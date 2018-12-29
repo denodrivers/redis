@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "deno": ["../.deno/deno.d.ts"],
+      "http://*": [
+        "../../.deno/deps/http/*"
+      ],
+      "https://*": [
+        "../../.deno/deps/https/*"
+      ]
+    }
+  }
+}
