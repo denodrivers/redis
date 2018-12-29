@@ -1,5 +1,16 @@
 import {test, assertEqual} from "https://deno.land/x/testing/testing.ts"
 import {connect} from "./redis.ts";
+
+test(async function testExists() {
+    const redis = await connect("127.0.0.1:6379");
+    const none = await redis.exists("none");
+    assertEqual(none, false);
+    await redis.set("exists", "aaa");
+    const exists = await redis.exists("exists");
+    assertEqual(exists, true);
+    redis.close();
+});
+
 test(async function testGetWhenNil() {
     const redis = await connect("127.0.0.1:6379");
     const hoge = await redis.get("none");

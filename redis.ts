@@ -2,6 +2,7 @@ import {Buffer, Conn, dial} from "deno"
 import {BufReader, BufWriter} from "http://deno.land/x/net/bufio.ts";
 
 export type Redis = {
+    exists(key: string): Promise<boolean>
     get(key: string): Promise<string>
     set(key: string, value: string): Promise<string>
     del(...keys: string[]): Promise<number>
@@ -16,6 +17,19 @@ class RedisImpl implements Redis {
     constructor(private readonly conn: Conn) {
         this.writer = new BufWriter(conn);
         this.reader = new BufReader(conn);
+    }
+
+    async exists(key: string) {
+        let msg = "";
+        msg += "*2\r\n";
+        msg += "$6\r\n";
+        msg += "EXISTS\r\n";
+        msg += `$${key.length}\r\n`;
+        msg += `${key}\r\n`;
+        await this.writer.write(this.encoder.encode(msg));
+        await this.writer.flush();
+        const reply = await readLine(this.reader);
+        return parseIntegerReply(reply) === 1;
     }
 
     async get(key: string) {
@@ -57,12 +71,9 @@ class RedisImpl implements Redis {
         const n = await this.writer.write(this.encoder.encode(msg));
         await this.writer.flush();
         console.log(msg.length, n);
-        const statusStr = await readLine(this.reader);
-        console.log(statusStr);
-        if (statusStr[0] === "+") {
-            return statusStr.substr(1, statusStr.length-3)
-        }
-        throw new Error(`error: ${statusStr}`);
+        const reply = await readLine(this.reader);
+        console.log(reply);
+        return parseStatusReply(reply);
     };
 
     async del(...keys: string[]) {
@@ -76,12 +87,8 @@ class RedisImpl implements Redis {
         }
         await this.writer.write(this.encoder.encode(msg));
         await this.writer.flush();
-        const line = await readLine(this.reader);
-        if (line[0] === ":") {
-            const numDel = line.substr(1,line.length-3);
-            return parseInt(numDel)
-        }
-        throw new Error(`error: ${line}`);
+        const reply = await readLine(this.reader);
+        return parseIntegerReply(reply);
     }
 
     close() {
@@ -104,6 +111,33 @@ async function readLine(reader: BufReader): Promise<string> {
         }
         buf[loc++] = d;
     }
+}
+
+export class ErrorReplyError extends Error {
+}
+
+export function parseStatusReply(line: string): string {
+    if (line[0] === "+") {
+        return line.substr(1, line.length-3)
+    }
+    parseErrorReply(line);
+}
+
+export function parseIntegerReply(line: string): number {
+    const code = line[0];
+    if (code === ":") {
+        const str = line.substr(1, line.length-3);
+        return parseInt(str);
+    }
+    parseErrorReply(line);
+}
+
+export function parseErrorReply(line: string) {
+    const code = line[0];
+    if (code === "-") {
+        throw new ErrorReplyError(line)
+    }
+    throw new Error(`invalid line: ${line}`);
 }
 
 export async function connect(addr: string): Promise<Redis> {
