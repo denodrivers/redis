@@ -65,12 +65,9 @@ class RedisImpl implements Redis {
         msg += `${key}\r\n`;
         msg += `$${value.length}\r\n`;
         msg += `${value}\r\n`;
-        console.log(msg);
-        const n = await this.writer.write(this.encoder.encode(msg));
+        await this.writer.write(this.encoder.encode(msg));
         await this.writer.flush();
-        console.log(msg.length, n);
         const reply = await readLine(this.reader);
-        console.log(reply);
         return parseStatusReply(reply);
     };
 
