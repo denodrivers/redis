@@ -6,6 +6,10 @@ export type Redis = {
     get(key: string): Promise<string>
     set(key: string, value: string): Promise<string>
     del(...keys: string[]): Promise<number>
+    incr(key: string): Promise<number>
+    incrby(key: string, value: number): Promise<number>
+    decr(key: string): Promise<number>
+    decrby(key: string, value: number): Promise<number>
     close()
 }
 
@@ -39,22 +43,16 @@ class RedisImpl implements Redis {
         msg += "GET\r\n";
         msg += `$${key.length}\r\n`;
         msg += `${key}\r\n`;
-        console.log(msg);
-        const o = await this.writer.write(this.encoder.encode(msg));
+        await this.writer.write(this.encoder.encode(msg));
         await this.writer.flush();
-        console.log(msg.length, o);
         const line = await readLine(this.reader);
-        console.log(line);
         const sizeStr = line.substr(1, line.length - 3);
-        console.log(sizeStr);
         const size = parseInt(sizeStr);
-        console.log(size);
         if (size < 0) {
             return;
         }
         const dest = new Uint8Array(size + 2);
         await this.reader.readFull(dest);
-        console.log(dest);
         return new Buffer(dest.subarray(0, dest.length-2)).toString();
     };
 
@@ -93,6 +91,64 @@ class RedisImpl implements Redis {
 
     close() {
         this.conn.close();
+    }
+
+    async incr(key: string) {
+        let msg = "";
+        msg += `*2\r\n`;
+        msg += "$4\r\n";
+        msg += "INCR\r\n";
+        msg += `$${key.length}\r\n`;
+        msg += `${key}\r\n`;
+        await this.writer.write(this.encoder.encode(msg));
+        await this.writer.flush();
+        const reply = await readLine(this.reader);
+        return parseIntegerReply(reply);
+    }
+
+    async incrby(key: string, value: number) {
+        let msg = "";
+        const valueStr = `${value}`;
+        msg += `*3\r\n`;
+        msg += "$6\r\n";
+        msg += "INCRBY\r\n";
+        msg += `$${key.length}\r\n`;
+        msg += `${key}\r\n`;
+        msg += `$${valueStr.length}\r\n`;
+        msg += `${valueStr}\r\n`;
+        await this.writer.write(this.encoder.encode(msg));
+        await this.writer.flush();
+        const reply = await readLine(this.reader);
+        return parseIntegerReply(reply);
+    }
+
+    async decr(key: string) {
+        let msg = "";
+        msg += `*2\r\n`;
+        msg += "$4\r\n";
+        msg += "DECR\r\n";
+        msg += `$${key.length}\r\n`;
+        msg += `${key}\r\n`;
+        await this.writer.write(this.encoder.encode(msg));
+        await this.writer.flush();
+        const reply = await readLine(this.reader);
+        return parseIntegerReply(reply);
+    }
+
+    async decrby(key: string, value: number) {
+        let msg = "";
+        const valueStr = `${value}`;
+        msg += `*3\r\n`;
+        msg += "$6\r\n";
+        msg += "DECRBY\r\n";
+        msg += `$${key.length}\r\n`;
+        msg += `${key}\r\n`;
+        msg += `$${valueStr.length}\r\n`;
+        msg += `${valueStr}\r\n`;
+        await this.writer.write(this.encoder.encode(msg));
+        await this.writer.flush();
+        const reply = await readLine(this.reader);
+        return parseIntegerReply(reply);
     }
 }
 
