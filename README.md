@@ -56,15 +56,15 @@ Still work in progress.
 - [ ] SUBSTR
 
 ### List
-- [ ] RPUSH
-- [ ] LPUSH
-- [ ] LLEN
-- [ ] LRANGE
-- [ ] LTRIM
-- [ ] LINDEX
-- [ ] LSET
-- [ ] LREM
-- [ ] LPOP
+- [x] RPUSH
+- [x] LPUSH
+- [x] LLEN
+- [x] LRANGE
+- [x] LTRIM
+- [x] LINDEX
+- [x] LSET
+- [x] LREM
+- [x] LPOP
 - [ ] RPOP
 - [ ] BLPOP
 - [ ] BRPOP

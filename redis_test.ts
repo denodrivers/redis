@@ -94,3 +94,4 @@ test(async function testDecrby() {
     assertEqual(await redis.get("decryby"), "-101");
     redis.close();
 });
+

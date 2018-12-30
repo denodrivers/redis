@@ -1,174 +1,150 @@
-import {Buffer, Conn, dial} from "deno"
+import {Buffer, Conn, dial, read} from "deno"
 import {BufReader, BufWriter} from "http://deno.land/x/net/bufio.ts";
 
 export type Redis = {
+    // common
     exists(key: string): Promise<boolean>
+    del(...keys: string[]): Promise<number>
+    // string
     get(key: string): Promise<string>
     getset(key: string, value: string): Promise<string>
     mget(...keys: string[]): Promise<string[]>
     set(key: string, value: string): Promise<string>
-    del(...keys: string[]): Promise<number>
     incr(key: string): Promise<number>
     incrby(key: string, value: number): Promise<number>
     decr(key: string): Promise<number>
     decrby(key: string, value: number): Promise<number>
+    // List
+    rpush(key: string, value: string): Promise<number>
+    lpush(key: string, value: string): Promise<number>
+    llen(key: string): Promise<number>
+    lrange(key: string, start: number, end: number): Promise<string[]>
+    ltrim(key: string, start: number, end: number): Promise<string>
+    lindex(key: string, index: number): Promise<string>;
+    lset(key: string, index: number, value: string): Promise<string>;
+    lrem(key: string, count: number, value: string): Promise<number>;
+    lpop(key: string): Promise<string>;
+    rpop(key: string): Promise<string>;
     close()
 }
 
 class RedisImpl implements Redis {
     writer: BufWriter;
     reader: BufReader;
-    encoder = new TextEncoder();
 
     constructor(private readonly conn: Conn) {
         this.writer = new BufWriter(conn);
         this.reader = new BufReader(conn);
     }
 
-    async exists(key: string) {
-        let msg = "";
-        msg += "*2\r\n";
-        msg += "$6\r\n";
-        msg += "EXISTS\r\n";
-        msg += `$${key.length}\r\n`;
-        msg += `${key}\r\n`;
-        await this.writer.write(this.encoder.encode(msg));
-        await this.writer.flush();
-        const reply = await readLine(this.reader);
-        return parseIntegerReply(reply) === 1;
+    private async execStatusReply(command: string, ...args: string[]): Promise<string> {
+        const msg = createRequest(command, ...args);
+        await writeRequest(this.writer, msg);
+        return readStatusReply(this.reader);
     }
 
-    async get(key: string) {
-        let msg = "";
-        msg += "*2\r\n";
-        msg += "$3\r\n";
-        msg += "GET\r\n";
-        msg += `$${key.length}\r\n`;
-        msg += `${key}\r\n`;
-        await this.writer.write(this.encoder.encode(msg));
-        await this.writer.flush();
+    private async execIntegerReply(command: string, ...args: string[]): Promise<number> {
+        const msg = createRequest(command, ...args);
+        await writeRequest(this.writer, msg);
+        return readIntegerReply(this.reader);
+    }
+
+    private async execBulkReply(command: string, ...args: string[]): Promise<string> {
+        const msg = createRequest(command, ...args);
+        await writeRequest(this.writer, msg);
         return readBulkReply(this.reader);
     }
 
-    async getset(key: string, value: string) {
-        let msg = "";
-        msg += "*3\r\n";
-        msg += "$6\r\n";
-        msg += "GETSET\r\n";
-        msg += `$${key.length}\r\n`;
-        msg += `${key}\r\n`;
-        msg += `$${value.length}\r\n`;
-        msg += `${value}\r\n`;
-        await this.writer.write(this.encoder.encode(msg));
-        await this.writer.flush();
-        return readBulkReply(this.reader);
-    }
-
-    async mget(...keys: string[]) {
-        let msg = "";
-        msg += `*${1+keys.length}\r\n`;
-        msg += "$4\r\n";
-        msg += "MGET\r\n";
-        for (const key of keys) {
-            msg += `$${key.length}\r\n`;
-            msg += `${key}\r\n`;
-        }
-        await this.writer.write(this.encoder.encode(msg));
-        await this.writer.flush();
+    private async execMultiBulkReply(command: string, ...args: string[]): Promise<string[]> {
+        const msg = createRequest(command, ...args);
+        await writeRequest(this.writer, msg);
         return readMultiBulkReply(this.reader);
     }
 
+    async exists(key: string) {
+        return await this.execIntegerReply("EXISTS", key) === 1;
+    }
+
+    async get(key: string) {
+        return this.execBulkReply("GET", key);
+    }
+
+    async getset(key: string, value: string) {
+        return this.execBulkReply("GETSET", key, value);
+    }
+
+    async mget(...keys: string[]) {
+        return this.execMultiBulkReply("MGET", ...keys);
+    }
+
     async set(key: string, value: string) {
-        let msg = "";
-        msg += "*3\r\n";
-        msg += "$3\r\n";
-        msg += "SET\r\n";
-        msg += `$${key.length}\r\n`;
-        msg += `${key}\r\n`;
-        msg += `$${value.length}\r\n`;
-        msg += `${value}\r\n`;
-        await this.writer.write(this.encoder.encode(msg));
-        await this.writer.flush();
-        const reply = await readLine(this.reader);
-        return parseStatusReply(reply);
+        return this.execStatusReply("SET", key, value);
     };
 
     async del(...keys: string[]) {
-        let msg = "";
-        msg += `*${1+keys.length}\r\n`;
-        msg += "$3\r\n";
-        msg += "DEL\r\n";
-        for (const key of keys) {
-            msg += `$${key.length}\r\n`;
-            msg += `${key}\r\n`;
-        }
-        await this.writer.write(this.encoder.encode(msg));
-        await this.writer.flush();
-        const reply = await readLine(this.reader);
-        return parseIntegerReply(reply);
+        return this.execIntegerReply("DEL", ...keys);
+    }
+
+    async incr(key: string) {
+        return this.execIntegerReply("INCR", key);
+    }
+
+    async incrby(key: string, value: number) {
+        return this.execIntegerReply("INCRBY", key, `${value}`);
+    }
+
+    async decr(key: string) {
+        return this.execIntegerReply("DECR", key);
+    }
+
+    async decrby(key: string, value: number) {
+        return this.execIntegerReply("DECRBY", key, `${value}`);
+    }
+
+    async rpush(key: string, value: string) {
+        return this.execIntegerReply("RPUSH", key, value);
+    }
+
+    async lpush(key: string, value: string) {
+        return this.execIntegerReply("LPUSH", key, value);
+    }
+
+    async llen(key: string) {
+        return this.execIntegerReply("LLEN", key);
+    }
+
+    async lrange(key: string, start: number, end: number) {
+        return this.execMultiBulkReply("LRANGE", `${start}`, `${end}`);
+    }
+
+    async lindex (key: string, index: number) {
+        return this.execBulkReply("LINDEX", key, `${index}`);
+    }
+
+    async lpop (key: string) {
+        return this.execBulkReply("LPOP", key);
+    }
+
+    async lrem (key: string, count: number, value: string) {
+        return this.execIntegerReply("LREM", key, `${count}`, value);
+    }
+
+    async lset (key: string, index: number, value: string) {
+        return this.execStatusReply("LSET", key, `${index}`, value);
+    }
+
+    async ltrim(key: string, start: number, end: number) {
+        return this.execStatusReply("LTRIM", key, `${start}`, `${end}`)
+    }
+
+    async rpop (key: string) {
+        return this.execBulkReply("RPOP", key);
     }
 
     close() {
         this.conn.close();
     }
 
-    async incr(key: string) {
-        let msg = "";
-        msg += `*2\r\n`;
-        msg += "$4\r\n";
-        msg += "INCR\r\n";
-        msg += `$${key.length}\r\n`;
-        msg += `${key}\r\n`;
-        await this.writer.write(this.encoder.encode(msg));
-        await this.writer.flush();
-        const reply = await readLine(this.reader);
-        return parseIntegerReply(reply);
-    }
-
-    async incrby(key: string, value: number) {
-        let msg = "";
-        const valueStr = `${value}`;
-        msg += `*3\r\n`;
-        msg += "$6\r\n";
-        msg += "INCRBY\r\n";
-        msg += `$${key.length}\r\n`;
-        msg += `${key}\r\n`;
-        msg += `$${valueStr.length}\r\n`;
-        msg += `${valueStr}\r\n`;
-        await this.writer.write(this.encoder.encode(msg));
-        await this.writer.flush();
-        const reply = await readLine(this.reader);
-        return parseIntegerReply(reply);
-    }
-
-    async decr(key: string) {
-        let msg = "";
-        msg += `*2\r\n`;
-        msg += "$4\r\n";
-        msg += "DECR\r\n";
-        msg += `$${key.length}\r\n`;
-        msg += `${key}\r\n`;
-        await this.writer.write(this.encoder.encode(msg));
-        await this.writer.flush();
-        const reply = await readLine(this.reader);
-        return parseIntegerReply(reply);
-    }
-
-    async decrby(key: string, value: number) {
-        let msg = "";
-        const valueStr = `${value}`;
-        msg += `*3\r\n`;
-        msg += "$6\r\n";
-        msg += "DECRBY\r\n";
-        msg += `$${key.length}\r\n`;
-        msg += `${key}\r\n`;
-        msg += `$${valueStr.length}\r\n`;
-        msg += `${valueStr}\r\n`;
-        await this.writer.write(this.encoder.encode(msg));
-        await this.writer.flush();
-        const reply = await readLine(this.reader);
-        return parseIntegerReply(reply);
-    }
 }
 
 async function readLine(reader: BufReader): Promise<string> {
@@ -191,23 +167,43 @@ async function readLine(reader: BufReader): Promise<string> {
 export class ErrorReplyError extends Error {
 }
 
-export function parseStatusReply(line: string): string {
+export function createRequest(command: string, ...args: string[]) {
+    let msg = "";
+    msg += `*${1 + args.length}\r\n`;
+    msg += `$${command.length}\r\n`;
+    msg += `${command}\r\n`;
+    for (const arg of args) {
+        msg += `$${arg.length}\r\n`;
+        msg += `${arg}\r\n`;
+    }
+    return msg;
+}
+
+const encoder = new TextEncoder();
+
+async function writeRequest(writer: BufWriter, msg: string) {
+    await writer.write(encoder.encode(msg));
+    await writer.flush();
+}
+
+async function readStatusReply(reader: BufReader): Promise<string> {
+    const line = await readLine(reader);
     if (line[0] === "+") {
-        return line.substr(1, line.length-3)
+        return line.substr(1, line.length - 3)
     }
     tryParseErrorReply(line);
 }
 
-export function parseIntegerReply(line: string): number {
-    const code = line[0];
-    if (code === ":") {
-        const str = line.substr(1, line.length-3);
+async function readIntegerReply(reader: BufReader): Promise<number> {
+    const line = await readLine(reader);
+    if (line[0] === ":") {
+        const str = line.substr(1, line.length - 3);
         return parseInt(str);
     }
     tryParseErrorReply(line);
 }
 
-export async function readBulkReply(reader: BufReader): Promise<string> {
+async function readBulkReply(reader: BufReader): Promise<string> {
     const line = await readLine(reader);
     if (line[0] !== "$") {
         tryParseErrorReply(line);
@@ -222,12 +218,12 @@ export async function readBulkReply(reader: BufReader): Promise<string> {
     return new Buffer(dest.subarray(0, dest.length - 2)).toString();
 }
 
-export async function readMultiBulkReply(reader: BufReader): Promise<string[]> {
+async function readMultiBulkReply(reader: BufReader): Promise<string[]> {
     const line = await readLine(reader);
     if (line[0] !== "*") {
         tryParseErrorReply(line);
     }
-    const argCount = parseInt(line.substr(1, line.length-3));
+    const argCount = parseInt(line.substr(1, line.length - 3));
     const result = [];
     for (let i = 0; i < argCount; i++) {
         result.push(await readBulkReply(reader));
