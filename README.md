@@ -20,8 +20,8 @@ const fuga = await redis.get("hoge");
 Still work in progress.
 
 ### Connection
-- [ ] QUIT
-- [ ] AUTH
+- [x] QUIT
+- [x] AUTH
 
 ### Common 
 - [x] EXISTS
