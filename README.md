@@ -1,15 +1,10 @@
 # deno-redis
 An experimental implementation of redis client for deno
 
+
 ## Usage
 
-!! WIP !!
-
-Only commands below are supported.  
-
-- GET
-- SET
-- DEL
+needs `--allow-net` privilege
 
 ```ts
 
@@ -19,3 +14,125 @@ const ok = await redis.set("hoge","fuga")
 const fuga = await redis.get("hoge");
 
 ```
+
+## Compatibility Table
+
+Still work in progress.
+
+### Connection
+- [ ] QUIT
+- [ ] AUTH
+
+### Common 
+- [x] EXISTS
+- [x] DEL
+- [ ] TYPE
+- [ ] KEYS
+- [ ] RANDOMKEY
+- [ ] RENAME
+- [ ] RENAMENX
+- [ ] DBSIZE
+- [ ] EXPIRE
+- [ ] PERSIST
+- [ ] TTL
+- [ ] SELECT
+- [ ] MOVE
+- [ ] FLUSHDB
+- [ ] FLUSHALL
+### String
+- [x] SET
+- [x] GET
+- [x] GETSET
+- [ ] MGET
+- [ ] SETNX
+- [ ] SETEX
+- [ ] MSET
+- [ ] MSETNX
+- [x] INCR
+- [x] INCRBY
+- [x] DECR
+- [x] DECRBY
+- [ ] APPEND
+- [ ] SUBSTR
+
+### List
+- [ ] RPUSH
+- [ ] LPUSH
+- [ ] LLEN
+- [ ] LRANGE
+- [ ] LTRIM
+- [ ] LINDEX
+- [ ] LSET
+- [ ] LREM
+- [ ] LPOP
+- [ ] RPOP
+- [ ] BLPOP
+- [ ] BRPOP
+- [ ] RPOPLPUSH
+
+### Set
+- [ ] SADD
+- [ ] SREM
+- [ ] SPOP
+- [ ] SMOVE
+- [ ] SCARD
+- [ ] SISMEMBER
+- [ ] SINTER
+- [ ] SINTERSTORE
+- [ ] SUNION
+- [ ] SUNIONSTORE
+- [ ] SDIFF
+- [ ] SDIFFSTORE
+- [ ] SMEMBERS
+- [ ] SRANDMEMBER
+
+### SortedSet
+- [ ] ZADD
+- [ ] ZREM
+- [ ] ZINCRBY
+- [ ] ZRANK
+- [ ] ZREVRANK
+- [ ] ZRANGE
+- [ ] ZREVRANGE
+- [ ] ZRANGEBYSCORE
+- [ ] ZCOUNT
+- [ ] ZCARD
+- [ ] ZSCORE
+- [ ] ZREMRANGEBYRANK
+- [ ] ZREMRANGEBYSCORE
+- [ ] ZUNIONSTORE / ZINTERSTORE
+
+### HashMap
+- [ ] HSET
+- [ ] HGET
+- [ ] HMGET
+- [ ] HMSET
+- [ ] HINCRBY
+- [ ] HEXISTS
+- [ ] HDEL
+- [ ] HLEN
+- [ ] HKEYS
+- [ ] HVALS
+- [ ] HGETALL
+
+### Sort
+- [ ] SORT
+
+### Multi
+- [ ] MULTI / EXEC / DISCARD / WATCH / UNWATCH
+
+### PubSub
+- [ ] SUBSCRIBE / UNSUBSCRIBE / PUBLISH
+
+### Persistence
+- [ ] SAVE
+- [ ] BGSAVE
+- [ ] LASTSAVE
+- [ ] SHUTDOWN
+- [ ] BGREWRITEAOF
+
+###　Control
+- [ ] INFO
+- [ ] MONITOR
+- [ ] SLAVEOF
+- [ ] CONFIG
