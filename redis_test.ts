@@ -4,7 +4,7 @@ import {connect} from "./redis.ts";
 
 test(async function beforeAll() {
     const redis = await connect("127.0.0.1:6379");
-    await redis.del("incr", "incrby", "decr", "decryby", "get", "del1", "del2")
+    await redis.del("incr", "incrby", "decr", "decryby", "get", "getset", "del1", "del2")
 });
 
 test(async function testExists() {
@@ -23,12 +23,20 @@ test(async function testGetWhenNil() {
     assertEqual(hoge, void 0);
     redis.close();
 });
-test(async function testGetSet() {
+test(async function testSet() {
     const redis = await connect("127.0.0.1:6379");
     const s = await redis.set("get", "fuga");
     assertEqual(s, "OK");
     const fuga = await redis.get("get");
     assertEqual(fuga, "fuga");
+    redis.close();
+});
+test(async function testGetSet() {
+    const redis = await connect("127.0.0.1:6379");
+    await redis.set("getset", "val");
+    const v = await redis.getset("getset", "lav");
+    assertEqual(v, "val");
+    assertEqual(await redis.get("getset"), "lav");
     redis.close();
 });
 test(async function testDel() {

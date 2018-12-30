@@ -4,6 +4,7 @@ import {BufReader, BufWriter} from "http://deno.land/x/net/bufio.ts";
 export type Redis = {
     exists(key: string): Promise<boolean>
     get(key: string): Promise<string>
+    getset(key: string, value: string): Promise<string>
     set(key: string, value: string): Promise<string>
     del(...keys: string[]): Promise<number>
     incr(key: string): Promise<number>
@@ -45,16 +46,22 @@ class RedisImpl implements Redis {
         msg += `${key}\r\n`;
         await this.writer.write(this.encoder.encode(msg));
         await this.writer.flush();
-        const line = await readLine(this.reader);
-        const sizeStr = line.substr(1, line.length - 3);
-        const size = parseInt(sizeStr);
-        if (size < 0) {
-            return;
-        }
-        const dest = new Uint8Array(size + 2);
-        await this.reader.readFull(dest);
-        return new Buffer(dest.subarray(0, dest.length-2)).toString();
-    };
+        return readBulkReply(this.reader);
+    }
+
+    async getset(key: string, value: string) {
+        let msg = "";
+        msg += "*3\r\n";
+        msg += "$6\r\n";
+        msg += "GETSET\r\n";
+        msg += `$${key.length}\r\n`;
+        msg += `${key}\r\n`;
+        msg += `$${value.length}\r\n`;
+        msg += `${value}\r\n`;
+        await this.writer.write(this.encoder.encode(msg));
+        await this.writer.flush();
+        return readBulkReply(this.reader);
+    }
 
     async set(key: string, value: string) {
         let msg = "";
@@ -173,7 +180,7 @@ export function parseStatusReply(line: string): string {
     if (line[0] === "+") {
         return line.substr(1, line.length-3)
     }
-    parseErrorReply(line);
+    tryParseErrorReply(line);
 }
 
 export function parseIntegerReply(line: string): number {
@@ -182,10 +189,25 @@ export function parseIntegerReply(line: string): number {
         const str = line.substr(1, line.length-3);
         return parseInt(str);
     }
-    parseErrorReply(line);
+    tryParseErrorReply(line);
 }
 
-export function parseErrorReply(line: string) {
+export async function readBulkReply(reader: BufReader): Promise<string> {
+    const line = await readLine(reader);
+    if (line[0] === "$") {
+        const sizeStr = line.substr(1, line.length - 3);
+        const size = parseInt(sizeStr);
+        if (size < 0) {
+            return;
+        }
+        const dest = new Uint8Array(size + 2);
+        await reader.readFull(dest);
+        return new Buffer(dest.subarray(0, dest.length - 2)).toString();
+    }
+    tryParseErrorReply(line);
+}
+
+export function tryParseErrorReply(line: string) {
     const code = line[0];
     if (code === "-") {
         throw new ErrorReplyError(line)
