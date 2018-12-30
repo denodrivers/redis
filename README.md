@@ -33,7 +33,7 @@ Still work in progress.
 -[x] EXISTS
 -[ ] EXPIRE
 -[ ] EXPIREAT
--[ ] KEYS 
+-[x] KEYS 
 -[ ] MIGRATE
 -[ ] MOVE
 -[ ] OBJECT
@@ -41,14 +41,14 @@ Still work in progress.
 -[ ] PEXPIRE
 -[ ] PEXPIREAT
 -[ ] PTTL
--[ ] RANDOMKEY
+-[x] RANDOMKEY
 -[ ] RENAME
 -[ ] RENAMENX
 -[ ] RESTORE
 -[ ] SORT
 -[ ] TOUCH
 -[ ] TTL
--[ ] TYPE
+-[x] TYPE
 -[ ] UNLINK
 -[ ] WAIT
 -[ ] SCAN

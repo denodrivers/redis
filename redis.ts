@@ -6,9 +6,12 @@ export type Redis = {
     // connection
     quit(): Promise<void>
     auth(password: string): Promise<string>
-    // common
+    // key
     exists(key: string): Promise<boolean>
     del(...keys: string[]): Promise<number>
+    keys(pattern: string): Promise<string[]>
+    type(key: string): Promise<string>
+    randomkey(): Promise<string>
     // string
     get(key: string): Promise<string>
     getset(key: string, value: string): Promise<string>
@@ -136,6 +139,18 @@ class RedisImpl implements Redis {
 
     async exists(key: string) {
         return await this.execIntegerReply("EXISTS", key) === 1;
+    }
+
+    keys(pattern: string) {
+        return this.execMultiBulkReply("KEYS", pattern);
+    }
+
+    type(key: string) {
+        return this.execStatusReply("TYPE", key);
+    }
+
+    randomkey () {
+        return this.execBulkReply("RANDOMKEY");
     }
 
     get(key: string) {
