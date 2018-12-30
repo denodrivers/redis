@@ -44,16 +44,16 @@ Still work in progress.
 - [x] GET
 - [x] GETSET
 - [x] MGET
-- [ ] SETNX
-- [ ] SETEX
-- [ ] MSET
-- [ ] MSETNX
+- [x] SETNX
+- [x] SETEX
+- [x] MSET
+- [x] MSETNX
 - [x] INCR
 - [x] INCRBY
 - [x] DECR
 - [x] DECRBY
-- [ ] APPEND
-- [ ] SUBSTR
+- [x] APPEND
+- [x] SUBSTR / GETRANGE
 
 ### List
 - [x] RPUSH

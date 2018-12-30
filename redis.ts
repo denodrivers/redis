@@ -14,6 +14,13 @@ export type Redis = {
     getset(key: string, value: string): Promise<string>
     mget(...keys: string[]): Promise<string[]>
     set(key: string, value: string): Promise<string>
+    setnx(key: string, value: string): Promise<number>
+    setex(key: string, time: number, value: string): Promise<string>;
+    mset(...keyValues: string[]): Promise<string>
+    msetnx(...keyValues: string[]): Promise<number>
+    append(key: string, value: string): Promise<number>
+    substr(key: string, start: number, end: number): Promise<string>
+    getrange(key: string, start: number, end: number): Promise<string>
     incr(key: string): Promise<number>
     incrby(key: string, value: number): Promise<number>
     decr(key: string): Promise<number>
@@ -115,6 +122,35 @@ class RedisImpl implements Redis {
         return this.execStatusReply("SET", key, value);
     };
 
+    mset(...keyValues: string[]) {
+        return this.execStatusReply("MSET", ...keyValues);
+    }
+
+    msetnx(...keyValues: string[]) {
+        return this.execIntegerReply("MSETNX", ...keyValues);
+    }
+
+    setex(key: string, time: number, value: string) {
+        return this.execStatusReply("SETEX", key, `${time}`, value);
+    }
+
+    setnx(key: string, value: string) {
+        return this.execIntegerReply("SETNX", key, value);
+    }
+
+    append(key: string, value: string) {
+        return this.execIntegerReply("APPEND", key, value);
+    }
+
+    // available >= 2.4.0, alias of substr
+    getrange(key: string, start: number, end: number) {
+        return this.execBulkReply("GETRANGE", key, `${start}`, `${end}`);
+    }
+
+    substr(key: string, start: number, end: number) {
+        return this.execBulkReply("SUBSTR", key, `${start}`, `${end}`)
+    }
+
     del(...keys: string[]) {
         return this.execIntegerReply("DEL", ...keys);
     }
@@ -196,7 +232,7 @@ class RedisImpl implements Redis {
         return this.execIntegerReply("SREM", key, member);
     }
 
-    async sismember (key: string) {
+    async sismember(key: string) {
         return await this.execIntegerReply("SISMEMBER", key) === 1
     }
 
