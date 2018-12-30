@@ -71,12 +71,12 @@ Still work in progress.
 - [ ] RPOPLPUSH
 
 ### Set
-- [ ] SADD
-- [ ] SREM
-- [ ] SPOP
-- [ ] SMOVE
-- [ ] SCARD
-- [ ] SISMEMBER
+- [x] SADD
+- [x] SREM
+- [x] SPOP
+- [x] SMOVE
+- [x] SCARD
+- [x] SISMEMBER
 - [ ] SINTER
 - [ ] SINTERSTORE
 - [ ] SUNION

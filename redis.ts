@@ -1,4 +1,4 @@
-import {Buffer, Conn, dial, read} from "deno"
+import {Buffer, Conn, dial} from "deno"
 import {BufReader, BufWriter} from "http://deno.land/x/net/bufio.ts";
 
 export type Redis = {
@@ -25,6 +25,14 @@ export type Redis = {
     lrem(key: string, count: number, value: string): Promise<number>;
     lpop(key: string): Promise<string>;
     rpop(key: string): Promise<string>;
+    // Set
+    sadd(key: string, member: string): Promise<number>
+    srem(key: string, member: string): Promise<number>
+    spop(key: string): Promise<string>
+    smove(srcKey: string, dstKey: string, member: string): Promise<number>
+    scard(key: string): Promise<number>
+    sismember(key: string): Promise<boolean>
+    //
     close()
 }
 
@@ -65,80 +73,105 @@ class RedisImpl implements Redis {
         return await this.execIntegerReply("EXISTS", key) === 1;
     }
 
-    async get(key: string) {
+    get(key: string) {
         return this.execBulkReply("GET", key);
     }
 
-    async getset(key: string, value: string) {
+    getset(key: string, value: string) {
         return this.execBulkReply("GETSET", key, value);
     }
 
-    async mget(...keys: string[]) {
+    mget(...keys: string[]) {
         return this.execMultiBulkReply("MGET", ...keys);
     }
 
-    async set(key: string, value: string) {
+    set(key: string, value: string) {
         return this.execStatusReply("SET", key, value);
     };
 
-    async del(...keys: string[]) {
+    del(...keys: string[]) {
         return this.execIntegerReply("DEL", ...keys);
     }
 
-    async incr(key: string) {
+    incr(key: string) {
         return this.execIntegerReply("INCR", key);
     }
 
-    async incrby(key: string, value: number) {
+    incrby(key: string, value: number) {
         return this.execIntegerReply("INCRBY", key, `${value}`);
     }
 
-    async decr(key: string) {
+    decr(key: string) {
         return this.execIntegerReply("DECR", key);
     }
 
-    async decrby(key: string, value: number) {
+    decrby(key: string, value: number) {
         return this.execIntegerReply("DECRBY", key, `${value}`);
     }
 
-    async rpush(key: string, value: string) {
+    rpush(key: string, value: string) {
         return this.execIntegerReply("RPUSH", key, value);
     }
 
-    async lpush(key: string, value: string) {
+    lpush(key: string, value: string) {
         return this.execIntegerReply("LPUSH", key, value);
     }
 
-    async llen(key: string) {
+    llen(key: string) {
         return this.execIntegerReply("LLEN", key);
     }
 
-    async lrange(key: string, start: number, end: number) {
+    lrange(key: string, start: number, end: number) {
         return this.execMultiBulkReply("LRANGE", `${start}`, `${end}`);
     }
 
-    async lindex (key: string, index: number) {
+    lindex(key: string, index: number) {
         return this.execBulkReply("LINDEX", key, `${index}`);
     }
 
-    async lpop (key: string) {
+    lpop(key: string) {
         return this.execBulkReply("LPOP", key);
     }
 
-    async lrem (key: string, count: number, value: string) {
+    lrem(key: string, count: number, value: string) {
         return this.execIntegerReply("LREM", key, `${count}`, value);
     }
 
-    async lset (key: string, index: number, value: string) {
+    lset(key: string, index: number, value: string) {
         return this.execStatusReply("LSET", key, `${index}`, value);
     }
 
-    async ltrim(key: string, start: number, end: number) {
+    ltrim(key: string, start: number, end: number) {
         return this.execStatusReply("LTRIM", key, `${start}`, `${end}`)
     }
 
-    async rpop (key: string) {
+    rpop(key: string) {
         return this.execBulkReply("RPOP", key);
+    }
+
+    // set
+    sadd(key: string, member: string) {
+        return this.execIntegerReply("SADD", key, member);
+    }
+
+    scard(key: string) {
+        return this.execIntegerReply("SCARD", key);
+    }
+
+    smove(srcKey: string, dstKey: string, member: string) {
+        return this.execIntegerReply("SMOVE", srcKey, dstKey, member);
+    }
+
+    spop(key: string) {
+        return this.execBulkReply("SPOP", key);
+    }
+
+    srem(key: string, member: string) {
+        return this.execIntegerReply("SREM", key, member);
+    }
+
+    async sismember (key: string) {
+        return await this.execIntegerReply("SISMEMBER", key) === 1
     }
 
     close() {
