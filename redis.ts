@@ -1,7 +1,11 @@
 import {Buffer, Conn, dial} from "deno"
 import {BufReader, BufWriter} from "http://deno.land/x/net/bufio.ts";
+import {ConnectionClosedError} from "./errors.ts";
 
 export type Redis = {
+    // connection
+    quit(): Promise<void>
+    auth(password: string): Promise<string>
     // common
     exists(key: string): Promise<boolean>
     del(...keys: string[]): Promise<number>
@@ -33,12 +37,17 @@ export type Redis = {
     scard(key: string): Promise<number>
     sismember(key: string): Promise<boolean>
     //
+    readonly isClosed: boolean;
     close()
 }
 
 class RedisImpl implements Redis {
     writer: BufWriter;
     reader: BufReader;
+    _isClosed = false;
+    get isClosed() {
+        return this._isClosed;
+    }
 
     constructor(private readonly conn: Conn) {
         this.writer = new BufWriter(conn);
@@ -46,27 +55,44 @@ class RedisImpl implements Redis {
     }
 
     private async execStatusReply(command: string, ...args: string[]): Promise<string> {
+        if (this.isClosed) throw new ConnectionClosedError();
         const msg = createRequest(command, ...args);
         await writeRequest(this.writer, msg);
         return readStatusReply(this.reader);
     }
 
     private async execIntegerReply(command: string, ...args: string[]): Promise<number> {
+        if (this.isClosed) throw new ConnectionClosedError();
         const msg = createRequest(command, ...args);
         await writeRequest(this.writer, msg);
         return readIntegerReply(this.reader);
     }
 
     private async execBulkReply(command: string, ...args: string[]): Promise<string> {
+        if (this.isClosed) throw new ConnectionClosedError();
         const msg = createRequest(command, ...args);
         await writeRequest(this.writer, msg);
         return readBulkReply(this.reader);
     }
 
     private async execMultiBulkReply(command: string, ...args: string[]): Promise<string[]> {
+        if (this.isClosed) throw new ConnectionClosedError();
         const msg = createRequest(command, ...args);
         await writeRequest(this.writer, msg);
         return readMultiBulkReply(this.reader);
+    }
+
+    auth(password: string) {
+        return this.execStatusReply("AUTH", password)
+    }
+
+    async quit() {
+        try {
+            const msg = createRequest("QUIT");
+            await writeRequest(this.writer, msg);
+        } finally {
+            this._isClosed = true;
+        }
     }
 
     async exists(key: string) {
