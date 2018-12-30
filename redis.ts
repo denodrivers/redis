@@ -5,6 +5,7 @@ export type Redis = {
     exists(key: string): Promise<boolean>
     get(key: string): Promise<string>
     getset(key: string, value: string): Promise<string>
+    mget(...keys: string[]): Promise<string[]>
     set(key: string, value: string): Promise<string>
     del(...keys: string[]): Promise<number>
     incr(key: string): Promise<number>
@@ -61,6 +62,20 @@ class RedisImpl implements Redis {
         await this.writer.write(this.encoder.encode(msg));
         await this.writer.flush();
         return readBulkReply(this.reader);
+    }
+
+    async mget(...keys: string[]) {
+        let msg = "";
+        msg += `*${1+keys.length}\r\n`;
+        msg += "$4\r\n";
+        msg += "MGET\r\n";
+        for (const key of keys) {
+            msg += `$${key.length}\r\n`;
+            msg += `${key}\r\n`;
+        }
+        await this.writer.write(this.encoder.encode(msg));
+        await this.writer.flush();
+        return readMultiBulkReply(this.reader);
     }
 
     async set(key: string, value: string) {
@@ -194,17 +209,30 @@ export function parseIntegerReply(line: string): number {
 
 export async function readBulkReply(reader: BufReader): Promise<string> {
     const line = await readLine(reader);
-    if (line[0] === "$") {
-        const sizeStr = line.substr(1, line.length - 3);
-        const size = parseInt(sizeStr);
-        if (size < 0) {
-            return;
-        }
-        const dest = new Uint8Array(size + 2);
-        await reader.readFull(dest);
-        return new Buffer(dest.subarray(0, dest.length - 2)).toString();
+    if (line[0] !== "$") {
+        tryParseErrorReply(line);
     }
-    tryParseErrorReply(line);
+    const sizeStr = line.substr(1, line.length - 3);
+    const size = parseInt(sizeStr);
+    if (size < 0) {
+        return;
+    }
+    const dest = new Uint8Array(size + 2);
+    await reader.readFull(dest);
+    return new Buffer(dest.subarray(0, dest.length - 2)).toString();
+}
+
+export async function readMultiBulkReply(reader: BufReader): Promise<string[]> {
+    const line = await readLine(reader);
+    if (line[0] !== "*") {
+        tryParseErrorReply(line);
+    }
+    const argCount = parseInt(line.substr(1, line.length-3));
+    const result = [];
+    for (let i = 0; i < argCount; i++) {
+        result.push(await readBulkReply(reader));
+    }
+    return result;
 }
 
 export function tryParseErrorReply(line: string) {

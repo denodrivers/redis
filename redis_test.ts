@@ -1,6 +1,10 @@
-import {test, assertEqual} from "https://deno.land/x/testing/testing.ts"
 import {connect} from "./redis.ts";
+import {test, assertEqual, setFilter} from "https://deno.land/x/testing/testing.ts"
+import {args} from "deno";
 
+if (args.length > 1) {
+    setFilter(args[1])
+}
 
 test(async function beforeAll() {
     const redis = await connect("127.0.0.1:6379");
@@ -37,6 +41,15 @@ test(async function testGetSet() {
     const v = await redis.getset("getset", "lav");
     assertEqual(v, "val");
     assertEqual(await redis.get("getset"), "lav");
+    redis.close();
+});
+test(async function testMget() {
+    const redis = await connect("127.0.0.1:6379");
+    await redis.set("mget1", "val1");
+    await redis.set("mget2", "val2");
+    await redis.set("mget3", "val3");
+    const v = await redis.mget("mget1", "mget2", "mget3");
+    assertEqual(v, ["val1", "val2", "val3"]);
     redis.close();
 });
 test(async function testDel() {

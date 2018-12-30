@@ -43,7 +43,7 @@ Still work in progress.
 - [x] SET
 - [x] GET
 - [x] GETSET
-- [ ] MGET
+- [x] MGET
 - [ ] SETNX
 - [ ] SETEX
 - [ ] MSET
