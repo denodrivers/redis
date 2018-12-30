@@ -43,10 +43,30 @@ export type Redis = {
     smove(srcKey: string, dstKey: string, member: string): Promise<number>
     scard(key: string): Promise<number>
     sismember(key: string): Promise<boolean>
+    // SortedSet
+    zadd(key: string, score: number, member: string): Promise<number>
+    zrem(key: string, member: string): Promise<number>
+    zincrby(key: string, incr: number, member: string): Promise<string>
+    zrank(key: string, member: string): Promise<number|string>
+    zrevrank(key, member): Promise<number|string>
+    // zrange(key, start, end, scores)
+    // zrevrange(key, start, end, scores)
+    zrangebyscore(key: string, mim: number, max: number): Promise<string[]>
+    zcount(key: string, min: number, max: number): Promise<number>
+    zremrangebyrank(key: string, start: number, end: number): Promise<number>
+    zremrangebyscore(key: string, min: number, max: number): Promise<number>
+    zcard(key: string): Promise<number>
+    zscore(key: string, element: string): Promise<string>
+    // zunionstore(dstkey, N, k1, ..., kN, [WEIGHTS, w1, ..., wN], [AGGREGATE, SUM|MIN|MAX])
+    // zinterstore(dstkey, N, k1, ..., kN, [WEIGHTS, w1, ..., wN], [AGGREGATE, SUM|MIN|MAX])
+
     //
     readonly isClosed: boolean;
     close()
 }
+
+const IntegerReplyCode = ":".charCodeAt(0);
+const BulkReplyCode = "$".charCodeAt(0);
 
 class RedisImpl implements Redis {
     writer: BufWriter;
@@ -61,7 +81,7 @@ class RedisImpl implements Redis {
         this.reader = new BufReader(conn);
     }
 
-    private async execStatusReply(command: string, ...args: string[]): Promise<string> {
+    private async execStatusReply(command: string, ...args: string[]): Promise<"OK"> {
         if (this.isClosed) throw new ConnectionClosedError();
         const msg = createRequest(command, ...args);
         await writeRequest(this.writer, msg);
@@ -87,6 +107,18 @@ class RedisImpl implements Redis {
         const msg = createRequest(command, ...args);
         await writeRequest(this.writer, msg);
         return readMultiBulkReply(this.reader);
+    }
+
+    private async execIntegerOrNilReply(command: string, ...args: string[]): Promise<number|string> {
+        if (this.isClosed) throw new ConnectionClosedError();
+        const msg = createRequest(command, ...args);
+        await writeRequest(this.writer, msg);
+        const code = await this.reader.peek(1)[0];
+        if (code === IntegerReplyCode) {
+            return readIntegerReply(this.reader);
+        } else {
+            return readBulkReply(this.reader);
+        }
     }
 
     auth(password: string) {
@@ -236,6 +268,51 @@ class RedisImpl implements Redis {
         return await this.execIntegerReply("SISMEMBER", key) === 1
     }
 
+    // sorted set
+    zadd (key: string, score: number, member: string) {
+        return this.execIntegerReply("ZADD", `${score}`, member);
+    }
+
+    zcard(key) {
+        return this.execIntegerReply("ZCARD")
+    }
+
+    zcount (key, min, max) {
+        return this.execIntegerReply("ZCOUNT", key, `${min}`, `${max}`)
+    }
+
+    zincrby (key: string, incr: number, member: string) {
+        return this.execBulkReply("ZINCRBY", key, `${incr}`, member);
+    }
+
+    zrangebyscore (key: string, min: number, max: number) {
+        return this.execMultiBulkReply("ZRANGEBYSCORE", key, `${min}`, `${max}`)
+    }
+
+    zrank(key: string, member: string) {
+        return this.execIntegerOrNilReply("ZRANK", key, member);
+    }
+
+    zrem(key: string, member: string) {
+        return this.execIntegerReply("ZREM", key, member)
+    }
+
+    zremrangebyrank(key: string, start: number, end: number) {
+        return this.execIntegerReply("ZREMRANGEBYRANK", key, `${start}`, `${end}`);
+    }
+
+    zremrangebyscore(key: string, min: number, max: number) {
+        return this.execIntegerReply("ZREMRANGEBYSCORE", key, `${min}`, `${max}`)
+    }
+
+    zrevrank (key: string, member: string) {
+        return this.execIntegerOrNilReply("ZREVRANK", key, member)
+    }
+
+    zscore(key: string, element: string) {
+        return this.execStatusReply("ZSCORE", element)
+    }
+
     close() {
         this.conn.close();
     }
@@ -281,10 +358,10 @@ async function writeRequest(writer: BufWriter, msg: string) {
     await writer.flush();
 }
 
-async function readStatusReply(reader: BufReader): Promise<string> {
+async function readStatusReply(reader: BufReader): Promise<"OK"> {
     const line = await readLine(reader);
     if (line[0] === "+") {
-        return line.substr(1, line.length - 3)
+        return line.substr(1, line.length - 3) as "OK"
     }
     tryParseErrorReply(line);
 }
@@ -306,6 +383,7 @@ async function readBulkReply(reader: BufReader): Promise<string> {
     const sizeStr = line.substr(1, line.length - 3);
     const size = parseInt(sizeStr);
     if (size < 0) {
+        // nil bulk reply
         return;
     }
     const dest = new Uint8Array(size + 2);

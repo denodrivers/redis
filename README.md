@@ -87,19 +87,19 @@ Still work in progress.
 - [ ] SRANDMEMBER
 
 ### SortedSet
-- [ ] ZADD
-- [ ] ZREM
-- [ ] ZINCRBY
-- [ ] ZRANK
-- [ ] ZREVRANK
+- [x] ZADD
+- [x] ZREM
+- [x] ZINCRBY
+- [x] ZRANK
+- [x] ZREVRANK
 - [ ] ZRANGE
 - [ ] ZREVRANGE
-- [ ] ZRANGEBYSCORE
-- [ ] ZCOUNT
-- [ ] ZCARD
-- [ ] ZSCORE
-- [ ] ZREMRANGEBYRANK
-- [ ] ZREMRANGEBYSCORE
+- [x] ZRANGEBYSCORE
+- [x] ZCOUNT
+- [x] ZCARD
+- [x] ZSCORE
+- [x] ZREMRANGEBYRANK
+- [x] ZREMRANGEBYSCORE
 - [ ] ZUNIONSTORE / ZINTERSTORE
 
 ### HashMap
