@@ -34,8 +34,10 @@ export type Redis = {
     discard(): Promise<string>
     dump(key: string): Promise<string>
     echo(message: string): Promise<string>
-    // eval(script, numkeys, key: string, ...keys: string[], arg, ...args)
-    // evalsha(sha1, numkeys, key: string, ...keys: string[], arg, ...args)
+    eval(script: string, key: string, arg: string)
+    eval(script: string, keys: string[], args: string[])
+    evalsha(sha1: string, key: string, arg: string)
+    evalsha(sha1: string, keys: string[], args: string[])
     exec(): Promise<string[]>
     exists(...keys: string[]): Promise<number>
     expire(key: string, seconds: number): Promise<number>
@@ -271,6 +273,7 @@ const IntegerReplyCode = ":".charCodeAt(0);
 const BulkReplyCode = "$".charCodeAt(0);
 const SimpleStringCode = "+".charCodeAt(0);
 const ArrayReplyCode = "*".charCodeAt(0);
+const ErrorReplyCode = "-".charCodeAt(0);
 
 class RedisImpl implements Redis {
     writer: BufWriter;
@@ -285,45 +288,48 @@ class RedisImpl implements Redis {
         this.reader = new BufReader(conn);
     }
 
-    private async execStatusReply(command: string, ...args: string[]): Promise<"OK"> {
+    private async execRawReply<T extends "I" | "S" | "B" | "A">(command: string, ...args: (string | number)[]): Promise<{
+        I: number,
+        S: string,
+        B: string | undefined,
+        A: any[]
+    }[T]> {
         if (this.isClosed) throw new ConnectionClosedError();
         const msg = createRequest(command, ...args);
         await writeRequest(this.writer, msg);
-        return readStatusReply(this.reader);
-    }
-
-    private async execIntegerReply(command: string, ...args: string[]): Promise<number> {
-        if (this.isClosed) throw new ConnectionClosedError();
-        const msg = createRequest(command, ...args);
-        await writeRequest(this.writer, msg);
-        return readIntegerReply(this.reader);
-    }
-
-    private async execBulkReply(command: string, ...args: string[]): Promise<string> {
-        if (this.isClosed) throw new ConnectionClosedError();
-        const msg = createRequest(command, ...args);
-        await writeRequest(this.writer, msg);
-        return readBulkReply(this.reader);
-    }
-
-    private async execIntegerOrNilReply(command: string, ...args: string[]): Promise<number | undefined> {
-        if (this.isClosed) throw new ConnectionClosedError();
-        const msg = createRequest(command, ...args);
-        await writeRequest(this.writer, msg);
-        const code = await this.reader.peek(1)[0];
-        if (code === IntegerReplyCode) {
-            return readIntegerReply(this.reader);
-        } else {
-            await readLine(this.reader);
-            return void 0;
+        const [b] = await this.reader.peek(1);
+        switch (b[0]) {
+            case IntegerReplyCode:
+                return readIntegerReply(this.reader);
+            case SimpleStringCode:
+                return readStatusReply(this.reader);
+            case BulkReplyCode:
+                return readBulkReply(this.reader);
+            case ArrayReplyCode:
+                return readArrayReply(this.reader);
+            case ErrorReplyCode:
+                tryParseErrorReply(await readLine(this.reader))
         }
     }
 
+    private async execStatusReply(command: string, ...args: (string | number)[]): Promise<string> {
+        return this.execRawReply<"S">(command, ...args);
+    }
+
+    private async execIntegerReply(command: string, ...args: (string | number)[]): Promise<number> {
+        return this.execRawReply<"I">(command, ...args);
+    }
+
+    private async execBulkReply(command: string, ...args: (string | number)[]): Promise<string> {
+        return this.execRawReply<"B">(command, ...args);
+    }
+
+    private async execIntegerOrNilReply(command: string, ...args: (string | number)[]): Promise<number | undefined> {
+        return this.execRawReply(command, ...args) as Promise<number | undefined>;
+    }
+
     private async execArrayReply(command: string, ...args: (string | number)[]): Promise<any[]> {
-        if (this.isClosed) throw new ConnectionClosedError();
-        const msg = createRequest(command, ...args);
-        await writeRequest(this.writer, msg);
-        return readArrayReply(this.reader);
+        return this.execRawReply<"A">(command, ...args)
     }
 
     append(key, value) {
@@ -462,13 +468,28 @@ class RedisImpl implements Redis {
         return this.execStatusReply("ECHO", message)
     }
 
-    // eval(script, numkeys, key, ...keys, arg, ...args) {
-    //     //
-    // }
-    //
-    // evalsha(sha1, numkeys, key, ...keys, arg, ...args) {
-    //     //
-    // }
+    eval(script, keys, args) {
+        return this.doEval("EVAL", script, keys, args);
+    }
+
+    evalsha(sha1, keys, args) {
+        return this.doEval("EVALSHA", sha1, keys, args);
+    }
+
+    private doEval(cmd, script, keys, args) {
+        const _args = [script];
+        if (typeof keys === "string") {
+            _args.push(keys);
+        } else {
+            _args.push(...keys);
+        }
+        if (typeof args === "string") {
+            _args.push(args);
+        } else {
+            _args.push(...args);
+        }
+        return this.execRawReply(cmd, ..._args);
+    }
 
     exec() {
         return this.execArrayReply("EXEC",)
@@ -1245,7 +1266,7 @@ async function readLine(reader: BufReader): Promise<string> {
 export class ErrorReplyError extends Error {
 }
 
-export function createRequest(command: string, ...args: (string | number)[]) {
+export function createRequest(command: string, ...args: (string | number | (string|number)[])[]) {
     let msg = "";
     msg += `*${1 + args.length}\r\n`;
     msg += `$${command.length}\r\n`;
@@ -1299,19 +1320,6 @@ async function readBulkReply(reader: BufReader): Promise<string> {
     const dest = new Uint8Array(size + 2);
     await reader.readFull(dest);
     return new Buffer(dest.subarray(0, dest.length - 2)).toString();
-}
-
-async function readMultiBulkReply(reader: BufReader): Promise<string[]> {
-    const line = await readLine(reader);
-    if (line[0] !== "*") {
-        tryParseErrorReply(line);
-    }
-    const argCount = parseInt(line.substr(1, line.length - 3));
-    const result = [];
-    for (let i = 0; i < argCount; i++) {
-        result.push(await readBulkReply(reader));
-    }
-    return result;
 }
 
 async function readArrayReply(reader: BufReader): Promise<any[]> {
