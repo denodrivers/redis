@@ -199,16 +199,30 @@ export type Redis = {
     touch(...keys: string[]): Promise<number>
     ttl(key: string): Promise<number>
     type(key: string): Promise<string>
-// unsubscribe(channel?,[channel?,...]?)
+    unsubscribe(...channels: string[])
     unlink(...keys: string[]): Promise<number>
     unwatch(): Promise<string>
     wait(numreplicas: number, timeout: number): Promise<number>
     watch(...keys: string[]): Promise<string>
-    // zadd(key: string, arg: "NX" | "XX?", CH?, INCR?, score, member: string, ...score_members): Promise<number>
+    zadd(key: string,
+         score: number,
+         member: string,
+         opts?: {
+             nxx?: "NX" | "XX",
+             ch?: boolean,
+             incr?: boolean,
+         }): Promise<number>
+    zadd(key: string,
+         score_members: (number|string)[],
+         opts?: {
+             nxx?: "NX" | "XX",
+             ch?: boolean,
+             incr?: boolean,
+         }): Promise<number>
     zcard(key: string): Promise<number>
     zcount(key: string, min: number, max: number): Promise<number>
     zincrby(key: string, increment, member: string): Promise<string>
-// zinterstore(destination,numkeys,key: string, ...keys: string[],WEIGHTS?,weight?,[weight?,...]?,arg: "AGGREGATE?,SUM"|"MIN"|"MAX?"): Promise<number>
+    zinterstore(destination: string, numkeys: number, keys: string | string[], weights?: number | number[], aggregate?: "SUM" | "MIN" | "MAX"): Promise<number>
     zlexcount(key: string, min: number, max: number): Promise<number>
     zpopmax(key: string, count?: number): Promise<string[]>
     zpopmin(key: string, count?: number): Promise<string[]>
@@ -225,7 +239,7 @@ export type Redis = {
     zrevrangebyscore(key: string, max: number, min: number, WITHSCORES?, LIMIT?, offset?: number, count?: number): Promise<string[]>
     zrevrank(key: string, member: string): Promise<number | undefined>
     zscore(key: string, member: string): Promise<string>
-// zunionstore(destination,numkeys,key: string, ...keys: string[],WEIGHTS?,weight?,[weight?,...]?,arg: "AGGREGATE?,SUM"|"MIN"|"MAX?"): Promise<number>
+    zunionstore(destination: string, numkeys: string, keys: string | string[], weights?: number | number[], aggregate?: "SUM" | "MIN" | "MAX"): Promise<number>
     scan(cursor, MATCH?, pattern?, COUNT?, count?: number)
     sscan(key: string, cursor, MATCH?, pattern?, COUNT?, count?: number)
     hscan(key: string, cursor, MATCH?, pattern?, COUNT?, count?: number)
@@ -971,9 +985,9 @@ class RedisImpl implements Redis {
         return this.execBulkReply("TYPE", key)
     }
 
-// unsubscribe(channel?,[channel?,...]?) {
-//   //
-// }
+    unsubscribe(...channels) {
+        return this.execArrayReply("UNSUBSCRIBE", ...channels);
+    }
 
     unlink(...keys) {
         return this.execIntegerReply("UNLINK", ...keys)
@@ -991,9 +1005,29 @@ class RedisImpl implements Redis {
         return this.execBulkReply("WATCH", key, ...keys)
     }
 
-// zadd(key,arg: "NX"|"XX?",CH?,INCR?,score,member, ...score_members) {
-//   return this.execIntegerReply("ZADD",key,arg)
-// }
+    zadd(key, scoreOrArr, memberOrOpts, opts?) {
+        const args = [key];
+        let _opts = opts;
+        if (typeof scoreOrArr === "number") {
+            args.push(scoreOrArr);
+            args.push(memberOrOpts);
+        } else {
+            args.push(...scoreOrArr);
+            _opts = memberOrOpts;
+        }
+        if (_opts) {
+            if (_opts.nxx) {
+                args.push(_opts.nxx)
+            }
+            if (_opts.ch) {
+                args.push("CH")
+            }
+            if (_opts.incr) {
+                args.push("INCR")
+            }
+        }
+        return this.execIntegerReply("ZADD", ...args);
+    }
 
     zcard(key) {
         return this.execIntegerReply("ZCARD", key)
@@ -1007,9 +1041,36 @@ class RedisImpl implements Redis {
         return this.execStatusReply("ZINCRBY", key, increment, member)
     }
 
-// zinterstore(destination,numkeys,key, ...keys,WEIGHTS?,weight?,[weight?,...]?,arg: "AGGREGATE?,SUM"|"MIN"|"MAX?") {
-//   return this.execIntegerReply("ZINTERSTORE",destination,numkeys,key, ...keys,WEIGHTS,weight,[weight,...],arg)
-// }
+    zinterstore(destination, numkeys, keys, weights?, aggregate?) {
+        const args = this.pushZInterStoreArgs([destination, numkeys], keys, weights, aggregate);
+        return this.execIntegerReply("ZINTERSTORE", ...args)
+    }
+
+    zunionstore(destination: string, numkeys: string, keys: string | string[], weights?: number | number[], aggregate?: "SUM" | "MIN" | "MAX"): Promise<number> {
+        const args = this.pushZInterStoreArgs([destination, numkeys], keys, weights, aggregate);
+        return this.execIntegerReply("ZUNIONSTORE", ...args);
+    }
+
+    private pushZInterStoreArgs(args, keys, weights?, aggregate?) {
+        if (typeof keys === "string") {
+            args.push(keys)
+        } else {
+            args.push(...keys)
+        }
+        if (weights) {
+            args.push("WEIGHTS");
+            if (typeof weights === "number") {
+                args.push(weights);
+            } else {
+                args.push(...weights)
+            }
+        }
+        if (aggregate) {
+            args.push("AGGREGATE");
+            args.push(aggregate)
+        }
+        return args;
+    }
 
     zlexcount(key, min, max) {
         return this.execIntegerReply("ZLEXCOUNT", key, min, max)
@@ -1074,10 +1135,6 @@ class RedisImpl implements Redis {
     zscore(key, member) {
         return this.execStatusReply("ZSCORE", key, member)
     }
-
-// zunionstore(destination,numkeys,key, ...keys,WEIGHTS?,weight?,[weight?,...]?,arg: "AGGREGATE?,SUM"|"MIN"|"MAX?") {
-//   return this.execIntegerReply("ZUNIONSTORE",destination,numkeys,key, ...keys,WEIGHTS,weight,[weight,...],arg)
-// }
 
     scan(cursor, MATCH?, pattern?, COUNT?, count?) {
         //
