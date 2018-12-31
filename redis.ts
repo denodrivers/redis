@@ -134,10 +134,19 @@ export type Redis = {
     ping(message?: string): Promise<string>
     psetex(key: string, milliseconds: number, value: string)
     psubscribe(...patterns: string[])
-// pubsub(subcommand,argument?,[argument?,...]?): Promise<string[]>
+    pubsub<T extends ("CHANNELS" | "NUMSUBS" | "NUMPAT")>(
+        subcommand: T, args: {
+            CHANNELS: string,
+            NUMSUBS: string[],
+            NUMPAT: number
+        }[T]): {
+        CHANNELS: Promise<string[]>,
+        NUMSUBS: Promise<string[]>,
+        NUMPAT: Promise<number>
+    }[T]
     pttl(key: string): Promise<number>
     publish(channel: string, message: string): Promise<number>
-// punsubscribe(pattern?,[pattern?,...]?)
+    punsubscribe(...patterns: string[])
     quit(): Promise<string>
     randomkey(): Promise<string>
     readonly(): Promise<string>
@@ -733,9 +742,16 @@ class RedisImpl implements Redis {
         //
     }
 
-// pubsub(subcommand,argument?,[argument?,...]?) {
-//   return this.execArrayReply("PUBSUB",subcommand,argument,[argument,...])
-// }
+    pubsub<T>(subcommand, args) {
+        switch (subcommand) {
+            case "CHANNELS":
+                return this.execArrayReply("PUBSUB", args);
+            case "NUMSUBS":
+                return this.execArrayReply("PUBSUB", ...args);
+            case "NUMPAT":
+                return this.execIntegerReply("PUBSUB", args);
+        }
+    }
 
     pttl(key) {
         return this.execIntegerReply("PTTL", key)
@@ -745,9 +761,9 @@ class RedisImpl implements Redis {
         return this.execIntegerReply("PUBLISH", channel, message)
     }
 
-// punsubscribe(pattern?,[pattern?,...]?) {
-//   //
-// }
+    punsubscribe(...patterns) {
+        return this.execArrayReply("PUNSUBSCRIBE", ...patterns)
+    }
 
     quit() {
         return this.execBulkReply("QUIT",)
