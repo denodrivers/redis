@@ -44,7 +44,8 @@ export type Redis = {
     expireat(key: string, timestamp: string): Promise<number>
     flushall(ASYNC?): Promise<string>
     flushdb(ASYNC?): Promise<string>
-    geoadd(key: string, longitude: number, latitude: number, member: string, ...longitude_latitude_members): Promise<number>
+    geoadd(key: string, longitude: number, latitude: number, member: string): Promise<number>
+    geoadd(key: string, ...longitude_latitude_member: [number|number|string][]): Promise<number>
     geohash(key: string, ...members: string[]): Promise<string[]>
     geopos(key: string, ...members: string[]): Promise<string[]>
     geodist(key: string, member1: string, member2: string, unit?: "m" | "km" | "ft" | "mi"): Promise<string>
@@ -515,8 +516,16 @@ class RedisImpl implements Redis {
         return this.execBulkReply("FLUSHDB", ASYNC)
     }
 
-    geoadd(key, longitude, latitude, member, ...longitude_latitude_members) {
-        return this.execIntegerReply("GEOADD", key, longitude, latitude, member, ...longitude_latitude_members)
+    geoadd(key, ...args) {
+        const _args = [key];
+        if (Array.isArray([args[0]])) {
+            for (const triple of args) {
+                _args.push(...triple);
+            }
+        } else {
+            _args.push(...args);
+        }
+        return this.execIntegerReply("GEOADD", key, ..._args)
     }
 
     geohash(key, ...members) {
