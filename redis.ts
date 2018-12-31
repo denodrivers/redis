@@ -124,7 +124,13 @@ export type Redis = {
     mset(key: string, value: string, ...key_values): Promise<string>
     msetnx(key: string, value: string, ...key_values): Promise<number>
     multi(): Promise<string>
-// object(subcommand,arguments?,[arguments?,...]?)
+    object<T extends ("REFCOUNT" | "ENCODING" | "IDLETIME" | "FREQ" | "HELP")>(subcommand, arg?: string): Promise<{
+        REFCOUNT: number,
+        ENCODING: string,
+        IDLETIME: number,
+        FREQ: string,
+        HELP: string,
+    }[T]>
     persist(key: string): Promise<number>
     pexpire(key: string, milliseconds: number): Promise<number>
     pexpireat(key: string, milliseconds_timestamp: number): Promise<number>
@@ -724,9 +730,18 @@ class RedisImpl implements Redis {
         return this.execBulkReply("MULTI",)
     }
 
-// object(subcommand,arguments?,[arguments?,...]?) {
-//   //
-// }
+    object(subcommand, arg?) {
+        switch (subcommand) {
+            case "REFCOUNT":
+            case "IDLETIME":
+                return this.execIntegerReply("OBJECT", subcommand, arg);
+            case "ENCODING":
+            case "FREQ":
+                return this.execBulkReply("OBJECT", subcommand, arg);
+            case "HELP":
+                return this.execBulkReply("OBJECT", subcommand);
+        }
+    }
 
     persist(key) {
         return this.execIntegerReply("PERSIST", key)
@@ -976,8 +991,8 @@ class RedisImpl implements Redis {
         return this.execStatusReply("SRANDMEMBER", key, count)
     }
 
-    srem(key, member, ...members) {
-        return this.execIntegerReply("SREM", key, member, ...members)
+    srem(key, ...members) {
+        return this.execIntegerReply("SREM", key, ...members)
     }
 
     strlen(key) {
@@ -988,12 +1003,12 @@ class RedisImpl implements Redis {
         //
     }
 
-    sunion(key, ...keys) {
-        return this.execArrayReply("SUNION", key, ...keys)
+    sunion(...keys) {
+        return this.execArrayReply("SUNION", ...keys)
     }
 
-    sunionstore(destination, key, ...keys) {
-        return this.execIntegerReply("SUNIONSTORE", destination, key, ...keys)
+    sunionstore(destination, ...keys) {
+        return this.execIntegerReply("SUNIONSTORE", destination, ...keys)
     }
 
     swapdb(index, index2) {
