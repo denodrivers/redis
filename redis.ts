@@ -185,7 +185,15 @@ export type Redis = {
     slowlog(subcommand, argument?)
     smembers(key: string): Promise<string[]>
     smove(source, destination, member: string): Promise<number>
-// sort(key: string,BY?,pattern?,LIMIT?,offset?: number,count?: number,GET?,pattern?,[GET?,pattern?,...]?,arg: "ASC"|"DESC?",ALPHA?,STORE?,destination?): Promise<string[]>
+    sort(key: string, opts?: {
+        by?: string,
+        offset?: number,
+        count?: number,
+        patterns?: string[]
+        order: "ASC" | "DESC",
+        alpha?: boolean,
+        destination?: string
+    }): Promise<string[] | number>
     spop(key: string, count?: number): Promise<string>
     srandmember(key: string, count?: number): Promise<string>
     srem(key: string, ...members: string[]): Promise<number>
@@ -213,7 +221,7 @@ export type Redis = {
              incr?: boolean,
          }): Promise<number>
     zadd(key: string,
-         score_members: (number|string)[],
+         score_members: (number | string)[],
          opts?: {
              nxx?: "NX" | "XX",
              ch?: boolean,
@@ -929,9 +937,36 @@ class RedisImpl implements Redis {
         return this.execIntegerReply("SMOVE", source, destination, member)
     }
 
-// sort(key,BY?,pattern?,LIMIT?,offset?,count?,GET?,pattern?,[GET?,pattern?,...]?,arg: "ASC"|"DESC?",ALPHA?,STORE?,destination?) {
-//   return this.execArrayReply("SORT",key,BY,pattern,LIMIT,offset,count,GET,pattern,[GET,pattern,...],arg)
-// }
+    sort(key, opts?) {
+        const args = [key];
+        if (opts) {
+            if (opts.by) {
+                args.push("BY", opts.by);
+            }
+            if (opts.offset !== void 0 && opts.count !== void 0) {
+                args.push("LIMIT", opts.offset, opts.count);
+            }
+            if (opts.patterns) {
+                for (const pat of opts.patterns) {
+                    args.push("GET", pat);
+                }
+            }
+            if (opts.alpha) {
+                args.push("ALPHA")
+            }
+            if (opts.order) {
+                args.push(opts.order)
+            }
+            if (opts.destination) {
+                args.push("STORE", opts.destination)
+            }
+        }
+        if (opts && opts.destination) {
+            return this.execIntegerReply("SORT", ...args);
+        } else {
+            return this.execArrayReply("SORT", ...args);
+        }
+    }
 
     spop(key, count?) {
         return this.execStatusReply("SPOP", key, count)
