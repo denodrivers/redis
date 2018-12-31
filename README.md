@@ -20,38 +20,38 @@ const fuga = await redis.get("hoge");
 Still work in progress.
 
 ### Connection
--[x] AUTH 
--[ ] ECHO
--[ ] PING
--[x] QUIT
--[ ] SELECT 
--[ ] SWAPDB
+- [x] AUTH 
+- [ ] ECHO
+- [ ] PING
+- [x] QUIT
+- [ ] SELECT 
+- [ ] SWAPDB
 
 ### Keys 
--[x] DEL
--[ ] DUMP
--[x] EXISTS
--[ ] EXPIRE
--[ ] EXPIREAT
--[x] KEYS 
--[ ] MIGRATE
--[ ] MOVE
--[ ] OBJECT
--[ ] PERSIST
--[ ] PEXPIRE
--[ ] PEXPIREAT
--[ ] PTTL
--[x] RANDOMKEY
--[ ] RENAME
--[ ] RENAMENX
--[ ] RESTORE
--[ ] SORT
--[ ] TOUCH
--[ ] TTL
--[x] TYPE
--[ ] UNLINK
--[ ] WAIT
--[ ] SCAN
+- [x] DEL
+- [ ] DUMP
+- [x] EXISTS
+- [ ] EXPIRE
+- [ ] EXPIREAT
+- [x] KEYS 
+- [ ] MIGRATE
+- [ ] MOVE
+- [ ] OBJECT
+- [ ] PERSIST
+- [ ] PEXPIRE
+- [ ] PEXPIREAT
+- [ ] PTTL
+- [x] RANDOMKEY
+- [ ] RENAME
+- [ ] RENAMENX
+- [ ] RESTORE
+- [ ] SORT
+- [ ] TOUCH
+- [ ] TTL
+- [x] TYPE
+- [ ] UNLINK
+- [ ] WAIT
+- [ ] SCAN
 
 ### String
 
@@ -116,48 +116,48 @@ Still work in progress.
 
 
 ### SortedSet
--[ ] BZPOPMIN
--[ ] BZPOPMAX
--[x] ZADD
--[x] ZCARD 
--[x] ZCOUNT
--[x] ZINCRBY 
--[ ] ZINTERSTORE
--[ ] ZLEXCOUNT
--[ ] ZPOPMAX
--[ ] ZPOPMIN
--[x] ZRANGE 
--[ ] ZRANGEBYLEX 
--[ ] ZREVRANGEBYLEX
--[ ] ZRANGEBYSCORE
--[x] ZRANK
--[ ] ZREM
--[ ] ZREMRANGEBYLEX
--[ ] ZREMRANGEBYRANK
--[ ] ZREMRANGEBYSCORE
--[x] ZREVRANGE
--[x] ZREVRANGEBYSCORE
--[x] ZREVRANK
--[x] ZSCORE
--[ ] ZUNIONSTORE
--[ ] ZSCAN
+- [ ] BZPOPMIN
+- [ ] BZPOPMAX
+- [x] ZADD
+- [x] ZCARD 
+- [x] ZCOUNT
+- [x] ZINCRBY 
+- [ ] ZINTERSTORE
+- [ ] ZLEXCOUNT
+- [ ] ZPOPMAX
+- [ ] ZPOPMIN
+- [x] ZRANGE 
+- [ ] ZRANGEBYLEX 
+- [ ] ZREVRANGEBYLEX
+- [ ] ZRANGEBYSCORE
+- [x] ZRANK
+- [ ] ZREM
+- [ ] ZREMRANGEBYLEX
+- [ ] ZREMRANGEBYRANK
+- [ ] ZREMRANGEBYSCORE
+- [x] ZREVRANGE
+- [x] ZREVRANGEBYSCORE
+- [x] ZREVRANK
+- [x] ZSCORE
+- [ ] ZUNIONSTORE
+- [ ] ZSCAN
 
 ### HashMap
--[ ] HDEL
--[ ] HEXISTS
--[ ] HGET
--[ ] HGETALL
--[ ] HINCRBY
--[ ] HINCRBYFLOAT
--[ ] HKEYS
--[ ] HLEN
--[ ] HMGET
--[ ] HMSET
--[ ] HSET
--[ ] HSETNX
--[ ] HSTRLEN
--[ ] HVALS 
--[ ] HSCAN
+- [ ] HDEL
+- [ ] HEXISTS
+- [ ] HGET
+- [ ] HGETALL
+- [ ] HINCRBY
+- [ ] HINCRBYFLOAT
+- [ ] HKEYS
+- [ ] HLEN
+- [ ] HMGET
+- [ ] HMSET
+- [ ] HSET
+- [ ] HSETNX
+- [ ] HSTRLEN
+- [ ] HVALS 
+- [ ] HSCAN
 ### Sort
 - [ ] SORT
 
@@ -178,34 +178,34 @@ none
 none
 
 ### Multi
-- [ ] MULTI 
-- [ ] EXEC 
-- [ ] DISCARD 
-- [ ] WATCH
-- [ ] UNWATCH
+-  [ ]  MULTI 
+-  [ ]  EXEC 
+-  [ ]  DISCARD 
+-  [ ]  WATCH
+-  [ ]  UNWATCH
 
 ### PubSub
--[ ] PSUBSCRIBE
--[ ] PUBSUB
--[ ] PUBLISH
--[ ] PUNSUBSCRIBE
--[ ] SUBSCRIBE 
--[ ] UNSUBSCRIBE
+- [ ]  PSUBSCRIBE
+- [ ]  PUBSUB
+- [ ]  PUBLISH
+- [ ]  PUNSUBSCRIBE
+- [ ]  SUBSCRIBE 
+- [ ]  UNSUBSCRIBE
 
 ### Scripting 
 
 none
 
 ### Persistence
-- [ ] SAVE
-- [ ] BGSAVE
-- [ ] LASTSAVE
-- [ ] SHUTDOWN
-- [ ] BGREWRITEAOF
+-  [ ] SAVE
+-  [ ] BGSAVE
+-  [ ] LASTSAVE
+-  [ ] SHUTDOWN
+-  [ ] BGREWRITEAOF
 
 ###　Control
 
-- [ ] INFO
-- [ ] MONITOR
-- [ ] SLAVEOF
-- [ ] CONFIG
+-  [ ] INFO
+-  [ ] MONITOR
+-  [ ] SLAVEOF
+-  [ ] CONFIG
