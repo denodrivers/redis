@@ -118,7 +118,11 @@ export type Redis = {
     memory_stats(): Promise<string[]>
     memory_usage(key: string, SAMPLES?, count?: number): Promise<number>
     mget(...keys: string[]): Promise<string[]>
-// migrate(host,port,arg: "key"|"""",destination_db,timeout,COPY?,REPLACE?,KEYS?,key?,[key?,...]?): Promise<string>
+    migrate(host: string, port: number | string, key: string, destination_db: string, timeout: number, opts?: {
+        copy?: boolean,
+        replace?: boolean,
+        keys?: string[]
+    }): Promise<string>
     monitor()
     move(key: string, db: string): Promise<number>
     mset(key: string, value: string, ...key_values): Promise<string>
@@ -702,13 +706,25 @@ class RedisImpl implements Redis {
         return this.execIntegerReply("MEMORY_USAGE", key, SAMPLES, count)
     }
 
-    mget(key, ...keys) {
-        return this.execArrayReply("MGET", key, ...keys)
+    mget(...keys) {
+        return this.execArrayReply("MGET", ...keys)
     }
 
-// migrate(host,port,arg: "key"|"""",destination_db,timeout,COPY?,REPLACE?,KEYS?,key?,[key?,...]?) {
-//   return this.execBulkReply("MIGRATE",host,port,arg)
-// }
+    migrate(host, port, key, destination_db, timeout, opts?) {
+        const args = [host, port, key, destination_db, timeout];
+        if (opts) {
+            if (opts.copy) {
+                args.push("COPY");
+            }
+            if (opts.replace) {
+                args.push("REPLACE");
+            }
+            if (opts.keys) {
+                args.push("KEYS", ...opts.keys);
+            }
+        }
+        return this.execStatusReply("MIGRATE", ...args);
+    }
 
     monitor() {
         //
