@@ -10,7 +10,7 @@ export type Redis = {
     bitcount(key: string): Promise<number>
     bitcount(key: string, start: number, end: number): Promise<number>
     bitfield(): Promise<string[]>
-    bitop(operation, destkey: string,...keys: string[]): Promise<number>
+    bitop(operation, destkey: string, ...keys: string[]): Promise<number>
     bitpos(key: string, bit: number, start?: number, end?: number): Promise<number>
     blpop(key: string | string[], timeout: number): Promise<string[]>
     brpop(key: string | string[], timeout: number): Promise<string[]>
@@ -45,9 +45,38 @@ export type Redis = {
     geoadd(key: string, longitude: number, latitude: number, member: string, ...longitude_latitude_members): Promise<number>
     geohash(key: string, ...members: string[]): Promise<string[]>
     geopos(key: string, ...members: string[]): Promise<string[]>
-    geodist(key: string, member1: string, member2: string, unit?: "m"|"km"|"ft"|"mi"): Promise<string>
-// georadius(key: string,longitude,latitude,radius,arg: "m"|"km"|"ft"|"mi",WITHCOORD?,WITHDIST?,WITHHASH?,COUNT?,count?: number,arg: "ASC"|"DESC?",STORE?,key?,STOREDIST?,key?): Promise<string[]>
-// georadiusbymember(key: string,member: string,radius,arg: "m"|"km"|"ft"|"mi",WITHCOORD?,WITHDIST?,WITHHASH?,COUNT?,count?: number,arg: "ASC"|"DESC?",STORE?,key?,STOREDIST?,key?)
+    geodist(key: string, member1: string, member2: string, unit?: "m" | "km" | "ft" | "mi"): Promise<string>
+    georadius(
+        key: string,
+        longitude: number,
+        latitude: number,
+        radius: number,
+        unit: "m" | "km" | "ft" | "mi",
+        opts?: {
+            withCoord?: boolean,
+            withDist?: boolean,
+            withHash?: boolean,
+            count?: number,
+            sort?: "ASC" | "DESC",
+            store?: string,
+            storeDist?: string,
+        }
+    )
+    georadiusbymember(
+        key: string,
+        member: string,
+        radius: number,
+        unit: "m" | "km" | "ft" | "mi",
+        opts?: {
+            withCoord?: boolean,
+            withDist?: boolean,
+            withHash?: boolean,
+            count?: number,
+            sort?: "ASC" | "DESC",
+            store?: string,
+            storeDist?: string,
+        }
+    )
     get(key: string): Promise<string>
     getbit(key: string, offset: number): Promise<number>
     getrange(key: string, start: number, end: number): Promise<string>
@@ -142,8 +171,8 @@ export type Redis = {
     sinter(...keys: string[]): Promise<string[]>
     sinterstore(destination: string, ...keys: string[]): Promise<number>
     sismember(key: string, member: string): Promise<number>
-    slaveof(host: string, port: string|number): Promise<string>
-    replicaof(host: string, port: string|number): Promise<string>
+    slaveof(host: string, port: string | number): Promise<string>
+    replicaof(host: string, port: string | number): Promise<string>
     slowlog(subcommand, argument?)
     smembers(key: string): Promise<string[]>
     smove(source, destination, member: string): Promise<number>
@@ -164,7 +193,7 @@ export type Redis = {
 // unsubscribe(channel?,[channel?,...]?)
     unlink(...keys: string[]): Promise<number>
     unwatch(): Promise<string>
-    wait(numreplicas:number, timeout:number): Promise<number>
+    wait(numreplicas: number, timeout: number): Promise<number>
     watch(...keys: string[]): Promise<string>
     // zadd(key: string, arg: "NX" | "XX?", CH?, INCR?, score, member: string, ...score_members): Promise<number>
     zcard(key: string): Promise<number>
@@ -178,14 +207,14 @@ export type Redis = {
     zrangebylex(key: string, min: number, max: number, LIMIT?, offset?: number, count?: number): Promise<string[]>
     zrevrangebylex(key: string, max: number, min: number, LIMIT?, offset?: number, count?: number): Promise<string[]>
     zrangebyscore(key: string, min: number, max: number, WITHSCORES?, LIMIT?, offset?: number, count?: number): Promise<string[]>
-    zrank(key: string, member: string): Promise<number|undefined>
+    zrank(key: string, member: string): Promise<number | undefined>
     zrem(key: string, member: string, ...members: string[]): Promise<number>
     zremrangebylex(key: string, min: number, max: number): Promise<number>
     zremrangebyrank(key: string, start: number, stop: number): Promise<number>
     zremrangebyscore(key: string, min: number, max: number): Promise<number>
     zrevrange(key: string, start: number, stop: number, WITHSCORES?): Promise<string[]>
     zrevrangebyscore(key: string, max: number, min: number, WITHSCORES?, LIMIT?, offset?: number, count?: number): Promise<string[]>
-    zrevrank(key: string, member: string): Promise<number|undefined>
+    zrevrank(key: string, member: string): Promise<number | undefined>
     zscore(key: string, member: string): Promise<string>
 // zunionstore(destination,numkeys,key: string, ...keys: string[],WEIGHTS?,weight?,[weight?,...]?,arg: "AGGREGATE?,SUM"|"MIN"|"MAX?"): Promise<number>
     scan(cursor, MATCH?, pattern?, COUNT?, count?: number)
@@ -249,7 +278,7 @@ class RedisImpl implements Redis {
         }
     }
 
-    private async execArrayReply(command: string, ...args: string[]): Promise<any[]> {
+    private async execArrayReply(command: string, ...args: (string | number)[]): Promise<any[]> {
         if (this.isClosed) throw new ConnectionClosedError();
         const msg = createRequest(command, ...args);
         await writeRequest(this.writer, msg);
@@ -440,13 +469,41 @@ class RedisImpl implements Redis {
         return this.execStatusReply("GEODIST", key, member1, member2, unit)
     }
 
-// georadius(key,longitude,latitude,radius,arg: "m"|"km"|"ft"|"mi",WITHCOORD?,WITHDIST?,WITHHASH?,COUNT?,count?,arg: "ASC"|"DESC?",STORE?,key?,STOREDIST?,key?) {
-//   return this.execArrayReply("GEORADIUS",key,longitude,latitude,radius,arg)
-// }
-//
-// georadiusbymember(key,member,radius,arg: "m"|"km"|"ft"|"mi",WITHCOORD?,WITHDIST?,WITHHASH?,COUNT?,count?,arg: "ASC"|"DESC?",STORE?,key?,STOREDIST?,key?) {
-//   //
-// }
+    georadius(key, longitude, latitude, radius, unit, opts?) {
+        const args = this.pushGeoRadiusOpts([key, longitude, latitude, radius, unit], opts);
+        return this.execArrayReply("GEORADIUS", ...args)
+    }
+
+    georadiusbymember(key, member, radius, unit, opts?) {
+        const args = this.pushGeoRadiusOpts([key, member, radius, unit], opts);
+        return this.execArrayReply("GEORADIUSBYMEMBER", ...args)
+    }
+
+    private pushGeoRadiusOpts(args: (string | number)[], opts) {
+        if (!opts) return args;
+        if (opts.withCoord) {
+            args.push("WITHCOORD")
+        }
+        if (opts.withDist) {
+            args.push("WITHDIST")
+        }
+        if (opts.withHash) {
+            args.push("WITHHASH")
+        }
+        if (typeof opts.count === "number") {
+            args.push(opts.count);
+        }
+        if (opts.sort === "ASC" || opts.sort === "DESC") {
+            args.push(opts.sort)
+        }
+        if (typeof opts.store === "string") {
+            args.push(opts.store)
+        }
+        if (typeof opts.storeDist === "string") {
+            args.push(opts.storeDist)
+        }
+        return args;
+    }
 
     get(key) {
         return this.execStatusReply("GET", key)
@@ -1049,7 +1106,7 @@ async function readLine(reader: BufReader): Promise<string> {
 export class ErrorReplyError extends Error {
 }
 
-export function createRequest(command: string, ...args: (string|number)[]) {
+export function createRequest(command: string, ...args: (string | number)[]) {
     let msg = "";
     msg += `*${1 + args.length}\r\n`;
     msg += `$${command.length}\r\n`;
