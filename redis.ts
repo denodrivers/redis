@@ -45,7 +45,7 @@ export type Redis = {
     flushall(async?: boolean): Promise<string>
     flushdb(async?: boolean): Promise<string>
     geoadd(key: string, longitude: number, latitude: number, member: string): Promise<number>
-    geoadd(key: string, ...longitude_latitude_member: [number|number|string][]): Promise<number>
+    geoadd(key: string, ...longitude_latitude_member: [number | number | string][]): Promise<number>
     geohash(key: string, ...members: string[]): Promise<string[]>
     geopos(key: string, ...members: string[]): Promise<string[]>
     geodist(key: string, member1: string, member2: string, unit?: "m" | "km" | "ft" | "mi"): Promise<string>
@@ -89,22 +89,23 @@ export type Redis = {
     hget(key: string, field: string): Promise<string>
     hgetall(key: string): Promise<string[]>
     hincrby(key: string, field: string, increment: number): Promise<number>
-    hincrbyfloat(key: string, field, increment): Promise<string>
+    hincrbyfloat(key: string, field: string, increment: number): Promise<string>
     hkeys(key: string): Promise<string[]>
     hlen(key: string): Promise<number>
     hmget(key: string, ...fields: string[]): Promise<string[]>
-    hmset(key: string, field, value: string, ...field_values): Promise<string>
-    hset(key: string, field, value: string): Promise<number>
-    hsetnx(key: string, field, value: string): Promise<number>
-    hstrlen(key: string, field): Promise<number>
+    hmset(key: string, field: string, value: string): Promise<string>
+    hmset(key: string, ...field_values: string[]): Promise<string>
+    hset(key: string, field: string, value: string): Promise<number>
+    hsetnx(key: string, field: string, value: string): Promise<number>
+    hstrlen(key: string, field: string): Promise<number>
     hvals(key: string): Promise<string[]>
     incr(key: string): Promise<number>
-    incrby(key: string, increment): Promise<number>
-    incrbyfloat(key: string, increment): Promise<string>
-    info(section?): Promise<string>
-    keys(pattern): Promise<string[]>
+    incrby(key: string, increment: number): Promise<number>
+    incrbyfloat(key: string, increment: number): Promise<string>
+    info(section?: string): Promise<string>
+    keys(pattern: string): Promise<string[]>
     lastsave(): Promise<number>
-    lindex(key: string, index): Promise<string>
+    lindex(key: string, index: number): Promise<string>
     linsert(key: string, loc: "BEFORE" | "AFTER", pivot: string, value: string): Promise<number>
     llen(key: string): Promise<number>
     lpop(key: string): Promise<string>
@@ -128,8 +129,10 @@ export type Redis = {
     }): Promise<string>
     monitor()
     move(key: string, db: string): Promise<number>
-    mset(key: string, value: string, ...key_values): Promise<string>
-    msetnx(key: string, value: string, ...key_values): Promise<number>
+    mset(key: string, value: string): Promise<string>
+    mset(...key_values: string[]): Promise<string>
+    msetnx(key: string, value: string): Promise<number>
+    msetnx(...key_values: string[]): Promise<number>
     multi(): Promise<string>
     object<T extends ("REFCOUNT" | "ENCODING" | "IDLETIME" | "FREQ" | "HELP")>(subcommand, arg?: string): Promise<{
         REFCOUNT: number,
@@ -166,7 +169,7 @@ export type Redis = {
     readwrite(): Promise<string>
     rename(key: string, newkey: string): Promise<string>
     renamenx(key: string, newkey: string): Promise<number>
-    restore(key: string, ttl, serialized_value: string, REPLACE?): Promise<string>
+    restore(key: string, ttl: number, serialized_value: string, replace?: boolean): Promise<string>
     role(): Promise<string[]>
     rpop(key: string): Promise<string>
     rpoplpush(source: string, destination: string): Promise<string>
@@ -179,12 +182,15 @@ export type Redis = {
     script_exists(...sha1s: string[]): Promise<string[]>
     script_flush(): Promise<string>
     script_kill(): Promise<string>
-    script_load(script): Promise<string>
+    script_load(script: string): Promise<string>
     sdiff(...keys: string[]): Promise<string[]>
     sdiffstore(destination: string, ...keys: string[]): Promise<number>
-    select(index): Promise<string>
-    set(key: string, value: string, flag?: string): Promise<string>;
-    set(key: string, value: string, mode: string, duration: number, flag?: string): Promise<string>;
+    select(index: number): Promise<string>
+    set(key: string, value: string, opts?: {
+        ex?: number
+        px?: number
+        mode?: "NX" | "XX",
+    }): Promise<string>;
     setbit(key: string, offset: number, value: string): Promise<number>
     setex(key: string, seconds: number, value: string): Promise<string>
     setnx(key: string, value: string): Promise<number>
@@ -195,9 +201,9 @@ export type Redis = {
     sismember(key: string, member: string): Promise<number>
     slaveof(host: string, port: string | number): Promise<string>
     replicaof(host: string, port: string | number): Promise<string>
-    slowlog(subcommand, argument?)
+    slowlog(subcommand: string, ...argument: string[])
     smembers(key: string): Promise<string[]>
-    smove(source, destination, member: string): Promise<number>
+    smove(source: string, destination: string, member: string): Promise<number>
     sort(key: string, opts?: {
         by?: string,
         offset?: number,
@@ -213,7 +219,7 @@ export type Redis = {
     strlen(key: string): Promise<number>
     subscribe(...channels: string[])
     sunion(...keys: string[]): Promise<string[]>
-    sunionstore(destination, key: string, ...keys: string[]): Promise<number>
+    sunionstore(destination, ...keys: string[]): Promise<number>
     swapdb(index, index2): Promise<string>
     sync()
     time(): Promise<string[]>
@@ -626,12 +632,12 @@ class RedisImpl implements Redis {
         return this.execIntegerReply("HLEN", key)
     }
 
-    hmget(key, field, ...fields) {
-        return this.execArrayReply("HMGET", key, field, ...fields)
+    hmget(key, ...fields) {
+        return this.execArrayReply("HMGET", key, ...fields)
     }
 
-    hmset(key, field, value, ...field_values) {
-        return this.execBulkReply("HMSET", key, field, value, ...field_values)
+    hmset(key, ...field_values) {
+        return this.execBulkReply("HMSET", key, ...field_values)
     }
 
     hset(key, field, value) {
@@ -766,12 +772,12 @@ class RedisImpl implements Redis {
         return this.execIntegerReply("MOVE", key, db)
     }
 
-    mset(key, value, ...key_values) {
-        return this.execBulkReply("MSET", key, value, ...key_values)
+    mset(...key_values) {
+        return this.execBulkReply("MSET", ...key_values)
     }
 
-    msetnx(key, value, ...key_values) {
-        return this.execIntegerReply("MSETNX", key, value, ...key_values)
+    msetnx(...key_values) {
+        return this.execIntegerReply("MSETNX", ...key_values)
     }
 
     multi() {
@@ -875,7 +881,11 @@ class RedisImpl implements Redis {
     }
 
     restore(key, ttl, serialized_value, REPLACE?) {
-        return this.execBulkReply("RESTORE", key, ttl, serialized_value, REPLACE)
+        const args = [key, ttl, serialized_value];
+        if (REPLACE) {
+            args.push("REPLACE");
+        }
+        return this.execBulkReply("RESTORE", ...args);
     }
 
     role() {
@@ -942,9 +952,19 @@ class RedisImpl implements Redis {
         return this.execBulkReply("SELECT", index)
     }
 
-    set(key, value, ...args) {
-        const _args = args.map(String);
-        return this.execBulkReply("SET", key, value, ..._args);
+    set(key, value, opts?) {
+        const args = [key, value];
+        if (opts) {
+            if (opts.ex) {
+                args.push("EX", opts.ex);
+            } else if (opts.px) {
+                args.push("PX", opts.px)
+            }
+            if (opts.mode) {
+                args.push(opts.mode);
+            }
+        }
+        return this.execBulkReply("SET", ...args);
     }
 
 
@@ -988,8 +1008,8 @@ class RedisImpl implements Redis {
         return this.execBulkReply("REPLICAOF", host, port)
     }
 
-    slowlog(subcommand, argument?) {
-        //
+    slowlog(subcommand, ...argument) {
+        return this.execRawReply("SLOWLOG", subcommand, ...argument)
     }
 
     smembers(key) {
@@ -1031,12 +1051,12 @@ class RedisImpl implements Redis {
         }
     }
 
-    spop(key, count?) {
-        return this.execStatusReply("SPOP", key, count)
+    spop(...args) {
+        return this.execStatusReply("SPOP", ...args)
     }
 
-    srandmember(key, count?) {
-        return this.execStatusReply("SRANDMEMBER", key, count)
+    srandmember(...args) {
+        return this.execStatusReply("SRANDMEMBER", ...args)
     }
 
     srem(key, ...members) {
@@ -1047,8 +1067,8 @@ class RedisImpl implements Redis {
         return this.execIntegerReply("STRLEN", key)
     }
 
-    subscribe(channel, ...channels) {
-        //
+    subscribe(...channels) {
+        return this.execRawReply("SUBSCRIBE", ...channels);
     }
 
     sunion(...keys) {
@@ -1065,14 +1085,15 @@ class RedisImpl implements Redis {
 
     sync() {
         //
+        throw new Error("not implemented");
     }
 
     time() {
         return this.execArrayReply("TIME",)
     }
 
-    touch(key, ...keys) {
-        return this.execIntegerReply("TOUCH", key, ...keys)
+    touch(...keys) {
+        return this.execIntegerReply("TOUCH",...keys)
     }
 
     ttl(key) {
@@ -1277,15 +1298,13 @@ async function readLine(reader: BufReader): Promise<string> {
 export class ErrorReplyError extends Error {
 }
 
-export function createRequest(command: string, ...args: (string | number | (string|number)[])[]) {
+export function createRequest(command: string, ...args: (string | number)[]) {
+    const _args = args.filter(v => v !== void 0 || v !== null);
     let msg = "";
-    msg += `*${1 + args.length}\r\n`;
+    msg += `*${1 + _args.length}\r\n`;
     msg += `$${command.length}\r\n`;
     msg += `${command}\r\n`;
-    for (const arg of args) {
-        if (arg === void 0 || arg === null) {
-            throw new Error(`invalid argument value: ${args}`)
-        }
+    for (const arg of _args) {
         const val = String(arg);
         msg += `$${val.length}\r\n`;
         msg += `${val}\r\n`;
