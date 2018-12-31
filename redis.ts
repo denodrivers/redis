@@ -3,73 +3,204 @@ import {BufReader, BufWriter} from "http://deno.land/x/net/bufio.ts";
 import {ConnectionClosedError} from "./errors.ts";
 
 export type Redis = {
-    // connection
-    quit(): Promise<void>
-    auth(password: string): Promise<string>
-    // key
-    exists(key: string): Promise<boolean>
-    del(...keys: string[]): Promise<number>
-    keys(pattern: string): Promise<string[]>
-    type(key: string): Promise<string>
-    randomkey(): Promise<string>
-    // string
-    get(key: string): Promise<string>
-    getset(key: string, value: string): Promise<string>
-    mget(...keys: string[]): Promise<string[]>
-    set(key: string, value: string): Promise<string>
-    setnx(key: string, value: string): Promise<number>
-    setex(key: string, time: number, value: string): Promise<string>;
-    mset(...keyValues: string[]): Promise<string>
-    msetnx(...keyValues: string[]): Promise<number>
     append(key: string, value: string): Promise<number>
-    substr(key: string, start: number, end: number): Promise<string>
-    getrange(key: string, start: number, end: number): Promise<string>
-    incr(key: string): Promise<number>
-    incrby(key: string, value: number): Promise<number>
+    auth(password: string): Promise<string>
+    bgrewriteaof(): Promise<string>
+    bgsave(): Promise<string>
+    bitcount(key: string): Promise<number>
+    bitcount(key: string, start: number, end: number): Promise<number>
+    bitfield(): Promise<string[]>
+    bitop(operation, destkey: string,...keys: string[]): Promise<number>
+    bitpos(key: string, bit: number, start?: number, end?: number): Promise<number>
+    blpop(key: string | string[], timeout: number): Promise<string[]>
+    brpop(key: string | string[], timeout: number): Promise<string[]>
+    brpoplpush(source: string, destination: string, timeout: number): Promise<string>
+    bzpopmin(key: string | string[], timeout: number): Promise<string[]>
+    bzpopmax(key: string | string[], timeout: number): Promise<string[]>
+    command(): Promise<string[]>
+    command_count(): Promise<number>
+    command_getkeys(): Promise<string[]>
+    command_info(...command_names: string[]): Promise<string[]>
+    config_get(parameter: string): Promise<string[]>
+    config_rewrite(): Promise<string>
+    config_set(parameter: string, value: string): Promise<string>
+    config_resetstat(): Promise<string>
+    dbsize(): Promise<number>
+    debug_object(key: string): Promise<string>
+    debug_segfault(): Promise<string>
     decr(key: string): Promise<number>
-    decrby(key: string, value: number): Promise<number>
-    // List
-    rpush(key: string, value: string): Promise<number>
-    lpush(key: string, value: string): Promise<number>
+    decrby(key: string, decrement: number): Promise<number>
+    del(...keys: string[]): Promise<number>
+    discard(): Promise<string>
+    dump(key: string): Promise<string>
+    echo(message: string): Promise<string>
+    // eval(script, numkeys, key: string, ...keys: string[], arg, ...args)
+    // evalsha(sha1, numkeys, key: string, ...keys: string[], arg, ...args)
+    exec(): Promise<string[]>
+    exists(...keys: string[]): Promise<number>
+    expire(key: string, seconds: number): Promise<number>
+    expireat(key: string, timestamp: string): Promise<number>
+    flushall(ASYNC?): Promise<string>
+    flushdb(ASYNC?): Promise<string>
+    geoadd(key: string, longitude: number, latitude: number, member: string, ...longitude_latitude_members): Promise<number>
+    geohash(key: string, ...members: string[]): Promise<string[]>
+    geopos(key: string, ...members: string[]): Promise<string[]>
+    geodist(key: string, member1: string, member2: string, unit?: "m"|"km"|"ft"|"mi"): Promise<string>
+// georadius(key: string,longitude,latitude,radius,arg: "m"|"km"|"ft"|"mi",WITHCOORD?,WITHDIST?,WITHHASH?,COUNT?,count?: number,arg: "ASC"|"DESC?",STORE?,key?,STOREDIST?,key?): Promise<string[]>
+// georadiusbymember(key: string,member: string,radius,arg: "m"|"km"|"ft"|"mi",WITHCOORD?,WITHDIST?,WITHHASH?,COUNT?,count?: number,arg: "ASC"|"DESC?",STORE?,key?,STOREDIST?,key?)
+    get(key: string): Promise<string>
+    getbit(key: string, offset: number): Promise<number>
+    getrange(key: string, start: number, end: number): Promise<string>
+    getset(key: string, value: string): Promise<string>
+    hdel(key: string, ...fields: string[]): Promise<number>
+    hexists(key: string, field: string): Promise<number>
+    hget(key: string, field: string): Promise<string>
+    hgetall(key: string): Promise<string[]>
+    hincrby(key: string, field: string, increment: number): Promise<number>
+    hincrbyfloat(key: string, field, increment): Promise<string>
+    hkeys(key: string): Promise<string[]>
+    hlen(key: string): Promise<number>
+    hmget(key: string, ...fields: string[]): Promise<string[]>
+    hmset(key: string, field, value: string, ...field_values): Promise<string>
+    hset(key: string, field, value: string): Promise<number>
+    hsetnx(key: string, field, value: string): Promise<number>
+    hstrlen(key: string, field): Promise<number>
+    hvals(key: string): Promise<string[]>
+    incr(key: string): Promise<number>
+    incrby(key: string, increment): Promise<number>
+    incrbyfloat(key: string, increment): Promise<string>
+    info(section?): Promise<string>
+    keys(pattern): Promise<string[]>
+    lastsave(): Promise<number>
+    lindex(key: string, index): Promise<string>
+    linsert(key: string, loc: "BEFORE" | "AFTER", pivot: string, value: string): Promise<number>
     llen(key: string): Promise<number>
-    lrange(key: string, start: number, end: number): Promise<string[]>
-    ltrim(key: string, start: number, end: number): Promise<string>
-    lindex(key: string, index: number): Promise<string>;
-    lset(key: string, index: number, value: string): Promise<string>;
-    lrem(key: string, count: number, value: string): Promise<number>;
-    lpop(key: string): Promise<string>;
-    rpop(key: string): Promise<string>;
-    // Set
-    sadd(key: string, member: string): Promise<number>
-    srem(key: string, member: string): Promise<number>
-    spop(key: string): Promise<string>
-    smove(srcKey: string, dstKey: string, member: string): Promise<number>
+    lpop(key: string): Promise<string>
+    lpush(key: string, ...values: string[]): Promise<number>
+    lpushx(key: string, value: string): Promise<number>
+    lrange(key: string, start: number, stop: number): Promise<string[]>
+    lrem(key: string, count: number, value: string): Promise<number>
+    lset(key: string, index: number, value: string): Promise<string>
+    ltrim(key: string, start: number, stop: number): Promise<string>
+    memory_doctor(): Promise<string>
+    memory_help(): Promise<string[]>
+    memory_malloc_stats(): Promise<string>
+    memory_purge(): Promise<string>
+    memory_stats(): Promise<string[]>
+    memory_usage(key: string, SAMPLES?, count?: number): Promise<number>
+    mget(...keys: string[]): Promise<string[]>
+// migrate(host,port,arg: "key"|"""",destination_db,timeout,COPY?,REPLACE?,KEYS?,key?,[key?,...]?): Promise<string>
+    monitor()
+    move(key: string, db: string): Promise<number>
+    mset(key: string, value: string, ...key_values): Promise<string>
+    msetnx(key: string, value: string, ...key_values): Promise<number>
+    multi(): Promise<string>
+// object(subcommand,arguments?,[arguments?,...]?)
+    persist(key: string): Promise<number>
+    pexpire(key: string, milliseconds: number): Promise<number>
+    pexpireat(key: string, milliseconds_timestamp: number): Promise<number>
+    pfadd(key: string, ...elements: string[]): Promise<number>
+    pfcount(...keys: string[]): Promise<number>
+    pfmerge(destkey: string, ...sourcekeys: string[]): Promise<string>
+    ping(message?: string): Promise<string>
+    psetex(key: string, milliseconds: number, value: string)
+    psubscribe(...patterns: string[])
+// pubsub(subcommand,argument?,[argument?,...]?): Promise<string[]>
+    pttl(key: string): Promise<number>
+    publish(channel: string, message: string): Promise<number>
+// punsubscribe(pattern?,[pattern?,...]?)
+    quit(): Promise<string>
+    randomkey(): Promise<string>
+    readonly(): Promise<string>
+    readwrite(): Promise<string>
+    rename(key: string, newkey: string): Promise<string>
+    renamenx(key: string, newkey: string): Promise<number>
+    restore(key: string, ttl, serialized_value: string, REPLACE?): Promise<string>
+    role(): Promise<string[]>
+    rpop(key: string): Promise<string>
+    rpoplpush(source: string, destination: string): Promise<string>
+    rpush(key: string, ...values: string[]): Promise<number>
+    rpushx(key: string, value: string): Promise<number>
+    sadd(key: string, ...members: string[]): Promise<number>
+    save(): Promise<string>
     scard(key: string): Promise<number>
-    sismember(key: string): Promise<boolean>
-    // SortedSet
-    zadd(key: string, score: number, member: string): Promise<number>
-    zrem(key: string, member: string): Promise<number>
-    zincrby(key: string, incr: number, member: string): Promise<string>
-    zrank(key: string, member: string): Promise<number|string>
-    zrevrank(key, member): Promise<number|string>
-    // zrange(key, start, end, scores)
-    // zrevrange(key, start, end, scores)
-    zrangebyscore(key: string, mim: number, max: number): Promise<string[]>
-    zcount(key: string, min: number, max: number): Promise<number>
-    zremrangebyrank(key: string, start: number, end: number): Promise<number>
-    zremrangebyscore(key: string, min: number, max: number): Promise<number>
+    script_debug(arg: "YES" | "SYNC" | "NO"): Promise<string>
+    script_exists(...sha1s: string[]): Promise<string[]>
+    script_flush(): Promise<string>
+    script_kill(): Promise<string>
+    script_load(script): Promise<string>
+    sdiff(...keys: string[]): Promise<string[]>
+    sdiffstore(destination: string, ...keys: string[]): Promise<number>
+    select(index): Promise<string>
+    set(key: string, value: string, flag?: string): Promise<string>;
+    set(key: string, value: string, mode: string, duration: number, flag?: string): Promise<string>;
+    setbit(key: string, offset: number, value: string): Promise<number>
+    setex(key: string, seconds: number, value: string): Promise<string>
+    setnx(key: string, value: string): Promise<number>
+    setrange(key: string, offset: number, value: string): Promise<number>
+    shutdown(arg: "NOSAVE" | "SAVE?"): Promise<string>
+    sinter(...keys: string[]): Promise<string[]>
+    sinterstore(destination: string, ...keys: string[]): Promise<number>
+    sismember(key: string, member: string): Promise<number>
+    slaveof(host: string, port: string|number): Promise<string>
+    replicaof(host: string, port: string|number): Promise<string>
+    slowlog(subcommand, argument?)
+    smembers(key: string): Promise<string[]>
+    smove(source, destination, member: string): Promise<number>
+// sort(key: string,BY?,pattern?,LIMIT?,offset?: number,count?: number,GET?,pattern?,[GET?,pattern?,...]?,arg: "ASC"|"DESC?",ALPHA?,STORE?,destination?): Promise<string[]>
+    spop(key: string, count?: number): Promise<string>
+    srandmember(key: string, count?: number): Promise<string>
+    srem(key: string, ...members: string[]): Promise<number>
+    strlen(key: string): Promise<number>
+    subscribe(...channels: string[])
+    sunion(...keys: string[]): Promise<string[]>
+    sunionstore(destination, key: string, ...keys: string[]): Promise<number>
+    swapdb(index, index2): Promise<string>
+    sync()
+    time(): Promise<string[]>
+    touch(...keys: string[]): Promise<number>
+    ttl(key: string): Promise<number>
+    type(key: string): Promise<string>
+// unsubscribe(channel?,[channel?,...]?)
+    unlink(...keys: string[]): Promise<number>
+    unwatch(): Promise<string>
+    wait(numreplicas:number, timeout:number): Promise<number>
+    watch(...keys: string[]): Promise<string>
+    // zadd(key: string, arg: "NX" | "XX?", CH?, INCR?, score, member: string, ...score_members): Promise<number>
     zcard(key: string): Promise<number>
-    zscore(key: string, element: string): Promise<string>
-    // zunionstore(dstkey, N, k1, ..., kN, [WEIGHTS, w1, ..., wN], [AGGREGATE, SUM|MIN|MAX])
-    // zinterstore(dstkey, N, k1, ..., kN, [WEIGHTS, w1, ..., wN], [AGGREGATE, SUM|MIN|MAX])
+    zcount(key: string, min: number, max: number): Promise<number>
+    zincrby(key: string, increment, member: string): Promise<string>
+// zinterstore(destination,numkeys,key: string, ...keys: string[],WEIGHTS?,weight?,[weight?,...]?,arg: "AGGREGATE?,SUM"|"MIN"|"MAX?"): Promise<number>
+    zlexcount(key: string, min: number, max: number): Promise<number>
+    zpopmax(key: string, count?: number): Promise<string[]>
+    zpopmin(key: string, count?: number): Promise<string[]>
+    zrange(key: string, start: number, stop: number, WITHSCORES?): Promise<string[]>
+    zrangebylex(key: string, min: number, max: number, LIMIT?, offset?: number, count?: number): Promise<string[]>
+    zrevrangebylex(key: string, max: number, min: number, LIMIT?, offset?: number, count?: number): Promise<string[]>
+    zrangebyscore(key: string, min: number, max: number, WITHSCORES?, LIMIT?, offset?: number, count?: number): Promise<string[]>
+    zrank(key: string, member: string): Promise<number|undefined>
+    zrem(key: string, member: string, ...members: string[]): Promise<number>
+    zremrangebylex(key: string, min: number, max: number): Promise<number>
+    zremrangebyrank(key: string, start: number, stop: number): Promise<number>
+    zremrangebyscore(key: string, min: number, max: number): Promise<number>
+    zrevrange(key: string, start: number, stop: number, WITHSCORES?): Promise<string[]>
+    zrevrangebyscore(key: string, max: number, min: number, WITHSCORES?, LIMIT?, offset?: number, count?: number): Promise<string[]>
+    zrevrank(key: string, member: string): Promise<number|undefined>
+    zscore(key: string, member: string): Promise<string>
+// zunionstore(destination,numkeys,key: string, ...keys: string[],WEIGHTS?,weight?,[weight?,...]?,arg: "AGGREGATE?,SUM"|"MIN"|"MAX?"): Promise<number>
+    scan(cursor, MATCH?, pattern?, COUNT?, count?: number)
+    sscan(key: string, cursor, MATCH?, pattern?, COUNT?, count?: number)
+    hscan(key: string, cursor, MATCH?, pattern?, COUNT?, count?: number)
+    zscan(key: string, cursor, MATCH?, pattern?)
 
-    //
     readonly isClosed: boolean;
     close()
 }
 
 const IntegerReplyCode = ":".charCodeAt(0);
 const BulkReplyCode = "$".charCodeAt(0);
+const SimpleStringCode = "+".charCodeAt(0);
+const ArrayReplyCode = "*".charCodeAt(0);
 
 class RedisImpl implements Redis {
     writer: BufWriter;
@@ -105,14 +236,7 @@ class RedisImpl implements Redis {
         return readBulkReply(this.reader);
     }
 
-    private async execMultiBulkReply(command: string, ...args: string[]): Promise<string[]> {
-        if (this.isClosed) throw new ConnectionClosedError();
-        const msg = createRequest(command, ...args);
-        await writeRequest(this.writer, msg);
-        return readMultiBulkReply(this.reader);
-    }
-
-    private async execIntegerOrNilReply(command: string, ...args: string[]): Promise<number|string> {
+    private async execIntegerOrNilReply(command: string, ...args: string[]): Promise<number | undefined> {
         if (this.isClosed) throw new ConnectionClosedError();
         const msg = createRequest(command, ...args);
         await writeRequest(this.writer, msg);
@@ -120,213 +244,784 @@ class RedisImpl implements Redis {
         if (code === IntegerReplyCode) {
             return readIntegerReply(this.reader);
         } else {
-            return readBulkReply(this.reader);
+            await readLine(this.reader);
+            return void 0;
         }
     }
 
-    auth(password: string) {
-        return this.execStatusReply("AUTH", password)
+    private async execArrayReply(command: string, ...args: string[]): Promise<any[]> {
+        if (this.isClosed) throw new ConnectionClosedError();
+        const msg = createRequest(command, ...args);
+        await writeRequest(this.writer, msg);
+        return readArrayReply(this.reader);
     }
 
-    async quit() {
-        try {
-            const msg = createRequest("QUIT");
-            await writeRequest(this.writer, msg);
-        } finally {
-            this._isClosed = true;
+    append(key, value) {
+        return this.execIntegerReply("APPEND", key, value)
+    }
+
+    auth(password) {
+        return this.execBulkReply("AUTH", password)
+    }
+
+    bgrewriteaof() {
+        return this.execBulkReply("BGREWRITEAOF",)
+    }
+
+    bgsave() {
+        return this.execBulkReply("BGSAVE",)
+    }
+
+    bitcount(key, start?, end?) {
+        return this.execIntegerReply("BITCOUNT", key, start, end)
+    }
+
+    bitfield() {
+        return this.execArrayReply("BITFIELD",)
+    }
+
+    bitop(operation, destkey, ...keys) {
+        return this.execIntegerReply("BITOP", operation, destkey, ...keys)
+    }
+
+    bitpos(key, bit, start?, end?) {
+        return this.execIntegerReply("BITPOS", key, bit, start, end)
+    }
+
+    blpop(keys, timeout) {
+        if (typeof keys === "string") {
+            return this.execArrayReply("BLPOP", keys, timeout)
+        } else {
+            return this.execArrayReply("BLPOP", ...keys, timeout)
         }
     }
 
-    async exists(key: string) {
-        return await this.execIntegerReply("EXISTS", key) === 1;
+    brpop(keys, timeout) {
+        if (typeof keys === "string") {
+            return this.execArrayReply("BRPOP", keys, timeout)
+        } else {
+            return this.execArrayReply("BRPOP", ...keys, timeout)
+        }
     }
 
-    keys(pattern: string) {
-        return this.execMultiBulkReply("KEYS", pattern);
+    brpoplpush(source, destination, timeout) {
+        return this.execStatusReply("BRPOPLPUSH", source, destination, timeout)
     }
 
-    type(key: string) {
-        return this.execStatusReply("TYPE", key);
+    bzpopmin(keys, timeout) {
+        if (typeof keys === "string") {
+            return this.execArrayReply("BZPOPMIN", keys, timeout)
+        } else {
+            return this.execArrayReply("BZPOPMIN", ...keys, timeout)
+        }
     }
 
-    randomkey () {
-        return this.execBulkReply("RANDOMKEY");
+    bzpopmax(keys, timeout) {
+        if (typeof keys === "string") {
+            return this.execArrayReply("BZPOPMAX", keys, timeout)
+        } else {
+            return this.execArrayReply("BZPOPMAX", ...keys, timeout)
+        }
     }
 
-    get(key: string) {
-        return this.execBulkReply("GET", key);
+    command() {
+        return this.execArrayReply("COMMAND",)
     }
 
-    getset(key: string, value: string) {
-        return this.execBulkReply("GETSET", key, value);
+    command_count() {
+        return this.execIntegerReply("COMMAND_COUNT",)
     }
 
-    mget(...keys: string[]) {
-        return this.execMultiBulkReply("MGET", ...keys);
+    command_getkeys() {
+        return this.execArrayReply("COMMAND_GETKEYS",)
     }
 
-    set(key: string, value: string) {
-        return this.execStatusReply("SET", key, value);
-    };
-
-    mset(...keyValues: string[]) {
-        return this.execStatusReply("MSET", ...keyValues);
+    command_info(command_name, ...command_names) {
+        return this.execArrayReply("COMMAND_INFO", command_name, ...command_names)
     }
 
-    msetnx(...keyValues: string[]) {
-        return this.execIntegerReply("MSETNX", ...keyValues);
+    config_get(parameter) {
+        return this.execArrayReply("CONFIG_GET", parameter)
     }
 
-    setex(key: string, time: number, value: string) {
-        return this.execStatusReply("SETEX", key, `${time}`, value);
+    config_rewrite() {
+        return this.execBulkReply("CONFIG_REWRITE",)
     }
 
-    setnx(key: string, value: string) {
-        return this.execIntegerReply("SETNX", key, value);
+    config_set(parameter, value) {
+        return this.execBulkReply("CONFIG_SET", parameter, value)
     }
 
-    append(key: string, value: string) {
-        return this.execIntegerReply("APPEND", key, value);
+    config_resetstat() {
+        return this.execBulkReply("CONFIG_RESETSTAT",)
     }
 
-    // available >= 2.4.0, alias of substr
-    getrange(key: string, start: number, end: number) {
-        return this.execBulkReply("GETRANGE", key, `${start}`, `${end}`);
+    dbsize() {
+        return this.execIntegerReply("DBSIZE",)
     }
 
-    substr(key: string, start: number, end: number) {
-        return this.execBulkReply("SUBSTR", key, `${start}`, `${end}`)
+    debug_object(key) {
+        return this.execBulkReply("DEBUG_OBJECT", key)
     }
 
-    del(...keys: string[]) {
-        return this.execIntegerReply("DEL", ...keys);
+    debug_segfault() {
+        return this.execBulkReply("DEBUG_SEGFAULT",)
     }
 
-    incr(key: string) {
-        return this.execIntegerReply("INCR", key);
+    decr(key) {
+        return this.execIntegerReply("DECR", key)
     }
 
-    incrby(key: string, value: number) {
-        return this.execIntegerReply("INCRBY", key, `${value}`);
+    decrby(key, decrement) {
+        return this.execIntegerReply("DECRBY", key, decrement)
     }
 
-    decr(key: string) {
-        return this.execIntegerReply("DECR", key);
+    del(key, ...keys) {
+        return this.execIntegerReply("DEL", key, ...keys)
     }
 
-    decrby(key: string, value: number) {
-        return this.execIntegerReply("DECRBY", key, `${value}`);
+    discard() {
+        return this.execBulkReply("DISCARD",)
     }
 
-    rpush(key: string, value: string) {
-        return this.execIntegerReply("RPUSH", key, value);
+    dump(key) {
+        return this.execStatusReply("DUMP", key)
     }
 
-    lpush(key: string, value: string) {
-        return this.execIntegerReply("LPUSH", key, value);
+    echo(message) {
+        return this.execStatusReply("ECHO", message)
     }
 
-    llen(key: string) {
-        return this.execIntegerReply("LLEN", key);
+    // eval(script, numkeys, key, ...keys, arg, ...args) {
+    //     //
+    // }
+    //
+    // evalsha(sha1, numkeys, key, ...keys, arg, ...args) {
+    //     //
+    // }
+
+    exec() {
+        return this.execArrayReply("EXEC",)
     }
 
-    lrange(key: string, start: number, end: number) {
-        return this.execMultiBulkReply("LRANGE", `${start}`, `${end}`);
+    exists(key, ...keys) {
+        return this.execIntegerReply("EXISTS", key, ...keys)
     }
 
-    lindex(key: string, index: number) {
-        return this.execBulkReply("LINDEX", key, `${index}`);
+    expire(key, seconds) {
+        return this.execIntegerReply("EXPIRE", key, seconds)
     }
 
-    lpop(key: string) {
-        return this.execBulkReply("LPOP", key);
+    expireat(key, timestamp) {
+        return this.execIntegerReply("EXPIREAT", key, timestamp)
     }
 
-    lrem(key: string, count: number, value: string) {
-        return this.execIntegerReply("LREM", key, `${count}`, value);
+    flushall(ASYNC?) {
+        return this.execBulkReply("FLUSHALL", ASYNC)
     }
 
-    lset(key: string, index: number, value: string) {
-        return this.execStatusReply("LSET", key, `${index}`, value);
+    flushdb(ASYNC?) {
+        return this.execBulkReply("FLUSHDB", ASYNC)
     }
 
-    ltrim(key: string, start: number, end: number) {
-        return this.execStatusReply("LTRIM", key, `${start}`, `${end}`)
+    geoadd(key, longitude, latitude, member, ...longitude_latitude_members) {
+        return this.execIntegerReply("GEOADD", key, longitude, latitude, member, ...longitude_latitude_members)
     }
 
-    rpop(key: string) {
-        return this.execBulkReply("RPOP", key);
+    geohash(key, ...members) {
+        return this.execArrayReply("GEOHASH", key, ...members)
     }
 
-    // set
-    sadd(key: string, member: string) {
-        return this.execIntegerReply("SADD", key, member);
+    geopos(key, ...members) {
+        return this.execArrayReply("GEOPOS", key, ...members)
     }
 
-    scard(key: string) {
-        return this.execIntegerReply("SCARD", key);
+    geodist(key, member1, member2, unit?) {
+        return this.execStatusReply("GEODIST", key, member1, member2, unit)
     }
 
-    smove(srcKey: string, dstKey: string, member: string) {
-        return this.execIntegerReply("SMOVE", srcKey, dstKey, member);
+// georadius(key,longitude,latitude,radius,arg: "m"|"km"|"ft"|"mi",WITHCOORD?,WITHDIST?,WITHHASH?,COUNT?,count?,arg: "ASC"|"DESC?",STORE?,key?,STOREDIST?,key?) {
+//   return this.execArrayReply("GEORADIUS",key,longitude,latitude,radius,arg)
+// }
+//
+// georadiusbymember(key,member,radius,arg: "m"|"km"|"ft"|"mi",WITHCOORD?,WITHDIST?,WITHHASH?,COUNT?,count?,arg: "ASC"|"DESC?",STORE?,key?,STOREDIST?,key?) {
+//   //
+// }
+
+    get(key) {
+        return this.execStatusReply("GET", key)
     }
 
-    spop(key: string) {
-        return this.execBulkReply("SPOP", key);
+    getbit(key, offset) {
+        return this.execIntegerReply("GETBIT", key, offset)
     }
 
-    srem(key: string, member: string) {
-        return this.execIntegerReply("SREM", key, member);
+    getrange(key, start, end) {
+        return this.execStatusReply("GETRANGE", key, start, end)
     }
 
-    async sismember(key: string) {
-        return await this.execIntegerReply("SISMEMBER", key) === 1
+    getset(key, value) {
+        return this.execStatusReply("GETSET", key, value)
     }
 
-    // sorted set
-    zadd (key: string, score: number, member: string) {
-        return this.execIntegerReply("ZADD", `${score}`, member);
+    hdel(key, field, ...fields) {
+        return this.execIntegerReply("HDEL", key, field, ...fields)
     }
+
+    hexists(key, field) {
+        return this.execIntegerReply("HEXISTS", key, field)
+    }
+
+    hget(key, field) {
+        return this.execStatusReply("HGET", key, field)
+    }
+
+    hgetall(key) {
+        return this.execArrayReply("HGETALL", key)
+    }
+
+    hincrby(key, field, increment) {
+        return this.execIntegerReply("HINCRBY", key, field, increment)
+    }
+
+    hincrbyfloat(key, field, increment) {
+        return this.execStatusReply("HINCRBYFLOAT", key, field, increment)
+    }
+
+    hkeys(key) {
+        return this.execArrayReply("HKEYS", key)
+    }
+
+    hlen(key) {
+        return this.execIntegerReply("HLEN", key)
+    }
+
+    hmget(key, field, ...fields) {
+        return this.execArrayReply("HMGET", key, field, ...fields)
+    }
+
+    hmset(key, field, value, ...field_values) {
+        return this.execBulkReply("HMSET", key, field, value, ...field_values)
+    }
+
+    hset(key, field, value) {
+        return this.execIntegerReply("HSET", key, field, value)
+    }
+
+    hsetnx(key, field, value) {
+        return this.execIntegerReply("HSETNX", key, field, value)
+    }
+
+    hstrlen(key, field) {
+        return this.execIntegerReply("HSTRLEN", key, field)
+    }
+
+    hvals(key) {
+        return this.execArrayReply("HVALS", key)
+    }
+
+    incr(key) {
+        return this.execIntegerReply("INCR", key)
+    }
+
+    incrby(key, increment) {
+        return this.execIntegerReply("INCRBY", key, increment)
+    }
+
+    incrbyfloat(key, increment) {
+        return this.execStatusReply("INCRBYFLOAT", key, increment)
+    }
+
+    info(section?) {
+        return this.execStatusReply("INFO", section)
+    }
+
+    keys(pattern) {
+        return this.execArrayReply("KEYS", pattern)
+    }
+
+    lastsave() {
+        return this.execIntegerReply("LASTSAVE",)
+    }
+
+    lindex(key, index) {
+        return this.execStatusReply("LINDEX", key, index)
+    }
+
+    linsert(key, arg: "BEFORE" | "AFTER", pivot, value) {
+        return this.execIntegerReply("LINSERT", key, arg)
+    }
+
+    llen(key) {
+        return this.execIntegerReply("LLEN", key)
+    }
+
+    lpop(key) {
+        return this.execStatusReply("LPOP", key)
+    }
+
+    lpush(key, ...values) {
+        return this.execIntegerReply("LPUSH", key, ...values)
+    }
+
+    lpushx(key, value) {
+        return this.execIntegerReply("LPUSHX", key, value)
+    }
+
+    lrange(key, start, stop) {
+        return this.execArrayReply("LRANGE", key, start, stop)
+    }
+
+    lrem(key, count, value) {
+        return this.execIntegerReply("LREM", key, count, value)
+    }
+
+    lset(key, index, value) {
+        return this.execBulkReply("LSET", key, index, value)
+    }
+
+    ltrim(key, start, stop) {
+        return this.execBulkReply("LTRIM", key, start, stop)
+    }
+
+    memory_doctor() {
+        return this.execStatusReply("MEMORY_DOCTOR",)
+    }
+
+    memory_help() {
+        return this.execArrayReply("MEMORY_HELP",)
+    }
+
+    memory_malloc_stats() {
+        return this.execStatusReply("MEMORY_MALLOC_STATS",)
+    }
+
+    memory_purge() {
+        return this.execBulkReply("MEMORY_PURGE",)
+    }
+
+    memory_stats() {
+        return this.execArrayReply("MEMORY_STATS",)
+    }
+
+    memory_usage(key, SAMPLES?, count?) {
+        return this.execIntegerReply("MEMORY_USAGE", key, SAMPLES, count)
+    }
+
+    mget(key, ...keys) {
+        return this.execArrayReply("MGET", key, ...keys)
+    }
+
+// migrate(host,port,arg: "key"|"""",destination_db,timeout,COPY?,REPLACE?,KEYS?,key?,[key?,...]?) {
+//   return this.execBulkReply("MIGRATE",host,port,arg)
+// }
+
+    monitor() {
+        //
+    }
+
+    move(key, db) {
+        return this.execIntegerReply("MOVE", key, db)
+    }
+
+    mset(key, value, ...key_values) {
+        return this.execBulkReply("MSET", key, value, ...key_values)
+    }
+
+    msetnx(key, value, ...key_values) {
+        return this.execIntegerReply("MSETNX", key, value, ...key_values)
+    }
+
+    multi() {
+        return this.execBulkReply("MULTI",)
+    }
+
+// object(subcommand,arguments?,[arguments?,...]?) {
+//   //
+// }
+
+    persist(key) {
+        return this.execIntegerReply("PERSIST", key)
+    }
+
+    pexpire(key, milliseconds) {
+        return this.execIntegerReply("PEXPIRE", key, milliseconds)
+    }
+
+    pexpireat(key, milliseconds_timestamp) {
+        return this.execIntegerReply("PEXPIREAT", key, milliseconds_timestamp)
+    }
+
+    pfadd(key, element, ...elements) {
+        return this.execIntegerReply("PFADD", key, element, ...elements)
+    }
+
+    pfcount(key, ...keys) {
+        return this.execIntegerReply("PFCOUNT", key, ...keys)
+    }
+
+    pfmerge(destkey, ...sourcekeys) {
+        return this.execBulkReply("PFMERGE", destkey, ...sourcekeys)
+    }
+
+    ping(message?) {
+        return this.execBulkReply("PING", message)
+    }
+
+    psetex(key, milliseconds, value) {
+        //
+    }
+
+    psubscribe(...patterns) {
+        //
+    }
+
+// pubsub(subcommand,argument?,[argument?,...]?) {
+//   return this.execArrayReply("PUBSUB",subcommand,argument,[argument,...])
+// }
+
+    pttl(key) {
+        return this.execIntegerReply("PTTL", key)
+    }
+
+    publish(channel, message) {
+        return this.execIntegerReply("PUBLISH", channel, message)
+    }
+
+// punsubscribe(pattern?,[pattern?,...]?) {
+//   //
+// }
+
+    quit() {
+        return this.execBulkReply("QUIT",)
+    }
+
+    randomkey() {
+        return this.execStatusReply("RANDOMKEY",)
+    }
+
+    readonly() {
+        return this.execBulkReply("READONLY",)
+    }
+
+    readwrite() {
+        return this.execBulkReply("READWRITE",)
+    }
+
+    rename(key, newkey) {
+        return this.execBulkReply("RENAME", key, newkey)
+    }
+
+    renamenx(key, newkey) {
+        return this.execIntegerReply("RENAMENX", key, newkey)
+    }
+
+    restore(key, ttl, serialized_value, REPLACE?) {
+        return this.execBulkReply("RESTORE", key, ttl, serialized_value, REPLACE)
+    }
+
+    role() {
+        return this.execArrayReply("ROLE",)
+    }
+
+    rpop(key) {
+        return this.execStatusReply("RPOP", key)
+    }
+
+    rpoplpush(source, destination) {
+        return this.execStatusReply("RPOPLPUSH", source, destination)
+    }
+
+    rpush(key, ...values) {
+        return this.execIntegerReply("RPUSH", key, ...values)
+    }
+
+    rpushx(key, value) {
+        return this.execIntegerReply("RPUSHX", key, value)
+    }
+
+    sadd(key, member, ...members) {
+        return this.execIntegerReply("SADD", key, member, ...members)
+    }
+
+    save() {
+        return this.execBulkReply("SAVE",)
+    }
+
+    scard(key) {
+        return this.execIntegerReply("SCARD", key)
+    }
+
+    script_debug(arg: "YES" | "SYNC" | "NO") {
+        return this.execBulkReply("SCRIPT_DEBUG", arg)
+    }
+
+    script_exists(sha1, ...sha1s) {
+        return this.execArrayReply("SCRIPT_EXISTS", sha1, ...sha1s)
+    }
+
+    script_flush() {
+        return this.execBulkReply("SCRIPT_FLUSH",)
+    }
+
+    script_kill() {
+        return this.execBulkReply("SCRIPT_KILL",)
+    }
+
+    script_load(script) {
+        return this.execStatusReply("SCRIPT_LOAD", script)
+    }
+
+    sdiff(key, ...keys) {
+        return this.execArrayReply("SDIFF", key, ...keys)
+    }
+
+    sdiffstore(destination, key, ...keys) {
+        return this.execIntegerReply("SDIFFSTORE", destination, key, ...keys)
+    }
+
+    select(index) {
+        return this.execBulkReply("SELECT", index)
+    }
+
+    set(key, value, ...args) {
+        const _args = args.map(String);
+        return this.execBulkReply("SET", key, value, ..._args);
+    }
+
+
+    setbit(key, offset, value) {
+        return this.execIntegerReply("SETBIT", key, offset, value)
+    }
+
+    setex(key, seconds, value) {
+        return this.execBulkReply("SETEX", key, seconds, value)
+    }
+
+    setnx(key, value) {
+        return this.execIntegerReply("SETNX", key, value)
+    }
+
+    setrange(key, offset, value) {
+        return this.execIntegerReply("SETRANGE", key, offset, value)
+    }
+
+    shutdown(arg: "NOSAVE" | "SAVE?") {
+        return this.execBulkReply("SHUTDOWN", arg)
+    }
+
+    sinter(key, ...keys) {
+        return this.execArrayReply("SINTER", key, ...keys)
+    }
+
+    sinterstore(destination, key, ...keys) {
+        return this.execIntegerReply("SINTERSTORE", destination, key, ...keys)
+    }
+
+    sismember(key, member) {
+        return this.execIntegerReply("SISMEMBER", key, member)
+    }
+
+    slaveof(host, port) {
+        return this.execBulkReply("SLAVEOF", host, port)
+    }
+
+    replicaof(host, port) {
+        return this.execBulkReply("REPLICAOF", host, port)
+    }
+
+    slowlog(subcommand, argument?) {
+        //
+    }
+
+    smembers(key) {
+        return this.execArrayReply("SMEMBERS", key)
+    }
+
+    smove(source, destination, member) {
+        return this.execIntegerReply("SMOVE", source, destination, member)
+    }
+
+// sort(key,BY?,pattern?,LIMIT?,offset?,count?,GET?,pattern?,[GET?,pattern?,...]?,arg: "ASC"|"DESC?",ALPHA?,STORE?,destination?) {
+//   return this.execArrayReply("SORT",key,BY,pattern,LIMIT,offset,count,GET,pattern,[GET,pattern,...],arg)
+// }
+
+    spop(key, count?) {
+        return this.execStatusReply("SPOP", key, count)
+    }
+
+    srandmember(key, count?) {
+        return this.execStatusReply("SRANDMEMBER", key, count)
+    }
+
+    srem(key, member, ...members) {
+        return this.execIntegerReply("SREM", key, member, ...members)
+    }
+
+    strlen(key) {
+        return this.execIntegerReply("STRLEN", key)
+    }
+
+    subscribe(channel, ...channels) {
+        //
+    }
+
+    sunion(key, ...keys) {
+        return this.execArrayReply("SUNION", key, ...keys)
+    }
+
+    sunionstore(destination, key, ...keys) {
+        return this.execIntegerReply("SUNIONSTORE", destination, key, ...keys)
+    }
+
+    swapdb(index, index2) {
+        return this.execBulkReply("SWAPDB", index, index2)
+    }
+
+    sync() {
+        //
+    }
+
+    time() {
+        return this.execArrayReply("TIME",)
+    }
+
+    touch(key, ...keys) {
+        return this.execIntegerReply("TOUCH", key, ...keys)
+    }
+
+    ttl(key) {
+        return this.execIntegerReply("TTL", key)
+    }
+
+    type(key) {
+        return this.execBulkReply("TYPE", key)
+    }
+
+// unsubscribe(channel?,[channel?,...]?) {
+//   //
+// }
+
+    unlink(...keys) {
+        return this.execIntegerReply("UNLINK", ...keys)
+    }
+
+    unwatch() {
+        return this.execBulkReply("UNWATCH",)
+    }
+
+    wait(numreplicas, timeout) {
+        return this.execIntegerReply("WAIT", numreplicas, timeout)
+    }
+
+    watch(key, ...keys) {
+        return this.execBulkReply("WATCH", key, ...keys)
+    }
+
+// zadd(key,arg: "NX"|"XX?",CH?,INCR?,score,member, ...score_members) {
+//   return this.execIntegerReply("ZADD",key,arg)
+// }
 
     zcard(key) {
-        return this.execIntegerReply("ZCARD")
+        return this.execIntegerReply("ZCARD", key)
     }
 
-    zcount (key, min, max) {
-        return this.execIntegerReply("ZCOUNT", key, `${min}`, `${max}`)
+    zcount(key, min, max) {
+        return this.execIntegerReply("ZCOUNT", key, min, max)
     }
 
-    zincrby (key: string, incr: number, member: string) {
-        return this.execBulkReply("ZINCRBY", key, `${incr}`, member);
+    zincrby(key, increment, member) {
+        return this.execStatusReply("ZINCRBY", key, increment, member)
     }
 
-    zrangebyscore (key: string, min: number, max: number) {
-        return this.execMultiBulkReply("ZRANGEBYSCORE", key, `${min}`, `${max}`)
+// zinterstore(destination,numkeys,key, ...keys,WEIGHTS?,weight?,[weight?,...]?,arg: "AGGREGATE?,SUM"|"MIN"|"MAX?") {
+//   return this.execIntegerReply("ZINTERSTORE",destination,numkeys,key, ...keys,WEIGHTS,weight,[weight,...],arg)
+// }
+
+    zlexcount(key, min, max) {
+        return this.execIntegerReply("ZLEXCOUNT", key, min, max)
     }
 
-    zrank(key: string, member: string) {
-        return this.execIntegerOrNilReply("ZRANK", key, member);
+    zpopmax(key, count?) {
+        return this.execArrayReply("ZPOPMAX", key, count)
     }
 
-    zrem(key: string, member: string) {
-        return this.execIntegerReply("ZREM", key, member)
+    zpopmin(key, count?) {
+        return this.execArrayReply("ZPOPMIN", key, count)
     }
 
-    zremrangebyrank(key: string, start: number, end: number) {
-        return this.execIntegerReply("ZREMRANGEBYRANK", key, `${start}`, `${end}`);
+    zrange(key, start, stop, WITHSCORES?) {
+        return this.execArrayReply("ZRANGE", key, start, stop, WITHSCORES)
     }
 
-    zremrangebyscore(key: string, min: number, max: number) {
-        return this.execIntegerReply("ZREMRANGEBYSCORE", key, `${min}`, `${max}`)
+    zrangebylex(key, min, max, LIMIT?, offset?, count?) {
+        return this.execArrayReply("ZRANGEBYLEX", key, min, max, LIMIT, offset, count)
     }
 
-    zrevrank (key: string, member: string) {
+    zrevrangebylex(key, max, min, LIMIT?, offset?, count?) {
+        return this.execArrayReply("ZREVRANGEBYLEX", key, max, min, LIMIT, offset, count)
+    }
+
+    zrangebyscore(key, min, max, WITHSCORES?, LIMIT?, offset?, count?) {
+        return this.execArrayReply("ZRANGEBYSCORE", key, min, max, WITHSCORES, LIMIT, offset, count)
+    }
+
+    zrank(key, member) {
+        return this.execIntegerOrNilReply("ZRANK", key, member)
+    }
+
+    zrem(key, member, ...members) {
+        return this.execIntegerReply("ZREM", key, member, ...members)
+    }
+
+    zremrangebylex(key, min, max) {
+        return this.execIntegerReply("ZREMRANGEBYLEX", key, min, max)
+    }
+
+    zremrangebyrank(key, start, stop) {
+        return this.execIntegerReply("ZREMRANGEBYRANK", key, start, stop)
+    }
+
+    zremrangebyscore(key, min, max) {
+        return this.execIntegerReply("ZREMRANGEBYSCORE", key, min, max)
+    }
+
+    zrevrange(key, start, stop, WITHSCORES?) {
+        return this.execArrayReply("ZREVRANGE", key, start, stop, WITHSCORES)
+    }
+
+    zrevrangebyscore(key, max, min, WITHSCORES?, LIMIT?, offset?, count?) {
+        return this.execArrayReply("ZREVRANGEBYSCORE", key, max, min, WITHSCORES, LIMIT, offset, count)
+    }
+
+    zrevrank(key, member) {
         return this.execIntegerOrNilReply("ZREVRANK", key, member)
     }
 
-    zscore(key: string, element: string) {
-        return this.execStatusReply("ZSCORE", element)
+    zscore(key, member) {
+        return this.execStatusReply("ZSCORE", key, member)
     }
+
+// zunionstore(destination,numkeys,key, ...keys,WEIGHTS?,weight?,[weight?,...]?,arg: "AGGREGATE?,SUM"|"MIN"|"MAX?") {
+//   return this.execIntegerReply("ZUNIONSTORE",destination,numkeys,key, ...keys,WEIGHTS,weight,[weight,...],arg)
+// }
+
+    scan(cursor, MATCH?, pattern?, COUNT?, count?) {
+        //
+    }
+
+    sscan(key, cursor, MATCH?, pattern?, COUNT?, count?) {
+        //
+    }
+
+    hscan(key, cursor, MATCH?, pattern?, COUNT?, count?) {
+        //
+    }
+
+    zscan(key, cursor, MATCH?, pattern?) {
+        //
+    }
+
 
     close() {
         this.conn.close();
@@ -354,14 +1049,18 @@ async function readLine(reader: BufReader): Promise<string> {
 export class ErrorReplyError extends Error {
 }
 
-export function createRequest(command: string, ...args: string[]) {
+export function createRequest(command: string, ...args: (string|number)[]) {
     let msg = "";
     msg += `*${1 + args.length}\r\n`;
     msg += `$${command.length}\r\n`;
     msg += `${command}\r\n`;
     for (const arg of args) {
-        msg += `$${arg.length}\r\n`;
-        msg += `${arg}\r\n`;
+        if (arg === void 0 || arg === null) {
+            throw new Error(`invalid argument value: ${args}`)
+        }
+        const val = String(arg);
+        msg += `$${val.length}\r\n`;
+        msg += `${val}\r\n`;
     }
     return msg;
 }
@@ -415,6 +1114,30 @@ async function readMultiBulkReply(reader: BufReader): Promise<string[]> {
     const result = [];
     for (let i = 0; i < argCount; i++) {
         result.push(await readBulkReply(reader));
+    }
+    return result;
+}
+
+async function readArrayReply(reader: BufReader): Promise<any[]> {
+    const line = await readLine(reader);
+    const argCount = parseInt(line.substr(1, line.length - 3));
+    const result = [];
+    for (let i = 0; i < argCount; i++) {
+        const [res] = await reader.peek(1);
+        switch (res[0]) {
+            case SimpleStringCode:
+                result.push(await readStatusReply(reader));
+                break;
+            case BulkReplyCode:
+                result.push(await readBulkReply(reader));
+                break;
+            case IntegerReplyCode:
+                result.push(await readIntegerReply(reader));
+                break;
+            case ArrayReplyCode:
+                result.push(await readArrayReply(reader));
+                break;
+        }
     }
     return result;
 }
