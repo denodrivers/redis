@@ -1,0 +1,11 @@
+language: python
+
+install:
+- curl -L https://deno.land/x/install/install.py | python - v0.2.4
+- export PATH="$HOME/.deno/bin:$PATH"
+
+services:
+- redis
+
+script:
+- deno redis_test.ts --allow-net
