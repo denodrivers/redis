@@ -166,7 +166,7 @@ export type Redis = {
     punsubscribe(...patterns: string[])
     subscribe(...channels: string[]): Promise<any[]>
     unsubscribe(...channels: string[])
-    //
+    // Cluster
     readonly(): Promise<string>
     readwrite(): Promise<string>
     // Set
@@ -270,7 +270,9 @@ export type Redis = {
     memory_malloc_stats(): Promise<string>
     memory_purge(): Promise<string>
     memory_stats(): Promise<string[]>
-    memory_usage(key: string, SAMPLES?, count?: number): Promise<number>
+    memory_usage(key: string, opts?: {
+        samples?: number
+    }): Promise<number>
     monitor()
     role(): Promise<string[]>
     save(): Promise<string>
@@ -315,7 +317,7 @@ export type Redis = {
 
     readonly isClosed: boolean;
     close()
-}
+} ;
 
 const IntegerReplyCode = ":".charCodeAt(0);
 const BulkReplyCode = "$".charCodeAt(0);
@@ -453,31 +455,31 @@ class RedisImpl implements Redis {
     }
 
     command_count() {
-        return this.execIntegerReply("COMMAND_COUNT",)
+        return this.execIntegerReply("COMMAND", "COUNT",)
     }
 
     command_getkeys() {
-        return this.execArrayReply("COMMAND GETKEYS",)
+        return this.execArrayReply("COMMAND", "GETKEYS",)
     }
 
-    command_info(command_name, ...command_names) {
-        return this.execArrayReply("COMMAND INFO", command_name, ...command_names)
+    command_info(...command_names) {
+        return this.execArrayReply("COMMAND", "INFO", ...command_names)
     }
 
     config_get(parameter) {
-        return this.execArrayReply("CONFIG GET", parameter)
+        return this.execArrayReply("CONFIG", "GET", parameter)
     }
 
     config_rewrite() {
-        return this.execBulkReply("CONFIG REWRITE",)
+        return this.execBulkReply("CONFIG", "REWRITE",)
     }
 
     config_set(parameter, value) {
-        return this.execBulkReply("CONFIG SET", parameter, value)
+        return this.execBulkReply("CONFIG", "SET", parameter, value)
     }
 
     config_resetstat() {
-        return this.execBulkReply("CONFIG RESETSTAT",)
+        return this.execBulkReply("CONFIG", "RESETSTAT",)
     }
 
     dbsize() {
@@ -485,11 +487,11 @@ class RedisImpl implements Redis {
     }
 
     debug_object(key) {
-        return this.execBulkReply("DEBUG OBJECT", key)
+        return this.execBulkReply("DEBUG", "OBJECT", key)
     }
 
     debug_segfault() {
-        return this.execBulkReply("DEBUG SEGFAULT",)
+        return this.execBulkReply("DEBUG", "SEGFAULT",)
     }
 
     decr(key) {
@@ -762,27 +764,31 @@ class RedisImpl implements Redis {
     }
 
     memory_doctor() {
-        return this.execStatusReply("MEMORY DOCTOR",)
+        return this.execStatusReply("MEMORY", "DOCTOR",)
     }
 
     memory_help() {
-        return this.execArrayReply("MEMORY HELP",)
+        return this.execArrayReply("MEMORY", "HELP",)
     }
 
     memory_malloc_stats() {
-        return this.execStatusReply("MEMORY MALLOC STATS",)
+        return this.execStatusReply("MEMORY", "MALLOC", "STATS",)
     }
 
     memory_purge() {
-        return this.execBulkReply("MEMORY PURGE",)
+        return this.execBulkReply("MEMORY", "PURGE",)
     }
 
     memory_stats() {
-        return this.execArrayReply("MEMORY STATS",)
+        return this.execArrayReply("MEMORY", "STATS",)
     }
 
-    memory_usage(key, SAMPLES?, count?) {
-        return this.execIntegerReply("MEMORY USAGE", key, SAMPLES, count)
+    memory_usage(key, opts?) {
+        const args = [key];
+        if (opts && typeof opts.samples === "number") {
+            args.push("SAMPLES", opts.samples);
+        }
+        return this.execIntegerReply("MEMORY", "USAGE", ...args)
     }
 
     mget(...keys) {
@@ -825,19 +831,22 @@ class RedisImpl implements Redis {
         return this.execBulkReply("MULTI",)
     }
 
-    object_encoding (key: string) {
+    object_encoding(key: string) {
         return this.execIntegerReply("OBJECT", "ENCODING", key);
     }
 
     object_freq(key: string) {
         return this.execBulkReply("OBJECT", "FREQ", key);
     }
-    object_help ()  {
+
+    object_help() {
         return this.execBulkReply("OBJECT", "HELP")
     }
-    object_ideltime (key: string) {
+
+    object_ideltime(key: string) {
         return this.execIntegerReply("OBJECT", "IDLETIME", key)
     }
+
     object_refcount(key: string) {
         return this.execIntegerReply("OBJECT", "REFCOUNT", key);
     }
@@ -878,11 +887,11 @@ class RedisImpl implements Redis {
         //
     }
 
-    pubsub_channels (pattern: string) {
+    pubsub_channels(pattern: string) {
         return this.execArrayReply("PUBSUB", "CHANNELS", pattern);
     }
 
-    pubsub_numpat () {
+    pubsub_numpat() {
         return this.execIntegerReply("PUBSUB", "NUMPAT");
     }
 
@@ -967,27 +976,27 @@ class RedisImpl implements Redis {
     }
 
     script_debug(arg: "YES" | "SYNC" | "NO") {
-        return this.execBulkReply("SCRIPT DEBUG", arg)
+        return this.execBulkReply("SCRIPT", "DEBUG", arg)
     }
 
-    script_exists(sha1, ...sha1s) {
-        return this.execArrayReply("SCRIPT EXISTS", sha1, ...sha1s)
+    script_exists(...sha1s) {
+        return this.execArrayReply("SCRIPT", "EXISTS", ...sha1s)
     }
 
     script_flush() {
-        return this.execBulkReply("SCRIPT FLUSH",)
+        return this.execBulkReply("SCRIPT", "FLUSH",)
     }
 
     script_kill() {
-        return this.execBulkReply("SCRIPT KILL",)
+        return this.execBulkReply("SCRIPT", "KILL",)
     }
 
     script_load(script) {
-        return this.execStatusReply("SCRIPT LOAD", script)
+        return this.execStatusReply("SCRIPT", "LOAD", script)
     }
 
-    sdiff(key, ...keys) {
-        return this.execArrayReply("SDIFF", key, ...keys)
+    sdiff(...keys) {
+        return this.execArrayReply("SDIFF", ...keys)
     }
 
     sdiffstore(destination, key, ...keys) {
