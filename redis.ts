@@ -3,47 +3,83 @@ import {BufReader, BufWriter} from "http://deno.land/x/net/bufio.ts";
 import {ConnectionClosedError} from "./errors.ts";
 
 export type Redis = {
-    append(key: string, value: string): Promise<number>
+    // Connection
     auth(password: string): Promise<string>
-    bgrewriteaof(): Promise<string>
-    bgsave(): Promise<string>
+    echo(message: string): Promise<string>
+    ping(message?: string): Promise<string>
+    quit(): Promise<string>
+    select(index: number): Promise<string>
+    swapdb(index, index2): Promise<string>
+    // Keys
+    del(...keys: string[]): Promise<number>
+    dump(key: string): Promise<string>
+    exists(...keys: string[]): Promise<number>
+    expire(key: string, seconds: number): Promise<number>
+    expireat(key: string, timestamp: string): Promise<number>
+    keys(pattern: string): Promise<string[]>
+    migrate(host: string, port: number | string, key: string, destination_db: string, timeout: number, opts?: {
+        copy?: boolean,
+        replace?: boolean,
+        keys?: string[]
+    }): Promise<string>
+    move(key: string, db: string): Promise<number>
+    object<T extends ("REFCOUNT" | "ENCODING" | "IDLETIME" | "FREQ" | "HELP")>(subcommand, arg?: string): Promise<{
+        REFCOUNT: number,
+        ENCODING: string,
+        IDLETIME: number,
+        FREQ: string,
+        HELP: string,
+    }[T]>
+    persist(key: string): Promise<number>
+    pexpire(key: string, milliseconds: number): Promise<number>
+    pexpireat(key: string, milliseconds_timestamp: number): Promise<number>
+    pttl(key: string): Promise<number>
+    randomkey(): Promise<string>
+    rename(key: string, newkey: string): Promise<string>
+    renamenx(key: string, newkey: string): Promise<number>
+    restore(key: string, ttl: number, serialized_value: string, replace?: boolean): Promise<string>
+    sort(key: string, opts?: {
+        by?: string,
+        offset?: number,
+        count?: number,
+        patterns?: string[]
+        order: "ASC" | "DESC",
+        alpha?: boolean,
+        destination?: string
+    }): Promise<string[] | number>
+    touch(...keys: string[]): Promise<number>
+    ttl(key: string): Promise<number>
+    type(key: string): Promise<string>
+    unlink(...keys: string[]): Promise<number>
+    wait(numreplicas: number, timeout: number): Promise<number>
+    // String
+    append(key: string, value: string): Promise<number>
     bitcount(key: string): Promise<number>
     bitcount(key: string, start: number, end: number): Promise<number>
     bitfield(): Promise<string[]>
     bitop(operation, destkey: string, ...keys: string[]): Promise<number>
     bitpos(key: string, bit: number, start?: number, end?: number): Promise<number>
-    blpop(key: string | string[], timeout: number): Promise<string[]>
-    brpop(key: string | string[], timeout: number): Promise<string[]>
-    brpoplpush(source: string, destination: string, timeout: number): Promise<string>
-    bzpopmin(key: string | string[], timeout: number): Promise<string[]>
-    bzpopmax(key: string | string[], timeout: number): Promise<string[]>
-    command(): Promise<string[]>
-    command_count(): Promise<number>
-    command_getkeys(): Promise<string[]>
-    command_info(...command_names: string[]): Promise<string[]>
-    config_get(parameter: string): Promise<string[]>
-    config_rewrite(): Promise<string>
-    config_set(parameter: string, value: string): Promise<string>
-    config_resetstat(): Promise<string>
-    dbsize(): Promise<number>
-    debug_object(key: string): Promise<string>
-    debug_segfault(): Promise<string>
     decr(key: string): Promise<number>
     decrby(key: string, decrement: number): Promise<number>
-    del(...keys: string[]): Promise<number>
-    discard(): Promise<string>
-    dump(key: string): Promise<string>
-    echo(message: string): Promise<string>
-    eval(script: string, key: string, arg: string)
-    eval(script: string, keys: string[], args: string[])
-    evalsha(sha1: string, key: string, arg: string)
-    evalsha(sha1: string, keys: string[], args: string[])
-    exec(): Promise<string[]>
-    exists(...keys: string[]): Promise<number>
-    expire(key: string, seconds: number): Promise<number>
-    expireat(key: string, timestamp: string): Promise<number>
-    flushall(async?: boolean): Promise<string>
-    flushdb(async?: boolean): Promise<string>
+    incr(key: string): Promise<number>
+    incrby(key: string, increment: number): Promise<number>
+    incrbyfloat(key: string, increment: number): Promise<string>
+    mget(...keys: string[]): Promise<string[]>
+    mset(key: string, value: string): Promise<string>
+    mset(...key_values: string[]): Promise<string>
+    msetnx(key: string, value: string): Promise<number>
+    msetnx(...key_values: string[]): Promise<number>
+    psetex(key: string, milliseconds: number, value: string)
+    set(key: string, value: string, opts?: {
+        ex?: number
+        px?: number
+        mode?: "NX" | "XX",
+    }): Promise<string>;
+    setbit(key: string, offset: number, value: string): Promise<number>
+    setex(key: string, seconds: number, value: string): Promise<string>
+    setnx(key: string, value: string): Promise<number>
+    setrange(key: string, offset: number, value: string): Promise<number>
+    strlen(key: string): Promise<number>
     // Geo
     geoadd(key: string, longitude: number, latitude: number, member: string): Promise<number>
     geoadd(key: string, ...longitude_latitude_member: [number | number | string][]): Promise<number>
@@ -101,13 +137,10 @@ export type Redis = {
     hsetnx(key: string, field: string, value: string): Promise<number>
     hstrlen(key: string, field: string): Promise<number>
     hvals(key: string): Promise<string[]>
-    // String
-    incr(key: string): Promise<number>
-    incrby(key: string, increment: number): Promise<number>
-    incrbyfloat(key: string, increment: number): Promise<string>
-    info(section?: string): Promise<string>
-    keys(pattern: string): Promise<string[]>
-    lastsave(): Promise<number>
+    // List
+    blpop(key: string | string[], timeout: number): Promise<string[]>
+    brpop(key: string | string[], timeout: number): Promise<string[]>
+    brpoplpush(source: string, destination: string, timeout: number): Promise<string>
     lindex(key: string, index: number): Promise<string>
     linsert(key: string, loc: "BEFORE" | "AFTER", pivot: string, value: string): Promise<number>
     llen(key: string): Promise<number>
@@ -118,40 +151,16 @@ export type Redis = {
     lrem(key: string, count: number, value: string): Promise<number>
     lset(key: string, index: number, value: string): Promise<string>
     ltrim(key: string, start: number, stop: number): Promise<string>
-    memory_doctor(): Promise<string>
-    memory_help(): Promise<string[]>
-    memory_malloc_stats(): Promise<string>
-    memory_purge(): Promise<string>
-    memory_stats(): Promise<string[]>
-    memory_usage(key: string, SAMPLES?, count?: number): Promise<number>
-    mget(...keys: string[]): Promise<string[]>
-    migrate(host: string, port: number | string, key: string, destination_db: string, timeout: number, opts?: {
-        copy?: boolean,
-        replace?: boolean,
-        keys?: string[]
-    }): Promise<string>
-    monitor()
-    move(key: string, db: string): Promise<number>
-    mset(key: string, value: string): Promise<string>
-    mset(...key_values: string[]): Promise<string>
-    msetnx(key: string, value: string): Promise<number>
-    msetnx(...key_values: string[]): Promise<number>
-    multi(): Promise<string>
-    object<T extends ("REFCOUNT" | "ENCODING" | "IDLETIME" | "FREQ" | "HELP")>(subcommand, arg?: string): Promise<{
-        REFCOUNT: number,
-        ENCODING: string,
-        IDLETIME: number,
-        FREQ: string,
-        HELP: string,
-    }[T]>
-    persist(key: string): Promise<number>
-    pexpire(key: string, milliseconds: number): Promise<number>
-    pexpireat(key: string, milliseconds_timestamp: number): Promise<number>
+    rpop(key: string): Promise<string>
+    rpoplpush(source: string, destination: string): Promise<string>
+    rpush(key: string, ...values: string[]): Promise<number>
+    rpushx(key: string, value: string): Promise<number>
+    // HypeprLogLog
     pfadd(key: string, ...elements: string[]): Promise<number>
     pfcount(...keys: string[]): Promise<number>
     pfmerge(destkey: string, ...sourcekeys: string[]): Promise<string>
-    ping(message?: string): Promise<string>
-    psetex(key: string, milliseconds: number, value: string)
+    // PubSub
+    publish(channel: string, message: string): Promise<number>
     psubscribe(...patterns: string[])
     pubsub<T extends ("CHANNELS" | "NUMSUBS" | "NUMPAT")>(
         subcommand: T, args: {
@@ -163,77 +172,30 @@ export type Redis = {
         NUMSUBS: Promise<string[]>,
         NUMPAT: Promise<number>
     }[T]
-    pttl(key: string): Promise<number>
-    publish(channel: string, message: string): Promise<number>
     punsubscribe(...patterns: string[])
-    quit(): Promise<string>
-    randomkey(): Promise<string>
+    subscribe(...channels: string[]): Promise<any[]>
+    unsubscribe(...channels: string[])
+    //
     readonly(): Promise<string>
     readwrite(): Promise<string>
-    rename(key: string, newkey: string): Promise<string>
-    renamenx(key: string, newkey: string): Promise<number>
-    restore(key: string, ttl: number, serialized_value: string, replace?: boolean): Promise<string>
-    role(): Promise<string[]>
-    rpop(key: string): Promise<string>
-    rpoplpush(source: string, destination: string): Promise<string>
-    rpush(key: string, ...values: string[]): Promise<number>
-    rpushx(key: string, value: string): Promise<number>
+   // Set
     sadd(key: string, ...members: string[]): Promise<number>
-    save(): Promise<string>
     scard(key: string): Promise<number>
-    script_debug(arg: "YES" | "SYNC" | "NO"): Promise<string>
-    script_exists(...sha1s: string[]): Promise<string[]>
-    script_flush(): Promise<string>
-    script_kill(): Promise<string>
-    script_load(script: string): Promise<string>
     sdiff(...keys: string[]): Promise<string[]>
     sdiffstore(destination: string, ...keys: string[]): Promise<number>
-    select(index: number): Promise<string>
-    set(key: string, value: string, opts?: {
-        ex?: number
-        px?: number
-        mode?: "NX" | "XX",
-    }): Promise<string>;
-    setbit(key: string, offset: number, value: string): Promise<number>
-    setex(key: string, seconds: number, value: string): Promise<string>
-    setnx(key: string, value: string): Promise<number>
-    setrange(key: string, offset: number, value: string): Promise<number>
-    shutdown(arg: "NOSAVE" | "SAVE?"): Promise<string>
     sinter(...keys: string[]): Promise<string[]>
     sinterstore(destination: string, ...keys: string[]): Promise<number>
     sismember(key: string, member: string): Promise<number>
-    slaveof(host: string, port: string | number): Promise<string>
-    replicaof(host: string, port: string | number): Promise<string>
-    slowlog(subcommand: string, ...argument: string[])
     smembers(key: string): Promise<string[]>
     smove(source: string, destination: string, member: string): Promise<number>
-    sort(key: string, opts?: {
-        by?: string,
-        offset?: number,
-        count?: number,
-        patterns?: string[]
-        order: "ASC" | "DESC",
-        alpha?: boolean,
-        destination?: string
-    }): Promise<string[] | number>
     spop(key: string, count?: number): Promise<string>
     srandmember(key: string, count?: number): Promise<string>
     srem(key: string, ...members: string[]): Promise<number>
-    strlen(key: string): Promise<number>
-    subscribe(...channels: string[])
     sunion(...keys: string[]): Promise<string[]>
     sunionstore(destination, ...keys: string[]): Promise<number>
-    swapdb(index, index2): Promise<string>
-    sync()
-    time(): Promise<string[]>
-    touch(...keys: string[]): Promise<number>
-    ttl(key: string): Promise<number>
-    type(key: string): Promise<string>
-    unsubscribe(...channels: string[])
-    unlink(...keys: string[]): Promise<number>
-    unwatch(): Promise<string>
-    wait(numreplicas: number, timeout: number): Promise<number>
-    watch(...keys: string[]): Promise<string>
+    // SortedSet
+    bzpopmin(key: string | string[], timeout: number): Promise<string[]>
+    bzpopmax(key: string | string[], timeout: number): Promise<string[]>
     zadd(key: string,
          score: number,
          member: string,
@@ -270,6 +232,56 @@ export type Redis = {
     zrevrank(key: string, member: string): Promise<number | undefined>
     zscore(key: string, member: string): Promise<string>
     zunionstore(destination: string, numkeys: string, keys: string | string[], weights?: number | number[], aggregate?: "SUM" | "MIN" | "MAX"): Promise<number>
+    // Server
+    bgrewriteaof(): Promise<string>
+    bgsave(): Promise<string>
+    // client //
+    command(): Promise<string[]>
+    command_count(): Promise<number>
+    command_getkeys(): Promise<string[]>
+    command_info(...command_names: string[]): Promise<string[]>
+    config_get(parameter: string): Promise<string[]>
+    config_rewrite(): Promise<string>
+    config_set(parameter: string, value: string): Promise<string>
+    config_resetstat(): Promise<string>
+    dbsize(): Promise<number>
+    debug_object(key: string): Promise<string>
+    debug_segfault(): Promise<string>
+    flushall(async?: boolean): Promise<string>
+    flushdb(async?: boolean): Promise<string>
+    info(section?: string): Promise<string>
+    lastsave(): Promise<number>
+    memory_doctor(): Promise<string>
+    memory_help(): Promise<string[]>
+    memory_malloc_stats(): Promise<string>
+    memory_purge(): Promise<string>
+    memory_stats(): Promise<string[]>
+    memory_usage(key: string, SAMPLES?, count?: number): Promise<number>
+    monitor()
+    role(): Promise<string[]>
+    save(): Promise<string>
+    shutdown(arg: "NOSAVE" | "SAVE?"): Promise<string>
+    slaveof(host: string, port: string | number): Promise<string>
+    replicaof(host: string, port: string | number): Promise<string>
+    slowlog(subcommand: string, ...argument: string[])
+    sync()
+    time(): Promise<string[]>
+    // Scripting
+    eval(script: string, key: string, arg: string)
+    eval(script: string, keys: string[], args: string[])
+    evalsha(sha1: string, key: string, arg: string)
+    evalsha(sha1: string, keys: string[], args: string[])
+    script_debug(arg: "YES" | "SYNC" | "NO"): Promise<string>
+    script_exists(...sha1s: string[]): Promise<string[]>
+    script_flush(): Promise<string>
+    script_kill(): Promise<string>
+    script_load(script: string): Promise<string>
+    // Transaction
+    multi(): Promise<string>
+    exec(): Promise<string[]>
+    discard(): Promise<string>
+    watch(...keys: string[]): Promise<string>
+    unwatch(): Promise<string>
     // scan
     scan(cursor: number, opts?: {
         pattern?: string,
