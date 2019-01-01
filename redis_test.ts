@@ -13,11 +13,11 @@ test(async function beforeAll() {
 
 test(async function testExists() {
     const redis = await connect("127.0.0.1:6379");
-    const none = await redis.exists("none");
-    assertEqual(none, false);
+    const none = await redis.exists("none", "none2");
+    assertEqual(none, 0);
     await redis.set("exists", "aaa");
-    const exists = await redis.exists("exists");
-    assertEqual(exists, true);
+    const exists = await redis.exists("exists", "none");
+    assertEqual(exists, 1);
     redis.close()
 });
 

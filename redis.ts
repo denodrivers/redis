@@ -550,8 +550,8 @@ class RedisImpl implements Redis {
         return this.execArrayReply("EXEC",)
     }
 
-    exists(key, ...keys) {
-        return this.execIntegerReply("EXISTS", key, ...keys)
+    exists(...keys) {
+        return this.execIntegerReply("EXISTS", ...keys)
     }
 
     expire(key, seconds) {
