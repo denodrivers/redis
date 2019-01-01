@@ -44,6 +44,7 @@ export type Redis = {
     expireat(key: string, timestamp: string): Promise<number>
     flushall(async?: boolean): Promise<string>
     flushdb(async?: boolean): Promise<string>
+    // Geo
     geoadd(key: string, longitude: number, latitude: number, member: string): Promise<number>
     geoadd(key: string, ...longitude_latitude_member: [number | number | string][]): Promise<number>
     geohash(key: string, ...members: string[]): Promise<string[]>
@@ -84,6 +85,7 @@ export type Redis = {
     getbit(key: string, offset: number): Promise<number>
     getrange(key: string, start: number, end: number): Promise<string>
     getset(key: string, value: string): Promise<string>
+    // Hash
     hdel(key: string, ...fields: string[]): Promise<number>
     hexists(key: string, field: string): Promise<number>
     hget(key: string, field: string): Promise<string>
@@ -99,6 +101,7 @@ export type Redis = {
     hsetnx(key: string, field: string, value: string): Promise<number>
     hstrlen(key: string, field: string): Promise<number>
     hvals(key: string): Promise<string[]>
+    // String
     incr(key: string): Promise<number>
     incrby(key: string, increment: number): Promise<number>
     incrbyfloat(key: string, increment: number): Promise<string>
@@ -267,10 +270,22 @@ export type Redis = {
     zrevrank(key: string, member: string): Promise<number | undefined>
     zscore(key: string, member: string): Promise<string>
     zunionstore(destination: string, numkeys: string, keys: string | string[], weights?: number | number[], aggregate?: "SUM" | "MIN" | "MAX"): Promise<number>
-    scan(cursor, MATCH?, pattern?, COUNT?, count?: number)
-    sscan(key: string, cursor, MATCH?, pattern?, COUNT?, count?: number)
-    hscan(key: string, cursor, MATCH?, pattern?, COUNT?, count?: number)
-    zscan(key: string, cursor, MATCH?, pattern?)
+    // scan
+    scan(cursor: number, opts?: {
+        pattern?: string,
+        count?: number
+    })
+    hscan(key: string, cursor: number, opts?: {
+        pattern?: string,
+        count?: number
+    })
+    sscan(key: string, cursor: number, opts?: {
+        pattern?: string,
+        count?: number
+    })
+    zscan(key: string, cursor: number, opts?: {
+        pattern?: string
+    })
 
     readonly isClosed: boolean;
     close()
@@ -1093,7 +1108,7 @@ class RedisImpl implements Redis {
     }
 
     touch(...keys) {
-        return this.execIntegerReply("TOUCH",...keys)
+        return this.execIntegerReply("TOUCH", ...keys)
     }
 
     ttl(key) {
@@ -1255,20 +1270,37 @@ class RedisImpl implements Redis {
         return this.execStatusReply("ZSCORE", key, member)
     }
 
-    scan(cursor, MATCH?, pattern?, COUNT?, count?) {
-        //
+    scan(cursor, opts?) {
+        const arg = this.pushScanOpts([cursor], opts);
+        return this.execArrayReply("SCAN", ...arg);
     }
 
-    sscan(key, cursor, MATCH?, pattern?, COUNT?, count?) {
-        //
+    sscan(key, cursor, opts?) {
+        const arg = this.pushScanOpts([key, cursor], opts);
+        return this.execArrayReply("SSCAN", ...arg);
     }
 
-    hscan(key, cursor, MATCH?, pattern?, COUNT?, count?) {
-        //
+    hscan(key, cursor, opts?) {
+        const arg = this.pushScanOpts([key, cursor], opts);
+        return this.execArrayReply("HSCAN", ...arg);
     }
 
-    zscan(key, cursor, MATCH?, pattern?) {
-        //
+    zscan(key, cursor,opts?) {
+        const arg = this.pushScanOpts([key, cursor], opts);
+        return this.execArrayReply("ZSCAN", ...arg);
+
+    }
+
+    private pushScanOpts(arg, opts?) {
+        if (opts) {
+            if (opts.pattern) {
+                arg.push("MATCH", opts.pattern)
+            }
+            if (opts.count !== void 0) {
+                arg.push("COUNT", opts.count)
+            }
+        }
+        return arg;
     }
 
 
