@@ -17,172 +17,180 @@ const fuga = await redis.get("hoge");
 
 ## Compatibility Table (5.0.3)
 
-Still work in progress.
-
 ### Connection
 - [x] AUTH 
-- [ ] ECHO
-- [ ] PING
+- [x] ECHO
+- [x] PING
 - [x] QUIT
-- [ ] SELECT 
-- [ ] SWAPDB
+- [x] SELECT 
+- [x] SWAPDB
 
 ### Keys 
 - [x] DEL
-- [ ] DUMP
+- [x] DUMP
 - [x] EXISTS
-- [ ] EXPIRE
-- [ ] EXPIREAT
+- [x] EXPIRE
+- [x] EXPIREAT
 - [x] KEYS 
-- [ ] MIGRATE
-- [ ] MOVE
-- [ ] OBJECT
-- [ ] PERSIST
-- [ ] PEXPIRE
-- [ ] PEXPIREAT
-- [ ] PTTL
+- [x] MIGRATE
+- [x] MOVE
+- [x] OBJECT
+- [x] PERSIST
+- [x] PEXPIRE
+- [x] PEXPIREAT
+- [x] PTTL
 - [x] RANDOMKEY
-- [ ] RENAME
-- [ ] RENAMENX
-- [ ] RESTORE
-- [ ] SORT
-- [ ] TOUCH
-- [ ] TTL
+- [x] RENAME
+- [x] RENAMENX
+- [x] RESTORE
+- [x] SORT
+- [x] TOUCH
+- [x] TTL
 - [x] TYPE
-- [ ] UNLINK
-- [ ] WAIT
-- [ ] SCAN
+- [x] UNLINK
+- [x] WAIT
+- [x] SCAN
 
 ### String
 
 - [x] APPEND
-- [ ] BITCOUNT
-- [ ] BITFIELD
-- [ ] BITOP
-- [ ] BITPOS
+- [x] BITCOUNT
+- [x] BITFIELD
+- [x] BITOP
+- [x] BITPOS
 - [x] DECR
 - [x] DECRBY
 - [x] GET
-- [ ] GETBIT
-- [x] GETRANGE / SUBSTR
+- [x] GETBIT
+- [x] GETRANGE
 - [x] GETSET
 - [x] INCR
 - [x] INCRBY
-- [ ] INCRBYFLOAT
+- [x] INCRBYFLOAT
 - [x] MGET
 - [x] MSET
 - [x] MSETNX
-- [ ] PSETEX
+- [x] PSETEX
 - [x] SET
-- [ ] SETBIT
+- [x] SETBIT
 - [x] SETEX
 - [x] SETNX
-- [ ] SETRANGE
-- [ ] STRLEN
+- [x] SETRANGE
+- [x] STRLEN
 
 ### List
 
-- [ ] BLPOP
-- [ ] BRPOP
-- [ ] BRPOPLPUSH
+- [x] BLPOP
+- [x] BRPOP
+- [x] BRPOPLPUSH
 - [x] LINDEX
-- [ ] LINSERT
+- [x] LINSERT
 - [x] LLEN
 - [x] LPOP 
 - [x] LPUSH 
-- [ ] LPUSHX
+- [x] LPUSHX
 - [x] LRANGE
 - [x] LREM
 - [x] LSET
 - [x] LTRIM
 - [x] RPOP
-- [ ] RPOPLPUSH
+- [x] RPOPLPUSH
 - [x] RPUSH
-- [ ] RPUSHX
+- [x] RPUSHX
 
 ### Set
 - [x] SADD
 - [x] SCARD
-- [ ] SDIFF
-- [ ] SDIFFSTORE
-- [ ] SINTER
-- [ ] SINTERSTORE
+- [x] SDIFF
+- [x] SDIFFSTORE
+- [x] SINTER
+- [x] SINTERSTORE
 - [x] SISMEMBER
-- [ ] SMEMBERS
+- [x] SMEMBERS
 - [x] SMOVE
 - [x] SPOP
-- [ ] SRANDMEMBER
+- [x] SRANDMEMBER
 - [x] SREM
 
 
 ### SortedSet
-- [ ] BZPOPMIN
-- [ ] BZPOPMAX
+- [x] BZPOPMIN
+- [x] BZPOPMAX
 - [x] ZADD
 - [x] ZCARD 
 - [x] ZCOUNT
 - [x] ZINCRBY 
-- [ ] ZINTERSTORE
-- [ ] ZLEXCOUNT
-- [ ] ZPOPMAX
-- [ ] ZPOPMIN
+- [x] ZINTERSTORE
+- [x] ZLEXCOUNT
+- [x] ZPOPMAX
+- [x] ZPOPMIN
 - [x] ZRANGE 
-- [ ] ZRANGEBYLEX 
-- [ ] ZREVRANGEBYLEX
-- [ ] ZRANGEBYSCORE
+- [x] ZRANGEBYLEX 
+- [x] ZREVRANGEBYLEX
+- [x] ZRANGEBYSCORE
 - [x] ZRANK
-- [ ] ZREM
-- [ ] ZREMRANGEBYLEX
-- [ ] ZREMRANGEBYRANK
-- [ ] ZREMRANGEBYSCORE
+- [x] ZREM
+- [x] ZREMRANGEBYLEX
+- [x] ZREMRANGEBYRANK
+- [x] ZREMRANGEBYSCORE
 - [x] ZREVRANGE
 - [x] ZREVRANGEBYSCORE
 - [x] ZREVRANK
 - [x] ZSCORE
-- [ ] ZUNIONSTORE
-- [ ] ZSCAN
+- [x] ZUNIONSTORE
+- [x] ZSCAN
 
 ### HashMap
-- [ ] HDEL
-- [ ] HEXISTS
-- [ ] HGET
-- [ ] HGETALL
-- [ ] HINCRBY
-- [ ] HINCRBYFLOAT
-- [ ] HKEYS
-- [ ] HLEN
-- [ ] HMGET
-- [ ] HMSET
-- [ ] HSET
-- [ ] HSETNX
-- [ ] HSTRLEN
-- [ ] HVALS 
-- [ ] HSCAN
-### Sort
-- [ ] SORT
+- [x] HDEL
+- [x] HEXISTS
+- [x] HGET
+- [x] HGETALL
+- [x] HINCRBY
+- [x] HINCRBYFLOAT
+- [x] HKEYS
+- [x] HLEN
+- [x] HMGET
+- [x] HMSET
+- [x] HSET
+- [x] HSETNX
+- [x] HSTRLEN
+- [x] HVALS 
+- [x] HSCAN
 
 ### GEO
 
-none
+- [x] GEOADD
+- [x] GEOADD
+- [x] GEOHASH
+- [x] GEOPOS
+- [x] GEODIST
+- [x] GEORADIUS
+- [x] GEORADIUSBYMEMBER
 
 ### Stream
 
-none
+WIP
+
+### Server
+
+WIP
 
 ### Cluster
 
-none
+None
 
 ### HyperLogLog
 
-none
+- [x]  PFADD
+- [x]  PFCOUNT 
+- [x]  PFMERGE 
 
 ### Multi
--  [ ]  MULTI 
--  [ ]  EXEC 
--  [ ]  DISCARD 
--  [ ]  WATCH
--  [ ]  UNWATCH
+- [ ]  MULTI 
+- [ ]  EXEC 
+- [ ]  DISCARD 
+- [ ]  WATCH
+- [ ]  UNWATCH
 
 ### PubSub
 - [ ]  PSUBSCRIBE
@@ -194,18 +202,10 @@ none
 
 ### Scripting 
 
-none
-
-### Persistence
--  [ ] SAVE
--  [ ] BGSAVE
--  [ ] LASTSAVE
--  [ ] SHUTDOWN
--  [ ] BGREWRITEAOF
-
-###　Control
-
--  [ ] INFO
--  [ ] MONITOR
--  [ ] SLAVEOF
--  [ ] CONFIG
+- [x] EVAL
+- [x] EVALSHA
+- [x] SCRIPT DEBUG
+- [x] SCRIPT EXISTS
+- [x] SCRIPT FLUSH
+- [x] SCRIPT KILL
+- [x] SCRIPT LOAD

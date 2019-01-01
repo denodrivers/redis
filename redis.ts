@@ -80,6 +80,10 @@ export type Redis = {
     setnx(key: string, value: string): Promise<number>
     setrange(key: string, offset: number, value: string): Promise<number>
     strlen(key: string): Promise<number>
+    get(key: string): Promise<string>
+    getbit(key: string, offset: number): Promise<number>
+    getrange(key: string, start: number, end: number): Promise<string>
+    getset(key: string, value: string): Promise<string>
     // Geo
     geoadd(key: string, longitude: number, latitude: number, member: string): Promise<number>
     geoadd(key: string, ...longitude_latitude_member: [number | number | string][]): Promise<number>
@@ -117,11 +121,7 @@ export type Redis = {
             storeDist?: string,
         }
     )
-    get(key: string): Promise<string>
-    getbit(key: string, offset: number): Promise<number>
-    getrange(key: string, start: number, end: number): Promise<string>
-    getset(key: string, value: string): Promise<string>
-    // Hash
+   // Hash
     hdel(key: string, ...fields: string[]): Promise<number>
     hexists(key: string, field: string): Promise<number>
     hget(key: string, field: string): Promise<string>
@@ -253,6 +253,8 @@ export type Redis = {
         weights?: number[],
         aggregate?: "SUM" | "MIN" | "MAX"
     }): Promise<number>
+    // Cluster
+    // cluster //
     // Server
     bgrewriteaof(): Promise<string>
     bgsave(): Promise<string>
