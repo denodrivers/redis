@@ -23,13 +23,11 @@ export type Redis = {
         keys?: string[]
     }): Promise<string>
     move(key: string, db: string): Promise<number>
-    object<T extends ("REFCOUNT" | "ENCODING" | "IDLETIME" | "FREQ" | "HELP")>(subcommand, arg?: string): Promise<{
-        REFCOUNT: number,
-        ENCODING: string,
-        IDLETIME: number,
-        FREQ: string,
-        HELP: string,
-    }[T]>
+    object_refcount(key: string);
+    object_encoding(key: string);
+    object_ideltime(key: string);
+    object_freq(key: string);
+    object_help();
     persist(key: string): Promise<number>
     pexpire(key: string, milliseconds: number): Promise<number>
     pexpireat(key: string, milliseconds_timestamp: number): Promise<number>
@@ -121,7 +119,7 @@ export type Redis = {
             storeDist?: string,
         }
     )
-   // Hash
+    // Hash
     hdel(key: string, ...fields: string[]): Promise<number>
     hexists(key: string, field: string): Promise<number>
     hget(key: string, field: string): Promise<string>
@@ -162,16 +160,9 @@ export type Redis = {
     // PubSub
     publish(channel: string, message: string): Promise<number>
     psubscribe(...patterns: string[])
-    pubsub<T extends ("CHANNELS" | "NUMSUBS" | "NUMPAT")>(
-        subcommand: T, args: {
-            CHANNELS: string,
-            NUMSUBS: string[],
-            NUMPAT: number
-        }[T]): Promise<{
-        CHANNELS: string[],
-        NUMSUBS: string[],
-        NUMPAT: number
-    }[T]>
+    pubsub_channels(pattern: string): Promise<string[]>;
+    pubsub_numsubs(...channels: string[]): Promise<string[]>;
+    pubsub_numpat(): Promise<number>;
     punsubscribe(...patterns: string[])
     subscribe(...channels: string[]): Promise<any[]>
     unsubscribe(...channels: string[])
@@ -834,17 +825,21 @@ class RedisImpl implements Redis {
         return this.execBulkReply("MULTI",)
     }
 
-    object(subcommand, arg?) {
-        switch (subcommand) {
-            case "REFCOUNT":
-            case "IDLETIME":
-                return this.execIntegerReply("OBJECT", subcommand, arg);
-            case "ENCODING":
-            case "FREQ":
-                return this.execBulkReply("OBJECT", subcommand, arg);
-            case "HELP":
-                return this.execBulkReply("OBJECT", subcommand);
-        }
+    object_encoding (key: string) {
+        return this.execIntegerReply("OBJECT", "ENCODING", key);
+    }
+
+    object_freq(key: string) {
+        return this.execBulkReply("OBJECT", "FREQ", key);
+    }
+    object_help ()  {
+        return this.execBulkReply("OBJECT", "HELP")
+    }
+    object_ideltime (key: string) {
+        return this.execIntegerReply("OBJECT", "IDLETIME", key)
+    }
+    object_refcount(key: string) {
+        return this.execIntegerReply("OBJECT", "REFCOUNT", key);
     }
 
     persist(key) {
@@ -883,15 +878,16 @@ class RedisImpl implements Redis {
         //
     }
 
-    pubsub<T>(subcommand, args) {
-        switch (subcommand) {
-            case "CHANNELS":
-                return this.execArrayReply("PUBSUB", args);
-            case "NUMSUBS":
-                return this.execArrayReply("PUBSUB", ...args);
-            case "NUMPAT":
-                return this.execIntegerReply("PUBSUB", args);
-        }
+    pubsub_channels (pattern: string) {
+        return this.execArrayReply("PUBSUB", "CHANNELS", pattern);
+    }
+
+    pubsub_numpat () {
+        return this.execIntegerReply("PUBSUB", "NUMPAT");
+    }
+
+    pubsub_numsubs(...channels: string[]) {
+        return this.execArrayReply("PUBSUB", "NUMSUBS", ...channels);
     }
 
     pttl(key) {
@@ -1215,7 +1211,7 @@ class RedisImpl implements Redis {
         return this.execIntegerReply("ZINTERSTORE", ...args)
     }
 
-    zunionstore(destination,  keys, opts?): Promise<number> {
+    zunionstore(destination, keys, opts?): Promise<number> {
         const args = [destination, keys.length, keys];
         if (opts) {
             if (opts.weights) {
@@ -1314,12 +1310,12 @@ class RedisImpl implements Redis {
     }
 
     zrevrange(key, start, stop, opts?) {
-        const args = this.pushZrangeOpts([key,start,stop], opts);
+        const args = this.pushZrangeOpts([key, start, stop], opts);
         return this.execArrayReply("ZREVRANGE", ...args);
     }
 
     zrevrangebyscore(key, max, min, opts?) {
-        const args = this.pushZrangeOpts([key,max,min], opts);
+        const args = this.pushZrangeOpts([key, max, min], opts);
         return this.execArrayReply("ZREVRANGEBYSCORE", ...args);
     }
 
@@ -1363,6 +1359,8 @@ class RedisImpl implements Redis {
         }
         return arg;
     }
+
+    // Stream
 
     close() {
         this.conn.close();
