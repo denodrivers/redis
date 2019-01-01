@@ -167,18 +167,18 @@ export type Redis = {
             CHANNELS: string,
             NUMSUBS: string[],
             NUMPAT: number
-        }[T]): {
-        CHANNELS: Promise<string[]>,
-        NUMSUBS: Promise<string[]>,
-        NUMPAT: Promise<number>
-    }[T]
+        }[T]): Promise<{
+        CHANNELS: string[],
+        NUMSUBS: string[],
+        NUMPAT: number
+    }[T]>
     punsubscribe(...patterns: string[])
     subscribe(...channels: string[]): Promise<any[]>
     unsubscribe(...channels: string[])
     //
     readonly(): Promise<string>
     readwrite(): Promise<string>
-   // Set
+    // Set
     sadd(key: string, ...members: string[]): Promise<number>
     scard(key: string): Promise<number>
     sdiff(...keys: string[]): Promise<string[]>
@@ -218,20 +218,41 @@ export type Redis = {
     zlexcount(key: string, min: number, max: number): Promise<number>
     zpopmax(key: string, count?: number): Promise<string[]>
     zpopmin(key: string, count?: number): Promise<string[]>
-    zrange(key: string, start: number, stop: number, WITHSCORES?): Promise<string[]>
-    zrangebylex(key: string, min: number, max: number, LIMIT?, offset?: number, count?: number): Promise<string[]>
-    zrevrangebylex(key: string, max: number, min: number, LIMIT?, offset?: number, count?: number): Promise<string[]>
-    zrangebyscore(key: string, min: number, max: number, WITHSCORES?, LIMIT?, offset?: number, count?: number): Promise<string[]>
+    zrange(key: string, start: number, stop: number, opts?: {
+        withScore?: boolean
+    }): Promise<string[]>
+    zrangebylex(key: string, min: number, max: number, opts?: {
+        offset?: number,
+        count?: number
+    }): Promise<string[]>
+    zrevrangebylex(key: string, max: number, min: number, opts?: {
+        offset?: number,
+        count?: number
+    }): Promise<string[]>
+    zrangebyscore(key: string, min: number, max: number, opts?: {
+        withScore?: boolean,
+        offset?: number,
+        count?: number
+    }): Promise<string[]>
     zrank(key: string, member: string): Promise<number | undefined>
-    zrem(key: string, member: string, ...members: string[]): Promise<number>
+    zrem(key: string, ...members: string[]): Promise<number>
     zremrangebylex(key: string, min: number, max: number): Promise<number>
     zremrangebyrank(key: string, start: number, stop: number): Promise<number>
     zremrangebyscore(key: string, min: number, max: number): Promise<number>
-    zrevrange(key: string, start: number, stop: number, WITHSCORES?): Promise<string[]>
-    zrevrangebyscore(key: string, max: number, min: number, WITHSCORES?, LIMIT?, offset?: number, count?: number): Promise<string[]>
+    zrevrange(key: string, start: number, stop: number, opts?: {
+        withScore?: boolean
+    }): Promise<string[]>
+    zrevrangebyscore(key: string, max: number, min: number, ops?: {
+        withScore?: boolean,
+        offset?: number,
+        count?: number
+    }): Promise<string[]>
     zrevrank(key: string, member: string): Promise<number | undefined>
     zscore(key: string, member: string): Promise<string>
-    zunionstore(destination: string, numkeys: string, keys: string | string[], weights?: number | number[], aggregate?: "SUM" | "MIN" | "MAX"): Promise<number>
+    zunionstore(destination: string, keys: string[], opts?: {
+        weights?: number[],
+        aggregate?: "SUM" | "MIN" | "MAX"
+    }): Promise<number>
     // Server
     bgrewriteaof(): Promise<string>
     bgsave(): Promise<string>
@@ -260,7 +281,7 @@ export type Redis = {
     monitor()
     role(): Promise<string[]>
     save(): Promise<string>
-    shutdown(arg: "NOSAVE" | "SAVE?"): Promise<string>
+    shutdown(arg: "NOSAVE" | "SAVE"): Promise<string>
     slaveof(host: string, port: string | number): Promise<string>
     replicaof(host: string, port: string | number): Promise<string>
     slowlog(subcommand: string, ...argument: string[])
@@ -443,27 +464,27 @@ class RedisImpl implements Redis {
     }
 
     command_getkeys() {
-        return this.execArrayReply("COMMAND_GETKEYS",)
+        return this.execArrayReply("COMMAND GETKEYS",)
     }
 
     command_info(command_name, ...command_names) {
-        return this.execArrayReply("COMMAND_INFO", command_name, ...command_names)
+        return this.execArrayReply("COMMAND INFO", command_name, ...command_names)
     }
 
     config_get(parameter) {
-        return this.execArrayReply("CONFIG_GET", parameter)
+        return this.execArrayReply("CONFIG GET", parameter)
     }
 
     config_rewrite() {
-        return this.execBulkReply("CONFIG_REWRITE",)
+        return this.execBulkReply("CONFIG REWRITE",)
     }
 
     config_set(parameter, value) {
-        return this.execBulkReply("CONFIG_SET", parameter, value)
+        return this.execBulkReply("CONFIG SET", parameter, value)
     }
 
     config_resetstat() {
-        return this.execBulkReply("CONFIG_RESETSTAT",)
+        return this.execBulkReply("CONFIG RESETSTAT",)
     }
 
     dbsize() {
@@ -471,11 +492,11 @@ class RedisImpl implements Redis {
     }
 
     debug_object(key) {
-        return this.execBulkReply("DEBUG_OBJECT", key)
+        return this.execBulkReply("DEBUG OBJECT", key)
     }
 
     debug_segfault() {
-        return this.execBulkReply("DEBUG_SEGFAULT",)
+        return this.execBulkReply("DEBUG SEGFAULT",)
     }
 
     decr(key) {
@@ -748,27 +769,27 @@ class RedisImpl implements Redis {
     }
 
     memory_doctor() {
-        return this.execStatusReply("MEMORY_DOCTOR",)
+        return this.execStatusReply("MEMORY DOCTOR",)
     }
 
     memory_help() {
-        return this.execArrayReply("MEMORY_HELP",)
+        return this.execArrayReply("MEMORY HELP",)
     }
 
     memory_malloc_stats() {
-        return this.execStatusReply("MEMORY_MALLOC_STATS",)
+        return this.execStatusReply("MEMORY MALLOC STATS",)
     }
 
     memory_purge() {
-        return this.execBulkReply("MEMORY_PURGE",)
+        return this.execBulkReply("MEMORY PURGE",)
     }
 
     memory_stats() {
-        return this.execArrayReply("MEMORY_STATS",)
+        return this.execArrayReply("MEMORY STATS",)
     }
 
     memory_usage(key, SAMPLES?, count?) {
-        return this.execIntegerReply("MEMORY_USAGE", key, SAMPLES, count)
+        return this.execIntegerReply("MEMORY USAGE", key, SAMPLES, count)
     }
 
     mget(...keys) {
@@ -948,23 +969,23 @@ class RedisImpl implements Redis {
     }
 
     script_debug(arg: "YES" | "SYNC" | "NO") {
-        return this.execBulkReply("SCRIPT_DEBUG", arg)
+        return this.execBulkReply("SCRIPT DEBUG", arg)
     }
 
     script_exists(sha1, ...sha1s) {
-        return this.execArrayReply("SCRIPT_EXISTS", sha1, ...sha1s)
+        return this.execArrayReply("SCRIPT EXISTS", sha1, ...sha1s)
     }
 
     script_flush() {
-        return this.execBulkReply("SCRIPT_FLUSH",)
+        return this.execBulkReply("SCRIPT FLUSH",)
     }
 
     script_kill() {
-        return this.execBulkReply("SCRIPT_KILL",)
+        return this.execBulkReply("SCRIPT KILL",)
     }
 
     script_load(script) {
-        return this.execStatusReply("SCRIPT_LOAD", script)
+        return this.execStatusReply("SCRIPT LOAD", script)
     }
 
     sdiff(key, ...keys) {
@@ -1011,7 +1032,7 @@ class RedisImpl implements Redis {
         return this.execIntegerReply("SETRANGE", key, offset, value)
     }
 
-    shutdown(arg: "NOSAVE" | "SAVE?") {
+    shutdown(arg) {
         return this.execBulkReply("SHUTDOWN", arg)
     }
 
@@ -1095,7 +1116,7 @@ class RedisImpl implements Redis {
     }
 
     subscribe(...channels) {
-        return this.execRawReply("SUBSCRIBE", ...channels);
+        return this.execArrayReply("SUBSCRIBE", ...channels);
     }
 
     sunion(...keys) {
@@ -1192,8 +1213,16 @@ class RedisImpl implements Redis {
         return this.execIntegerReply("ZINTERSTORE", ...args)
     }
 
-    zunionstore(destination: string, numkeys: string, keys: string | string[], weights?: number | number[], aggregate?: "SUM" | "MIN" | "MAX"): Promise<number> {
-        const args = this.pushZInterStoreArgs([destination, numkeys], keys, weights, aggregate);
+    zunionstore(destination,  keys, opts?): Promise<number> {
+        const args = [destination, keys.length, keys];
+        if (opts) {
+            if (opts.weights) {
+                args.push("WEIGHTS", ...opts.weights)
+            }
+            if (opts.aggregate) {
+                args.push("AGGREGATE", opts.aggregate);
+            }
+        }
         return this.execIntegerReply("ZUNIONSTORE", ...args);
     }
 
@@ -1230,28 +1259,44 @@ class RedisImpl implements Redis {
         return this.execArrayReply("ZPOPMIN", key, count)
     }
 
-    zrange(key, start, stop, WITHSCORES?) {
-        return this.execArrayReply("ZRANGE", key, start, stop, WITHSCORES)
+    zrange(key, start, stop, opts?) {
+        const args = this.pushZrangeOpts([key, start, stop], opts);
+        return this.execArrayReply("ZRANGE", ...args)
     }
 
-    zrangebylex(key, min, max, LIMIT?, offset?, count?) {
-        return this.execArrayReply("ZRANGEBYLEX", key, min, max, LIMIT, offset, count)
+    zrangebylex(key, min, max, opts?) {
+        const args = this.pushZrangeOpts([key, min, max], opts);
+        return this.execArrayReply("ZRANGEBYLEX", ...args)
     }
 
-    zrevrangebylex(key, max, min, LIMIT?, offset?, count?) {
-        return this.execArrayReply("ZREVRANGEBYLEX", key, max, min, LIMIT, offset, count)
+    zrevrangebylex(key, max, min, opts?) {
+        const args = this.pushZrangeOpts([key, min, max], opts);
+        return this.execArrayReply("ZREVRANGEBYLEX", ...args)
     }
 
-    zrangebyscore(key, min, max, WITHSCORES?, LIMIT?, offset?, count?) {
-        return this.execArrayReply("ZRANGEBYSCORE", key, min, max, WITHSCORES, LIMIT, offset, count)
+    zrangebyscore(key, min, max, opts?) {
+        const args = this.pushZrangeOpts([key, min, max], opts);
+        return this.execArrayReply("ZRANGEBYSCORE", ...args);
+    }
+
+    private pushZrangeOpts(args, opts?) {
+        if (opts) {
+            if (opts.withScore) {
+                args.push("WITHSCORE");
+            }
+            if (opts.offset !== void 0 && opts.count !== void 0) {
+                args.push("LIMIT", opts.offset, opts.count);
+            }
+        }
+        return args;
     }
 
     zrank(key, member) {
         return this.execIntegerOrNilReply("ZRANK", key, member)
     }
 
-    zrem(key, member, ...members) {
-        return this.execIntegerReply("ZREM", key, member, ...members)
+    zrem(key, ...members) {
+        return this.execIntegerReply("ZREM", key, ...members)
     }
 
     zremrangebylex(key, min, max) {
@@ -1266,12 +1311,14 @@ class RedisImpl implements Redis {
         return this.execIntegerReply("ZREMRANGEBYSCORE", key, min, max)
     }
 
-    zrevrange(key, start, stop, WITHSCORES?) {
-        return this.execArrayReply("ZREVRANGE", key, start, stop, WITHSCORES)
+    zrevrange(key, start, stop, opts?) {
+        const args = this.pushZrangeOpts([key,start,stop], opts);
+        return this.execArrayReply("ZREVRANGE", ...args);
     }
 
-    zrevrangebyscore(key, max, min, WITHSCORES?, LIMIT?, offset?, count?) {
-        return this.execArrayReply("ZREVRANGEBYSCORE", key, max, min, WITHSCORES, LIMIT, offset, count)
+    zrevrangebyscore(key, max, min, opts?) {
+        const args = this.pushZrangeOpts([key,max,min], opts);
+        return this.execArrayReply("ZREVRANGEBYSCORE", ...args);
     }
 
     zrevrank(key, member) {
@@ -1297,7 +1344,7 @@ class RedisImpl implements Redis {
         return this.execArrayReply("HSCAN", ...arg);
     }
 
-    zscan(key, cursor,opts?) {
+    zscan(key, cursor, opts?) {
         const arg = this.pushScanOpts([key, cursor], opts);
         return this.execArrayReply("ZSCAN", ...arg);
 
@@ -1314,7 +1361,6 @@ class RedisImpl implements Redis {
         }
         return arg;
     }
-
 
     close() {
         this.conn.close();
