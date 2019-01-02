@@ -1,4 +1,6 @@
 # deno-redis
+[![Build Status](https://travis-ci.com/keroxp/deno-redis.svg?branch=master)](https://travis-ci.com/keroxp/deno-redis)
+
 An experimental implementation of redis client for deno
 
 
