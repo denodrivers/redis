@@ -8,12 +8,27 @@ An experimental implementation of redis client for deno
 
 needs `--allow-net` privilege
 
+**Stateless Commands**
+
 ```ts
 
 import {connect} from "https://denopkg.com/keroxp/deno-redis/redis.ts"
 const redis = await connect("127.0.0.1:6379");
 const ok = await redis.set("hoge","fuga")
 const fuga = await redis.get("hoge");
+
+```
+
+**PubSub**
+
+```ts
+
+const sub = redis.subscribe("channel");
+(async function() {
+  for await (const {channel, message} of sub.receive()) {
+    // on message
+  }
+})()
 
 ```
 
@@ -195,12 +210,12 @@ None
 - [ ]  UNWATCH
 
 ### PubSub
-- [ ]  PSUBSCRIBE
-- [ ]  PUBSUB
-- [ ]  PUBLISH
-- [ ]  PUNSUBSCRIBE
-- [ ]  SUBSCRIBE 
-- [ ]  UNSUBSCRIBE
+- [x] PSUBSCRIBE
+- [x] PUBSUB
+- [x] PUBLISH
+- [x] PUNSUBSCRIBE
+- [x] SUBSCRIBE 
+- [x] UNSUBSCRIBE
 
 ### Scripting 
 
