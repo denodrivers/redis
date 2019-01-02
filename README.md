@@ -23,7 +23,7 @@ const fuga = await redis.get("hoge");
 
 ```ts
 
-const sub = redis.subscribe("channel");
+const sub = await redis.subscribe("channel");
 (async function() {
   for await (const {channel, message} of sub.receive()) {
     // on message
