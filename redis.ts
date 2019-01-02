@@ -1,6 +1,8 @@
-import {Buffer, Conn, dial} from "deno"
+import {Conn, dial} from "deno"
 import {BufReader, BufWriter} from "http://deno.land/x/net/bufio.ts";
 import {ConnectionClosedError} from "./errors.ts";
+import {psubscribe, RedisSubscription, subscribe} from "./pubsub.ts";
+import {sendCommand} from "./io.ts";
 
 export type Redis = {
     // Connection
@@ -159,13 +161,11 @@ export type Redis = {
     pfmerge(destkey: string, ...sourcekeys: string[]): Promise<string>
     // PubSub
     publish(channel: string, message: string): Promise<number>
-    psubscribe(...patterns: string[])
+    psubscribe(...patterns: string[]): Promise<RedisSubscription>
+    subscribe(...channels: string[]): Promise<RedisSubscription>
     pubsub_channels(pattern: string): Promise<string[]>;
     pubsub_numsubs(...channels: string[]): Promise<string[]>;
     pubsub_numpat(): Promise<number>;
-    punsubscribe(...patterns: string[])
-    subscribe(...channels: string[]): Promise<any[]>
-    unsubscribe(...channels: string[])
     // Cluster
     readonly(): Promise<string>
     readwrite(): Promise<string>
@@ -319,12 +319,6 @@ export type Redis = {
     close()
 } ;
 
-const IntegerReplyCode = ":".charCodeAt(0);
-const BulkReplyCode = "$".charCodeAt(0);
-const SimpleStringCode = "+".charCodeAt(0);
-const ArrayReplyCode = "*".charCodeAt(0);
-const ErrorReplyCode = "-".charCodeAt(0);
-
 class RedisImpl implements Redis {
     writer: BufWriter;
     reader: BufReader;
@@ -345,21 +339,7 @@ class RedisImpl implements Redis {
         A: any[]
     }[T]> {
         if (this.isClosed) throw new ConnectionClosedError();
-        const msg = createRequest(command, ...args);
-        await writeRequest(this.writer, msg);
-        const [b] = await this.reader.peek(1);
-        switch (b[0]) {
-            case IntegerReplyCode:
-                return readIntegerReply(this.reader);
-            case SimpleStringCode:
-                return readStatusReply(this.reader);
-            case BulkReplyCode:
-                return readBulkReply(this.reader);
-            case ArrayReplyCode:
-                return readArrayReply(this.reader);
-            case ErrorReplyCode:
-                tryParseErrorReply(await readLine(this.reader))
-        }
+        return sendCommand(this.writer, this.reader, command, ...args);
     }
 
     private async execStatusReply(command: string, ...args: (string | number)[]): Promise<string> {
@@ -883,8 +863,22 @@ class RedisImpl implements Redis {
         //
     }
 
+    // PubSub
+
+    publish(channel, message) {
+        return this.execIntegerReply("PUBLISH", channel, message)
+    }
+
+    subscribe(...channels) {
+        return subscribe(
+            this.writer, this.reader, ...channels
+        )
+    }
+
     psubscribe(...patterns) {
-        //
+        return psubscribe(
+            this.writer, this.reader, ...patterns
+        )
     }
 
     pubsub_channels(pattern: string) {
@@ -903,16 +897,13 @@ class RedisImpl implements Redis {
         return this.execIntegerReply("PTTL", key)
     }
 
-    publish(channel, message) {
-        return this.execIntegerReply("PUBLISH", channel, message)
-    }
-
-    punsubscribe(...patterns) {
-        return this.execArrayReply("PUNSUBSCRIBE", ...patterns)
-    }
 
     quit() {
-        return this.execBulkReply("QUIT",)
+        try {
+            return this.execBulkReply("QUIT",)
+        } finally {
+            this._isClosed = true;
+        }
     }
 
     randomkey() {
@@ -1122,10 +1113,6 @@ class RedisImpl implements Redis {
         return this.execIntegerReply("STRLEN", key)
     }
 
-    subscribe(...channels) {
-        return this.execArrayReply("SUBSCRIBE", ...channels);
-    }
-
     sunion(...keys) {
         return this.execArrayReply("SUNION", ...keys)
     }
@@ -1157,10 +1144,6 @@ class RedisImpl implements Redis {
 
     type(key) {
         return this.execBulkReply("TYPE", key)
-    }
-
-    unsubscribe(...channels) {
-        return this.execArrayReply("UNSUBSCRIBE", ...channels);
     }
 
     unlink(...keys) {
@@ -1375,112 +1358,6 @@ class RedisImpl implements Redis {
         this.conn.close();
     }
 
-}
-
-async function readLine(reader: BufReader): Promise<string> {
-    let buf = new Uint8Array(1024);
-    let loc = 0;
-    while (true) {
-        const d = await reader.readByte();
-        if (d === '\r'.charCodeAt(0)) {
-            const d1 = await reader.readByte();
-            if (d1 === '\n'.charCodeAt(0)) {
-                buf[loc++] = d;
-                buf[loc++] = d1;
-                return new Buffer(buf.subarray(0, loc)).toString();
-            }
-        }
-        buf[loc++] = d;
-    }
-}
-
-export class ErrorReplyError extends Error {
-}
-
-export function createRequest(command: string, ...args: (string | number)[]) {
-    const _args = args.filter(v => v !== void 0 || v !== null);
-    let msg = "";
-    msg += `*${1 + _args.length}\r\n`;
-    msg += `$${command.length}\r\n`;
-    msg += `${command}\r\n`;
-    for (const arg of _args) {
-        const val = String(arg);
-        msg += `$${val.length}\r\n`;
-        msg += `${val}\r\n`;
-    }
-    return msg;
-}
-
-const encoder = new TextEncoder();
-
-async function writeRequest(writer: BufWriter, msg: string) {
-    await writer.write(encoder.encode(msg));
-    await writer.flush();
-}
-
-async function readStatusReply(reader: BufReader): Promise<"OK"> {
-    const line = await readLine(reader);
-    if (line[0] === "+") {
-        return line.substr(1, line.length - 3) as "OK"
-    }
-    tryParseErrorReply(line);
-}
-
-async function readIntegerReply(reader: BufReader): Promise<number> {
-    const line = await readLine(reader);
-    if (line[0] === ":") {
-        const str = line.substr(1, line.length - 3);
-        return parseInt(str);
-    }
-    tryParseErrorReply(line);
-}
-
-async function readBulkReply(reader: BufReader): Promise<string> {
-    const line = await readLine(reader);
-    if (line[0] !== "$") {
-        tryParseErrorReply(line);
-    }
-    const sizeStr = line.substr(1, line.length - 3);
-    const size = parseInt(sizeStr);
-    if (size < 0) {
-        // nil bulk reply
-        return;
-    }
-    const dest = new Uint8Array(size + 2);
-    await reader.readFull(dest);
-    return new Buffer(dest.subarray(0, dest.length - 2)).toString();
-}
-
-async function readArrayReply(reader: BufReader): Promise<any[]> {
-    const line = await readLine(reader);
-    const argCount = parseInt(line.substr(1, line.length - 3));
-    const result = [];
-    for (let i = 0; i < argCount; i++) {
-        const [res] = await reader.peek(1);
-        switch (res[0]) {
-            case SimpleStringCode:
-                result.push(await readStatusReply(reader));
-                break;
-            case BulkReplyCode:
-                result.push(await readBulkReply(reader));
-                break;
-            case IntegerReplyCode:
-                result.push(await readIntegerReply(reader));
-                break;
-            case ArrayReplyCode:
-                result.push(await readArrayReply(reader));
-                break;
-        }
-    }
-    return result;
-}
-
-export function tryParseErrorReply(line: string) {
-    const code = line[0];
-    if (code === "-") {
-        throw new ErrorReplyError(line)
-    }
-    throw new Error(`invalid line: ${line}`);
 }
 
 export async function connect(addr: string): Promise<Redis> {
