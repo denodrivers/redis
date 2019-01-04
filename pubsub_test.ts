@@ -1,4 +1,4 @@
-import {test} from "https://deno.land/x/testing/testing.ts";
+import {test} from "https://deno.land/x/testing/mod.ts";
 import {assertEqual} from "https://deno.land/x/pretty_assert/mod.ts"
 import {connect} from "./redis.ts";
 import {RedisPubSubMessage} from "./pubsub.ts";

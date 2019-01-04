@@ -1,5 +1,5 @@
 import {connect} from "./redis.ts";
-import {setFilter, test} from "https://deno.land/x/testing/testing.ts"
+import {setFilter, test} from "https://deno.land/x/testing/mod.ts"
 import {assertEqual} from "https://deno.land/x/pretty_assert/mod.ts"
 import {args} from "deno";
 
