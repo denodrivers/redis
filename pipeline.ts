@@ -9,7 +9,7 @@ export type RedisPipeline = {
     flush(): Promise<RedisRawReply[]>
 } & Redis;
 
-export function createRedisPipeline(writer: BufWriter, reader: BufReader): RedisPipeline {
+export function createRedisPipeline(writer: BufWriter, reader: BufReader, opts?: { tx: true }): RedisPipeline {
     let queue = [];
     const executor = {
         enqueue(command: string, ...args) {
@@ -17,6 +17,11 @@ export function createRedisPipeline(writer: BufWriter, reader: BufReader): Redis
             queue.push(msg);
         },
         async flush() {
+            // wrap pipelined commands with MULTI/EXEC
+            if (opts && opts.tx) {
+                queue.splice(0, 0, createRequest("MULTI"));
+                queue.push(createRequest("EXEC"));
+            }
             const msg = queue.join("");
             await writer.write(encoder.encode(msg));
             await writer.flush();

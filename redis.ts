@@ -295,11 +295,12 @@ export type Redis = {
     script_load(script: string): Promise<string>
     // multi
     multi(): Promise<string>
-    exec(): Promise<string[]>
+    exec(): Promise<any[]>
     discard(): Promise<string>
     watch(...keys: string[]): Promise<string>
     unwatch(): Promise<string>
     // pipeline
+    tx(): RedisPipeline;
     pipeline(): RedisPipeline;
     // scan
     scan(cursor: number, opts?: {
@@ -347,22 +348,22 @@ class RedisImpl implements Redis, CommandExecutor {
     }
 
     async execStatusReply(command: string, ...args: (string | number)[]): Promise<string> {
-        const [_,reply] = await this.executor.execRawReply(command, ...args);
+        const [_, reply] = await this.executor.execRawReply(command, ...args);
         return reply as string;
     }
 
     async execIntegerReply(command: string, ...args: (string | number)[]): Promise<number> {
-        const [_,reply] = await this.executor.execRawReply(command, ...args);
+        const [_, reply] = await this.executor.execRawReply(command, ...args);
         return reply as number;
     }
 
     async execBulkReply(command: string, ...args: (string | number)[]): Promise<string> {
-        const [_,reply] = await this.executor.execRawReply(command, ...args);
+        const [_, reply] = await this.executor.execRawReply(command, ...args);
         return reply as string;
     }
 
     async execArrayReply(command: string, ...args: (string | number)[]): Promise<any[]> {
-        const [_,reply] = await this.executor.execRawReply(command, ...args);
+        const [_, reply] = await this.executor.execRawReply(command, ...args);
         return reply as any[];
     }
 
@@ -1357,6 +1358,10 @@ class RedisImpl implements Redis, CommandExecutor {
     }
 
     // pipeline
+    tx() {
+        return createRedisPipeline(this.writer, this.reader, {tx: true});
+    }
+
     pipeline() {
         return createRedisPipeline(this.writer, this.reader);
     }

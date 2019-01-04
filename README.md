@@ -41,7 +41,7 @@ https://redis.io/topics/pipelining
 ```ts
 
 const redis = await connect("127.0.0.1:6379");
-const pl = conn.pipeline();
+const pl = redis.pipeline();
 await Promise.all([
     pl.ping(),
     pl.ping(),
@@ -54,6 +54,32 @@ await Promise.all([
 const replies = await pl.flush();
 
 ```
+
+
+### TxPipeline (pipeline with MULTI/EXEC)
+
+We recommend to use `tx()` instead of `multi()/exec()` for transactional operation.  
+`MULTI/EXEC` are potentially stateful operation so that operation's atomicity is guaranteed but redis's state may change between MULTI and EXEC.
+
+`WATCH` is designed for these problems. You can ignore it by using TxPipeline because pipelined MULTI/EXEC commands are strictly executed in order at the time and no changes will happen during execution. 
+
+See detail https://redis.io/topics/transactions
+
+```ts
+const tx = redis.tx();
+await Promise.all([
+   tx.set("a", "aa"),
+   tx.set("b", "bb"),
+   tx.del("c"),
+])
+await tx.flush();
+// MULTI
+// SET a aa
+// SET b bb
+// DEL c
+// EXEC
+```
+
 
 ## Compatibility Table (5.0.3)
 
@@ -226,11 +252,11 @@ None
 - [x]  PFMERGE 
 
 ### Multi
-- [ ]  MULTI 
-- [ ]  EXEC 
-- [ ]  DISCARD 
-- [ ]  WATCH
-- [ ]  UNWATCH
+- [x]  MULTI 
+- [x]  EXEC 
+- [x]  DISCARD 
+- [x]  WATCH
+- [x]  UNWATCH
 
 ### PubSub
 - [x] PSUBSCRIBE
