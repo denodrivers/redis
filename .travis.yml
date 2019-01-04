@@ -8,4 +8,4 @@ services:
 - redis
 
 script:
-- deno redis_test.ts --allow-net
+- make test

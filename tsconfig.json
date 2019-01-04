@@ -4,11 +4,11 @@
     "baseUrl": ".",
     "paths": {
       "deno": ["./deno.d.ts"],
-      "http://*": [
-        "../../.deno/deps/https/*"
-      ],
       "https://*": [
         "../../.deno/deps/https/*"
+      ],
+      "http://*": [
+        "../../.deno/deps/http/*"
       ]
     }
   }

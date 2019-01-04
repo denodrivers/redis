@@ -1,6 +1,13 @@
-import {BufReader, BufWriter} from "http://deno.land/x/net/bufio.ts";
-import {Buffer} from "deno";
+import {BufReader, BufWriter} from "https://deno.land/x/net/bufio.ts";
+import {Buffer, Reader, ReadResult, Writer} from "deno";
 import {ErrorReplyError} from "./errors.ts";
+
+export type RedisRawReply =
+    ["status", string]
+    | ["integer", number]
+    | ["bulk", string]
+    | ["array", any[]]
+    | ["error", ErrorReplyError]
 
 const IntegerReplyCode = ":".charCodeAt(0);
 const BulkReplyCode = "$".charCodeAt(0);
@@ -10,8 +17,8 @@ const ErrorReplyCode = "-".charCodeAt(0);
 
 const encoder = new TextEncoder();
 
-export function createRequest(command: string, ...args: (string | number)[]) {
-    const _args = args.filter(v => v !== void 0 || v !== null);
+export function createRequest(command: string, ...args: (string | number)[]): string {
+    const _args = args.filter(v => v !== void 0 && v !== null);
     let msg = "";
     msg += `*${1 + _args.length}\r\n`;
     msg += `$${command.length}\r\n`;
@@ -24,30 +31,30 @@ export function createRequest(command: string, ...args: (string | number)[]) {
     return msg;
 }
 
-export async function sendCommand(writer: BufWriter, reader: BufReader, command, ...args) {
+export async function sendCommand(writer: BufWriter, reader: BufReader, command, ...args): Promise<RedisRawReply> {
     const msg = createRequest(command, ...args);
     await writer.write(encoder.encode(msg));
     await writer.flush();
     return readReply(reader);
 }
 
-export async function readReply(reader: BufReader) {
+export async function readReply(reader: BufReader): Promise<RedisRawReply> {
     const [b] = await reader.peek(1);
     switch (b[0]) {
         case IntegerReplyCode:
-            return readIntegerReply(reader);
+            return ["integer", await readIntegerReply(reader)];
         case SimpleStringCode:
-            return readStatusReply(reader);
+            return ["status", await readStatusReply(reader)];
         case BulkReplyCode:
-            return readBulkReply(reader);
+            return ["bulk", await readBulkReply(reader)];
         case ArrayReplyCode:
-            return readArrayReply(reader);
+            return ["array", await readArrayReply(reader)];
         case ErrorReplyCode:
             tryParseErrorReply(await readLine(reader))
     }
 }
 
-async function readLine(reader: BufReader): Promise<string> {
+export async function readLine(reader: BufReader): Promise<string> {
     let buf = new Uint8Array(1024);
     let loc = 0;
     while (true) {
@@ -64,10 +71,10 @@ async function readLine(reader: BufReader): Promise<string> {
     }
 }
 
-export async function readStatusReply(reader: BufReader): Promise<"OK"> {
+export async function readStatusReply(reader: BufReader): Promise<string> {
     const line = await readLine(reader);
     if (line[0] === "+") {
-        return line.substr(1, line.length - 3) as "OK"
+        return line.substr(1, line.length - 3)
     }
     tryParseErrorReply(line);
 }

@@ -1,8 +1,9 @@
-import {Conn, dial} from "deno"
-import {BufReader, BufWriter} from "http://deno.land/x/net/bufio.ts";
+import {Closer, Conn, dial, Reader, Writer} from "deno"
+import {BufReader, BufWriter} from "https://deno.land/x/net/bufio.ts";
 import {ConnectionClosedError} from "./errors.ts";
 import {psubscribe, RedisSubscription, subscribe} from "./pubsub.ts";
-import {sendCommand} from "./io.ts";
+import {RedisRawReply, sendCommand} from "./io.ts";
+import {createRedisPipeline, RedisPipeline} from "./pipeline.ts";
 
 export type Redis = {
     // Connection
@@ -292,12 +293,14 @@ export type Redis = {
     script_flush(): Promise<string>
     script_kill(): Promise<string>
     script_load(script: string): Promise<string>
-    // Transaction
+    // multi
     multi(): Promise<string>
     exec(): Promise<string[]>
     discard(): Promise<string>
     watch(...keys: string[]): Promise<string>
     unwatch(): Promise<string>
+    // pipeline
+    pipeline(): RedisPipeline;
     // scan
     scan(cursor: number, opts?: {
         pattern?: string,
@@ -319,47 +322,48 @@ export type Redis = {
     close()
 } ;
 
-class RedisImpl implements Redis {
-    writer: BufWriter;
-    reader: BufReader;
+export interface CommandExecutor {
+    execRawReply(command: string, ...args: (string | number)[]): Promise<RedisRawReply>
+}
+
+class RedisImpl implements Redis, CommandExecutor {
     _isClosed = false;
     get isClosed() {
         return this._isClosed;
     }
 
-    constructor(private readonly conn: Conn) {
-        this.writer = new BufWriter(conn);
-        this.reader = new BufReader(conn);
+    constructor(
+        private closer: Closer,
+        private writer: BufWriter,
+        private reader: BufReader,
+        private executor?: CommandExecutor
+    ) {
+        this.executor = executor || this;
     }
 
-    private async execRawReply<T extends "I" | "S" | "B" | "A">(command: string, ...args: (string | number)[]): Promise<{
-        I: number,
-        S: string,
-        B: string | undefined,
-        A: any[]
-    }[T]> {
+    async execRawReply(command: string, ...args: (string | number)[]): Promise<RedisRawReply> {
         if (this.isClosed) throw new ConnectionClosedError();
         return sendCommand(this.writer, this.reader, command, ...args);
     }
 
-    private async execStatusReply(command: string, ...args: (string | number)[]): Promise<string> {
-        return this.execRawReply<"S">(command, ...args);
+    async execStatusReply(command: string, ...args: (string | number)[]): Promise<string> {
+        const [_,reply] = await this.executor.execRawReply(command, ...args);
+        return reply as string;
     }
 
-    private async execIntegerReply(command: string, ...args: (string | number)[]): Promise<number> {
-        return this.execRawReply<"I">(command, ...args);
+    async execIntegerReply(command: string, ...args: (string | number)[]): Promise<number> {
+        const [_,reply] = await this.executor.execRawReply(command, ...args);
+        return reply as number;
     }
 
-    private async execBulkReply(command: string, ...args: (string | number)[]): Promise<string> {
-        return this.execRawReply<"B">(command, ...args);
+    async execBulkReply(command: string, ...args: (string | number)[]): Promise<string> {
+        const [_,reply] = await this.executor.execRawReply(command, ...args);
+        return reply as string;
     }
 
-    private async execIntegerOrNilReply(command: string, ...args: (string | number)[]): Promise<number | undefined> {
-        return this.execRawReply(command, ...args) as Promise<number | undefined>;
-    }
-
-    private async execArrayReply(command: string, ...args: (string | number)[]): Promise<any[]> {
-        return this.execRawReply<"A">(command, ...args)
+    async execArrayReply(command: string, ...args: (string | number)[]): Promise<any[]> {
+        const [_,reply] = await this.executor.execRawReply(command, ...args);
+        return reply as any[];
     }
 
     append(key, value) {
@@ -1282,7 +1286,7 @@ class RedisImpl implements Redis {
     }
 
     zrank(key, member) {
-        return this.execIntegerOrNilReply("ZRANK", key, member)
+        return this.execIntegerReply("ZRANK", key, member)
     }
 
     zrem(key, ...members) {
@@ -1312,7 +1316,7 @@ class RedisImpl implements Redis {
     }
 
     zrevrank(key, member) {
-        return this.execIntegerOrNilReply("ZREVRANK", key, member)
+        return this.execIntegerReply("ZREVRANK", key, member)
     }
 
     zscore(key, member) {
@@ -1352,15 +1356,38 @@ class RedisImpl implements Redis {
         return arg;
     }
 
+    // pipeline
+    pipeline() {
+        return createRedisPipeline(this.writer, this.reader);
+    }
+
     // Stream
 
     close() {
-        this.conn.close();
+        this.closer.close();
     }
 
 }
 
 export async function connect(addr: string): Promise<Redis> {
     const conn = await dial("tcp", addr);
-    return new RedisImpl(conn);
+    return create(
+        conn,
+        conn,
+        conn,
+    );
+}
+
+export function create(
+    closer: Closer,
+    writer: Writer,
+    reader: Reader,
+    executor?: CommandExecutor
+) {
+    return new RedisImpl(
+        closer,
+        new BufWriter(writer),
+        new BufReader(reader),
+        executor
+    )
 }

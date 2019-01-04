@@ -32,6 +32,29 @@ const sub = await redis.subscribe("channel");
 
 ```
 
+## Advanced Usage
+
+### Pipelining
+
+https://redis.io/topics/pipelining
+
+```ts
+
+const redis = await connect("127.0.0.1:6379");
+const pl = conn.pipeline();
+await Promise.all([
+    pl.ping(),
+    pl.ping(),
+    pl.set("set1", "value1"),
+    pl.set("set2", "value2"),
+    pl.mget("set1", "set2"),
+    pl.del("set1"),
+    pl.del("set2")
+]);
+const replies = await pl.flush();
+
+```
+
 ## Compatibility Table (5.0.3)
 
 ### Connection
