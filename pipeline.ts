@@ -1,4 +1,4 @@
-import {BufReader, BufWriter} from "https://deno.land/x/net/bufio.ts";
+import {BufReader, BufWriter} from "https://deno.land/x/io@v0.2.6/bufio.ts";
 import {createRequest, readReply, RedisRawReply} from "./io.ts";
 import {ErrorReplyError} from "./errors.ts";
 import {create, Redis} from "./redis.ts";

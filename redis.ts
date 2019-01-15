@@ -1,5 +1,5 @@
 import {Closer, Conn, dial, Reader, Writer} from "deno"
-import {BufReader, BufWriter} from "https://deno.land/x/net/bufio.ts";
+import {BufReader, BufWriter} from "https://deno.land/x/io@v0.2.6/bufio.ts";
 import {ConnectionClosedError} from "./errors.ts";
 import {psubscribe, RedisSubscription, subscribe} from "./pubsub.ts";
 import {RedisRawReply, sendCommand} from "./io.ts";

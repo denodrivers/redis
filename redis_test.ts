@@ -1,6 +1,6 @@
 import {connect} from "./redis.ts";
-import {setFilter, test} from "https://deno.land/x/testing/mod.ts"
-import {assertEqual} from "https://deno.land/x/pretty_assert/mod.ts"
+import {setFilter, test} from "https://deno.land/x/testing@v0.2.6/mod.ts"
+import {assertEqual} from "https://deno.land/x/pretty_assert@0.1.4/mod.ts"
 import {args} from "deno";
 
 if (args.length > 1) {
