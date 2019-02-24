@@ -1,5 +1,4 @@
-import {test} from "https://deno.land/x/testing@v0.2.6/mod.ts";
-import {assertEqual} from "https://deno.land/x/pretty_assert@0.1.4/mod.ts";
+import {test, assert} from "https://deno.land/x/std@v0.2.11/testing/mod.ts";
 import {connect} from "./redis.ts";
 
 const addr = "127.0.0.1:6379";
@@ -16,7 +15,7 @@ test(async function testPipeline() {
         pl.del("set2")
     ]);
     const ret = await pl.flush();
-    assertEqual(ret, [
+    assert.equal(ret, [
         ["status", "PONG"],
         ["status", "PONG"],
         ["status", "OK"],
@@ -56,7 +55,7 @@ test(async function testTx() {
     const rep2 = await tx2.flush();
     const rep3 = await tx3.flush();
     console.log(rep1);
-    assertEqual(parseInt(rep1[4][1] as string), parseInt(rep1[0][1] as string) + 3);
-    assertEqual(parseInt(rep2[4][1] as string), parseInt(rep2[0][1] as string) + 3);
-    assertEqual(parseInt(rep3[4][1] as string), parseInt(rep3[0][1] as string) + 3);
+    assert.equal(parseInt(rep1[4][1] as string), parseInt(rep1[0][1] as string) + 3);
+    assert.equal(parseInt(rep2[4][1] as string), parseInt(rep2[0][1] as string) + 3);
+    assert.equal(parseInt(rep3[4][1] as string), parseInt(rep3[0][1] as string) + 3);
 });

@@ -1,5 +1,5 @@
-import {BufReader, BufWriter} from "https://deno.land/x/io@v0.2.6/bufio.ts";
-import {Buffer} from "deno";
+import {BufReader, BufWriter} from "https://deno.land/x/io@v0.2.11/bufio.ts";
+import Buffer = Deno.Buffer;
 import {ErrorReplyError} from "./errors.ts";
 
 export type RedisRawReply =
