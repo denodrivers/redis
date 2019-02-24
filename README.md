@@ -1,8 +1,8 @@
 # deno-redis
+
 [![Build Status](https://travis-ci.com/keroxp/deno-redis.svg?branch=master)](https://travis-ci.com/keroxp/deno-redis)
 
 An experimental implementation of redis client for deno
-
 
 ## Usage
 
@@ -11,25 +11,21 @@ needs `--allow-net` privilege
 **Stateless Commands**
 
 ```ts
-
-import {connect} from "https://denopkg.com/keroxp/deno-redis/redis.ts"
+import { connect } from "https://denopkg.com/keroxp/deno-redis/redis.ts";
 const redis = await connect("127.0.0.1:6379");
-const ok = await redis.set("hoge","fuga")
+const ok = await redis.set("hoge", "fuga");
 const fuga = await redis.get("hoge");
-
 ```
 
 **PubSub**
 
 ```ts
-
 const sub = await redis.subscribe("channel");
 (async function() {
-  for await (const {channel, message} of sub.receive()) {
+  for await (const { channel, message } of sub.receive()) {
     // on message
   }
-})()
-
+})();
 ```
 
 ## Advanced Usage
@@ -39,39 +35,32 @@ const sub = await redis.subscribe("channel");
 https://redis.io/topics/pipelining
 
 ```ts
-
 const redis = await connect("127.0.0.1:6379");
 const pl = redis.pipeline();
 await Promise.all([
-    pl.ping(),
-    pl.ping(),
-    pl.set("set1", "value1"),
-    pl.set("set2", "value2"),
-    pl.mget("set1", "set2"),
-    pl.del("set1"),
-    pl.del("set2")
+  pl.ping(),
+  pl.ping(),
+  pl.set("set1", "value1"),
+  pl.set("set2", "value2"),
+  pl.mget("set1", "set2"),
+  pl.del("set1"),
+  pl.del("set2")
 ]);
 const replies = await pl.flush();
-
 ```
-
 
 ### TxPipeline (pipeline with MULTI/EXEC)
 
 We recommend to use `tx()` instead of `multi()/exec()` for transactional operation.  
 `MULTI/EXEC` are potentially stateful operation so that operation's atomicity is guaranteed but redis's state may change between MULTI and EXEC.
 
-`WATCH` is designed for these problems. You can ignore it by using TxPipeline because pipelined MULTI/EXEC commands are strictly executed in order at the time and no changes will happen during execution. 
+`WATCH` is designed for these problems. You can ignore it by using TxPipeline because pipelined MULTI/EXEC commands are strictly executed in order at the time and no changes will happen during execution.
 
 See detail https://redis.io/topics/transactions
 
 ```ts
 const tx = redis.tx();
-await Promise.all([
-   tx.set("a", "aa"),
-   tx.set("b", "bb"),
-   tx.del("c"),
-])
+await Promise.all([tx.set("a", "aa"), tx.set("b", "bb"), tx.del("c")]);
 await tx.flush();
 // MULTI
 // SET a aa
@@ -80,24 +69,25 @@ await tx.flush();
 // EXEC
 ```
 
-
 ## Compatibility Table (5.0.3)
 
 ### Connection
-- [x] AUTH 
+
+- [x] AUTH
 - [x] ECHO
 - [x] PING
 - [x] QUIT
-- [x] SELECT 
+- [x] SELECT
 - [x] SWAPDB
 
-### Keys 
+### Keys
+
 - [x] DEL
 - [x] DUMP
 - [x] EXISTS
 - [x] EXPIRE
 - [x] EXPIREAT
-- [x] KEYS 
+- [x] KEYS
 - [x] MIGRATE
 - [x] MOVE
 - [x] OBJECT
@@ -152,8 +142,8 @@ await tx.flush();
 - [x] LINDEX
 - [x] LINSERT
 - [x] LLEN
-- [x] LPOP 
-- [x] LPUSH 
+- [x] LPOP
+- [x] LPUSH
 - [x] LPUSHX
 - [x] LRANGE
 - [x] LREM
@@ -165,6 +155,7 @@ await tx.flush();
 - [x] RPUSHX
 
 ### Set
+
 - [x] SADD
 - [x] SCARD
 - [x] SDIFF
@@ -178,20 +169,20 @@ await tx.flush();
 - [x] SRANDMEMBER
 - [x] SREM
 
-
 ### SortedSet
+
 - [x] BZPOPMIN
 - [x] BZPOPMAX
 - [x] ZADD
-- [x] ZCARD 
+- [x] ZCARD
 - [x] ZCOUNT
-- [x] ZINCRBY 
+- [x] ZINCRBY
 - [x] ZINTERSTORE
 - [x] ZLEXCOUNT
 - [x] ZPOPMAX
 - [x] ZPOPMIN
-- [x] ZRANGE 
-- [x] ZRANGEBYLEX 
+- [x] ZRANGE
+- [x] ZRANGEBYLEX
 - [x] ZREVRANGEBYLEX
 - [x] ZRANGEBYSCORE
 - [x] ZRANK
@@ -207,6 +198,7 @@ await tx.flush();
 - [x] ZSCAN
 
 ### HashMap
+
 - [x] HDEL
 - [x] HEXISTS
 - [x] HGET
@@ -220,7 +212,7 @@ await tx.flush();
 - [x] HSET
 - [x] HSETNX
 - [x] HSTRLEN
-- [x] HVALS 
+- [x] HVALS
 - [x] HSCAN
 
 ### GEO
@@ -247,26 +239,28 @@ None
 
 ### HyperLogLog
 
-- [x]  PFADD
-- [x]  PFCOUNT 
-- [x]  PFMERGE 
+- [x] PFADD
+- [x] PFCOUNT
+- [x] PFMERGE
 
 ### Multi
-- [x]  MULTI 
-- [x]  EXEC 
-- [x]  DISCARD 
-- [x]  WATCH
-- [x]  UNWATCH
+
+- [x] MULTI
+- [x] EXEC
+- [x] DISCARD
+- [x] WATCH
+- [x] UNWATCH
 
 ### PubSub
+
 - [x] PSUBSCRIBE
 - [x] PUBSUB
 - [x] PUBLISH
 - [x] PUNSUBSCRIBE
-- [x] SUBSCRIBE 
+- [x] SUBSCRIBE
 - [x] UNSUBSCRIBE
 
-### Scripting 
+### Scripting
 
 - [x] EVAL
 - [x] EVALSHA
