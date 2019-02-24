@@ -1,14 +1,13 @@
 {
   "compilerOptions": {
     "target": "es2018",
-    "baseUrl": ".",
+    "baseUrl": "/Users/keroxp/Library/Caches",
     "paths": {
-      "deno": ["./deno.d.ts"],
       "https://*": [
-        "../../.deno/deps/https/*"
+        "./deno/deps/https/*"
       ],
       "http://*": [
-        "../../.deno/deps/http/*"
+        "./deno/deps/http/*"
       ]
     }
   }

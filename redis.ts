@@ -1,5 +1,7 @@
-import {Closer, Conn, dial, Reader, Writer} from "deno"
-import {BufReader, BufWriter} from "https://deno.land/x/io@v0.2.6/bufio.ts";
+type Reader = Deno.Reader;
+type Writer = Deno.Writer;
+type Closer = Deno.Closer;
+import {BufReader, BufWriter} from "https://deno.land/x/io@v0.2.11/bufio.ts";
 import {ConnectionClosedError} from "./errors.ts";
 import {psubscribe, RedisSubscription, subscribe} from "./pubsub.ts";
 import {RedisRawReply, sendCommand} from "./io.ts";
@@ -1375,7 +1377,7 @@ class RedisImpl implements Redis, CommandExecutor {
 }
 
 export async function connect(addr: string): Promise<Redis> {
-    const conn = await dial("tcp", addr);
+    const conn = await Deno.dial("tcp", addr);
     return create(
         conn,
         conn,
