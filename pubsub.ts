@@ -1,4 +1,4 @@
-import { BufReader, BufWriter } from "https://deno.land/x/io@v0.2.11/bufio.ts";
+import { BufReader, BufWriter } from "https://deno.land/x/io@v0.3.1/bufio.ts";
 import { readArrayReply, sendCommand } from "./io.ts";
 
 export type RedisSubscription = {

@@ -1,4 +1,5 @@
-import { test, assert } from "https://deno.land/x/std@v0.2.11/testing/mod.ts";
+import { test } from "https://deno.land/std@v0.3.1/testing/mod.ts";
+import { assertEquals } from "https://deno.land/std@v0.3.1/testing/asserts.ts";
 import { connect } from "./redis.ts";
 import { RedisPubSubMessage } from "./pubsub.ts";
 
@@ -16,7 +17,7 @@ test(async function testSubscribe() {
   //const hoge = await redis.get("hoge");
   const unsub = await sub.unsubscribe("subsc");
   await sub.close();
-  assert.equal(sub.isClosed, true);
+  assertEquals(sub.isClosed, true);
   redis.close();
 });
 
@@ -32,12 +33,12 @@ test(async function testSubscribe2() {
   await pub.publish("subsc2", "wayway");
   await sub.close();
   await wait(100);
-  assert.equal(message, {
+  assertEquals(message, {
     channel: "subsc2",
     message: "wayway"
   });
   const a = await redis.get("aaa");
-  assert.equal(a, void 0);
+  assertEquals(a, void 0);
   pub.close();
   redis.close();
 });
@@ -57,12 +58,12 @@ test(async function testPsubscribe() {
   await pub.publish("psubs", "heyhey");
   await sub.close();
   await wait(100);
-  assert.equal(message1, {
+  assertEquals(message1, {
     pattern: "ps*",
     channel: "psub",
     message: "wayway"
   });
-  assert.equal(message2, {
+  assertEquals(message2, {
     pattern: "ps*",
     channel: "psubs",
     message: "heyhey"
