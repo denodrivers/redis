@@ -1,4 +1,4 @@
-import { BufReader, BufWriter } from "https://deno.land/x/io@v0.3.1/bufio.ts";
+import { BufReader, BufWriter } from "https://deno.land/std@v0.3.1/io/bufio.ts";
 import Buffer = Deno.Buffer;
 import { ErrorReplyError } from "./errors.ts";
 
