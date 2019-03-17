@@ -28,7 +28,7 @@ export function createRequest(
   msg += `${command}\r\n`;
   for (const arg of _args) {
     const val = String(arg);
-    const bytesLen = encoder.encode(val).length;
+    const bytesLen = encoder.encode(val).byteLength;
     msg += `$${bytesLen}\r\n`;
     msg += `${val}\r\n`;
   }
