@@ -36,10 +36,10 @@ test(async function testGetWhenNil() {
 });
 test(async function testSet() {
   const redis = await connect(addr);
-  const s = await redis.set("get", "fuga");
+  const s = await redis.set("get", "fuga你好こんにちは");
   assertEquals(s, "OK");
   const fuga = await redis.get("get");
-  assertEquals(fuga, "fuga");
+  assertEquals(fuga, "fuga你好こんにちは");
   redis.close();
 });
 test(async function testGetSet() {
