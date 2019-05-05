@@ -1,5 +1,5 @@
-import { test } from "https://deno.land/std@v0.3.2/testing/mod.ts";
-import { assertEquals } from "https://deno.land/std@v0.3.2/testing/asserts.ts";
+import { test } from "https://deno.land/std@v0.4.0/testing/mod.ts";
+import { assertEquals } from "https://deno.land/std@v0.4.0/testing/asserts.ts";
 import { connect } from "./redis.ts";
 import { RedisPubSubMessage } from "./pubsub.ts";
 
