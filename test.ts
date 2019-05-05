@@ -1,4 +1,3 @@
-#!/usr/bin/env deno run --allow-net
 import "./redis_test.ts";
 import "./pubsub_test.ts";
 import "./pipeline_test.ts";
