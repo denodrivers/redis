@@ -1,5 +1,5 @@
 import { BufReader, BufWriter } from "https://deno.land/std@v0.7.0/io/bufio.ts";
-import { readArrayReply, sendCommand } from "./io.ts";
+import { createRequest, readArrayReply, sendCommand } from "./io.ts";
 
 export type RedisSubscription = {
   readonly isClosed: boolean;
@@ -77,9 +77,7 @@ class RedisSubscriptionImpl implements RedisSubscription {
 
   async close() {
     try {
-      console.log("unsubscribing");
       await this.unsubscribe(...Object.keys(this.channels));
-      console.log("unsubscribing done");
       await this.punsubscribe(...Object.keys(this.patterns));
     } finally {
       this._isClosed = true;

@@ -42,7 +42,7 @@ export function createRequest(
 export async function sendCommand(
   writer: BufWriter,
   reader: BufReader,
-  command,
+  command: string,
   ...args
 ): Promise<RedisRawReply> {
   const msg = createRequest(command, ...args);
