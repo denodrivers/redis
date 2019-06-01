@@ -1,4 +1,8 @@
-import { BufReader, BufWriter } from "https://deno.land/std@v0.3.2/io/bufio.ts";
+import {
+  BufReader,
+  BufWriter,
+  EOF
+} from "https://deno.land/std@v0.7.0/io/bufio.ts";
 import Buffer = Deno.Buffer;
 import { ErrorReplyError } from "./errors.ts";
 
@@ -48,8 +52,11 @@ export async function sendCommand(
 }
 
 export async function readReply(reader: BufReader): Promise<RedisRawReply> {
-  const [b] = await reader.peek(1);
-  switch (b[0]) {
+  const res = await reader.peek(1);
+  if (res === EOF) {
+    throw EOF;
+  }
+  switch (res[0]) {
     case IntegerReplyCode:
       return ["integer", await readIntegerReply(reader)];
     case SimpleStringCode:
@@ -118,7 +125,10 @@ export async function readArrayReply(reader: BufReader): Promise<any[]> {
   const argCount = parseInt(line.substr(1, line.length - 3));
   const result = [];
   for (let i = 0; i < argCount; i++) {
-    const [res] = await reader.peek(1);
+    const res = await reader.peek(1);
+    if (res === EOF) {
+      throw EOF;
+    }
     switch (res[0]) {
       case SimpleStringCode:
         result.push(await readStatusReply(reader));

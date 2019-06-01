@@ -1,14 +1,14 @@
-import { BufReader, BufWriter } from "https://deno.land/std@v0.3.2/io/bufio.ts";
+import { BufReader, BufWriter } from "https://deno.land/std@v0.7.0/io/bufio.ts";
 import { readArrayReply, sendCommand } from "./io.ts";
 
 export type RedisSubscription = {
   readonly isClosed: boolean;
   receive(): AsyncIterableIterator<RedisPubSubMessage>;
-  psubscribe(...patterns: string[]);
-  subscribe(...channels: string[]);
-  punsubscribe(...patterns: string[]);
-  unsubscribe(...channels: string[]);
-  close();
+  psubscribe(...patterns: string[]): Promise<void>;
+  subscribe(...channels: string[]): Promise<void>;
+  punsubscribe(...patterns: string[]): Promise<void>;
+  unsubscribe(...channels: string[]): Promise<void>;
+  close(): Promise<void>;
 };
 
 export type RedisPubSubMessage = {
@@ -77,7 +77,9 @@ class RedisSubscriptionImpl implements RedisSubscription {
 
   async close() {
     try {
+      console.log("unsubscribing");
       await this.unsubscribe(...Object.keys(this.channels));
+      console.log("unsubscribing done");
       await this.punsubscribe(...Object.keys(this.patterns));
     } finally {
       this._isClosed = true;
@@ -89,7 +91,7 @@ export async function subscribe(
   writer: BufWriter,
   reader: BufReader,
   ...channels: string[]
-) {
+): Promise<RedisSubscription> {
   const sub = new RedisSubscriptionImpl(writer, reader);
   await sub.subscribe(...channels);
   return sub;
@@ -99,7 +101,7 @@ export async function psubscribe(
   writer: BufWriter,
   reader: BufReader,
   ...patterns: string[]
-) {
+): Promise<RedisSubscription> {
   const sub = new RedisSubscriptionImpl(writer, reader);
   await sub.psubscribe(...patterns);
   return sub;

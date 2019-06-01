@@ -1,5 +1,5 @@
-import { test } from "https://deno.land/std@v0.3.2/testing/mod.ts";
-import { assertEquals } from "https://deno.land/std@v0.3.2/testing/asserts.ts";
+import { test } from "https://deno.land/std@v0.7.0/testing/mod.ts";
+import { assertEquals } from "https://deno.land/std@v0.7.0/testing/asserts.ts";
 import { connect } from "./redis.ts";
 import { RedisPubSubMessage } from "./pubsub.ts";
 
@@ -32,7 +32,6 @@ test(async function testSubscribe2() {
   })();
   await pub.publish("subsc2", "wayway");
   await sub.close();
-  await wait(100);
   assertEquals(message, {
     channel: "subsc2",
     message: "wayway"
@@ -57,7 +56,6 @@ test(async function testPsubscribe() {
   await pub.publish("psub", "wayway");
   await pub.publish("psubs", "heyhey");
   await sub.close();
-  await wait(100);
   assertEquals(message1, {
     pattern: "ps*",
     channel: "psub",
