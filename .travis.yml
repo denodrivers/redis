@@ -1,11 +1,11 @@
 language: python
 
 install:
-- curl -fsSL https://deno.land/x/install/install.sh | sh -s -- v0.3.3
+- curl -fsSL https://deno.land/x/install/install.sh | sh -s -- v0.7.0
 - export PATH="$HOME/.deno/bin:$PATH"
 
 services:
 - redis
 
 script:
-- make test
+- deno run --allow-net test.ts 

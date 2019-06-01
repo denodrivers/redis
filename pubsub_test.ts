@@ -1,5 +1,5 @@
-import { test } from "https://deno.land/std@v0.3.2/testing/mod.ts";
-import { assertEquals } from "https://deno.land/std@v0.3.2/testing/asserts.ts";
+import { test } from "https://deno.land/std@v0.7.0/testing/mod.ts";
+import { assertEquals } from "https://deno.land/std@v0.7.0/testing/asserts.ts";
 import { connect } from "./redis.ts";
 import { RedisPubSubMessage } from "./pubsub.ts";
 
@@ -26,17 +26,17 @@ test(async function testSubscribe2() {
   const pub = await connect(addr);
   const sub = await redis.subscribe("subsc2");
   let message: RedisPubSubMessage;
-  (async function() {
+  const p = (async function() {
     const it = sub.receive();
     message = (await it.next()).value;
   })();
   await pub.publish("subsc2", "wayway");
-  await sub.close();
-  await wait(100);
+  await p;
   assertEquals(message, {
     channel: "subsc2",
     message: "wayway"
   });
+  await sub.close();
   const a = await redis.get("aaa");
   assertEquals(a, void 0);
   pub.close();
@@ -49,15 +49,14 @@ test(async function testPsubscribe() {
   const sub = await redis.psubscribe("ps*");
   let message1;
   let message2;
-  (async function() {
-    const it = sub.receive();
+  const it = sub.receive();
+  const p = (async function() {
     message1 = (await it.next()).value;
     message2 = (await it.next()).value;
   })();
   await pub.publish("psub", "wayway");
   await pub.publish("psubs", "heyhey");
-  await sub.close();
-  await wait(100);
+  await p;
   assertEquals(message1, {
     pattern: "ps*",
     channel: "psub",
@@ -68,6 +67,7 @@ test(async function testPsubscribe() {
     channel: "psubs",
     message: "heyhey"
   });
+  await sub.close();
   pub.close();
   redis.close();
 });
