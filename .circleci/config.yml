@@ -4,7 +4,7 @@ jobs:
     docker:
       - image: circleci/node:stretch
     environment:
-      PATH: $HOME/:deno/bin:$PATH
+      PATH: "$HOME/.deno/bin:$PATH"
     steps:
       - checkout
       - run:
