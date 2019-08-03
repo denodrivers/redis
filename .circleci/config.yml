@@ -3,7 +3,7 @@ jobs:
   build:
     docker:
       - image: circleci/node:stretch
-      - image: ciecleci/redis:5-alpine
+      - image: circleci/redis:5-alpine
     steps:
       - checkout
       - run:
