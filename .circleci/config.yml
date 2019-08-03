@@ -9,7 +9,9 @@ jobs:
       - checkout
       - run:
           name: Install Deno
-          command: curl -fsSL https://deno.land/x/install/install.sh | sh -s -- v0.13.0
+          command: |
+            apt-get install curl
+            curl -fsSL https://deno.land/x/install/install.sh | bash -s -- v0.13.0
       - run:
           name: Run Tests
           command: deno -A test.ts
