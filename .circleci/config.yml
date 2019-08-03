@@ -1,0 +1,15 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: debian:stretch
+    environment:
+      PATH: $HOME/:deno/bin:$PATH
+    steps:
+      - checkout
+      - run:
+          name: Install Deno
+          command: curl -fsSL https://deno.land/x/install/install.sh | sh -s -- v0.13.0
+      - run:
+          name: Run Tests
+          command: deno -A test.ts
