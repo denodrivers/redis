@@ -55,7 +55,6 @@ test(async function testTx() {
   const rep1 = await tx1.flush();
   const rep2 = await tx2.flush();
   const rep3 = await tx3.flush();
-  console.log(rep1);
   assertEquals(
     parseInt(rep1[4][1] as string),
     parseInt(rep1[0][1] as string) + 3
