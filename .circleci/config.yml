@@ -1,8 +1,6 @@
 version: 2
 jobs:
   build:
-    environment:
-      PATH: $HOME/:deno/bin:$PATH
     docker:
       - image: circleci/node:stretch
       - image: circleci/redis:5-alpine
@@ -13,4 +11,6 @@ jobs:
           command: curl -fsSL https://deno.land/x/install/install.sh | sh -s -- v0.17.0
       - run:
           name: Run Tests
-          command: deno -A test.ts
+          command: |
+            export PATH=$HOME/.deno/bin:$PATH
+            deno -A test.ts
