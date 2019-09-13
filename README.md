@@ -3,8 +3,8 @@
 [![Build Status](https://travis-ci.com/keroxp/deno-redis.svg?branch=master)](https://travis-ci.com/keroxp/deno-redis)
 ![https://img.shields.io/github/tag/keroxp/deno-redis.svg](https://img.shields.io/github/tag/keroxp/deno-redis.svg)
 [![license](https://img.shields.io/github/license/keroxp/deno-redis.svg)](https://github.com/keroxp/deno-redis)
-[![tag](https://img.shields.io/badge/deno__std-v0.12.0-green.svg)](https://github.com/denoland/deno_std)
-[![tag](https://img.shields.io/badge/deno-v0.12.0-green.svg)](https://github.com/denoland/deno)
+[![tag](https://img.shields.io/badge/deno__std-v0.17.0-green.svg)](https://github.com/denoland/deno_std)
+[![tag](https://img.shields.io/badge/deno-v0.17.0-green.svg)](https://github.com/denoland/deno)
 
 An experimental implementation of redis client for deno
 
