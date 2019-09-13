@@ -1,10 +1,11 @@
 version: 2
 jobs:
   build:
-    docker:
-      - image: debian:stretch
     environment:
       PATH: $HOME/:deno/bin:$PATH
+    docker:
+      - image: circleci/node:stretch
+      - image: circleci/redis:5-alpine
     steps:
       - checkout
       - run:

@@ -1,6 +1,6 @@
 # deno-redis
 
-[![Build Status](https://travis-ci.com/keroxp/deno-redis.svg?branch=master)](https://travis-ci.com/keroxp/deno-redis)
+[![CircleCI](https://circleci.com/gh/keroxp/deno-redis.svg?style=svg)](https://circleci.com/gh/keroxp/deno-redis)
 ![https://img.shields.io/github/tag/keroxp/deno-redis.svg](https://img.shields.io/github/tag/keroxp/deno-redis.svg)
 [![license](https://img.shields.io/github/license/keroxp/deno-redis.svg)](https://github.com/keroxp/deno-redis)
 [![tag](https://img.shields.io/badge/deno__std-v0.17.0-green.svg)](https://github.com/denoland/deno_std)
