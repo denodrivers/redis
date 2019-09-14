@@ -1,5 +1,5 @@
-import { test } from "https://deno.land/std@v0.17.0/testing/mod.ts";
-import { assertEquals } from "https://deno.land/std@v0.17.0/testing/asserts.ts";
+import { test } from "./vendor/https/deno.land/std/testing/mod.ts";
+import { assertEquals } from "./vendor/https/deno.land/std/testing/asserts.ts";
 import { connect } from "./redis.ts";
 
 const addr = "127.0.0.1:6379";

@@ -1,10 +1,7 @@
 type Reader = Deno.Reader;
 type Writer = Deno.Writer;
 type Closer = Deno.Closer;
-import {
-  BufReader,
-  BufWriter
-} from "https://deno.land/std@v0.17.0/io/bufio.ts";
+import { BufReader, BufWriter } from "./vendor/https/deno.land/std/io/bufio.ts";
 import { ConnectionClosedError } from "./errors.ts";
 import { psubscribe, RedisSubscription, subscribe } from "./pubsub.ts";
 import { RedisRawReply, sendCommand } from "./io.ts";
