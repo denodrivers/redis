@@ -1,1 +1,11 @@
-{"https://deno.land/std":{"version":"@v0.18.0","modules":["/testing/mod.ts","/testing/asserts.ts","/io/bufio.ts","/fmt/colors.ts"]}}
+{
+  "https://deno.land/std": {
+    "version": "@v0.18.0",
+    "modules": [
+      "/testing/mod.ts",
+      "/testing/asserts.ts",
+      "/io/bufio.ts",
+      "/fmt/colors.ts"
+    ]
+  }
+}
