@@ -1,8 +1,14 @@
 import { connect } from "./redis.ts";
-import { test } from "./vendor/https/deno.land/std/testing/mod.ts";
-import { assertEquals } from "./vendor/https/deno.land/std/testing/asserts.ts";
+import { runIfMain, test } from "./vendor/https/deno.land/std/testing/mod.ts";
+import {
+  assertEquals,
+  assertThrowsAsync
+} from "./vendor/https/deno.land/std/testing/asserts.ts";
 // can be substituted with env variable
-const addr = "127.0.0.1:6379";
+const addr = {
+  hostname: "127.0.0.1",
+  port: 6379
+};
 
 test(async function beforeAll() {
   const redis = await connect(addr);
@@ -101,3 +107,17 @@ test(async function testDecrby() {
   assertEquals(await redis.get("decryby"), "-101");
   redis.close();
 });
+
+[Infinity, NaN, "", "port"].forEach(v => {
+  test(`invalid port: ${v}`, () => {
+    assertThrowsAsync(
+      async () => {
+        await connect({ hostname: "127.0.0.1", port: v });
+      },
+      Error,
+      "invalid"
+    );
+  });
+});
+
+runIfMain(import.meta);

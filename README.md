@@ -3,8 +3,8 @@
 [![CircleCI](https://circleci.com/gh/keroxp/deno-redis.svg?style=svg)](https://circleci.com/gh/keroxp/deno-redis)
 ![https://img.shields.io/github/tag/keroxp/deno-redis.svg](https://img.shields.io/github/tag/keroxp/deno-redis.svg)
 [![license](https://img.shields.io/github/license/keroxp/deno-redis.svg)](https://github.com/keroxp/deno-redis)
-[![tag](https://img.shields.io/badge/deno__std-v0.17.0-green.svg)](https://github.com/denoland/deno_std)
-[![tag](https://img.shields.io/badge/deno-v0.17.0-green.svg)](https://github.com/denoland/deno)
+[![tag](https://img.shields.io/badge/deno__std-v0.18.0-green.svg)](https://github.com/denoland/deno_std)
+[![tag](https://img.shields.io/badge/deno-v0.19.0-green.svg)](https://github.com/denoland/deno)
 
 An experimental implementation of redis client for deno
 
@@ -16,7 +16,10 @@ needs `--allow-net` privilege
 
 ```ts
 import { connect } from "https://denopkg.com/keroxp/deno-redis/redis.ts";
-const redis = await connect("127.0.0.1:6379");
+const redis = await connect({
+  hostname: "127.0.0.1",
+  port: 6379
+});
 const ok = await redis.set("hoge", "fuga");
 const fuga = await redis.get("hoge");
 ```
@@ -39,7 +42,10 @@ const sub = await redis.subscribe("channel");
 https://redis.io/topics/pipelining
 
 ```ts
-const redis = await connect("127.0.0.1:6379");
+const redis = await connect({
+  hostname: "127.0.0.1",
+  port: 6379
+});
 const pl = redis.pipeline();
 await Promise.all([
   pl.ping(),

@@ -14,7 +14,7 @@ export function createRedisPipeline(
   reader: BufReader,
   opts?: { tx: true }
 ): RedisPipeline {
-  let queue = [];
+  let queue: string[] = [];
   const executor = {
     enqueue(command: string, ...args) {
       const msg = createRequest(command, ...args);
@@ -29,7 +29,7 @@ export function createRedisPipeline(
       const msg = queue.join("");
       await writer.write(encoder.encode(msg));
       await writer.flush();
-      const ret = [];
+      const ret: RedisRawReply[] = [];
       for (let i = 0; i < queue.length; i++) {
         try {
           const rep = await readReply(reader);
