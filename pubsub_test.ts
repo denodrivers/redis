@@ -3,7 +3,10 @@ import { assertEquals } from "./vendor/https/deno.land/std/testing/asserts.ts";
 import { connect } from "./redis.ts";
 import { RedisPubSubMessage } from "./pubsub.ts";
 
-const addr = "127.0.0.1:6379";
+const addr = {
+  hostname: "127.0.0.1",
+  port: 6379
+};
 
 async function wait(duration) {
   return new Promise(resolve => {

@@ -1,7 +1,10 @@
+import DialOptions = Deno.DialOptions;
+
 type Reader = Deno.Reader;
 type Writer = Deno.Writer;
 type Closer = Deno.Closer;
 import { BufReader, BufWriter } from "./vendor/https/deno.land/std/io/bufio.ts";
+import { yellow } from "./vendor/https/deno.land/std/fmt/colors.ts";
 import { ConnectionClosedError } from "./errors.ts";
 import { psubscribe, RedisSubscription, subscribe } from "./pubsub.ts";
 import { RedisRawReply, sendCommand } from "./io.ts";
@@ -445,12 +448,12 @@ class RedisImpl implements Redis, CommandExecutor {
   get isClosed() {
     return this._isClosed;
   }
-
+  private executor: CommandExecutor;
   constructor(
     private closer: Closer,
     private writer: BufWriter,
     private reader: BufReader,
-    private executor?: CommandExecutor
+    executor?: CommandExecutor
   ) {
     this.executor = executor || this;
   }
@@ -1502,8 +1505,56 @@ class RedisImpl implements Redis, CommandExecutor {
   }
 }
 
-export async function connect(addr: string): Promise<Redis> {
-  const conn = await Deno.dial("tcp", addr);
+export type RedisConnectOptions = {
+  hostname: string;
+  port?: number | string;
+  tls?: boolean;
+};
+
+/**
+ * Connect to Redis server
+ * @param opts redis server's url http/https url with port number
+ * Examples:
+ *  const conn = connect({hostname: "127.0.0.1", port: 6379})// -> tcp, 127.0.0.1:6379
+ *  const conn = connect({hostname: "redis.proxy", port: 443, tls: true}) // -> TLS, redis.proxy:443
+ */
+export async function connect(
+  opts: string | RedisConnectOptions
+): Promise<Redis> {
+  let conn: Deno.Conn;
+  if (typeof opts === "string") {
+    console.warn(
+      yellow(
+        "deno-redis: connect(addr) is now deprecated and will be removed in v0.5.0 (now v0.4.x)"
+      )
+    );
+    const [h, p] = opts.split(":");
+    if (!p) {
+      throw new Error("redis: port must be specified");
+    }
+    const dialOptions: DialOptions = { port: parseInt(p) };
+    if (h) {
+      dialOptions.hostname = h;
+    }
+    conn = await Deno.dial(dialOptions);
+  } else {
+    const { hostname } = opts;
+    const port = parseInt(`${opts.port}`);
+    if (!Number.isSafeInteger(port)) {
+      throw new Error("deno-redis: opts.port is invalid");
+    }
+    if (opts.tls) {
+      conn = await Deno.dialTLS({
+        hostname,
+        port
+      });
+    } else {
+      conn = await Deno.dial({
+        hostname,
+        port
+      });
+    }
+  }
   return create(conn, conn, conn);
 }
 

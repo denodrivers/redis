@@ -1,5 +1,5 @@
 import { BufReader, BufWriter } from "./vendor/https/deno.land/std/io/bufio.ts";
-import { createRequest, readArrayReply, sendCommand } from "./io.ts";
+import { readArrayReply, sendCommand } from "./io.ts";
 
 export type RedisSubscription = {
   readonly isClosed: boolean;
