@@ -9,6 +9,7 @@ import { ConnectionClosedError } from "./errors.ts";
 import { psubscribe, RedisSubscription, subscribe } from "./pubsub.ts";
 import { RedisRawReply, sendCommand } from "./io.ts";
 import { createRedisPipeline, RedisPipeline } from "./pipeline.ts";
+import { deferred, Deferred } from "./vendor/https/deno.land/std/util/async.ts";
 
 export type Redis = {
   // Connection
@@ -443,11 +444,46 @@ export interface CommandExecutor {
   ): Promise<RedisRawReply>;
 }
 
-class RedisImpl implements Redis, CommandExecutor {
+export function muxExecutor(r: BufReader, w: BufWriter): CommandExecutor {
+  let queue: {
+    command: string;
+    args: (string | number)[];
+    d: Deferred<RedisRawReply>;
+  }[] = [];
+
+  function dequeue(): void {
+    const [e] = queue;
+    if (!e) return;
+    sendCommand(w, r, e.command, ...e.args)
+      .then(v => e.d.resolve(v))
+      .catch(err => e.d.reject(err))
+      .finally(() => {
+        queue.shift();
+        dequeue();
+      });
+  }
+
+  return {
+    async execRawReply(
+      command: string,
+      ...args: (string | number)[]
+    ): Promise<RedisRawReply> {
+      const d = deferred<RedisRawReply>();
+      queue.push({ command, args, d });
+      if (queue.length === 1) {
+        dequeue();
+      }
+      return d;
+    }
+  };
+}
+
+class RedisImpl implements Redis {
   _isClosed = false;
   get isClosed() {
     return this._isClosed;
   }
+
   private executor: CommandExecutor;
   constructor(
     private closer: Closer,
@@ -455,7 +491,7 @@ class RedisImpl implements Redis, CommandExecutor {
     private reader: BufReader,
     executor?: CommandExecutor
   ) {
-    this.executor = executor || this;
+    this.executor = executor || muxExecutor(reader, writer);
   }
 
   async execRawReply(

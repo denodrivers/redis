@@ -1,4 +1,4 @@
-import { test } from "./vendor/https/deno.land/std/testing/mod.ts";
+import { runIfMain, test } from "./vendor/https/deno.land/std/testing/mod.ts";
 import { assertEquals } from "./vendor/https/deno.land/std/testing/asserts.ts";
 import { connect } from "./redis.ts";
 
@@ -72,3 +72,31 @@ test(async function testTx() {
     parseInt(rep3[0][1] as string) + 3
   );
 });
+
+test("pipeline in concurrent", async () => {
+  const redis = await connect(addr);
+  const tx = redis.pipeline();
+  let promises: Promise<any>[] = [];
+  await redis.del("a", "b", "c");
+  for (const key of ["a", "b", "c"]) {
+    promises.push(tx.set(key, key));
+  }
+  promises.push(tx.flush());
+  for (const key of ["a", "b", "c"]) {
+    promises.push(tx.get(key));
+  }
+  promises.push(tx.flush());
+  const res = await Promise.all(promises);
+  assertEquals(res, [
+    "OK", //set(a)
+    "OK", //set(b)
+    "OK", //set(c)
+    [["status", "OK"], ["status", "OK"], ["status", "OK"]], //flush()
+    "OK", // get(a)
+    "OK", // get(b)
+    "OK", //get(c)
+    [["bulk", "a"], ["bulk", "b"], ["bulk", "c"]] //flush()
+  ]);
+});
+
+runIfMain(import.meta);
