@@ -2,6 +2,7 @@
   "https://deno.land/std": {
     "version": "@v0.20.0",
     "modules": [
+      "/util/async.ts",
       "/testing/mod.ts",
       "/testing/asserts.ts",
       "/io/bufio.ts",

@@ -1,7 +1,8 @@
 import { BufReader, BufWriter } from "./vendor/https/deno.land/std/io/bufio.ts";
 import { createRequest, readReply, RedisRawReply } from "./io.ts";
 import { ErrorReplyError } from "./errors.ts";
-import { create, Redis } from "./redis.ts";
+import { create, muxExecutor, Redis } from "./redis.ts";
+import { deferred, Deferred } from "./vendor/https/deno.land/std/util/async.ts";
 
 const encoder = new TextEncoder();
 export type RedisPipeline = {
@@ -14,36 +15,62 @@ export function createRedisPipeline(
   reader: BufReader,
   opts?: { tx: true }
 ): RedisPipeline {
-  let queue: string[] = [];
+  let commands: string[] = [];
+  let queue: {
+    commands: string[];
+    d: Deferred<RedisRawReply[]>;
+  }[] = [];
+
+  function dequeue() {
+    const [e] = queue;
+    if (!e) return;
+    exec(e.commands)
+      .then(e.d.resolve)
+      .catch(e.d.reject)
+      .finally(() => {
+        queue.shift();
+        dequeue();
+      });
+  }
+
+  async function exec(cmds: string[]) {
+    const msg = cmds.join("");
+    await writer.write(encoder.encode(msg));
+    await writer.flush();
+    const ret: RedisRawReply[] = [];
+    for (let i = 0; i < cmds.length; i++) {
+      try {
+        const rep = await readReply(reader);
+        ret.push(rep);
+      } catch (e) {
+        if (e.constructor === ErrorReplyError) {
+          ret.push(e);
+        } else {
+          throw e;
+        }
+      }
+    }
+    return ret;
+  }
+
   const executor = {
     enqueue(command: string, ...args) {
       const msg = createRequest(command, ...args);
-      queue.push(msg);
+      commands.push(msg);
     },
     async flush() {
       // wrap pipelined commands with MULTI/EXEC
       if (opts && opts.tx) {
-        queue.splice(0, 0, createRequest("MULTI"));
-        queue.push(createRequest("EXEC"));
+        commands.splice(0, 0, createRequest("MULTI"));
+        commands.push(createRequest("EXEC"));
       }
-      const msg = queue.join("");
-      await writer.write(encoder.encode(msg));
-      await writer.flush();
-      const ret: RedisRawReply[] = [];
-      for (let i = 0; i < queue.length; i++) {
-        try {
-          const rep = await readReply(reader);
-          ret.push(rep);
-        } catch (e) {
-          if (e.constructor === ErrorReplyError) {
-            ret.push(e);
-          } else {
-            throw e;
-          }
-        }
+      const d = deferred<RedisRawReply[]>();
+      queue.push({ commands, d });
+      if (queue.length === 1) {
+        dequeue();
       }
-      queue = [];
-      return ret;
+      commands = [];
+      return d;
     },
     async execRawReply(
       command: string,
