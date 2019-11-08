@@ -69,8 +69,8 @@ export async function readReply(reader: BufReader): Promise<RedisRawReply> {
 export async function readLine(reader: BufReader): Promise<string> {
   let buf = new Uint8Array(1024);
   let loc = 0;
-  while (true) {
-    const d = await reader.readByte();
+  let d: number | Deno.EOF;
+  while ((d = await reader.readByte()) && d !== Deno.EOF) {
     if (d === "\r".charCodeAt(0)) {
       const d1 = await reader.readByte();
       if (d1 === "\n".charCodeAt(0)) {
