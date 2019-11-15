@@ -14,7 +14,7 @@ const addr = {
   port: 6379
 };
 
-let redis:Redis;
+let redis: Redis;
 test(async function beforeAll() {
   redis = await connect(addr);
   await redis.del(
