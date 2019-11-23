@@ -6,7 +6,8 @@ import {
 } from "./vendor/https/deno.land/std/testing/mod.ts";
 import {
   assertEquals,
-  assertThrowsAsync
+  assertThrowsAsync,
+  assertArrayContains
 } from "./vendor/https/deno.land/std/testing/asserts.ts";
 // can be substituted with env variable
 const addr = {
@@ -25,7 +26,9 @@ test(async function beforeAll() {
     "get",
     "getset",
     "del1",
-    "del2"
+    "del2",
+    "spop",
+    "spopWithCount"
   );
 });
 
@@ -95,6 +98,18 @@ test(async function testDecrby() {
   const rep = await redis.decrby("decryby", 101);
   assertEquals(rep, -101);
   assertEquals(await redis.get("decryby"), "-101");
+});
+
+test(async function testSpop() {
+  await redis.sadd("spop", "a");
+  const v = await redis.spop("spop");
+  assertEquals(v, "a");
+});
+
+test(async function testSpopWithCount() {
+  await redis.sadd("spopWithCount", "a", "b");
+  const v = await redis.spop("spopWithCount", 2);
+  assertArrayContains(v, ["a", "b"]);
 });
 
 test(async function testConcurrent() {
