@@ -232,7 +232,8 @@ export type Redis = {
   sismember(key: string, member: string): Promise<number>;
   smembers(key: string): Promise<string[]>;
   smove(source: string, destination: string, member: string): Promise<number>;
-  spop(key: string, count?: number): Promise<string>;
+  spop(key: string): Promise<string>;
+  spop(key: string, count: number): Promise<string[]>;
   srandmember(key: string, count?: number): Promise<string>;
   srem(key: string, ...members: string[]): Promise<number>;
   sunion(...keys: string[]): Promise<string[]>;
@@ -1266,7 +1267,9 @@ class RedisImpl implements Redis {
     }
   }
 
-  spop(...args) {
+  spop(key: string): Promise<string>;
+  spop(key: string, count: number): Promise<string[]>;
+  spop(...args): Promise<string | string[]> {
     return this.execStatusReply("SPOP", ...args);
   }
 
