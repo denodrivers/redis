@@ -1548,6 +1548,7 @@ export type RedisConnectOptions = {
   hostname: string;
   port?: number | string;
   tls?: boolean;
+  db?: number;
 };
 
 /**
@@ -1560,7 +1561,8 @@ export type RedisConnectOptions = {
 export async function connect({
   hostname,
   port,
-  tls
+  tls,
+  db,
 }: RedisConnectOptions): Promise<Redis> {
   const dialOpts: DialOptions = {
     hostname,
@@ -1572,7 +1574,11 @@ export async function connect({
   const conn: Deno.Conn = tls
     ? await Deno.dialTLS(dialOpts)
     : await Deno.dial(dialOpts);
-  return create(conn, conn, conn);
+  const client = await create(conn, conn, conn);
+  if (db) {
+    await client.select(db);
+  }
+  return client;
 }
 
 export function create(
