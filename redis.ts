@@ -1557,43 +1557,21 @@ export type RedisConnectOptions = {
  *  const conn = connect({hostname: "127.0.0.1", port: 6379})// -> tcp, 127.0.0.1:6379
  *  const conn = connect({hostname: "redis.proxy", port: 443, tls: true}) // -> TLS, redis.proxy:443
  */
-export async function connect(
-  opts: string | RedisConnectOptions
-): Promise<Redis> {
-  let conn: Deno.Conn;
-  if (typeof opts === "string") {
-    console.warn(
-      yellow(
-        "deno-redis: connect(addr) is now deprecated and will be removed in v0.5.0 (now v0.4.x)"
-      )
-    );
-    const [h, p] = opts.split(":");
-    if (!p) {
-      throw new Error("redis: port must be specified");
-    }
-    const dialOptions: DialOptions = { port: parseInt(p) };
-    if (h) {
-      dialOptions.hostname = h;
-    }
-    conn = await Deno.dial(dialOptions);
-  } else {
-    const { hostname } = opts;
-    const port = parseInt(`${opts.port}`);
-    if (!Number.isSafeInteger(port)) {
-      throw new Error("deno-redis: opts.port is invalid");
-    }
-    if (opts.tls) {
-      conn = await Deno.dialTLS({
-        hostname,
-        port
-      });
-    } else {
-      conn = await Deno.dial({
-        hostname,
-        port
-      });
-    }
+export async function connect({
+  hostname,
+  port,
+  tls
+}: RedisConnectOptions): Promise<Redis> {
+  const dialOpts: DialOptions = {
+    hostname,
+    port: typeof port === "string" ? parseInt(port) : port ?? 6379
+  };
+  if (!Number.isSafeInteger(dialOpts.port)) {
+    throw new Error("deno-redis: opts.port is invalid");
   }
+  const conn: Deno.Conn = tls
+    ? await Deno.dialTLS(dialOpts)
+    : await Deno.dial(dialOpts);
   return create(conn, conn, conn);
 }
 
