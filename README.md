@@ -83,5 +83,5 @@ There are still unimplmeneted API
 
 - Server: [#35](https://github.com/keroxp/deno-redis/issues/35)
 - Stream: [#36](https://github.com/keroxp/deno-redis/issues/36)
-- Cluter: [#37](https://github.com/keroxp/deno-redis/issues/37)
+- Cluster: [#37](https://github.com/keroxp/deno-redis/issues/37)
 
