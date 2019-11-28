@@ -128,6 +128,26 @@ test(async function testConcurrent() {
   assertEquals(c, "c");
 });
 
+test(async function testDb0Option() {
+  const key = "exists";
+  await redis.set(key, "aaa");
+  const exists1 = await redis.exists(key);
+  assertEquals(exists1, 1);
+  const client2 = await connect({ ...addr, db: 0 });
+  const exists2 = await client2.exists(key);
+  assertEquals(exists2, 1);
+});
+
+test(async function testDb1Option() {
+  const key = "exists";
+  await redis.set(key, "aaa");
+  const exists1 = await redis.exists(key);
+  assertEquals(exists1, 1);
+  const client2 = await connect({ ...addr, db: 1 });
+  const exists2 = await client2.exists(key);
+  assertEquals(exists2, 0);
+});
+
 [Infinity, NaN, "", "port"].forEach(v => {
   test(`invalid port: ${v}`, () => {
     assertThrowsAsync(
