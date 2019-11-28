@@ -1551,6 +1551,18 @@ export type RedisConnectOptions = {
   db?: number;
 };
 
+function prasePortLike(port: string | number | undefined): number {
+  if (typeof port === "string") {
+    return parseInt(port);
+  } else if (typeof port === "number") {
+    return port;
+  } else if (port === undefined) {
+    return 6379;
+  } else {
+    throw new Error("port is invalid: typeof=" + typeof port);
+  }
+}
+
 /**
  * Connect to Redis server
  * @param opts redis server's url http/https url with port number
@@ -1562,11 +1574,11 @@ export async function connect({
   hostname,
   port,
   tls,
-  db,
+  db
 }: RedisConnectOptions): Promise<Redis> {
   const dialOpts: DialOptions = {
     hostname,
-    port: typeof port === "string" ? parseInt(port) : port ?? 6379
+    port: prasePortLike(port)
   };
   if (!Number.isSafeInteger(dialOpts.port)) {
     throw new Error("deno-redis: opts.port is invalid");
