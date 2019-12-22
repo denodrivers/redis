@@ -1449,7 +1449,7 @@ class RedisImpl implements Redis {
   private pushZrangeOpts(args, opts?) {
     if (opts) {
       if (opts.withScore) {
-        args.push("WITHSCORE");
+        args.push("WITHSCORES");
       }
       if (opts.offset !== void 0 && opts.count !== void 0) {
         args.push("LIMIT", opts.offset, opts.count);
