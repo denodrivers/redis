@@ -140,7 +140,7 @@ test(async function testZrevrange() {
   redis.zadd("zrevrange", 1, "one");
   redis.zadd("zrevrange", 2, "two");
   redis.zadd("zrevrange", 3, "three");
-  const v = await redis.zrevrange("zrevrange", 0, 1)
+  const v = await redis.zrevrange("zrevrange", 0, 1);
   assertEquals(v, ["three", "two"]);
 });
 
@@ -148,7 +148,9 @@ test(async function testZrevrangeWithScores() {
   redis.zadd("zrevrangeWithScores", 1, "one");
   redis.zadd("zrevrangeWithScores", 2, "two");
   redis.zadd("zrevrangeWithScores", 3, "three");
-  const v = await redis.zrevrange("zrevrangeWithScores", 0, 1, { withScore: true });
+  const v = await redis.zrevrange("zrevrangeWithScores", 0, 1, {
+    withScore: true
+  });
   assertEquals(v, ["three", "3", "two", "2"]);
 });
 
@@ -156,7 +158,7 @@ test(async function testZrangebyscore() {
   redis.zadd("zrangebyscore", 2, "m1");
   redis.zadd("zrangebyscore", 5, "m2");
   redis.zadd("zrangebyscore", 8, "m3");
-  redis.zadd("zrangebyscore", 10, "m4"); 
+  redis.zadd("zrangebyscore", 10, "m4");
   const v = await redis.zrangebyscore("zrangebyscore", 3, 9);
   assertEquals(v, ["m2", "m3"]);
 });
@@ -165,8 +167,10 @@ test(async function testZrangebyscoreWithScores() {
   redis.zadd("zrangebyscoreWithScores", 2, "m1");
   redis.zadd("zrangebyscoreWithScores", 5, "m2");
   redis.zadd("zrangebyscoreWithScores", 8, "m3");
-  redis.zadd("zrangebyscoreWithScores", 10, "m4"); 
-  const v = await redis.zrangebyscore("zrangebyscoreWithScores", 3, 9, { withScore: true });
+  redis.zadd("zrangebyscoreWithScores", 10, "m4");
+  const v = await redis.zrangebyscore("zrangebyscoreWithScores", 3, 9, {
+    withScore: true
+  });
   assertEquals(v, ["m2", "5", "m3", "8"]);
 });
 
@@ -174,7 +178,7 @@ test(async function testZrevrangebyscore() {
   redis.zadd("zrevrangebyscore", 2, "m1");
   redis.zadd("zrevrangebyscore", 5, "m2");
   redis.zadd("zrevrangebyscore", 8, "m3");
-  redis.zadd("zrevrangebyscore", 10, "m4"); 
+  redis.zadd("zrevrangebyscore", 10, "m4");
   const v = await redis.zrevrangebyscore("zrevrangebyscore", 9, 4);
   assertEquals(v, ["m3", "m2"]);
 });
@@ -183,8 +187,10 @@ test(async function testZrevrangebyscore() {
   redis.zadd("zrevrangebyscoreWithScores", 2, "m1");
   redis.zadd("zrevrangebyscoreWithScores", 5, "m2");
   redis.zadd("zrevrangebyscoreWithScores", 8, "m3");
-  redis.zadd("zrevrangebyscoreWithScores", 10, "m4"); 
-  const v = await redis.zrevrangebyscore("zrevrangebyscoreWithScores", 9, 4, { withScore: true });
+  redis.zadd("zrevrangebyscoreWithScores", 10, "m4");
+  const v = await redis.zrevrangebyscore("zrevrangebyscoreWithScores", 9, 4, {
+    withScore: true
+  });
   assertEquals(v, ["m3", "8", "m2", "5"]);
 });
 
