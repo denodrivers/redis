@@ -1,5 +1,3 @@
-import DialOptions = Deno.DialOptions;
-
 type Reader = Deno.Reader;
 type Writer = Deno.Writer;
 type Closer = Deno.Closer;
@@ -1576,7 +1574,7 @@ export async function connect({
   tls,
   db
 }: RedisConnectOptions): Promise<Redis> {
-  const dialOpts: DialOptions = {
+  const dialOpts: Deno.ConnectOptions = {
     hostname,
     port: prasePortLike(port)
   };
@@ -1584,8 +1582,8 @@ export async function connect({
     throw new Error("deno-redis: opts.port is invalid");
   }
   const conn: Deno.Conn = tls
-    ? await Deno.dialTLS(dialOpts)
-    : await Deno.dial(dialOpts);
+    ? await Deno.connectTLS(dialOpts)
+    : await Deno.connect(dialOpts);
   const client = await create(conn, conn, conn);
   if (db) {
     await client.select(db);
