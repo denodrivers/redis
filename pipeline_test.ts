@@ -91,19 +91,11 @@ test("pipeline in concurrent", async () => {
     "OK", //set(a)
     "OK", //set(b)
     "OK", //set(c)
-    [
-      ["status", "OK"],
-      ["status", "OK"],
-      ["status", "OK"]
-    ], //flush()
+    [["status", "OK"], ["status", "OK"], ["status", "OK"]], //flush()
     "OK", // get(a)
     "OK", // get(b)
     "OK", //get(c)
-    [
-      ["bulk", "a"],
-      ["bulk", "b"],
-      ["bulk", "c"]
-    ] //flush()
+    [["bulk", "a"], ["bulk", "b"], ["bulk", "c"]] //flush()
   ]);
 });
 
