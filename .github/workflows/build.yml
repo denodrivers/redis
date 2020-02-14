@@ -24,4 +24,4 @@ jobs:
       - name: Run Tests
         run: |
           export PATH=$HOME/.local/bin:$PATH
-          deno test -A
+          make test
