@@ -1,14 +1,11 @@
 import { connect, Redis } from "./redis.ts";
 import {
-  runIfMain,
-  setFilter,
-  test
-} from "./vendor/https/deno.land/std/testing/mod.ts";
-import {
   assertEquals,
   assertThrowsAsync,
   assertArrayContains
 } from "./vendor/https/deno.land/std/testing/asserts.ts";
+const { test } = Deno;
+
 // can be substituted with env variable
 const addr = {
   hostname: "127.0.0.1",
@@ -242,4 +239,3 @@ test(async function testDb1Option() {
   });
 });
 
-runIfMain(import.meta);

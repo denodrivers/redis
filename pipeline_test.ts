@@ -1,6 +1,6 @@
-import { runIfMain, test } from "./vendor/https/deno.land/std/testing/mod.ts";
 import { assertEquals } from "./vendor/https/deno.land/std/testing/asserts.ts";
 import { connect } from "./redis.ts";
+const { test } = Deno;
 
 const addr = {
   hostname: "127.0.0.1",
@@ -99,4 +99,3 @@ test("pipeline in concurrent", async () => {
   ]);
 });
 
-runIfMain(import.meta);

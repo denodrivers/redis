@@ -1,9 +1,8 @@
 {
   "https://deno.land/std": {
-    "version": "@v0.32.0",
+    "version": "@v0.33.0",
     "modules": [
       "/util/async.ts",
-      "/testing/mod.ts",
       "/testing/asserts.ts",
       "/io/bufio.ts",
       "/fmt/colors.ts"

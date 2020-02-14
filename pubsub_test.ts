@@ -1,8 +1,7 @@
-import { test } from "./vendor/https/deno.land/std/testing/mod.ts";
 import { assertEquals } from "./vendor/https/deno.land/std/testing/asserts.ts";
 import { connect } from "./redis.ts";
 import { RedisPubSubMessage } from "./pubsub.ts";
-
+const { test } = Deno;
 const addr = {
   hostname: "127.0.0.1",
   port: 6379
