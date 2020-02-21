@@ -238,4 +238,3 @@ test(async function testDb1Option() {
     );
   });
 });
-
