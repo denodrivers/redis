@@ -6,7 +6,7 @@ import { deferred, Deferred } from "./vendor/https/deno.land/std/util/async.ts";
 
 const encoder = new TextEncoder();
 export type RedisPipeline = {
-  enqueue(command: string, ...args);
+  enqueue(command: string, ...args: (number | string)[]): void;
   flush(): Promise<RedisRawReply[]>;
 } & Redis;
 
@@ -54,11 +54,11 @@ export function createRedisPipeline(
   }
 
   const executor = {
-    enqueue(command: string, ...args) {
+    enqueue(command: string, ...args: (number | string)[]): void {
       const msg = createRequest(command, ...args);
       commands.push(msg);
     },
-    async flush() {
+    async flush(): Promise<RedisRawReply[]> {
       // wrap pipelined commands with MULTI/EXEC
       if (opts && opts.tx) {
         commands.splice(0, 0, createRequest("MULTI"));
@@ -80,6 +80,19 @@ export function createRedisPipeline(
       return ["status", "OK"];
     }
   };
-  const fakeRedis = create(null, null, null, executor);
+  const d = dummyReadWriteCloser();
+  const fakeRedis = create(d, d, d, executor);
   return Object.assign(fakeRedis, executor);
+}
+
+function dummyReadWriteCloser(): Deno.ReadWriteCloser {
+  return {
+    close() {},
+    async read(p) {
+      return 0;
+    },
+    async write(p) {
+      return 0;
+    }
+  };
 }

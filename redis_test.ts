@@ -47,7 +47,7 @@ test(async function testExists() {
 
 test(async function testGetWhenNil() {
   const hoge = await redis.get("none");
-  assertEquals(hoge, void 0);
+  assertEquals(hoge, undefined);
 });
 
 test(async function testSet() {
@@ -238,4 +238,3 @@ test(async function testDb1Option() {
     );
   });
 });
-

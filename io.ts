@@ -2,10 +2,11 @@ import { BufReader, BufWriter } from "./vendor/https/deno.land/std/io/bufio.ts";
 import Buffer = Deno.Buffer;
 import { ErrorReplyError } from "./errors.ts";
 
+export type BulkResult = string | undefined;
 export type RedisRawReply =
   | ["status", string]
   | ["integer", number]
-  | ["bulk", string]
+  | ["bulk", BulkResult]
   | ["array", any[]]
   | ["error", ErrorReplyError];
 
@@ -39,7 +40,7 @@ export async function sendCommand(
   writer: BufWriter,
   reader: BufReader,
   command: string,
-  ...args
+  ...args: (number | string)[]
 ): Promise<RedisRawReply> {
   const msg = createRequest(command, ...args);
   await writer.write(encoder.encode(msg));
@@ -64,6 +65,7 @@ export async function readReply(reader: BufReader): Promise<RedisRawReply> {
     case ErrorReplyCode:
       tryParseErrorReply(await readLine(reader));
   }
+  throw new Error("Invalid state");
 }
 
 export async function readLine(reader: BufReader): Promise<string> {
@@ -81,6 +83,7 @@ export async function readLine(reader: BufReader): Promise<string> {
     }
     buf[loc++] = d;
   }
+  throw new Error("Invalid state");
 }
 
 export async function readStatusReply(reader: BufReader): Promise<string> {
@@ -100,7 +103,7 @@ export async function readIntegerReply(reader: BufReader): Promise<number> {
   tryParseErrorReply(line);
 }
 
-export async function readBulkReply(reader: BufReader): Promise<string> {
+export async function readBulkReply(reader: BufReader): Promise<BulkResult> {
   const line = await readLine(reader);
   if (line[0] !== "$") {
     tryParseErrorReply(line);
@@ -109,7 +112,7 @@ export async function readBulkReply(reader: BufReader): Promise<string> {
   const size = parseInt(sizeStr);
   if (size < 0) {
     // nil bulk reply
-    return;
+    return undefined;
   }
   const dest = new Uint8Array(size + 2);
   await reader.readFull(dest);
@@ -119,7 +122,7 @@ export async function readBulkReply(reader: BufReader): Promise<string> {
 export async function readArrayReply(reader: BufReader): Promise<any[]> {
   const line = await readLine(reader);
   const argCount = parseInt(line.substr(1, line.length - 3));
-  const result = [];
+  const result: any[] = [];
   for (let i = 0; i < argCount; i++) {
     const res = await reader.peek(1);
     if (res === Deno.EOF) {
@@ -143,7 +146,7 @@ export async function readArrayReply(reader: BufReader): Promise<any[]> {
   return result;
 }
 
-function tryParseErrorReply(line: string) {
+function tryParseErrorReply(line: string): never {
   const code = line[0];
   if (code === "-") {
     throw new ErrorReplyError(line);

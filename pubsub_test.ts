@@ -7,7 +7,7 @@ const addr = {
   port: 6379
 };
 
-async function wait(duration) {
+async function wait(duration: number) {
   return new Promise(resolve => {
     setTimeout(resolve, duration);
   });
@@ -27,20 +27,19 @@ test(async function testSubscribe2() {
   const redis = await connect(addr);
   const pub = await connect(addr);
   const sub = await redis.subscribe("subsc2");
-  let message: RedisPubSubMessage;
   const p = (async function() {
     const it = sub.receive();
-    message = (await it.next()).value;
+    return (await it.next()).value;
   })();
   await pub.publish("subsc2", "wayway");
-  await p;
+  const message = await p;
   assertEquals(message, {
     channel: "subsc2",
     message: "wayway"
   });
   await sub.close();
   const a = await redis.get("aaa");
-  assertEquals(a, void 0);
+  assertEquals(a, undefined);
   pub.close();
   redis.close();
 });
