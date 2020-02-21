@@ -28,7 +28,7 @@ class RedisSubscriptionImpl implements RedisSubscription {
 
   constructor(private writer: BufWriter, private reader: BufReader) {}
 
-  async psubscribe(...patterns) {
+  async psubscribe(...patterns: string[]) {
     await sendCommand(this.writer, this.reader, "PSUBSCRIBE", ...patterns);
     for (const pat of patterns) {
       this.channels[pat] = true;

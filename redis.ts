@@ -5,18 +5,17 @@ import { BufReader, BufWriter } from "./vendor/https/deno.land/std/io/bufio.ts";
 import { yellow } from "./vendor/https/deno.land/std/fmt/colors.ts";
 import { ConnectionClosedError } from "./errors.ts";
 import { psubscribe, RedisSubscription, subscribe } from "./pubsub.ts";
-import { RedisRawReply, sendCommand } from "./io.ts";
+import { RedisRawReply, sendCommand, BulkResult } from "./io.ts";
 import { createRedisPipeline, RedisPipeline } from "./pipeline.ts";
 import { deferred, Deferred } from "./vendor/https/deno.land/std/util/async.ts";
-
 export type Redis = {
   // Connection
-  auth(password: string): Promise<string>;
-  echo(message: string): Promise<string>;
+  auth(password: string): Promise<BulkResult>;
+  echo(message: string): Promise<BulkResult>;
   ping(message?: string): Promise<string>;
   quit(): Promise<string>;
   select(index: number): Promise<string>;
-  swapdb(index, index2): Promise<string>;
+  swapdb(index: number, index2: number): Promise<string>;
   // Keys
   del(...keys: string[]): Promise<number>;
   dump(key: string): Promise<string>;
@@ -37,11 +36,11 @@ export type Redis = {
     }
   ): Promise<string>;
   move(key: string, db: string): Promise<number>;
-  object_refcount(key);
-  object_encoding(key);
-  object_ideltime(key);
-  object_freq(key);
-  object_help();
+  object_refcount(key: string): Promise<number>;
+  object_encoding(key: string): Promise<number>;
+  object_ideltime(key: string): Promise<number>;
+  object_freq(key: string): Promise<BulkResult>;
+  object_help(): Promise<BulkResult>;
   persist(key: string): Promise<number>;
   pexpire(key: string, milliseconds: number): Promise<number>;
   pexpireat(key: string, milliseconds_timestamp: number): Promise<number>;
@@ -77,7 +76,11 @@ export type Redis = {
   bitcount(key: string): Promise<number>;
   bitcount(key: string, start: number, end: number): Promise<number>;
   bitfield(): Promise<string[]>;
-  bitop(operation, destkey: string, ...keys: string[]): Promise<number>;
+  bitop(
+    operation: "AND" | "OR" | "XOR" | "NOT",
+    destkey: string,
+    ...keys: string[]
+  ): Promise<number>;
   bitpos(
     key: string,
     bit: number,
@@ -94,7 +97,7 @@ export type Redis = {
   mset(...key_values: string[]): Promise<string>;
   msetnx(key: string, value: string): Promise<number>;
   msetnx(...key_values: string[]): Promise<number>;
-  psetex(key: string, milliseconds: number, value: string);
+  psetex(key: string, milliseconds: number, value: string): Promise<string>;
   set(
     key: string,
     value: string,
@@ -103,13 +106,13 @@ export type Redis = {
       px?: number;
       mode?: "NX" | "XX";
     }
-  ): Promise<string>;
+  ): Promise<BulkResult>;
   setbit(key: string, offset: number, value: string): Promise<number>;
   setex(key: string, seconds: number, value: string): Promise<string>;
   setnx(key: string, value: string): Promise<number>;
   setrange(key: string, offset: number, value: string): Promise<number>;
   strlen(key: string): Promise<number>;
-  get(key: string): Promise<string>;
+  get(key: string): Promise<BulkResult>;
   getbit(key: string, offset: number): Promise<number>;
   getrange(key: string, start: number, end: number): Promise<string>;
   getset(key: string, value: string): Promise<string>;
@@ -147,7 +150,7 @@ export type Redis = {
       store?: string;
       storeDist?: string;
     }
-  );
+  ): Promise<string[]>;
   georadiusbymember(
     key: string,
     member: string,
@@ -162,7 +165,7 @@ export type Redis = {
       store?: string;
       storeDist?: string;
     }
-  );
+  ): Promise<string[]>;
   // Hash
   hdel(key: string, ...fields: string[]): Promise<number>;
   hexists(key: string, field: string): Promise<number>;
@@ -235,7 +238,7 @@ export type Redis = {
   srandmember(key: string, count?: number): Promise<string>;
   srem(key: string, ...members: string[]): Promise<number>;
   sunion(...keys: string[]): Promise<string[]>;
-  sunionstore(destination, ...keys: string[]): Promise<number>;
+  sunionstore(destination: string, ...keys: string[]): Promise<number>;
   // SortedSet
   bzpopmin(key: string | string[], timeout: number): Promise<string[]>;
   bzpopmax(key: string | string[], timeout: number): Promise<string[]>;
@@ -260,7 +263,7 @@ export type Redis = {
   ): Promise<number>;
   zcard(key: string): Promise<number>;
   zcount(key: string, min: number, max: number): Promise<number>;
-  zincrby(key: string, increment, member: string): Promise<string>;
+  zincrby(key: string, increment: number, member: string): Promise<string>;
   zinterstore(
     destination: string,
     numkeys: number,
@@ -343,22 +346,22 @@ export type Redis = {
   // Cluster
   // cluster //
   // Server
-  bgrewriteaof(): Promise<string>;
-  bgsave(): Promise<string>;
+  bgrewriteaof(): Promise<BulkResult>;
+  bgsave(): Promise<BulkResult>;
   // client //
   command(): Promise<string[]>;
   command_count(): Promise<number>;
   command_getkeys(): Promise<string[]>;
   command_info(...command_names: string[]): Promise<string[]>;
   config_get(parameter: string): Promise<string[]>;
-  config_rewrite(): Promise<string>;
-  config_set(parameter: string, value: string): Promise<string>;
-  config_resetstat(): Promise<string>;
+  config_rewrite(): Promise<BulkResult>;
+  config_set(parameter: string, value: string): Promise<BulkResult>;
+  config_resetstat(): Promise<BulkResult>;
   dbsize(): Promise<number>;
-  debug_object(key: string): Promise<string>;
-  debug_segfault(): Promise<string>;
-  flushall(async?: boolean): Promise<string>;
-  flushdb(async?: boolean): Promise<string>;
+  debug_object(key: string): Promise<BulkResult>;
+  debug_segfault(): Promise<BulkResult>;
+  flushall(async?: boolean): Promise<BulkResult>;
+  flushdb(async?: boolean): Promise<BulkResult>;
   info(section?: string): Promise<string>;
   lastsave(): Promise<number>;
   memory_doctor(): Promise<string>;
@@ -372,20 +375,20 @@ export type Redis = {
       samples?: number;
     }
   ): Promise<number>;
-  monitor();
+  monitor(): void;
   role(): Promise<string[]>;
   save(): Promise<string>;
   shutdown(arg: "NOSAVE" | "SAVE"): Promise<string>;
   slaveof(host: string, port: string | number): Promise<string>;
   replicaof(host: string, port: string | number): Promise<string>;
-  slowlog(subcommand: string, ...argument: string[]);
-  sync();
+  slowlog(subcommand: string, ...argument: string[]): Promise<RedisRawReply>;
+  sync(): void;
   time(): Promise<string[]>;
   // Scripting
-  eval(script: string, key: string, arg: string);
-  eval(script: string, keys: string[], args: string[]);
-  evalsha(sha1: string, key: string, arg: string);
-  evalsha(sha1: string, keys: string[], args: string[]);
+  eval(script: string, key: string, arg: string): Promise<RedisRawReply>;
+  eval(script: string, keys: string[], args: string[]): Promise<RedisRawReply>;
+  evalsha(sha1: string, key: string, arg: string): Promise<RedisRawReply>;
+  evalsha(sha1: string, keys: string[], args: string[]): Promise<RedisRawReply>;
   script_debug(arg: "YES" | "SYNC" | "NO"): Promise<string>;
   script_exists(...sha1s: string[]): Promise<string[]>;
   script_flush(): Promise<string>;
@@ -394,7 +397,7 @@ export type Redis = {
   // multi
   multi(): Promise<string>;
   exec(): Promise<any[]>;
-  discard(): Promise<string>;
+  discard(): Promise<BulkResult>;
   watch(...keys: string[]): Promise<string>;
   unwatch(): Promise<string>;
   // pipeline
@@ -407,7 +410,7 @@ export type Redis = {
       pattern?: string;
       count?: number;
     }
-  );
+  ): Promise<string[]>;
   hscan(
     key: string,
     cursor: number,
@@ -415,7 +418,7 @@ export type Redis = {
       pattern?: string;
       count?: number;
     }
-  );
+  ): Promise<string[]>;
   sscan(
     key: string,
     cursor: number,
@@ -423,17 +426,17 @@ export type Redis = {
       pattern?: string;
       count?: number;
     }
-  );
+  ): Promise<string[]>;
   zscan(
     key: string,
     cursor: number,
     opts?: {
       pattern?: string;
     }
-  );
+  ): Promise<string[]>;
 
   readonly isClosed: boolean;
-  close();
+  close(): void;
 };
 
 export interface CommandExecutor {
@@ -520,9 +523,12 @@ class RedisImpl implements Redis {
   async execBulkReply(
     command: string,
     ...args: (string | number)[]
-  ): Promise<string> {
+  ): Promise<BulkResult> {
     const [_, reply] = await this.executor.execRawReply(command, ...args);
-    return reply as string;
+    if (typeof reply !== "string" && reply != null) {
+      throw new Error();
+    }
+    return reply;
   }
 
   async execArrayReply(
@@ -549,20 +555,30 @@ class RedisImpl implements Redis {
     return this.execBulkReply("BGSAVE");
   }
 
-  bitcount(key: string, start?, end?) {
-    return this.execIntegerReply("BITCOUNT", key, start, end);
+  bitcount(key: string, start?: number, end?: number) {
+    if (start != null && end != null)
+      return this.execIntegerReply("BITCOUNT", key, start, end);
+    else if (start != null)
+      return this.execIntegerReply("BITCOUNT", key, start);
+    else return this.execIntegerReply("BITCOUNT", key);
   }
 
   bitfield() {
     return this.execArrayReply("BITFIELD");
   }
 
-  bitop(operation, destkey, ...keys) {
+  bitop(operation: string, destkey: string, ...keys: string[]) {
     return this.execIntegerReply("BITOP", operation, destkey, ...keys);
   }
 
-  bitpos(key: string, bit, start?, end?) {
-    return this.execIntegerReply("BITPOS", key, bit, start, end);
+  bitpos(key: string, bit: number, start?: number, end?: number) {
+    if (start != null && end != null) {
+      return this.execIntegerReply("BITPOS", key, bit, start, end);
+    } else if (start != null) {
+      return this.execIntegerReply("BITPOS", key, bit, start);
+    } else {
+      return this.execIntegerReply("BITPOS", key, bit);
+    }
   }
 
   blpop(keys: string[], timeout: number) {
@@ -649,11 +665,11 @@ class RedisImpl implements Redis {
     return this.execIntegerReply("DECR", key);
   }
 
-  decrby(key: string, decrement) {
+  decrby(key: string, decrement: number) {
     return this.execIntegerReply("DECRBY", key, decrement);
   }
 
-  del(key: string, ...keys) {
+  del(key: string, ...keys: string[]) {
     return this.execIntegerReply("DEL", key, ...keys);
   }
 
@@ -665,19 +681,24 @@ class RedisImpl implements Redis {
     return this.execStatusReply("DUMP", key);
   }
 
-  echo(message) {
+  echo(message: string) {
     return this.execStatusReply("ECHO", message);
   }
 
-  eval(script, keys, args) {
-    return this.doEval("EVAL", script, keys, args);
+  eval(script: string, keys: string | string[], arg: string | string[]) {
+    return this.doEval("EVAL", script, keys, arg);
   }
 
-  evalsha(sha1, keys, args) {
+  evalsha(sha1: string, keys: string | string[], args: string | string[]) {
     return this.doEval("EVALSHA", sha1, keys, args);
   }
 
-  private doEval(cmd, script, keys, args) {
+  private doEval(
+    cmd: string,
+    script: string,
+    keys: string | string[],
+    args: string | string[]
+  ) {
     const _args = [script];
     if (typeof keys === "string") {
       _args.push(keys);
@@ -718,7 +739,7 @@ class RedisImpl implements Redis {
     return this.execBulkReply("FLUSHDB", ...args);
   }
 
-  geoadd(key: string, ...args) {
+  geoadd(key: string, ...args: any) {
     const _args = [key];
     if (Array.isArray([args[0]])) {
       for (const triple of args) {
@@ -738,8 +759,10 @@ class RedisImpl implements Redis {
     return this.execArrayReply("GEOPOS", key, ...members);
   }
 
-  geodist(key: string, member1: string, member2: string, unit?) {
-    return this.execStatusReply("GEODIST", key, member1, member2, unit);
+  geodist(key: string, member1: string, member2: string, unit?: string) {
+    if (unit)
+      return this.execStatusReply("GEODIST", key, member1, member2, unit);
+    else return this.execStatusReply("GEODIST", key, member1, member2);
   }
 
   georadius(
@@ -747,8 +770,16 @@ class RedisImpl implements Redis {
     longitude: number,
     latitude: number,
     radius: number,
-    unit,
-    opts?
+    unit: string,
+    opts?: {
+      withCoord?: boolean;
+      withDist?: boolean;
+      withHash?: boolean;
+      count?: number;
+      sort?: "ASC" | "DESC";
+      store?: string;
+      storeDist?: string;
+    }
   ) {
     const args = this.pushGeoRadiusOpts(
       [key, longitude, latitude, radius, unit],
@@ -757,12 +788,39 @@ class RedisImpl implements Redis {
     return this.execArrayReply("GEORADIUS", ...args);
   }
 
-  georadiusbymember(key: string, member: string, radius: number, unit, opts?) {
+  georadiusbymember(
+    key: string,
+    member: string,
+    radius: number,
+    unit: string,
+    opts?: {
+      withCoord?: boolean;
+      withDist?: boolean;
+      withHash?: boolean;
+      count?: number;
+      sort?: "ASC" | "DESC";
+      store?: string;
+      storeDist?: string;
+    }
+  ) {
     const args = this.pushGeoRadiusOpts([key, member, radius, unit], opts);
     return this.execArrayReply("GEORADIUSBYMEMBER", ...args);
   }
 
-  private pushGeoRadiusOpts(args: (string | number)[], opts) {
+  private pushGeoRadiusOpts(
+    args: (string | number)[],
+    opts:
+      | {
+          withCoord?: boolean;
+          withDist?: boolean;
+          withHash?: boolean;
+          count?: number;
+          sort?: "ASC" | "DESC";
+          store?: string;
+          storeDist?: string;
+        }
+      | undefined
+  ) {
     if (!opts) return args;
     if (opts.withCoord) {
       args.push("WITHCOORD");
@@ -789,7 +847,7 @@ class RedisImpl implements Redis {
   }
 
   get(key: string) {
-    return this.execStatusReply("GET", key);
+    return this.execBulkReply("GET", key);
   }
 
   getbit(key: string, offset: number) {
@@ -841,7 +899,7 @@ class RedisImpl implements Redis {
   }
 
   hmset(key: string, ...field_values: string[]) {
-    return this.execBulkReply("HMSET", key, ...field_values);
+    return this.execStatusReply("HMSET", key, ...field_values);
   }
 
   hset(key: string, field: string, value: string) {
@@ -921,11 +979,11 @@ class RedisImpl implements Redis {
   }
 
   lset(key: string, index: number, value: string | number) {
-    return this.execBulkReply("LSET", key, index, value);
+    return this.execStatusReply("LSET", key, index, value);
   }
 
   ltrim(key: string, start: number, stop: number) {
-    return this.execBulkReply("LTRIM", key, start, stop);
+    return this.execStatusReply("LTRIM", key, start, stop);
   }
 
   memory_doctor() {
@@ -941,15 +999,20 @@ class RedisImpl implements Redis {
   }
 
   memory_purge() {
-    return this.execBulkReply("MEMORY", "PURGE");
+    return this.execStatusReply("MEMORY", "PURGE");
   }
 
   memory_stats() {
     return this.execArrayReply("MEMORY", "STATS");
   }
 
-  memory_usage(key: string, opts?) {
-    const args = [key];
+  memory_usage(
+    key: string,
+    opts?: {
+      samples?: number;
+    }
+  ) {
+    const args: (number | string)[] = [key];
     if (opts && typeof opts.samples === "number") {
       args.push("SAMPLES", opts.samples);
     }
@@ -960,7 +1023,18 @@ class RedisImpl implements Redis {
     return this.execArrayReply("MGET", ...keys);
   }
 
-  migrate(host, port, key, destination_db, timeout, opts?) {
+  migrate(
+    host: string,
+    port: number | string,
+    key: string,
+    destination_db: string,
+    timeout: number,
+    opts?: {
+      copy?: boolean;
+      replace?: boolean;
+      keys?: string[];
+    }
+  ) {
     const args = [host, port, key, destination_db, timeout];
     if (opts) {
       if (opts.copy) {
@@ -977,15 +1051,15 @@ class RedisImpl implements Redis {
   }
 
   monitor() {
-    //
+    throw new Error("not supported yet");
   }
 
-  move(key: string, db) {
+  move(key: string, db: string) {
     return this.execIntegerReply("MOVE", key, db);
   }
 
   mset(...key_values: string[]) {
-    return this.execBulkReply("MSET", ...key_values);
+    return this.execStatusReply("MSET", ...key_values);
   }
 
   msetnx(...key_values: string[]) {
@@ -993,7 +1067,7 @@ class RedisImpl implements Redis {
   }
 
   multi() {
-    return this.execBulkReply("MULTI");
+    return this.execStatusReply("MULTI");
   }
 
   object_encoding(key: string) {
@@ -1037,12 +1111,12 @@ class RedisImpl implements Redis {
   }
 
   pfmerge(destkey: string, ...sourcekeys: string[]) {
-    return this.execBulkReply("PFMERGE", destkey, ...sourcekeys);
+    return this.execStatusReply("PFMERGE", destkey, ...sourcekeys);
   }
 
   ping(message?: string) {
-    if (message) return this.execBulkReply("PING", message);
-    else return this.execBulkReply("PING");
+    if (message) return this.execStatusReply("PING", message);
+    else return this.execStatusReply("PING");
   }
 
   psetex(key: string, milliseconds: number, value: string) {
@@ -1081,7 +1155,7 @@ class RedisImpl implements Redis {
 
   quit() {
     try {
-      return this.execBulkReply("QUIT");
+      return this.execStatusReply("QUIT");
     } finally {
       this._isClosed = true;
     }
@@ -1092,15 +1166,15 @@ class RedisImpl implements Redis {
   }
 
   readonly() {
-    return this.execBulkReply("READONLY");
+    return this.execStatusReply("READONLY");
   }
 
   readwrite() {
-    return this.execBulkReply("READWRITE");
+    return this.execStatusReply("READWRITE");
   }
 
   rename(key: string, newkey: string) {
-    return this.execBulkReply("RENAME", key, newkey);
+    return this.execStatusReply("RENAME", key, newkey);
   }
 
   renamenx(key: string, newkey: string) {
@@ -1117,7 +1191,7 @@ class RedisImpl implements Redis {
     if (REPLACE) {
       args.push("REPLACE");
     }
-    return this.execBulkReply("RESTORE", ...args);
+    return this.execStatusReply("RESTORE", ...args);
   }
 
   role() {
@@ -1145,7 +1219,7 @@ class RedisImpl implements Redis {
   }
 
   save() {
-    return this.execBulkReply("SAVE");
+    return this.execStatusReply("SAVE");
   }
 
   scard(key: string) {
@@ -1153,7 +1227,7 @@ class RedisImpl implements Redis {
   }
 
   script_debug(arg: "YES" | "SYNC" | "NO") {
-    return this.execBulkReply("SCRIPT", "DEBUG", arg);
+    return this.execStatusReply("SCRIPT", "DEBUG", arg);
   }
 
   script_exists(...sha1s: string[]) {
@@ -1161,11 +1235,11 @@ class RedisImpl implements Redis {
   }
 
   script_flush() {
-    return this.execBulkReply("SCRIPT", "FLUSH");
+    return this.execStatusReply("SCRIPT", "FLUSH");
   }
 
   script_kill() {
-    return this.execBulkReply("SCRIPT", "KILL");
+    return this.execStatusReply("SCRIPT", "KILL");
   }
 
   script_load(script: string) {
@@ -1181,11 +1255,19 @@ class RedisImpl implements Redis {
   }
 
   select(index: number) {
-    return this.execBulkReply("SELECT", index);
+    return this.execStatusReply("SELECT", index);
   }
 
-  set(key: string, value: string, opts?) {
-    const args = [key, value];
+  set(
+    key: string,
+    value: string,
+    opts?: {
+      ex?: number;
+      px?: number;
+      mode?: "NX" | "XX";
+    }
+  ) {
+    const args: (number | string)[] = [key, value];
     if (opts) {
       if (opts.ex) {
         args.push("EX", opts.ex);
@@ -1204,7 +1286,7 @@ class RedisImpl implements Redis {
   }
 
   setex(key: string, seconds: number, value: string) {
-    return this.execBulkReply("SETEX", key, seconds, value);
+    return this.execStatusReply("SETEX", key, seconds, value);
   }
 
   setnx(key: string, value: string) {
@@ -1216,7 +1298,7 @@ class RedisImpl implements Redis {
   }
 
   shutdown(arg: string) {
-    return this.execBulkReply("SHUTDOWN", arg);
+    return this.execStatusReply("SHUTDOWN", arg);
   }
 
   sinter(key: string, ...keys: string[]) {
@@ -1232,11 +1314,11 @@ class RedisImpl implements Redis {
   }
 
   slaveof(host: string, port: string | number) {
-    return this.execBulkReply("SLAVEOF", host, port);
+    return this.execStatusReply("SLAVEOF", host, port);
   }
 
   replicaof(host: string, port: string | number) {
-    return this.execBulkReply("REPLICAOF", host, port);
+    return this.execStatusReply("REPLICAOF", host, port);
   }
 
   slowlog(subcommand: string, ...argument: string[]) {
@@ -1251,8 +1333,19 @@ class RedisImpl implements Redis {
     return this.execIntegerReply("SMOVE", source, destination, member);
   }
 
-  sort(key: string, opts?) {
-    const args = [key];
+  sort(
+    key: string,
+    opts?: {
+      by?: string;
+      offset?: number;
+      count?: number;
+      patterns?: string[];
+      order: "ASC" | "DESC";
+      alpha?: boolean;
+      destination?: string;
+    }
+  ) {
+    const args: (number | string)[] = [key];
     if (opts) {
       if (opts.by) {
         args.push("BY", opts.by);
@@ -1288,10 +1381,9 @@ class RedisImpl implements Redis {
     return this.execStatusReply("SPOP", ...args);
   }
 
-  srandmember(key: string);
-  srandmember(key: string, count: number);
-  srandmember(...args: any[]) {
-    return this.execStatusReply("SRANDMEMBER", ...args);
+  srandmember(key: string, count?: number) {
+    if (count != null) return this.execStatusReply("SRANDMEMBER", key, count);
+    else return this.execStatusReply("SRANDMEMBER", key);
   }
 
   srem(key: string, ...members: string[]) {
@@ -1311,11 +1403,10 @@ class RedisImpl implements Redis {
   }
 
   swapdb(index: number, index2: number) {
-    return this.execBulkReply("SWAPDB", index, index2);
+    return this.execStatusReply("SWAPDB", index, index2);
   }
 
   sync() {
-    //
     throw new Error("not implemented");
   }
 
@@ -1332,7 +1423,7 @@ class RedisImpl implements Redis {
   }
 
   type(key: string) {
-    return this.execBulkReply("TYPE", key);
+    return this.execStatusReply("TYPE", key);
   }
 
   unlink(...keys: string[]) {
@@ -1340,7 +1431,7 @@ class RedisImpl implements Redis {
   }
 
   unwatch() {
-    return this.execBulkReply("UNWATCH");
+    return this.execStatusReply("UNWATCH");
   }
 
   wait(numreplicas: number, timeout: number) {
@@ -1348,28 +1439,10 @@ class RedisImpl implements Redis {
   }
 
   watch(key: string, ...keys: string[]) {
-    return this.execBulkReply("WATCH", key, ...keys);
+    return this.execStatusReply("WATCH", key, ...keys);
   }
-  zadd(
-    key: string,
-    score: number,
-    member: string,
-    opts?: {
-      nxx?: "NX" | "XX";
-      ch?: boolean;
-      incr?: boolean;
-    }
-  ): Promise<number>;
-  zadd(
-    key: string,
-    score_members: (number | string)[],
-    opts?: {
-      nxx?: "NX" | "XX";
-      ch?: boolean;
-      incr?: boolean;
-    }
-  ): Promise<number>;
-  zadd(key: string, scoreOrArr: any, memberOrOpts: any, opts?) {
+
+  zadd(key: string, scoreOrArr: any, memberOrOpts: any, opts?: any) {
     const args: (string | number)[] = [key];
     let _opts = opts;
     if (typeof scoreOrArr === "number") {
@@ -1409,8 +1482,8 @@ class RedisImpl implements Redis {
     destination: string,
     numkeys: number,
     keys: string[],
-    weights?,
-    aggregate?
+    weights?: number | number[],
+    aggregate?: string
   ) {
     const args = this.pushZInterStoreArgs(
       [destination, numkeys],
@@ -1421,8 +1494,15 @@ class RedisImpl implements Redis {
     return this.execIntegerReply("ZINTERSTORE", ...args);
   }
 
-  zunionstore(destination: string, keys: string[], opts?): Promise<number> {
-    const args: (string | number)[] = [destination, keys.length, keys];
+  zunionstore(
+    destination: string,
+    keys: string[],
+    opts?: {
+      weights?: number[];
+      aggregate?: "SUM" | "MIN" | "MAX";
+    }
+  ): Promise<number> {
+    const args: (string | number)[] = [destination, keys.length, ...keys];
     if (opts) {
       if (opts.weights) {
         args.push("WEIGHTS", ...opts.weights);
@@ -1434,7 +1514,12 @@ class RedisImpl implements Redis {
     return this.execIntegerReply("ZUNIONSTORE", ...args);
   }
 
-  private pushZInterStoreArgs(args, keys, weights?, aggregate?) {
+  private pushZInterStoreArgs(
+    args: (number | string)[],
+    keys: string | string[],
+    weights?: number | number[],
+    aggregate?: string
+  ) {
     if (typeof keys === "string") {
       args.push(keys);
     } else {
@@ -1469,27 +1554,65 @@ class RedisImpl implements Redis {
     else return this.execArrayReply("ZPOPMIN", key);
   }
 
-  zrange(key: string, start: number, stop: number, opts?) {
+  zrange(
+    key: string,
+    start: number,
+    stop: number,
+    opts?: {
+      withScore?: boolean;
+    }
+  ) {
     const args = this.pushZrangeOpts([key, start, stop], opts);
     return this.execArrayReply("ZRANGE", ...args);
   }
 
-  zrangebylex(key: string, min: number, max: number, opts?) {
+  zrangebylex(
+    key: string,
+    min: number,
+    max: number,
+    opts?: {
+      withScore?: boolean;
+      count?: number;
+    }
+  ) {
     const args = this.pushZrangeOpts([key, min, max], opts);
     return this.execArrayReply("ZRANGEBYLEX", ...args);
   }
 
-  zrevrangebylex(key: string, max: number, min: number, opts?) {
+  zrevrangebylex(
+    key: string,
+    max: number,
+    min: number,
+    opts?: {
+      withScore?: boolean;
+      count?: number;
+    }
+  ) {
     const args = this.pushZrangeOpts([key, min, max], opts);
     return this.execArrayReply("ZREVRANGEBYLEX", ...args);
   }
 
-  zrangebyscore(key: string, min: number, max: number, opts?) {
+  zrangebyscore(
+    key: string,
+    min: number,
+    max: number,
+    opts?: {
+      withScore?: boolean;
+      count?: number;
+    }
+  ) {
     const args = this.pushZrangeOpts([key, min, max], opts);
     return this.execArrayReply("ZRANGEBYSCORE", ...args);
   }
 
-  private pushZrangeOpts(args, opts?) {
+  private pushZrangeOpts(
+    args: (number | string)[],
+    opts?: {
+      withScore?: boolean;
+      offset?: number;
+      count?: number;
+    }
+  ) {
     if (opts) {
       if (opts.withScore) {
         args.push("WITHSCORES");
@@ -1513,7 +1636,7 @@ class RedisImpl implements Redis {
     return this.execIntegerReply("ZREMRANGEBYLEX", key, min, max);
   }
 
-  zremrangebyrank(key: string, start, stop) {
+  zremrangebyrank(key: string, start: number, stop: number) {
     return this.execIntegerReply("ZREMRANGEBYRANK", key, start, stop);
   }
 
@@ -1521,12 +1644,28 @@ class RedisImpl implements Redis {
     return this.execIntegerReply("ZREMRANGEBYSCORE", key, min, max);
   }
 
-  zrevrange(key: string, start: number, stop: number, opts?) {
+  zrevrange(
+    key: string,
+    start: number,
+    stop: number,
+    opts?: {
+      withScore?: boolean;
+    }
+  ) {
     const args = this.pushZrangeOpts([key, start, stop], opts);
     return this.execArrayReply("ZREVRANGE", ...args);
   }
 
-  zrevrangebyscore(key: string, max: number, min: number, opts?) {
+  zrevrangebyscore(
+    key: string,
+    max: number,
+    min: number,
+    opts?: {
+      withScore?: boolean;
+      offset?: number;
+      count?: number;
+    }
+  ) {
     const args = this.pushZrangeOpts([key, max, min], opts);
     return this.execArrayReply("ZREVRANGEBYSCORE", ...args);
   }
@@ -1539,27 +1678,59 @@ class RedisImpl implements Redis {
     return this.execStatusReply("ZSCORE", key, member);
   }
 
-  scan(cursor: number, opts?) {
+  scan(
+    cursor: number,
+    opts?: {
+      pattern?: string;
+      count?: number;
+    }
+  ) {
     const arg = this.pushScanOpts([cursor], opts);
     return this.execArrayReply("SCAN", ...arg);
   }
 
-  sscan(key: string, cursor: number, opts?) {
+  sscan(
+    key: string,
+    cursor: number,
+    opts?: {
+      pattern?: string;
+      count?: number;
+    }
+  ) {
     const arg = this.pushScanOpts([key, cursor], opts);
     return this.execArrayReply("SSCAN", ...arg);
   }
 
-  hscan(key: string, cursor: number, opts?) {
+  hscan(
+    key: string,
+    cursor: number,
+    opts?: {
+      pattern?: string;
+      count?: number;
+    }
+  ) {
     const arg = this.pushScanOpts([key, cursor], opts);
     return this.execArrayReply("HSCAN", ...arg);
   }
 
-  zscan(key: string, cursor: number, opts?) {
+  zscan(
+    key: string,
+    cursor: number,
+    opts?: {
+      pattern?: string;
+    }
+  ) {
     const arg = this.pushScanOpts([key, cursor], opts);
     return this.execArrayReply("ZSCAN", ...arg);
   }
 
-  private pushScanOpts(arg, opts?) {
+  private pushScanOpts(
+    arg: (number | string)[],
+    opts?: {
+      pattern?: string;
+      count?: number;
+    }
+  ) {
     if (opts) {
       if (opts.pattern) {
         arg.push("MATCH", opts.pattern);
