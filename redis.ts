@@ -696,24 +696,24 @@ class RedisImpl implements Redis {
     return this.execArrayReply("EXEC");
   }
 
-  exists(...keys) {
+  exists(...keys: string[]) {
     return this.execIntegerReply("EXISTS", ...keys);
   }
 
-  expire(key: string, seconds) {
+  expire(key: string, seconds: number) {
     return this.execIntegerReply("EXPIRE", key, seconds);
   }
 
-  expireat(key: string, timestamp) {
+  expireat(key: string, timestamp: string) {
     return this.execIntegerReply("EXPIREAT", key, timestamp);
   }
 
-  flushall(async) {
+  flushall(async: boolean) {
     const args = async ? ["ASYNC"] : [];
     return this.execBulkReply("FLUSHALL", ...args);
   }
 
-  flushdb(async) {
+  flushdb(async: boolean) {
     const args = async ? ["ASYNC"] : [];
     return this.execBulkReply("FLUSHDB", ...args);
   }
@@ -730,19 +730,26 @@ class RedisImpl implements Redis {
     return this.execIntegerReply("GEOADD", key, ..._args);
   }
 
-  geohash(key: string, ...members) {
+  geohash(key: string, ...members: string[]) {
     return this.execArrayReply("GEOHASH", key, ...members);
   }
 
-  geopos(key: string, ...members) {
+  geopos(key: string, ...members: string[]) {
     return this.execArrayReply("GEOPOS", key, ...members);
   }
 
-  geodist(key: string, member1, member2, unit?) {
+  geodist(key: string, member1: string, member2: string, unit?) {
     return this.execStatusReply("GEODIST", key, member1, member2, unit);
   }
 
-  georadius(key: string, longitude, latitude, radius, unit, opts?) {
+  georadius(
+    key: string,
+    longitude: number,
+    latitude: number,
+    radius: number,
+    unit,
+    opts?
+  ) {
     const args = this.pushGeoRadiusOpts(
       [key, longitude, latitude, radius, unit],
       opts
@@ -750,7 +757,7 @@ class RedisImpl implements Redis {
     return this.execArrayReply("GEORADIUS", ...args);
   }
 
-  georadiusbymember(key: string, member, radius, unit, opts?) {
+  georadiusbymember(key: string, member: string, radius: number, unit, opts?) {
     const args = this.pushGeoRadiusOpts([key, member, radius, unit], opts);
     return this.execArrayReply("GEORADIUSBYMEMBER", ...args);
   }
@@ -785,27 +792,27 @@ class RedisImpl implements Redis {
     return this.execStatusReply("GET", key);
   }
 
-  getbit(key: string, offset) {
+  getbit(key: string, offset: number) {
     return this.execIntegerReply("GETBIT", key, offset);
   }
 
-  getrange(key: string, start, end) {
+  getrange(key: string, start: number, end: number) {
     return this.execStatusReply("GETRANGE", key, start, end);
   }
 
-  getset(key: string, value) {
+  getset(key: string, value: string) {
     return this.execStatusReply("GETSET", key, value);
   }
 
-  hdel(key: string, field, ...fields) {
+  hdel(key: string, field: string, ...fields: string[]) {
     return this.execIntegerReply("HDEL", key, field, ...fields);
   }
 
-  hexists(key: string, field) {
+  hexists(key: string, field: string) {
     return this.execIntegerReply("HEXISTS", key, field);
   }
 
-  hget(key: string, field) {
+  hget(key: string, field: string) {
     return this.execStatusReply("HGET", key, field);
   }
 
@@ -813,11 +820,11 @@ class RedisImpl implements Redis {
     return this.execArrayReply("HGETALL", key);
   }
 
-  hincrby(key: string, field, increment) {
+  hincrby(key: string, field: string, increment: number) {
     return this.execIntegerReply("HINCRBY", key, field, increment);
   }
 
-  hincrbyfloat(key: string, field, increment) {
+  hincrbyfloat(key: string, field: string, increment: number) {
     return this.execStatusReply("HINCRBYFLOAT", key, field, increment);
   }
 
@@ -829,23 +836,23 @@ class RedisImpl implements Redis {
     return this.execIntegerReply("HLEN", key);
   }
 
-  hmget(key: string, ...fields) {
+  hmget(key: string, ...fields: string[]) {
     return this.execArrayReply("HMGET", key, ...fields);
   }
 
-  hmset(key: string, ...field_values) {
+  hmset(key: string, ...field_values: string[]) {
     return this.execBulkReply("HMSET", key, ...field_values);
   }
 
-  hset(key: string, field, value) {
+  hset(key: string, field: string, value: string) {
     return this.execIntegerReply("HSET", key, field, value);
   }
 
-  hsetnx(key: string, field, value) {
+  hsetnx(key: string, field: string, value: string) {
     return this.execIntegerReply("HSETNX", key, field, value);
   }
 
-  hstrlen(key: string, field) {
+  hstrlen(key: string, field: string) {
     return this.execIntegerReply("HSTRLEN", key, field);
   }
 
@@ -857,19 +864,23 @@ class RedisImpl implements Redis {
     return this.execIntegerReply("INCR", key);
   }
 
-  incrby(key: string, increment) {
+  incrby(key: string, increment: number) {
     return this.execIntegerReply("INCRBY", key, increment);
   }
 
-  incrbyfloat(key: string, increment) {
+  incrbyfloat(key: string, increment: number) {
     return this.execStatusReply("INCRBYFLOAT", key, increment);
   }
 
-  info(section?) {
-    return this.execStatusReply("INFO", section);
+  info(section?: string) {
+    if (section) {
+      return this.execStatusReply("INFO", section);
+    } else {
+      return this.execStatusReply("INFO");
+    }
   }
 
-  keys(pattern) {
+  keys(pattern: string) {
     return this.execArrayReply("KEYS", pattern);
   }
 
@@ -877,11 +888,11 @@ class RedisImpl implements Redis {
     return this.execIntegerReply("LASTSAVE");
   }
 
-  lindex(key: string, index) {
+  lindex(key: string, index: number) {
     return this.execStatusReply("LINDEX", key, index);
   }
 
-  linsert(key: string, arg: "BEFORE" | "AFTER", pivot, value) {
+  linsert(key: string, arg: "BEFORE" | "AFTER", pivot: string, value: string) {
     return this.execIntegerReply("LINSERT", key, arg);
   }
 
@@ -893,27 +904,27 @@ class RedisImpl implements Redis {
     return this.execStatusReply("LPOP", key);
   }
 
-  lpush(key: string, ...values) {
+  lpush(key: string, ...values: (string | number)[]) {
     return this.execIntegerReply("LPUSH", key, ...values);
   }
 
-  lpushx(key: string, value) {
+  lpushx(key: string, value: string | number) {
     return this.execIntegerReply("LPUSHX", key, value);
   }
 
-  lrange(key: string, start, stop) {
+  lrange(key: string, start: number, stop: number) {
     return this.execArrayReply("LRANGE", key, start, stop);
   }
 
-  lrem(key: string, count, value) {
+  lrem(key: string, count: number, value: string | number) {
     return this.execIntegerReply("LREM", key, count, value);
   }
 
-  lset(key: string, index, value) {
+  lset(key: string, index: number, value: string | number) {
     return this.execBulkReply("LSET", key, index, value);
   }
 
-  ltrim(key: string, start, stop) {
+  ltrim(key: string, start: number, stop: number) {
     return this.execBulkReply("LTRIM", key, start, stop);
   }
 
@@ -945,7 +956,7 @@ class RedisImpl implements Redis {
     return this.execIntegerReply("MEMORY", "USAGE", ...args);
   }
 
-  mget(...keys) {
+  mget(...keys: string[]) {
     return this.execArrayReply("MGET", ...keys);
   }
 
@@ -973,11 +984,11 @@ class RedisImpl implements Redis {
     return this.execIntegerReply("MOVE", key, db);
   }
 
-  mset(...key_values) {
+  mset(...key_values: string[]) {
     return this.execBulkReply("MSET", ...key_values);
   }
 
-  msetnx(...key_values) {
+  msetnx(...key_values: string[]) {
     return this.execIntegerReply("MSETNX", ...key_values);
   }
 
@@ -1009,45 +1020,46 @@ class RedisImpl implements Redis {
     return this.execIntegerReply("PERSIST", key);
   }
 
-  pexpire(key: string, milliseconds) {
+  pexpire(key: string, milliseconds: number) {
     return this.execIntegerReply("PEXPIRE", key, milliseconds);
   }
 
-  pexpireat(key: string, milliseconds_timestamp) {
+  pexpireat(key: string, milliseconds_timestamp: number) {
     return this.execIntegerReply("PEXPIREAT", key, milliseconds_timestamp);
   }
 
-  pfadd(key: string, element, ...elements) {
+  pfadd(key: string, element: string, ...elements: string[]) {
     return this.execIntegerReply("PFADD", key, element, ...elements);
   }
 
-  pfcount(key: string, ...keys) {
+  pfcount(key: string, ...keys: string[]) {
     return this.execIntegerReply("PFCOUNT", key, ...keys);
   }
 
-  pfmerge(destkey, ...sourcekeys) {
+  pfmerge(destkey: string, ...sourcekeys: string[]) {
     return this.execBulkReply("PFMERGE", destkey, ...sourcekeys);
   }
 
-  ping(message?) {
-    return this.execBulkReply("PING", message);
+  ping(message?: string) {
+    if (message) return this.execBulkReply("PING", message);
+    else return this.execBulkReply("PING");
   }
 
-  psetex(key: string, milliseconds, value) {
-    //
+  psetex(key: string, milliseconds: number, value: string) {
+    return this.execStatusReply("PSETEX", key, milliseconds, value);
   }
 
   // PubSub
 
-  publish(channel, message) {
+  publish(channel: string, message: string) {
     return this.execIntegerReply("PUBLISH", channel, message);
   }
 
-  subscribe(...channels) {
+  subscribe(...channels: string[]) {
     return subscribe(this.writer, this.reader, ...channels);
   }
 
-  psubscribe(...patterns) {
+  psubscribe(...patterns: string[]) {
     return psubscribe(this.writer, this.reader, ...patterns);
   }
 
@@ -1087,15 +1099,20 @@ class RedisImpl implements Redis {
     return this.execBulkReply("READWRITE");
   }
 
-  rename(key: string, newkey) {
+  rename(key: string, newkey: string) {
     return this.execBulkReply("RENAME", key, newkey);
   }
 
-  renamenx(key: string, newkey) {
+  renamenx(key: string, newkey: string) {
     return this.execIntegerReply("RENAMENX", key, newkey);
   }
 
-  restore(key: string, ttl, serialized_value, REPLACE?) {
+  restore(
+    key: string,
+    ttl: number,
+    serialized_value: string,
+    REPLACE?: boolean
+  ) {
     const args = [key, ttl, serialized_value];
     if (REPLACE) {
       args.push("REPLACE");
@@ -1111,19 +1128,19 @@ class RedisImpl implements Redis {
     return this.execStatusReply("RPOP", key);
   }
 
-  rpoplpush(source, destination) {
+  rpoplpush(source: string, destination: string) {
     return this.execStatusReply("RPOPLPUSH", source, destination);
   }
 
-  rpush(key: string, ...values) {
+  rpush(key: string, ...values: (string | number)[]) {
     return this.execIntegerReply("RPUSH", key, ...values);
   }
 
-  rpushx(key: string, value) {
+  rpushx(key: string, value: string) {
     return this.execIntegerReply("RPUSHX", key, value);
   }
 
-  sadd(key: string, member, ...members) {
+  sadd(key: string, member: string, ...members: string[]) {
     return this.execIntegerReply("SADD", key, member, ...members);
   }
 
@@ -1139,7 +1156,7 @@ class RedisImpl implements Redis {
     return this.execBulkReply("SCRIPT", "DEBUG", arg);
   }
 
-  script_exists(...sha1s) {
+  script_exists(...sha1s: string[]) {
     return this.execArrayReply("SCRIPT", "EXISTS", ...sha1s);
   }
 
@@ -1159,15 +1176,15 @@ class RedisImpl implements Redis {
     return this.execArrayReply("SDIFF", ...keys);
   }
 
-  sdiffstore(destination, key, ...keys) {
+  sdiffstore(destination: string, key: string, ...keys: string[]) {
     return this.execIntegerReply("SDIFFSTORE", destination, key, ...keys);
   }
 
-  select(index) {
+  select(index: number) {
     return this.execBulkReply("SELECT", index);
   }
 
-  set(key: string, value, opts?) {
+  set(key: string, value: string, opts?) {
     const args = [key, value];
     if (opts) {
       if (opts.ex) {
@@ -1182,47 +1199,47 @@ class RedisImpl implements Redis {
     return this.execBulkReply("SET", ...args);
   }
 
-  setbit(key: string, offset, value) {
+  setbit(key: string, offset: number, value: string) {
     return this.execIntegerReply("SETBIT", key, offset, value);
   }
 
-  setex(key: string, seconds, value) {
+  setex(key: string, seconds: number, value: string) {
     return this.execBulkReply("SETEX", key, seconds, value);
   }
 
-  setnx(key: string, value) {
+  setnx(key: string, value: string) {
     return this.execIntegerReply("SETNX", key, value);
   }
 
-  setrange(key: string, offset, value) {
+  setrange(key: string, offset: number, value: string) {
     return this.execIntegerReply("SETRANGE", key, offset, value);
   }
 
-  shutdown(arg) {
+  shutdown(arg: string) {
     return this.execBulkReply("SHUTDOWN", arg);
   }
 
-  sinter(key: string, ...keys) {
+  sinter(key: string, ...keys: string[]) {
     return this.execArrayReply("SINTER", key, ...keys);
   }
 
-  sinterstore(destination, key, ...keys) {
+  sinterstore(destination: string, key: string, ...keys: string[]) {
     return this.execIntegerReply("SINTERSTORE", destination, key, ...keys);
   }
 
-  sismember(key: string, member) {
+  sismember(key: string, member: string) {
     return this.execIntegerReply("SISMEMBER", key, member);
   }
 
-  slaveof(host, port) {
+  slaveof(host: string, port: string | number) {
     return this.execBulkReply("SLAVEOF", host, port);
   }
 
-  replicaof(host, port) {
+  replicaof(host: string, port: string | number) {
     return this.execBulkReply("REPLICAOF", host, port);
   }
 
-  slowlog(subcommand, ...argument) {
+  slowlog(subcommand: string, ...argument: string[]) {
     return this.execRawReply("SLOWLOG", subcommand, ...argument);
   }
 
@@ -1230,7 +1247,7 @@ class RedisImpl implements Redis {
     return this.execArrayReply("SMEMBERS", key);
   }
 
-  smove(source, destination, member) {
+  smove(source: string, destination: string, member: string) {
     return this.execIntegerReply("SMOVE", source, destination, member);
   }
 
@@ -1267,15 +1284,17 @@ class RedisImpl implements Redis {
 
   spop(key: string): Promise<string>;
   spop(key: string, count: number): Promise<string[]>;
-  spop(...args): Promise<string | string[]> {
+  spop(...args: (string | number)[]): Promise<string | string[]> {
     return this.execStatusReply("SPOP", ...args);
   }
 
-  srandmember(...args) {
+  srandmember(key: string);
+  srandmember(key: string, count: number);
+  srandmember(...args: any[]) {
     return this.execStatusReply("SRANDMEMBER", ...args);
   }
 
-  srem(key: string, ...members) {
+  srem(key: string, ...members: string[]) {
     return this.execIntegerReply("SREM", key, ...members);
   }
 
@@ -1283,15 +1302,15 @@ class RedisImpl implements Redis {
     return this.execIntegerReply("STRLEN", key);
   }
 
-  sunion(...keys) {
+  sunion(...keys: string[]) {
     return this.execArrayReply("SUNION", ...keys);
   }
 
-  sunionstore(destination, ...keys) {
+  sunionstore(destination: string, ...keys: string[]) {
     return this.execIntegerReply("SUNIONSTORE", destination, ...keys);
   }
 
-  swapdb(index, index2) {
+  swapdb(index: number, index2: number) {
     return this.execBulkReply("SWAPDB", index, index2);
   }
 
@@ -1304,7 +1323,7 @@ class RedisImpl implements Redis {
     return this.execArrayReply("TIME");
   }
 
-  touch(...keys) {
+  touch(...keys: string[]) {
     return this.execIntegerReply("TOUCH", ...keys);
   }
 
@@ -1316,7 +1335,7 @@ class RedisImpl implements Redis {
     return this.execBulkReply("TYPE", key);
   }
 
-  unlink(...keys) {
+  unlink(...keys: string[]) {
     return this.execIntegerReply("UNLINK", ...keys);
   }
 
@@ -1324,15 +1343,33 @@ class RedisImpl implements Redis {
     return this.execBulkReply("UNWATCH");
   }
 
-  wait(numreplicas, timeout) {
+  wait(numreplicas: number, timeout: number) {
     return this.execIntegerReply("WAIT", numreplicas, timeout);
   }
 
-  watch(key: string, ...keys) {
+  watch(key: string, ...keys: string[]) {
     return this.execBulkReply("WATCH", key, ...keys);
   }
-
-  zadd(key: string, scoreOrArr, memberOrOpts, opts?) {
+  zadd(
+    key: string,
+    score: number,
+    member: string,
+    opts?: {
+      nxx?: "NX" | "XX";
+      ch?: boolean;
+      incr?: boolean;
+    }
+  ): Promise<number>;
+  zadd(
+    key: string,
+    score_members: (number | string)[],
+    opts?: {
+      nxx?: "NX" | "XX";
+      ch?: boolean;
+      incr?: boolean;
+    }
+  ): Promise<number>;
+  zadd(key: string, scoreOrArr: any, memberOrOpts: any, opts?) {
     const args: (string | number)[] = [key];
     let _opts = opts;
     if (typeof scoreOrArr === "number") {
@@ -1364,11 +1401,17 @@ class RedisImpl implements Redis {
     return this.execIntegerReply("ZCOUNT", key, min, max);
   }
 
-  zincrby(key: string, increment, member) {
+  zincrby(key: string, increment: number, member: string) {
     return this.execStatusReply("ZINCRBY", key, increment, member);
   }
 
-  zinterstore(destination, numkeys, keys, weights?, aggregate?) {
+  zinterstore(
+    destination: string,
+    numkeys: number,
+    keys: string[],
+    weights?,
+    aggregate?
+  ) {
     const args = this.pushZInterStoreArgs(
       [destination, numkeys],
       keys,
@@ -1378,8 +1421,8 @@ class RedisImpl implements Redis {
     return this.execIntegerReply("ZINTERSTORE", ...args);
   }
 
-  zunionstore(destination, keys, opts?): Promise<number> {
-    const args = [destination, keys.length, keys];
+  zunionstore(destination: string, keys: string[], opts?): Promise<number> {
+    const args: (string | number)[] = [destination, keys.length, keys];
     if (opts) {
       if (opts.weights) {
         args.push("WEIGHTS", ...opts.weights);
@@ -1412,19 +1455,21 @@ class RedisImpl implements Redis {
     return args;
   }
 
-  zlexcount(key: string, min, max) {
+  zlexcount(key: string, min: number, max: number) {
     return this.execIntegerReply("ZLEXCOUNT", key, min, max);
   }
 
-  zpopmax(key: string, count?) {
-    return this.execArrayReply("ZPOPMAX", key, count);
+  zpopmax(key: string, count?: number) {
+    if (count != null) return this.execArrayReply("ZPOPMAX", key, count);
+    else return this.execArrayReply("ZPOPMAX", key);
   }
 
-  zpopmin(key: string, count?) {
-    return this.execArrayReply("ZPOPMIN", key, count);
+  zpopmin(key: string, count?: number) {
+    if (count != null) return this.execArrayReply("ZPOPMIN", key, count);
+    else return this.execArrayReply("ZPOPMIN", key);
   }
 
-  zrange(key: string, start, stop, opts?) {
+  zrange(key: string, start: number, stop: number, opts?) {
     const args = this.pushZrangeOpts([key, start, stop], opts);
     return this.execArrayReply("ZRANGE", ...args);
   }
@@ -1439,7 +1484,7 @@ class RedisImpl implements Redis {
     return this.execArrayReply("ZREVRANGEBYLEX", ...args);
   }
 
-  zrangebyscore(key: string, min, max, opts?) {
+  zrangebyscore(key: string, min: number, max: number, opts?) {
     const args = this.pushZrangeOpts([key, min, max], opts);
     return this.execArrayReply("ZRANGEBYSCORE", ...args);
   }
@@ -1456,11 +1501,11 @@ class RedisImpl implements Redis {
     return args;
   }
 
-  zrank(key: string, member) {
+  zrank(key: string, member: string) {
     return this.execIntegerReply("ZRANK", key, member);
   }
 
-  zrem(key: string, ...members) {
+  zrem(key: string, ...members: string[]) {
     return this.execIntegerReply("ZREM", key, ...members);
   }
 
@@ -1476,7 +1521,7 @@ class RedisImpl implements Redis {
     return this.execIntegerReply("ZREMRANGEBYSCORE", key, min, max);
   }
 
-  zrevrange(key: string, start, stop, opts?) {
+  zrevrange(key: string, start: number, stop: number, opts?) {
     const args = this.pushZrangeOpts([key, start, stop], opts);
     return this.execArrayReply("ZREVRANGE", ...args);
   }
@@ -1486,30 +1531,30 @@ class RedisImpl implements Redis {
     return this.execArrayReply("ZREVRANGEBYSCORE", ...args);
   }
 
-  zrevrank(key: string, member) {
+  zrevrank(key: string, member: string) {
     return this.execIntegerReply("ZREVRANK", key, member);
   }
 
-  zscore(key: string, member) {
+  zscore(key: string, member: string) {
     return this.execStatusReply("ZSCORE", key, member);
   }
 
-  scan(cursor, opts?) {
+  scan(cursor: number, opts?) {
     const arg = this.pushScanOpts([cursor], opts);
     return this.execArrayReply("SCAN", ...arg);
   }
 
-  sscan(key: string, cursor, opts?) {
+  sscan(key: string, cursor: number, opts?) {
     const arg = this.pushScanOpts([key, cursor], opts);
     return this.execArrayReply("SSCAN", ...arg);
   }
 
-  hscan(key: string, cursor, opts?) {
+  hscan(key: string, cursor: number, opts?) {
     const arg = this.pushScanOpts([key, cursor], opts);
     return this.execArrayReply("HSCAN", ...arg);
   }
 
-  zscan(key: string, cursor, opts?) {
+  zscan(key: string, cursor: number, opts?) {
     const arg = this.pushScanOpts([key, cursor], opts);
     return this.execArrayReply("ZSCAN", ...arg);
   }
