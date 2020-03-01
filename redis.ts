@@ -526,7 +526,7 @@ class RedisImpl implements Redis {
   ): Promise<BulkResult> {
     const [_, reply] = await this.executor.execRawReply(command, ...args);
     // Note: `reply != null` won't work when `strict` is false #50
-    if (typeof reply !== "string" && typeof reply !== 'undefined') {
+    if (typeof reply !== "string" && typeof reply !== "undefined") {
       throw new Error();
     }
     return reply;
