@@ -1,7 +1,14 @@
 import { BufReader, BufWriter } from "./vendor/https/deno.land/std/io/bufio.ts";
-import { createRequest, readReply, RedisRawReply, StatusReply } from "./io.ts";
+import {
+  createRequest,
+  readReply,
+  RedisRawReply,
+  StatusReply,
+  CommandFunc,
+  CommandExecutor
+} from "./io.ts";
 import { ErrorReplyError } from "./errors.ts";
-import { create, Redis, CommandFunc, CommandExecutor } from "./redis.ts";
+import { create, Redis } from "./redis.ts";
 import { deferred, Deferred } from "./vendor/https/deno.land/std/util/async.ts";
 
 const encoder = new TextEncoder();
@@ -72,24 +79,26 @@ export function createRedisPipeline(
     commands = [];
     return d;
   }
-  function execRawReply(
+  async function execRawReply(
     command: string,
     ...args: (string | number)[]
-  ): ["status", "OK"] {
+  ): Promise<["status", "OK"]> {
     enqueue(command, ...args);
     return ["status", "OK"];
   }
-  const _execOk: CommandFunc<OkStatus> = (command, ...args) => {
-    const [_, ok] = execRawReply(command, ...args);
+  const _execOk: CommandFunc<OkStatus> = async (command, ...args) => {
+    const [_, ok] = await execRawReply(command, ...args);
     return ok;
   };
   const execStatusReply = _execOk;
   const execIntegerReply = _execOk;
   const execBulkReply = _execOk;
   const execArrayReply = _execOk;
+  const execStatusOrNilReply = _execOk;
   const d = dummyReadWriteCloser();
   const executor: CommandExecutor<
     StatusReply,
+    OkStatus,
     OkStatus,
     OkStatus,
     OkStatus,
@@ -99,7 +108,8 @@ export function createRedisPipeline(
     execIntegerReply,
     execStatusReply,
     execBulkReply,
-    execArrayReply
+    execArrayReply,
+    execStatusOrNilReply
   };
   const fakeRedis = create(d, d, d, executor);
   return Object.assign(fakeRedis, executor, { enqueue, flush });

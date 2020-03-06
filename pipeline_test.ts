@@ -1,7 +1,4 @@
-import {
-  assertEquals,
-  assert
-} from "./vendor/https/deno.land/std/testing/asserts.ts";
+import { assertEquals } from "./vendor/https/deno.land/std/testing/asserts.ts";
 import { connect } from "./redis.ts";
 const { test } = Deno;
 
@@ -40,7 +37,8 @@ test(async function testTx() {
   const tx2 = redis.tx();
   const tx3 = redis.tx();
   await redis.del("key");
-  tx1.get("key"),
+  await Promise.all<any>([
+    tx1.get("key"),
     tx1.incr("key"),
     tx1.incr("key"),
     tx1.incr("key"),
@@ -56,7 +54,8 @@ test(async function testTx() {
     tx3.incr("key"),
     tx3.incr("key"),
     tx3.incr("key"),
-    tx3.get("key");
+    tx3.get("key")
+  ]);
   const rep1 = await tx1.flush();
   const rep2 = await tx2.flush();
   const rep3 = await tx3.flush();
@@ -77,43 +76,33 @@ test(async function testTx() {
 test("pipeline in concurrent", async () => {
   const redis = await connect(addr);
   const tx = redis.pipeline();
+  let promises: Promise<any>[] = [];
   await redis.del("a", "b", "c");
-  const ps: Promise<any>[] = [];
-  const res1: any[] = [];
-  const res2: any[] = [];
   for (const key of ["a", "b", "c"]) {
-    res1.push(tx.set(key, key));
+    promises.push(tx.set(key, key));
   }
-  ps.push(tx.flush());
+  promises.push(tx.flush());
   for (const key of ["a", "b", "c"]) {
-    res2.push(tx.get(key));
+    promises.push(tx.get(key));
   }
-  ps.push(tx.flush());
-  const [rep1, rep2] = await Promise.all(ps);
-  assertEquals(res1, [
+  promises.push(tx.flush());
+  const res = await Promise.all(promises);
+  assertEquals(res, [
     "OK", //set(a)
     "OK", //set(b)
-    "OK" //set(c)
-  ]);
-  assertEquals(
-    rep1,
+    "OK", //set(c)
     [
       ["status", "OK"],
       ["status", "OK"],
       ["status", "OK"]
-    ] //flush()
-  );
-  assertEquals(res2, [
+    ], //flush()
     "OK", // get(a)
     "OK", // get(b)
-    "OK" //get(c)
-  ]);
-  assertEquals(
-    rep2,
+    "OK", //get(c)
     [
       ["bulk", "a"],
       ["bulk", "b"],
       ["bulk", "c"]
     ] //flush()
-  );
+  ]);
 });

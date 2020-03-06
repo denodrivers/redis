@@ -2,7 +2,7 @@ import { BufReader, BufWriter } from "./vendor/https/deno.land/std/io/bufio.ts";
 import Buffer = Deno.Buffer;
 import { ErrorReplyError } from "./errors.ts";
 import { deferred, Deferred } from "./vendor/https/deno.land/std/util/async.ts";
-import { CommandExecutor } from "./redis.ts";
+import { assert } from "./vendor/https/deno.land/std/testing/asserts.ts";
 
 export type BulkResult = string | undefined;
 export type StatusReply = ["status", string];
@@ -10,6 +10,27 @@ export type IntegerReply = ["integer", number];
 export type BulkReply = ["bulk", BulkResult];
 export type ArrayReply = ["array", any[]];
 export type RedisRawReply = StatusReply | IntegerReply | BulkReply | ArrayReply;
+
+export type CommandFunc<T> = (
+  comand: string,
+  ...args: (string | number)[]
+) => Promise<T>;
+
+export interface CommandExecutor<
+  TRaw,
+  TStatus,
+  TInteger,
+  TBulk,
+  TArray,
+  TBulkNil
+> {
+  execRawReply: CommandFunc<TRaw>;
+  execStatusReply: CommandFunc<TStatus>;
+  execIntegerReply: CommandFunc<TInteger>;
+  execBulkReply: CommandFunc<TBulk>;
+  execArrayReply: CommandFunc<TArray>;
+  execStatusOrNilReply: CommandFunc<TStatus | TBulkNil>;
+}
 
 const IntegerReplyCode = ":".charCodeAt(0);
 const BulkReplyCode = "$".charCodeAt(0);
@@ -159,11 +180,12 @@ export function muxExecutor(
   r: BufReader,
   w: BufWriter
 ): CommandExecutor<
-  Promise<RedisRawReply>,
-  Promise<"OK">,
-  Promise<number>,
-  Promise<BulkResult>,
-  Promise<(number | string | undefined)[]>
+  RedisRawReply,
+  string,
+  number,
+  BulkResult,
+  (number | string | undefined)[],
+  undefined
 > {
   let queue: {
     command: string;
@@ -186,37 +208,64 @@ export function muxExecutor(
   async function execStatusReply(
     command: string,
     ...args: (string | number)[]
-  ): Promise<"OK"> {
-    const [_, reply] = await execRawReply(command, ...args);
-    return reply as "OK";
+  ): Promise<string> {
+    const [type, reply] = await execRawReply(command, ...args);
+    assert(
+      type === "status" && typeof reply === "string",
+      `${command} ${type} ${reply}`
+    );
+    return reply;
   }
 
   async function execIntegerReply(
     command: string,
     ...args: (string | number)[]
   ): Promise<number> {
-    const [_, reply] = await execRawReply(command, ...args);
-    return reply as number;
+    const [type, reply] = await execRawReply(command, ...args);
+    assert(
+      type === "integer" && typeof reply === "number",
+      `${command} ${type} ${reply}`
+    );
+    return reply;
   }
 
   async function execBulkReply(
     command: string,
     ...args: (string | number)[]
   ): Promise<BulkResult> {
-    const [_, reply] = await execRawReply(command, ...args);
-    // Note: `reply != null` won't work when `strict` is false #50
-    if (typeof reply !== "string" && typeof reply !== "undefined") {
-      throw new Error();
-    }
+    const [type, reply] = await execRawReply(command, ...args);
+    assert(
+      (type === "bulk" && typeof reply === "string") || reply === undefined,
+      `${command} ${type} ${reply}`
+    );
     return reply;
   }
 
   async function execArrayReply(
     command: string,
     ...args: (string | number)[]
-  ): Promise<(string | number | undefined)[]> {
-    const [_, reply] = await execRawReply(command, ...args);
-    return reply as any[];
+  ): Promise<any[]> {
+    const [type, reply] = await execRawReply(command, ...args);
+    assert(
+      type === "array" && Array.isArray(reply),
+      `${command} ${type} ${reply}`
+    );
+    return reply;
+  }
+
+  async function execStatusOrNilReply(
+    command: string,
+    ...args: (string | number)[]
+  ): Promise<string | undefined> {
+    const [type, reply] = await execRawReply(command, ...args);
+    if (type === "status") {
+      assert(typeof reply === "string");
+      return reply;
+    } else if (type === "bulk") {
+      assert(reply === undefined);
+      return reply;
+    }
+    throw new Error("unexpected type: " + type);
   }
 
   async function execRawReply(
@@ -235,6 +284,7 @@ export function muxExecutor(
     execIntegerReply,
     execArrayReply,
     execStatusReply,
+    execStatusOrNilReply,
     execBulkReply
   };
 }
