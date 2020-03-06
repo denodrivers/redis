@@ -1,14 +1,15 @@
 import { BufReader, BufWriter } from "./vendor/https/deno.land/std/io/bufio.ts";
 import Buffer = Deno.Buffer;
 import { ErrorReplyError } from "./errors.ts";
+import { deferred, Deferred } from "./vendor/https/deno.land/std/util/async.ts";
+import { CommandExecutor } from "./redis.ts";
 
 export type BulkResult = string | undefined;
-export type RedisRawReply =
-  | ["status", string]
-  | ["integer", number]
-  | ["bulk", BulkResult]
-  | ["array", any[]]
-  | ["error", ErrorReplyError];
+export type StatusReply = ["status", string];
+export type IntegerReply = ["integer", number];
+export type BulkReply = ["bulk", BulkResult];
+export type ArrayReply = ["array", any[]];
+export type RedisRawReply = StatusReply | IntegerReply | BulkReply | ArrayReply;
 
 const IntegerReplyCode = ":".charCodeAt(0);
 const BulkReplyCode = "$".charCodeAt(0);
@@ -152,4 +153,88 @@ function tryParseErrorReply(line: string): never {
     throw new ErrorReplyError(line);
   }
   throw new Error(`invalid line: ${line}`);
+}
+
+export function muxExecutor(
+  r: BufReader,
+  w: BufWriter
+): CommandExecutor<
+  Promise<RedisRawReply>,
+  Promise<"OK">,
+  Promise<number>,
+  Promise<BulkResult>,
+  Promise<(number | string | undefined)[]>
+> {
+  let queue: {
+    command: string;
+    args: (string | number)[];
+    d: Deferred<RedisRawReply>;
+  }[] = [];
+
+  function dequeue(): void {
+    const [e] = queue;
+    if (!e) return;
+    sendCommand(w, r, e.command, ...e.args)
+      .then(v => e.d.resolve(v))
+      .catch(err => e.d.reject(err))
+      .finally(() => {
+        queue.shift();
+        dequeue();
+      });
+  }
+
+  async function execStatusReply(
+    command: string,
+    ...args: (string | number)[]
+  ): Promise<"OK"> {
+    const [_, reply] = await execRawReply(command, ...args);
+    return reply as "OK";
+  }
+
+  async function execIntegerReply(
+    command: string,
+    ...args: (string | number)[]
+  ): Promise<number> {
+    const [_, reply] = await execRawReply(command, ...args);
+    return reply as number;
+  }
+
+  async function execBulkReply(
+    command: string,
+    ...args: (string | number)[]
+  ): Promise<BulkResult> {
+    const [_, reply] = await execRawReply(command, ...args);
+    // Note: `reply != null` won't work when `strict` is false #50
+    if (typeof reply !== "string" && typeof reply !== "undefined") {
+      throw new Error();
+    }
+    return reply;
+  }
+
+  async function execArrayReply(
+    command: string,
+    ...args: (string | number)[]
+  ): Promise<(string | number | undefined)[]> {
+    const [_, reply] = await execRawReply(command, ...args);
+    return reply as any[];
+  }
+
+  async function execRawReply(
+    command: string,
+    ...args: (string | number)[]
+  ): Promise<RedisRawReply> {
+    const d = deferred<RedisRawReply>();
+    queue.push({ command, args, d });
+    if (queue.length === 1) {
+      dequeue();
+    }
+    return d;
+  }
+  return {
+    execRawReply,
+    execIntegerReply,
+    execArrayReply,
+    execStatusReply,
+    execBulkReply
+  };
 }
