@@ -235,8 +235,8 @@ export function muxExecutor(
   ): Promise<BulkResult> {
     const [type, reply] = await execRawReply(command, ...args);
     assert(
-      (type === "bulk" && typeof reply === "string") || reply === undefined,
-      `${command} ${type} ${reply}`
+      ((type === "bulk" || type === "status") && typeof reply === "string") || reply === undefined,
+      `${command} ${type} ${typeof reply} ${reply}`
     );
     return reply;
   }
