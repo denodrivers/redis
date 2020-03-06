@@ -1,4 +1,4 @@
-import { connect, Redis } from "./redis.ts";
+import { connect } from "./redis.ts";
 import {
   assertEquals,
   assertThrowsAsync,
@@ -12,30 +12,27 @@ const addr = {
   port: 6379
 };
 
-let redis: Redis;
-test(async function beforeAll() {
-  redis = await connect(addr);
-  await redis.del(
-    "incr",
-    "incrby",
-    "decr",
-    "decryby",
-    "get",
-    "getset",
-    "del1",
-    "del2",
-    "spop",
-    "spopWithCount",
-    "zrange",
-    "zrangeWithScores",
-    "zrevrange",
-    "zrevrangeWithScores",
-    "zrangebyscore",
-    "zrangebyscoreWithScores",
-    "zrevrangebyscore",
-    "zrevrangebyscoreWithScores"
-  );
-});
+let redis = await connect(addr);
+await redis.del(
+  "incr",
+  "incrby",
+  "decr",
+  "decryby",
+  "get",
+  "getset",
+  "del1",
+  "del2",
+  "spop",
+  "spopWithCount",
+  "zrange",
+  "zrangeWithScores",
+  "zrevrange",
+  "zrevrangeWithScores",
+  "zrangebyscore",
+  "zrangebyscoreWithScores",
+  "zrevrangebyscore",
+  "zrevrangebyscoreWithScores"
+);
 
 test(async function testExists() {
   const none = await redis.exists("none", "none2");

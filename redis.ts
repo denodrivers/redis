@@ -2,27 +2,25 @@ type Reader = Deno.Reader;
 type Writer = Deno.Writer;
 type Closer = Deno.Closer;
 import { BufReader, BufWriter } from "./vendor/https/deno.land/std/io/bufio.ts";
-import { yellow } from "./vendor/https/deno.land/std/fmt/colors.ts";
-import { ConnectionClosedError } from "./errors.ts";
 import { psubscribe, RedisSubscription, subscribe } from "./pubsub.ts";
-import { RedisRawReply, sendCommand, BulkResult } from "./io.ts";
+import { muxExecutor, CommandExecutor } from "./io.ts";
 import { createRedisPipeline, RedisPipeline } from "./pipeline.ts";
-import { deferred, Deferred } from "./vendor/https/deno.land/std/util/async.ts";
-export type Redis = {
+
+export type Redis<TRaw, TStatus, TInteger, TBulk, TArray, TBulkNil> = {
   // Connection
-  auth(password: string): Promise<BulkResult>;
-  echo(message: string): Promise<BulkResult>;
-  ping(message?: string): Promise<string>;
-  quit(): Promise<string>;
-  select(index: number): Promise<string>;
-  swapdb(index: number, index2: number): Promise<string>;
+  auth(password: string): Promise<TBulk>;
+  echo(message: string): Promise<TBulk>;
+  ping(message?: string): Promise<TStatus>;
+  quit(): Promise<TStatus>;
+  select(index: number): Promise<TStatus>;
+  swapdb(index: number, index2: number): Promise<TStatus>;
   // Keys
-  del(...keys: string[]): Promise<number>;
-  dump(key: string): Promise<string>;
-  exists(...keys: string[]): Promise<number>;
-  expire(key: string, seconds: number): Promise<number>;
-  expireat(key: string, timestamp: string): Promise<number>;
-  keys(pattern: string): Promise<string[]>;
+  del(...keys: string[]): Promise<TInteger>;
+  dump(key: string): Promise<TStatus>;
+  exists(...keys: string[]): Promise<TInteger>;
+  expire(key: string, seconds: number): Promise<TInteger>;
+  expireat(key: string, timestamp: string): Promise<TInteger>;
+  keys(pattern: string): Promise<TArray>;
   migrate(
     host: string,
     port: number | string,
@@ -34,26 +32,26 @@ export type Redis = {
       replace?: boolean;
       keys?: string[];
     }
-  ): Promise<string>;
-  move(key: string, db: string): Promise<number>;
-  object_refcount(key: string): Promise<number>;
-  object_encoding(key: string): Promise<number>;
-  object_ideltime(key: string): Promise<number>;
-  object_freq(key: string): Promise<BulkResult>;
-  object_help(): Promise<BulkResult>;
-  persist(key: string): Promise<number>;
-  pexpire(key: string, milliseconds: number): Promise<number>;
-  pexpireat(key: string, milliseconds_timestamp: number): Promise<number>;
-  pttl(key: string): Promise<number>;
-  randomkey(): Promise<string>;
-  rename(key: string, newkey: string): Promise<string>;
-  renamenx(key: string, newkey: string): Promise<number>;
+  ): Promise<TStatus>;
+  move(key: string, db: string): Promise<TInteger>;
+  object_refcount(key: string): Promise<TInteger>;
+  object_encoding(key: string): Promise<TInteger>;
+  object_ideltime(key: string): Promise<TInteger>;
+  object_freq(key: string): Promise<TBulk>;
+  object_help(): Promise<TBulk>;
+  persist(key: string): Promise<TInteger>;
+  pexpire(key: string, milliseconds: number): Promise<TInteger>;
+  pexpireat(key: string, milliseconds_timestamp: number): Promise<TInteger>;
+  pttl(key: string): Promise<TInteger>;
+  randomkey(): Promise<TStatus>;
+  rename(key: string, newkey: string): Promise<TStatus>;
+  renamenx(key: string, newkey: string): Promise<TInteger>;
   restore(
     key: string,
     ttl: number,
     serialized_value: string,
     replace?: boolean
-  ): Promise<string>;
+  ): Promise<TStatus>;
   sort(
     key: string,
     opts?: {
@@ -65,76 +63,84 @@ export type Redis = {
       alpha?: boolean;
       destination?: string;
     }
-  ): Promise<string[] | number>;
-  touch(...keys: string[]): Promise<number>;
-  ttl(key: string): Promise<number>;
-  type(key: string): Promise<string>;
-  unlink(...keys: string[]): Promise<number>;
-  wait(numreplicas: number, timeout: number): Promise<number>;
+  ): Promise<TInteger> | Promise<TArray>;
+  touch(...keys: string[]): Promise<TInteger>;
+  ttl(key: string): Promise<TInteger>;
+  type(key: string): Promise<TStatus>;
+  unlink(...keys: string[]): Promise<TInteger>;
+  wait(numreplicas: number, timeout: number): Promise<TInteger>;
   // String
-  append(key: string, value: string): Promise<number>;
-  bitcount(key: string): Promise<number>;
-  bitcount(key: string, start: number, end: number): Promise<number>;
-  bitfield(): Promise<string[]>;
+  append(key: string, value: string): Promise<TInteger>;
+  bitcount(key: string): Promise<TInteger>;
+  bitcount(key: string, start: number, end: number): Promise<TInteger>;
+  bitfield(): Promise<TArray>;
   bitop(
     operation: "AND" | "OR" | "XOR" | "NOT",
     destkey: string,
     ...keys: string[]
-  ): Promise<number>;
+  ): Promise<TInteger>;
   bitpos(
     key: string,
     bit: number,
     start?: number,
     end?: number
-  ): Promise<number>;
-  decr(key: string): Promise<number>;
-  decrby(key: string, decrement: number): Promise<number>;
-  incr(key: string): Promise<number>;
-  incrby(key: string, increment: number): Promise<number>;
-  incrbyfloat(key: string, increment: number): Promise<string>;
-  mget(...keys: string[]): Promise<string[]>;
-  mset(key: string, value: string): Promise<string>;
-  mset(...key_values: string[]): Promise<string>;
-  msetnx(key: string, value: string): Promise<number>;
-  msetnx(...key_values: string[]): Promise<number>;
-  psetex(key: string, milliseconds: number, value: string): Promise<string>;
+  ): Promise<TInteger>;
+  decr(key: string): Promise<TInteger>;
+  decrby(key: string, decrement: number): Promise<TInteger>;
+  incr(key: string): Promise<TInteger>;
+  incrby(key: string, increment: number): Promise<TInteger>;
+  incrbyfloat(key: string, increment: number): Promise<TStatus>;
+  mget(...keys: string[]): Promise<TArray>;
+  mset(key: string, value: string): Promise<TStatus>;
+  mset(...key_values: string[]): Promise<TStatus>;
+  msetnx(key: string, value: string): Promise<TInteger>;
+  msetnx(...key_values: string[]): Promise<TInteger>;
+  psetex(key: string, milliseconds: number, value: string): Promise<TStatus>;
   set(
     key: string,
     value: string,
     opts?: {
       ex?: number;
       px?: number;
-      mode?: "NX" | "XX";
     }
-  ): Promise<BulkResult>;
-  setbit(key: string, offset: number, value: string): Promise<number>;
-  setex(key: string, seconds: number, value: string): Promise<string>;
-  setnx(key: string, value: string): Promise<number>;
-  setrange(key: string, offset: number, value: string): Promise<number>;
-  strlen(key: string): Promise<number>;
-  get(key: string): Promise<BulkResult>;
-  getbit(key: string, offset: number): Promise<number>;
-  getrange(key: string, start: number, end: number): Promise<string>;
-  getset(key: string, value: string): Promise<string>;
+  ): Promise<TStatus>;
+  set(
+    key: string,
+    value: string,
+    opts: {
+      ex?: number;
+      px?: number;
+      mode: "NX" | "XX";
+    }
+  ): Promise<TStatus | TBulkNil>;
+  setbit(key: string, offset: number, value: string): Promise<TInteger>;
+  setex(key: string, seconds: number, value: string): Promise<TStatus>;
+  setnx(key: string, value: string): Promise<TInteger>;
+  setrange(key: string, offset: number, value: string): Promise<TInteger>;
+  strlen(key: string): Promise<TInteger>;
+  get(key: string): Promise<TBulk>;
+  getbit(key: string, offset: number): Promise<TInteger>;
+  getrange(key: string, start: number, end: number): Promise<TStatus>;
+  getset(key: string, value: string): Promise<TBulk>;
   // Geo
   geoadd(
     key: string,
     longitude: number,
     latitude: number,
     member: string
-  ): Promise<number>;
+  ): Promise<TInteger>;
   geoadd(
     key: string,
     ...longitude_latitude_member: [number | number | string][]
-  ): Promise<number>;
-  geohash(key: string, ...members: string[]): Promise<string[]>;
-  geopos(key: string, ...members: string[]): Promise<string[]>;
+  ): Promise<TInteger>;
+  geohash(key: string, ...members: string[]): Promise<TArray>;
+  geopos(key: string, ...members: string[]): Promise<TArray>;
   geodist(
     key: string,
     member1: string,
     member2: string,
     unit?: "m" | "km" | "ft" | "mi"
-  ): Promise<string>;
+  ): Promise<TStatus>;
   georadius(
     key: string,
     longitude: number,
@@ -150,7 +156,7 @@ export type Redis = {
       store?: string;
       storeDist?: string;
     }
-  ): Promise<string[]>;
+  ): Promise<TArray>;
   georadiusbymember(
     key: string,
     member: string,
@@ -165,83 +171,83 @@ export type Redis = {
       store?: string;
       storeDist?: string;
     }
-  ): Promise<string[]>;
+  ): Promise<TArray>;
   // Hash
-  hdel(key: string, ...fields: string[]): Promise<number>;
-  hexists(key: string, field: string): Promise<number>;
-  hget(key: string, field: string): Promise<string>;
-  hgetall(key: string): Promise<string[]>;
-  hincrby(key: string, field: string, increment: number): Promise<number>;
-  hincrbyfloat(key: string, field: string, increment: number): Promise<string>;
-  hkeys(key: string): Promise<string[]>;
-  hlen(key: string): Promise<number>;
-  hmget(key: string, ...fields: string[]): Promise<string[]>;
-  hmset(key: string, field: string, value: string): Promise<string>;
-  hmset(key: string, ...field_values: string[]): Promise<string>;
-  hset(key: string, field: string, value: string): Promise<number>;
-  hsetnx(key: string, field: string, value: string): Promise<number>;
-  hstrlen(key: string, field: string): Promise<number>;
-  hvals(key: string): Promise<string[]>;
+  hdel(key: string, ...fields: string[]): Promise<TInteger>;
+  hexists(key: string, field: string): Promise<TInteger>;
+  hget(key: string, field: string): Promise<TStatus>;
+  hgetall(key: string): Promise<TArray>;
+  hincrby(key: string, field: string, increment: number): Promise<TInteger>;
+  hincrbyfloat(key: string, field: string, increment: number): Promise<TStatus>;
+  hkeys(key: string): Promise<TArray>;
+  hlen(key: string): Promise<TInteger>;
+  hmget(key: string, ...fields: string[]): Promise<TArray>;
+  hmset(key: string, field: string, value: string): Promise<TStatus>;
+  hmset(key: string, ...field_values: string[]): Promise<TStatus>;
+  hset(key: string, field: string, value: string): Promise<TInteger>;
+  hsetnx(key: string, field: string, value: string): Promise<TInteger>;
+  hstrlen(key: string, field: string): Promise<TInteger>;
+  hvals(key: string): Promise<TArray>;
   // List
-  blpop(key: string | string[], timeout: number): Promise<string[]>;
-  brpop(key: string | string[], timeout: number): Promise<string[]>;
+  blpop(key: string | string[], timeout: number): Promise<TArray>;
+  brpop(key: string | string[], timeout: number): Promise<TArray>;
   brpoplpush(
     source: string,
     destination: string,
     timeout: number
-  ): Promise<string>;
-  lindex(key: string, index: number): Promise<string>;
+  ): Promise<TStatus>;
+  lindex(key: string, index: number): Promise<TStatus>;
   linsert(
     key: string,
     loc: "BEFORE" | "AFTER",
     pivot: string,
     value: string
-  ): Promise<number>;
-  llen(key: string): Promise<number>;
-  lpop(key: string): Promise<string>;
-  lpush(key: string, ...values: string[]): Promise<number>;
-  lpushx(key: string, value: string): Promise<number>;
-  lrange(key: string, start: number, stop: number): Promise<string[]>;
-  lrem(key: string, count: number, value: string): Promise<number>;
-  lset(key: string, index: number, value: string): Promise<string>;
-  ltrim(key: string, start: number, stop: number): Promise<string>;
-  rpop(key: string): Promise<string>;
-  rpoplpush(source: string, destination: string): Promise<string>;
-  rpush(key: string, ...values: string[]): Promise<number>;
-  rpushx(key: string, value: string): Promise<number>;
+  ): Promise<TInteger>;
+  llen(key: string): Promise<TInteger>;
+  lpop(key: string): Promise<TStatus>;
+  lpush(key: string, ...values: string[]): Promise<TInteger>;
+  lpushx(key: string, value: string): Promise<TInteger>;
+  lrange(key: string, start: number, stop: number): Promise<TArray>;
+  lrem(key: string, count: number, value: string): Promise<TInteger>;
+  lset(key: string, index: number, value: string): Promise<TStatus>;
+  ltrim(key: string, start: number, stop: number): Promise<TStatus>;
+  rpop(key: string): Promise<TStatus>;
+  rpoplpush(source: string, destination: string): Promise<TStatus>;
+  rpush(key: string, ...values: string[]): Promise<TInteger>;
+  rpushx(key: string, value: string): Promise<TInteger>;
   // HypeprLogLog
-  pfadd(key: string, ...elements: string[]): Promise<number>;
-  pfcount(...keys: string[]): Promise<number>;
-  pfmerge(destkey: string, ...sourcekeys: string[]): Promise<string>;
+  pfadd(key: string, ...elements: string[]): Promise<TInteger>;
+  pfcount(...keys: string[]): Promise<TInteger>;
+  pfmerge(destkey: string, ...sourcekeys: string[]): Promise<TStatus>;
   // PubSub
-  publish(channel: string, message: string): Promise<number>;
+  publish(channel: string, message: string): Promise<TInteger>;
   psubscribe(...patterns: string[]): Promise<RedisSubscription>;
   subscribe(...channels: string[]): Promise<RedisSubscription>;
-  pubsub_channels(pattern: string): Promise<string[]>;
-  pubsub_numsubs(...channels: string[]): Promise<string[]>;
-  pubsub_numpat(): Promise<number>;
+  pubsub_channels(pattern: string): Promise<TArray>;
+  pubsub_numsubs(...channels: string[]): Promise<TArray>;
+  pubsub_numpat(): Promise<TInteger>;
   // Cluster
-  readonly(): Promise<string>;
-  readwrite(): Promise<string>;
+  readonly(): Promise<TStatus>;
+  readwrite(): Promise<TStatus>;
   // Set
-  sadd(key: string, ...members: string[]): Promise<number>;
-  scard(key: string): Promise<number>;
-  sdiff(...keys: string[]): Promise<string[]>;
-  sdiffstore(destination: string, ...keys: string[]): Promise<number>;
-  sinter(...keys: string[]): Promise<string[]>;
-  sinterstore(destination: string, ...keys: string[]): Promise<number>;
-  sismember(key: string, member: string): Promise<number>;
-  smembers(key: string): Promise<string[]>;
-  smove(source: string, destination: string, member: string): Promise<number>;
-  spop(key: string): Promise<string>;
-  spop(key: string, count: number): Promise<string[]>;
-  srandmember(key: string, count?: number): Promise<string>;
-  srem(key: string, ...members: string[]): Promise<number>;
-  sunion(...keys: string[]): Promise<string[]>;
-  sunionstore(destination: string, ...keys: string[]): Promise<number>;
+  sadd(key: string, ...members: string[]): Promise<TInteger>;
+  scard(key: string): Promise<TInteger>;
+  sdiff(...keys: string[]): Promise<TArray>;
+  sdiffstore(destination: string, ...keys: string[]): Promise<TInteger>;
+  sinter(...keys: string[]): Promise<TArray>;
+  sinterstore(destination: string, ...keys: string[]): Promise<TInteger>;
+  sismember(key: string, member: string): Promise<TInteger>;
+  smembers(key: string): Promise<TArray>;
+  smove(source: string, destination: string, member: string): Promise<TInteger>;
+  spop(key: string): Promise<TBulk>;
+  spop(key: string, count: number): Promise<TArray>;
+  srandmember(key: string, count?: number): Promise<TStatus>;
+  srem(key: string, ...members: string[]): Promise<TInteger>;
+  sunion(...keys: string[]): Promise<TArray>;
+  sunionstore(destination: string, ...keys: string[]): Promise<TInteger>;
   // SortedSet
-  bzpopmin(key: string | string[], timeout: number): Promise<string[]>;
-  bzpopmax(key: string | string[], timeout: number): Promise<string[]>;
+  bzpopmin(key: string | string[], timeout: number): Promise<TArray>;
+  bzpopmax(key: string | string[], timeout: number): Promise<TArray>;
   zadd(
     key: string,
     score: number,
@@ -251,7 +257,7 @@ export type Redis = {
       ch?: boolean;
       incr?: boolean;
     }
-  ): Promise<number>;
+  ): Promise<TInteger>;
   zadd(
     key: string,
     score_members: (number | string)[],
@@ -260,20 +266,20 @@ export type Redis = {
       ch?: boolean;
       incr?: boolean;
     }
-  ): Promise<number>;
-  zcard(key: string): Promise<number>;
-  zcount(key: string, min: number, max: number): Promise<number>;
-  zincrby(key: string, increment: number, member: string): Promise<string>;
+  ): Promise<TInteger>;
+  zcard(key: string): Promise<TInteger>;
+  zcount(key: string, min: number, max: number): Promise<TInteger>;
+  zincrby(key: string, increment: number, member: string): Promise<TStatus>;
   zinterstore(
     destination: string,
     numkeys: number,
     keys: string | string[],
     weights?: number | number[],
     aggregate?: "SUM" | "MIN" | "MAX"
-  ): Promise<number>;
-  zlexcount(key: string, min: number, max: number): Promise<number>;
-  zpopmax(key: string, count?: number): Promise<string[]>;
-  zpopmin(key: string, count?: number): Promise<string[]>;
+  ): Promise<TInteger>;
+  zlexcount(key: string, min: number, max: number): Promise<TInteger>;
+  zpopmax(key: string, count?: number): Promise<TArray>;
+  zpopmin(key: string, count?: number): Promise<TArray>;
   zrange(
     key: string,
     start: number,
@@ -281,7 +287,7 @@ export type Redis = {
     opts?: {
       withScore?: boolean;
     }
-  ): Promise<string[]>;
+  ): Promise<TArray>;
   zrangebylex(
     key: string,
     min: number,
@@ -290,7 +296,7 @@ export type Redis = {
       offset?: number;
       count?: number;
     }
-  ): Promise<string[]>;
+  ): Promise<TArray>;
   zrevrangebylex(
     key: string,
     max: number,
@@ -299,7 +305,7 @@ export type Redis = {
       offset?: number;
       count?: number;
     }
-  ): Promise<string[]>;
+  ): Promise<TArray>;
   zrangebyscore(
     key: string,
     min: number,
@@ -309,12 +315,12 @@ export type Redis = {
       offset?: number;
       count?: number;
     }
-  ): Promise<string[]>;
-  zrank(key: string, member: string): Promise<number | undefined>;
-  zrem(key: string, ...members: string[]): Promise<number>;
-  zremrangebylex(key: string, min: number, max: number): Promise<number>;
-  zremrangebyrank(key: string, start: number, stop: number): Promise<number>;
-  zremrangebyscore(key: string, min: number, max: number): Promise<number>;
+  ): Promise<TArray>;
+  zrank(key: string, member: string): Promise<TInteger | TBulkNil>;
+  zrem(key: string, ...members: string[]): Promise<TInteger>;
+  zremrangebylex(key: string, min: number, max: number): Promise<TInteger>;
+  zremrangebyrank(key: string, start: number, stop: number): Promise<TInteger>;
+  zremrangebyscore(key: string, min: number, max: number): Promise<TInteger>;
   zrevrange(
     key: string,
     start: number,
@@ -322,7 +328,7 @@ export type Redis = {
     opts?: {
       withScore?: boolean;
     }
-  ): Promise<string[]>;
+  ): Promise<TArray>;
   zrevrangebyscore(
     key: string,
     max: number,
@@ -332,9 +338,9 @@ export type Redis = {
       offset?: number;
       count?: number;
     }
-  ): Promise<string[]>;
-  zrevrank(key: string, member: string): Promise<number | undefined>;
-  zscore(key: string, member: string): Promise<string>;
+  ): Promise<TArray>;
+  zrevrank(key: string, member: string): Promise<TInteger | TBulkNil>;
+  zscore(key: string, member: string): Promise<TStatus>;
   zunionstore(
     destination: string,
     keys: string[],
@@ -342,64 +348,64 @@ export type Redis = {
       weights?: number[];
       aggregate?: "SUM" | "MIN" | "MAX";
     }
-  ): Promise<number>;
+  ): Promise<TInteger>;
   // Cluster
   // cluster //
   // Server
-  bgrewriteaof(): Promise<BulkResult>;
-  bgsave(): Promise<BulkResult>;
+  bgrewriteaof(): Promise<TBulk>;
+  bgsave(): Promise<TBulk>;
   // client //
-  command(): Promise<string[]>;
-  command_count(): Promise<number>;
-  command_getkeys(): Promise<string[]>;
-  command_info(...command_names: string[]): Promise<string[]>;
-  config_get(parameter: string): Promise<string[]>;
-  config_rewrite(): Promise<BulkResult>;
-  config_set(parameter: string, value: string): Promise<BulkResult>;
-  config_resetstat(): Promise<BulkResult>;
-  dbsize(): Promise<number>;
-  debug_object(key: string): Promise<BulkResult>;
-  debug_segfault(): Promise<BulkResult>;
-  flushall(async?: boolean): Promise<BulkResult>;
-  flushdb(async?: boolean): Promise<BulkResult>;
-  info(section?: string): Promise<string>;
-  lastsave(): Promise<number>;
-  memory_doctor(): Promise<string>;
-  memory_help(): Promise<string[]>;
-  memory_malloc_stats(): Promise<string>;
-  memory_purge(): Promise<string>;
-  memory_stats(): Promise<string[]>;
+  command(): Promise<TArray>;
+  command_count(): Promise<TInteger>;
+  command_getkeys(): Promise<TArray>;
+  command_info(...command_names: string[]): Promise<TArray>;
+  config_get(parameter: string): Promise<TArray>;
+  config_rewrite(): Promise<TBulk>;
+  config_set(parameter: string, value: string): Promise<TBulk>;
+  config_resetstat(): Promise<TBulk>;
+  dbsize(): Promise<TInteger>;
+  debug_object(key: string): Promise<TBulk>;
+  debug_segfault(): Promise<TBulk>;
+  flushall(async?: boolean): Promise<TBulk>;
+  flushdb(async?: boolean): Promise<TBulk>;
+  info(section?: string): Promise<TStatus>;
+  lastsave(): Promise<TInteger>;
+  memory_doctor(): Promise<TStatus>;
+  memory_help(): Promise<TArray>;
+  memory_malloc_stats(): Promise<TStatus>;
+  memory_purge(): Promise<TStatus>;
+  memory_stats(): Promise<TArray>;
   memory_usage(
     key: string,
     opts?: {
       samples?: number;
     }
-  ): Promise<number>;
+  ): Promise<TInteger>;
   monitor(): void;
-  role(): Promise<string[]>;
-  save(): Promise<string>;
-  shutdown(arg: "NOSAVE" | "SAVE"): Promise<string>;
-  slaveof(host: string, port: string | number): Promise<string>;
-  replicaof(host: string, port: string | number): Promise<string>;
-  slowlog(subcommand: string, ...argument: string[]): Promise<RedisRawReply>;
+  role(): Promise<TArray>;
+  save(): Promise<TStatus>;
+  shutdown(arg: "NOSAVE" | "SAVE"): Promise<TStatus>;
+  slaveof(host: string, port: string | number): Promise<TStatus>;
+  replicaof(host: string, port: string | number): Promise<TStatus>;
+  slowlog(subcommand: string, ...argument: string[]): Promise<TRaw>;
   sync(): void;
-  time(): Promise<string[]>;
+  time(): Promise<TArray>;
   // Scripting
-  eval(script: string, key: string, arg: string): Promise<RedisRawReply>;
-  eval(script: string, keys: string[], args: string[]): Promise<RedisRawReply>;
-  evalsha(sha1: string, key: string, arg: string): Promise<RedisRawReply>;
-  evalsha(sha1: string, keys: string[], args: string[]): Promise<RedisRawReply>;
-  script_debug(arg: "YES" | "SYNC" | "NO"): Promise<string>;
-  script_exists(...sha1s: string[]): Promise<string[]>;
-  script_flush(): Promise<string>;
-  script_kill(): Promise<string>;
-  script_load(script: string): Promise<string>;
+  eval(script: string, key: string, arg: string): Promise<TRaw>;
+  eval(script: string, keys: string[], args: string[]): Promise<TRaw>;
+  evalsha(sha1: string, key: string, arg: string): Promise<TRaw>;
+  evalsha(sha1: string, keys: string[], args: string[]): Promise<TRaw>;
+  script_debug(arg: "YES" | "SYNC" | "NO"): Promise<TStatus>;
+  script_exists(...sha1s: string[]): Promise<TArray>;
+  script_flush(): Promise<TStatus>;
+  script_kill(): Promise<TStatus>;
+  script_load(script: string): Promise<TStatus>;
   // multi
-  multi(): Promise<string>;
-  exec(): Promise<any[]>;
-  discard(): Promise<BulkResult>;
-  watch(...keys: string[]): Promise<string>;
-  unwatch(): Promise<string>;
+  multi(): Promise<TStatus>;
+  exec(): Promise<TRaw>;
+  discard(): Promise<TBulk>;
+  watch(...keys: string[]): Promise<TStatus>;
+  unwatch(): Promise<TStatus>;
   // pipeline
   tx(): RedisPipeline;
   pipeline(): RedisPipeline;
@@ -410,7 +416,7 @@ export type Redis = {
       pattern?: string;
       count?: number;
     }
-  ): Promise<string[]>;
+  ): Promise<TArray>;
   hscan(
     key: string,
     cursor: number,
@@ -418,7 +424,7 @@ export type Redis = {
       pattern?: string;
       count?: number;
     }
-  ): Promise<string[]>;
+  ): Promise<TArray>;
   sscan(
     key: string,
     cursor: number,
@@ -426,119 +432,45 @@ export type Redis = {
       pattern?: string;
       count?: number;
     }
-  ): Promise<string[]>;
+  ): Promise<TArray>;
   zscan(
     key: string,
     cursor: number,
     opts?: {
       pattern?: string;
     }
-  ): Promise<string[]>;
+  ): Promise<TArray>;
 
   readonly isClosed: boolean;
   close(): void;
 };
 
-export interface CommandExecutor {
-  execRawReply(
-    command: string,
-    ...args: (string | number)[]
-  ): Promise<RedisRawReply>;
-}
-
-export function muxExecutor(r: BufReader, w: BufWriter): CommandExecutor {
-  let queue: {
-    command: string;
-    args: (string | number)[];
-    d: Deferred<RedisRawReply>;
-  }[] = [];
-
-  function dequeue(): void {
-    const [e] = queue;
-    if (!e) return;
-    sendCommand(w, r, e.command, ...e.args)
-      .then(v => e.d.resolve(v))
-      .catch(err => e.d.reject(err))
-      .finally(() => {
-        queue.shift();
-        dequeue();
-      });
-  }
-
-  return {
-    async execRawReply(
-      command: string,
-      ...args: (string | number)[]
-    ): Promise<RedisRawReply> {
-      const d = deferred<RedisRawReply>();
-      queue.push({ command, args, d });
-      if (queue.length === 1) {
-        dequeue();
-      }
-      return d;
-    }
-  };
-}
-
-class RedisImpl implements Redis {
+class RedisImpl<TRaw, TStatus, TInteger, TBulk, TArray, TBulkNil>
+  implements Redis<TRaw, TStatus, TInteger, TBulk, TArray, TBulkNil> {
   _isClosed = false;
   get isClosed() {
     return this._isClosed;
   }
 
-  private executor: CommandExecutor;
   constructor(
     private closer: Closer,
     private writer: BufWriter,
     private reader: BufReader,
-    executor?: CommandExecutor
-  ) {
-    this.executor = executor || muxExecutor(reader, writer);
-  }
+    private executor: CommandExecutor<
+      TRaw,
+      TStatus,
+      TInteger,
+      TBulk,
+      TArray,
+      TBulkNil
+    >
+  ) {}
 
-  async execRawReply(
-    command: string,
-    ...args: (string | number)[]
-  ): Promise<RedisRawReply> {
-    if (this.isClosed) throw new ConnectionClosedError();
-    return sendCommand(this.writer, this.reader, command, ...args);
-  }
-
-  async execStatusReply(
-    command: string,
-    ...args: (string | number)[]
-  ): Promise<string> {
-    const [_, reply] = await this.executor.execRawReply(command, ...args);
-    return reply as string;
-  }
-
-  async execIntegerReply(
-    command: string,
-    ...args: (string | number)[]
-  ): Promise<number> {
-    const [_, reply] = await this.executor.execRawReply(command, ...args);
-    return reply as number;
-  }
-
-  async execBulkReply(
-    command: string,
-    ...args: (string | number)[]
-  ): Promise<BulkResult> {
-    const [_, reply] = await this.executor.execRawReply(command, ...args);
-    // Note: `reply != null` won't work when `strict` is false #50
-    if (typeof reply !== "string" && typeof reply !== "undefined") {
-      throw new Error();
-    }
-    return reply;
-  }
-
-  async execArrayReply(
-    command: string,
-    ...args: (string | number)[]
-  ): Promise<any[]> {
-    const [_, reply] = await this.executor.execRawReply(command, ...args);
-    return reply as any[];
-  }
+  private execRawReply = this.executor.execRawReply;
+  private execIntegerReply = this.executor.execIntegerReply;
+  private execBulkReply = this.executor.execBulkReply;
+  private execStatusReply = this.executor.execStatusReply;
+  private execArrayReply = this.executor.execArrayReply;
 
   append(key: string, value: string | number) {
     return this.execIntegerReply("APPEND", key, value);
@@ -602,7 +534,7 @@ class RedisImpl implements Redis {
     return this.execStatusReply("BRPOPLPUSH", source, destination, timeout);
   }
 
-  bzpopmin(keys: string[], timeout: number) {
+  bzpopmin(keys: string | string[], timeout: number) {
     if (typeof keys === "string") {
       return this.execArrayReply("BZPOPMIN", keys, timeout);
     } else {
@@ -683,7 +615,7 @@ class RedisImpl implements Redis {
   }
 
   echo(message: string) {
-    return this.execStatusReply("ECHO", message);
+    return this.execBulkReply("ECHO", message);
   }
 
   eval(script: string, keys: string | string[], arg: string | string[]) {
@@ -715,7 +647,7 @@ class RedisImpl implements Redis {
   }
 
   exec() {
-    return this.execArrayReply("EXEC");
+    return this.execRawReply("EXEC");
   }
 
   exists(...keys: string[]) {
@@ -810,17 +742,15 @@ class RedisImpl implements Redis {
 
   private pushGeoRadiusOpts(
     args: (string | number)[],
-    opts:
-      | {
-          withCoord?: boolean;
-          withDist?: boolean;
-          withHash?: boolean;
-          count?: number;
-          sort?: "ASC" | "DESC";
-          store?: string;
-          storeDist?: string;
-        }
-      | undefined
+    opts?: {
+      withCoord?: boolean;
+      withDist?: boolean;
+      withHash?: boolean;
+      count?: number;
+      sort?: "ASC" | "DESC";
+      store?: string;
+      storeDist?: string;
+    }
   ) {
     if (!opts) return args;
     if (opts.withCoord) {
@@ -860,7 +790,7 @@ class RedisImpl implements Redis {
   }
 
   getset(key: string, value: string) {
-    return this.execStatusReply("GETSET", key, value);
+    return this.execBulkReply("GETSET", key, value);
   }
 
   hdel(key: string, field: string, ...fields: string[]) {
@@ -1265,6 +1195,23 @@ class RedisImpl implements Redis {
     opts?: {
       ex?: number;
       px?: number;
+    }
+  ): Promise<TStatus>;
+  set(
+    key: string,
+    value: string,
+    opts: {
+      ex?: number;
+      px?: number;
+      mode: "NX" | "XX";
+    }
+  ): Promise<TStatus | TBulkNil>;
+  set(
+    key: string,
+    value: string,
+    opts?: {
+      ex?: number;
+      px?: number;
       mode?: "NX" | "XX";
     }
   ) {
@@ -1279,7 +1226,11 @@ class RedisImpl implements Redis {
         args.push(opts.mode);
       }
     }
-    return this.execBulkReply("SET", ...args);
+    if (opts?.mode) {
+      return this.executor.execStatusOrNilReply("SET", ...args);
+    } else {
+      return this.executor.execStatusReply("SET", ...args);
+    }
   }
 
   setbit(key: string, offset: number, value: string) {
@@ -1376,10 +1327,14 @@ class RedisImpl implements Redis {
     }
   }
 
-  spop(key: string): Promise<string>;
-  spop(key: string, count: number): Promise<string[]>;
-  spop(...args: (string | number)[]): Promise<string | string[]> {
-    return this.execStatusReply("SPOP", ...args);
+  spop(key: string): Promise<TBulk>;
+  spop(key: string, count: number): Promise<TArray>;
+  spop(key: string, count?: number): Promise<TBulk | TArray> {
+    if (typeof count === "number") {
+      return this.execArrayReply("SPOP", key, count);
+    } else {
+      return this.execBulkReply("SPOP", key);
+    }
   }
 
   srandmember(key: string, count?: number) {
@@ -1502,7 +1457,7 @@ class RedisImpl implements Redis {
       weights?: number[];
       aggregate?: "SUM" | "MIN" | "MAX";
     }
-  ): Promise<number> {
+  ) {
     const args: (string | number)[] = [destination, keys.length, ...keys];
     if (opts) {
       if (opts.weights) {
@@ -1790,7 +1745,7 @@ export async function connect({
   port,
   tls,
   db
-}: RedisConnectOptions): Promise<Redis> {
+}: RedisConnectOptions) {
   const dialOpts: Deno.ConnectOptions = {
     hostname,
     port: prasePortLike(port)
@@ -1801,18 +1756,22 @@ export async function connect({
   const conn: Deno.Conn = tls
     ? await Deno.connectTLS(dialOpts)
     : await Deno.connect(dialOpts);
-  const client = await create(conn, conn, conn);
+
+  const bufr = new BufReader(conn);
+  const bufw = new BufWriter(conn);
+  const exec = muxExecutor(bufr, bufw);
+  const client = await create(conn, conn, conn, exec);
   if (db) {
     await client.select(db);
   }
   return client;
 }
 
-export function create(
+export function create<TRaw, TStatus, TInteger, TBulk, TArray, TBulkNil>(
   closer: Closer,
   writer: Writer,
   reader: Reader,
-  executor?: CommandExecutor
+  executor: CommandExecutor<TRaw, TStatus, TInteger, TBulk, TArray, TBulkNil>
 ) {
   return new RedisImpl(
     closer,

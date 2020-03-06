@@ -1,14 +1,36 @@
 import { BufReader, BufWriter } from "./vendor/https/deno.land/std/io/bufio.ts";
 import Buffer = Deno.Buffer;
 import { ErrorReplyError } from "./errors.ts";
+import { deferred, Deferred } from "./vendor/https/deno.land/std/util/async.ts";
+import { assert } from "./vendor/https/deno.land/std/testing/asserts.ts";
 
 export type BulkResult = string | undefined;
-export type RedisRawReply =
-  | ["status", string]
-  | ["integer", number]
-  | ["bulk", BulkResult]
-  | ["array", any[]]
-  | ["error", ErrorReplyError];
+export type StatusReply = ["status", string];
+export type IntegerReply = ["integer", number];
+export type BulkReply = ["bulk", BulkResult];
+export type ArrayReply = ["array", any[]];
+export type RedisRawReply = StatusReply | IntegerReply | BulkReply | ArrayReply;
+
+export type CommandFunc<T> = (
+  comand: string,
+  ...args: (string | number)[]
+) => Promise<T>;
+
+export interface CommandExecutor<
+  TRaw,
+  TStatus,
+  TInteger,
+  TBulk,
+  TArray,
+  TBulkNil
+> {
+  execRawReply: CommandFunc<TRaw>;
+  execStatusReply: CommandFunc<TStatus>;
+  execIntegerReply: CommandFunc<TInteger>;
+  execBulkReply: CommandFunc<TBulk>;
+  execArrayReply: CommandFunc<TArray>;
+  execStatusOrNilReply: CommandFunc<TStatus | TBulkNil>;
+}
 
 const IntegerReplyCode = ":".charCodeAt(0);
 const BulkReplyCode = "$".charCodeAt(0);
@@ -152,4 +174,117 @@ function tryParseErrorReply(line: string): never {
     throw new ErrorReplyError(line);
   }
   throw new Error(`invalid line: ${line}`);
+}
+
+export function muxExecutor(
+  r: BufReader,
+  w: BufWriter
+): CommandExecutor<
+  RedisRawReply,
+  string,
+  number,
+  BulkResult,
+  (number | string | undefined)[],
+  undefined
+> {
+  let queue: {
+    command: string;
+    args: (string | number)[];
+    d: Deferred<RedisRawReply>;
+  }[] = [];
+
+  function dequeue(): void {
+    const [e] = queue;
+    if (!e) return;
+    sendCommand(w, r, e.command, ...e.args)
+      .then(v => e.d.resolve(v))
+      .catch(err => e.d.reject(err))
+      .finally(() => {
+        queue.shift();
+        dequeue();
+      });
+  }
+
+  async function execStatusReply(
+    command: string,
+    ...args: (string | number)[]
+  ): Promise<string> {
+    const [type, reply] = await execRawReply(command, ...args);
+    assert(
+      type === "status" && typeof reply === "string",
+      `${command} ${type} ${reply}`
+    );
+    return reply;
+  }
+
+  async function execIntegerReply(
+    command: string,
+    ...args: (string | number)[]
+  ): Promise<number> {
+    const [type, reply] = await execRawReply(command, ...args);
+    assert(
+      type === "integer" && typeof reply === "number",
+      `${command} ${type} ${reply}`
+    );
+    return reply;
+  }
+
+  async function execBulkReply(
+    command: string,
+    ...args: (string | number)[]
+  ): Promise<BulkResult> {
+    const [type, reply] = await execRawReply(command, ...args);
+    assert(
+      (type === "bulk" && typeof reply === "string") || reply === undefined,
+      `${command} ${type} ${reply}`
+    );
+    return reply;
+  }
+
+  async function execArrayReply(
+    command: string,
+    ...args: (string | number)[]
+  ): Promise<any[]> {
+    const [type, reply] = await execRawReply(command, ...args);
+    assert(
+      type === "array" && Array.isArray(reply),
+      `${command} ${type} ${reply}`
+    );
+    return reply;
+  }
+
+  async function execStatusOrNilReply(
+    command: string,
+    ...args: (string | number)[]
+  ): Promise<string | undefined> {
+    const [type, reply] = await execRawReply(command, ...args);
+    if (type === "status") {
+      assert(typeof reply === "string");
+      return reply;
+    } else if (type === "bulk") {
+      assert(reply === undefined);
+      return reply;
+    }
+    throw new Error("unexpected type: " + type);
+  }
+
+  async function execRawReply(
+    command: string,
+    ...args: (string | number)[]
+  ): Promise<RedisRawReply> {
+    const d = deferred<RedisRawReply>();
+    queue.push({ command, args, d });
+    if (queue.length === 1) {
+      dequeue();
+    }
+    return d;
+  }
+  return {
+    execRawReply,
+    execIntegerReply,
+    execArrayReply,
+    execStatusReply,
+    execStatusOrNilReply,
+    execBulkReply
+  };
 }

@@ -1,14 +1,22 @@
 import { BufReader, BufWriter } from "./vendor/https/deno.land/std/io/bufio.ts";
-import { createRequest, readReply, RedisRawReply } from "./io.ts";
+import {
+  createRequest,
+  readReply,
+  RedisRawReply,
+  StatusReply,
+  CommandFunc,
+  CommandExecutor
+} from "./io.ts";
 import { ErrorReplyError } from "./errors.ts";
-import { create, muxExecutor, Redis } from "./redis.ts";
+import { create, Redis } from "./redis.ts";
 import { deferred, Deferred } from "./vendor/https/deno.land/std/util/async.ts";
 
 const encoder = new TextEncoder();
+type OkStatus = string;
 export type RedisPipeline = {
   enqueue(command: string, ...args: (number | string)[]): void;
   flush(): Promise<RedisRawReply[]>;
-} & Redis;
+} & Redis<StatusReply, OkStatus, OkStatus, OkStatus, OkStatus, OkStatus>;
 
 export function createRedisPipeline(
   writer: BufWriter,
@@ -53,36 +61,58 @@ export function createRedisPipeline(
     return ret;
   }
 
-  const executor = {
-    enqueue(command: string, ...args: (number | string)[]): void {
-      const msg = createRequest(command, ...args);
-      commands.push(msg);
-    },
-    async flush(): Promise<RedisRawReply[]> {
-      // wrap pipelined commands with MULTI/EXEC
-      if (opts && opts.tx) {
-        commands.splice(0, 0, createRequest("MULTI"));
-        commands.push(createRequest("EXEC"));
-      }
-      const d = deferred<RedisRawReply[]>();
-      queue.push({ commands, d });
-      if (queue.length === 1) {
-        dequeue();
-      }
-      commands = [];
-      return d;
-    },
-    async execRawReply(
-      command: string,
-      ...args: (string | number)[]
-    ): Promise<RedisRawReply> {
-      this.enqueue(command, ...args);
-      return ["status", "OK"];
+  function enqueue(command: string, ...args: (number | string)[]): void {
+    const msg = createRequest(command, ...args);
+    commands.push(msg);
+  }
+  async function flush(): Promise<RedisRawReply[]> {
+    // wrap pipelined commands with MULTI/EXEC
+    if (opts && opts.tx) {
+      commands.splice(0, 0, createRequest("MULTI"));
+      commands.push(createRequest("EXEC"));
     }
+    const d = deferred<RedisRawReply[]>();
+    queue.push({ commands, d });
+    if (queue.length === 1) {
+      dequeue();
+    }
+    commands = [];
+    return d;
+  }
+  async function execRawReply(
+    command: string,
+    ...args: (string | number)[]
+  ): Promise<["status", "OK"]> {
+    enqueue(command, ...args);
+    return ["status", "OK"];
+  }
+  const _execOk: CommandFunc<OkStatus> = async (command, ...args) => {
+    const [_, ok] = await execRawReply(command, ...args);
+    return ok;
   };
+  const execStatusReply = _execOk;
+  const execIntegerReply = _execOk;
+  const execBulkReply = _execOk;
+  const execArrayReply = _execOk;
+  const execStatusOrNilReply = _execOk;
   const d = dummyReadWriteCloser();
+  const executor: CommandExecutor<
+    StatusReply,
+    OkStatus,
+    OkStatus,
+    OkStatus,
+    OkStatus,
+    OkStatus
+  > = {
+    execRawReply,
+    execIntegerReply,
+    execStatusReply,
+    execBulkReply,
+    execArrayReply,
+    execStatusOrNilReply
+  };
   const fakeRedis = create(d, d, d, executor);
-  return Object.assign(fakeRedis, executor);
+  return Object.assign(fakeRedis, executor, { enqueue, flush });
 }
 
 function dummyReadWriteCloser(): Deno.ReadWriteCloser {
