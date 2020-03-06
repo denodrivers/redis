@@ -12,27 +12,8 @@ const addr = {
   port: 6379
 };
 
-let redis = await connect(addr);
-await redis.del(
-  "incr",
-  "incrby",
-  "decr",
-  "decryby",
-  "get",
-  "getset",
-  "del1",
-  "del2",
-  "spop",
-  "spopWithCount",
-  "zrange",
-  "zrangeWithScores",
-  "zrevrange",
-  "zrevrangeWithScores",
-  "zrangebyscore",
-  "zrangebyscoreWithScores",
-  "zrevrangebyscore",
-  "zrevrangebyscoreWithScores"
-);
+let redis = await connect({ ...addr, db: 0 });
+await redis.flushdb(false);
 
 test(async function testExists() {
   const none = await redis.exists("none", "none2");
@@ -235,3 +216,6 @@ test(async function testDb1Option() {
     );
   });
 });
+
+import "./tests/connection_test.ts";
+import "./tests/geo_test.ts";

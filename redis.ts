@@ -3,14 +3,20 @@ type Writer = Deno.Writer;
 type Closer = Deno.Closer;
 import { BufReader, BufWriter } from "./vendor/https/deno.land/std/io/bufio.ts";
 import { psubscribe, RedisSubscription, subscribe } from "./pubsub.ts";
-import { muxExecutor, CommandExecutor } from "./io.ts";
+import {
+  muxExecutor,
+  CommandExecutor,
+  RedisRawReply,
+  BulkResult
+} from "./io.ts";
 import { createRedisPipeline, RedisPipeline } from "./pipeline.ts";
 
 export type Redis<TRaw, TStatus, TInteger, TBulk, TArray, TBulkNil> = {
   // Connection
-  auth(password: string): Promise<TBulk>;
+  auth(password: string): Promise<TStatus>;
   echo(message: string): Promise<TBulk>;
-  ping(message?: string): Promise<TStatus>;
+  ping(): Promise<TStatus>;
+  ping(message: string): Promise<TBulk>;
   quit(): Promise<TStatus>;
   select(index: number): Promise<TStatus>;
   swapdb(index: number, index2: number): Promise<TStatus>;
@@ -131,7 +137,7 @@ export type Redis<TRaw, TStatus, TInteger, TBulk, TArray, TBulkNil> = {
   ): Promise<TInteger>;
   geoadd(
     key: string,
-    ...longitude_latitude_member: [number | number | string][]
+    ...longitude_latitude_member: [number, number, string][]
   ): Promise<TInteger>;
   geohash(key: string, ...members: string[]): Promise<TArray>;
   geopos(key: string, ...members: string[]): Promise<TArray>;
@@ -140,7 +146,7 @@ export type Redis<TRaw, TStatus, TInteger, TBulk, TArray, TBulkNil> = {
     member1: string,
     member2: string,
     unit?: "m" | "km" | "ft" | "mi"
-  ): Promise<TStatus>;
+  ): Promise<TBulk>;
   georadius(
     key: string,
     longitude: number,
@@ -175,10 +181,10 @@ export type Redis<TRaw, TStatus, TInteger, TBulk, TArray, TBulkNil> = {
   // Hash
   hdel(key: string, ...fields: string[]): Promise<TInteger>;
   hexists(key: string, field: string): Promise<TInteger>;
-  hget(key: string, field: string): Promise<TStatus>;
+  hget(key: string, field: string): Promise<TBulk>;
   hgetall(key: string): Promise<TArray>;
   hincrby(key: string, field: string, increment: number): Promise<TInteger>;
-  hincrbyfloat(key: string, field: string, increment: number): Promise<TStatus>;
+  hincrbyfloat(key: string, field: string, increment: number): Promise<TBulk>;
   hkeys(key: string): Promise<TArray>;
   hlen(key: string): Promise<TInteger>;
   hmget(key: string, ...fields: string[]): Promise<TArray>;
@@ -352,8 +358,8 @@ export type Redis<TRaw, TStatus, TInteger, TBulk, TArray, TBulkNil> = {
   // Cluster
   // cluster //
   // Server
-  bgrewriteaof(): Promise<TBulk>;
-  bgsave(): Promise<TBulk>;
+  bgrewriteaof(): Promise<TStatus>;
+  bgsave(): Promise<TStatus>;
   // client //
   command(): Promise<TArray>;
   command_count(): Promise<TInteger>;
@@ -366,8 +372,8 @@ export type Redis<TRaw, TStatus, TInteger, TBulk, TArray, TBulkNil> = {
   dbsize(): Promise<TInteger>;
   debug_object(key: string): Promise<TBulk>;
   debug_segfault(): Promise<TBulk>;
-  flushall(async?: boolean): Promise<TBulk>;
-  flushdb(async?: boolean): Promise<TBulk>;
+  flushall(async?: boolean): Promise<TStatus>;
+  flushdb(async?: boolean): Promise<TStatus>;
   info(section?: string): Promise<TStatus>;
   lastsave(): Promise<TInteger>;
   memory_doctor(): Promise<TStatus>;
@@ -477,15 +483,15 @@ class RedisImpl<TRaw, TStatus, TInteger, TBulk, TArray, TBulkNil>
   }
 
   auth(password: string) {
-    return this.execBulkReply("AUTH", password);
+    return this.execStatusReply("AUTH", password);
   }
 
   bgrewriteaof() {
-    return this.execBulkReply("BGREWRITEAOF");
+    return this.execStatusReply("BGREWRITEAOF");
   }
 
   bgsave() {
-    return this.execBulkReply("BGSAVE");
+    return this.execStatusReply("BGSAVE");
   }
 
   bitcount(key: string, start?: number, end?: number) {
@@ -664,17 +670,17 @@ class RedisImpl<TRaw, TStatus, TInteger, TBulk, TArray, TBulkNil>
 
   flushall(async: boolean) {
     const args = async ? ["ASYNC"] : [];
-    return this.execBulkReply("FLUSHALL", ...args);
+    return this.execStatusReply("FLUSHALL", ...args);
   }
 
   flushdb(async: boolean) {
     const args = async ? ["ASYNC"] : [];
-    return this.execBulkReply("FLUSHDB", ...args);
+    return this.execStatusReply("FLUSHDB", ...args);
   }
 
-  geoadd(key: string, ...args: any) {
-    const _args = [key];
-    if (Array.isArray([args[0]])) {
+  geoadd(key: string, ...args: any[]) {
+    const _args = [];
+    if (Array.isArray(args[0])) {
       for (const triple of args) {
         _args.push(...triple);
       }
@@ -693,9 +699,11 @@ class RedisImpl<TRaw, TStatus, TInteger, TBulk, TArray, TBulkNil>
   }
 
   geodist(key: string, member1: string, member2: string, unit?: string) {
-    if (unit)
-      return this.execStatusReply("GEODIST", key, member1, member2, unit);
-    else return this.execStatusReply("GEODIST", key, member1, member2);
+    if (unit) {
+      return this.execBulkReply("GEODIST", key, member1, member2, unit);
+    } else {
+      return this.execBulkReply("GEODIST", key, member1, member2);
+    }
   }
 
   georadius(
@@ -802,7 +810,7 @@ class RedisImpl<TRaw, TStatus, TInteger, TBulk, TArray, TBulkNil>
   }
 
   hget(key: string, field: string) {
-    return this.execStatusReply("HGET", key, field);
+    return this.execBulkReply("HGET", key, field);
   }
 
   hgetall(key: string) {
@@ -814,7 +822,7 @@ class RedisImpl<TRaw, TStatus, TInteger, TBulk, TArray, TBulkNil>
   }
 
   hincrbyfloat(key: string, field: string, increment: number) {
-    return this.execStatusReply("HINCRBYFLOAT", key, field, increment);
+    return this.execBulkReply("HINCRBYFLOAT", key, field, increment);
   }
 
   hkeys(key: string) {
@@ -1045,9 +1053,14 @@ class RedisImpl<TRaw, TStatus, TInteger, TBulk, TArray, TBulkNil>
     return this.execStatusReply("PFMERGE", destkey, ...sourcekeys);
   }
 
+  ping(): Promise<TStatus>;
+  ping(message: string): Promise<TBulk>;
   ping(message?: string) {
-    if (message) return this.execStatusReply("PING", message);
-    else return this.execStatusReply("PING");
+    if (message) {
+      return this.execBulkReply("PING", message);
+    } else {
+      return this.execStatusReply("PING");
+    }
   }
 
   psetex(key: string, milliseconds: number, value: string) {
@@ -1745,7 +1758,9 @@ export async function connect({
   port,
   tls,
   db
-}: RedisConnectOptions) {
+}: RedisConnectOptions): Promise<
+  Redis<RedisRawReply, string, number, BulkResult, any[], undefined>
+> {
   const dialOpts: Deno.ConnectOptions = {
     hostname,
     port: prasePortLike(port)
