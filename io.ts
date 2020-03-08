@@ -210,11 +210,17 @@ export function muxExecutor(
     ...args: (string | number)[]
   ): Promise<string> {
     const [type, reply] = await execRawReply(command, ...args);
-    assert(
-      type === "status" && typeof reply === "string",
-      `${command} ${type} ${reply}`
-    );
-    return reply;
+    if (type !== "status" || typeof reply !== "string") {
+      console.warn(
+        `wrong type definition for status: ${command} ${type} ${reply}`
+      );
+    }
+    // TODO: enable assertion
+    // assert(
+    //   type === "status" && typeof reply === "string",
+    //   `${command} ${type} ${reply}`
+    // );
+    return reply as string;
   }
 
   async function execIntegerReply(
@@ -234,11 +240,16 @@ export function muxExecutor(
     ...args: (string | number)[]
   ): Promise<BulkResult> {
     const [type, reply] = await execRawReply(command, ...args);
-    assert(
-      (type === "bulk" && typeof reply === "string") || reply === undefined,
-      `${command} ${type} ${reply}`
-    );
-    return reply;
+    if (type !== "bulk" || (typeof reply !== "string" && reply !== undefined)) {
+      console.warn(
+        `wrong type definition for bulk: ${command} ${type} ${reply}`
+      );
+    }
+    // assert(
+    //   (type === "bulk" && typeof reply === "string") || reply === undefined,
+    //   `${command} ${type} ${reply}`
+    // );
+    return reply as BulkResult;
   }
 
   async function execArrayReply(
