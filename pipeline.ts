@@ -1,4 +1,7 @@
-import { BufReader, BufWriter } from "./vendor/https/deno.land/std/io/bufio.ts";
+import {
+  BufReader,
+  BufWriter
+} from "./vendor/https/deno.land/std/io/bufio.ts";
 import {
   createRequest,
   readReply,
@@ -9,7 +12,10 @@ import {
 } from "./io.ts";
 import { ErrorReplyError } from "./errors.ts";
 import { create, RedisCommands } from "./redis.ts";
-import { deferred, Deferred } from "./vendor/https/deno.land/std/util/async.ts";
+import {
+  deferred,
+  Deferred
+} from "./vendor/https/deno.land/std/util/async.ts";
 
 const encoder = new TextEncoder();
 type OkStatus = string;

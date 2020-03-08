@@ -1,5 +1,7 @@
 import { makeTest } from "./test_util.ts";
-import { assertEquals } from "../vendor/https/deno.land/std/testing/asserts.ts";
+import {
+  assertEquals
+} from "../vendor/https/deno.land/std/testing/asserts.ts";
 
 const { test, client } = await makeTest("list");
 

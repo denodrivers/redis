@@ -1,5 +1,7 @@
 import { connect } from "../redis.ts";
-import { assertEquals } from "../vendor/https/deno.land/std/testing/asserts.ts";
+import {
+  assertEquals
+} from "../vendor/https/deno.land/std/testing/asserts.ts";
 import { makeTest } from "./test_util.ts";
 
 const { test, client } = await makeTest("geo");

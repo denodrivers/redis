@@ -1,7 +1,10 @@
 type Reader = Deno.Reader;
 type Writer = Deno.Writer;
 type Closer = Deno.Closer;
-import { BufReader, BufWriter } from "./vendor/https/deno.land/std/io/bufio.ts";
+import {
+  BufReader,
+  BufWriter
+} from "./vendor/https/deno.land/std/io/bufio.ts";
 import { psubscribe, RedisSubscription, subscribe } from "./pubsub.ts";
 import {
   muxExecutor,
@@ -247,7 +250,9 @@ export type RedisCommands<TRaw, TStatus, TInteger, TBulk, TArray, TBulkNil> = {
   sinterstore(destination: string, ...keys: string[]): Promise<TInteger>;
   sismember(key: string, member: string): Promise<TInteger>;
   smembers(key: string): Promise<TArray>;
-  smove(source: string, destination: string, member: string): Promise<TInteger>;
+  smove(source: string, destination: string, member: string): Promise<
+    TInteger
+  >;
   spop(key: string): Promise<TBulk>;
   spop(key: string, count: number): Promise<TArray>;
   srandmember(key: string): Promise<TBulk>;
@@ -465,7 +470,8 @@ export type Redis = RedisCommands<
 >;
 
 class RedisImpl<TRaw, TStatus, TInteger, TBulk, TArray, TBulkNil>
-  implements RedisCommands<TRaw, TStatus, TInteger, TBulk, TArray, TBulkNil> {
+  implements RedisCommands<TRaw, TStatus, TInteger, TBulk, TArray, TBulkNil>
+{
   _isClosed = false;
   get isClosed() {
     return this._isClosed;
@@ -508,11 +514,11 @@ class RedisImpl<TRaw, TStatus, TInteger, TBulk, TArray, TBulkNil>
   }
 
   bitcount(key: string, start?: number, end?: number) {
-    if (start != null && end != null)
+    if (start != null && end != null) {
       return this.execIntegerReply("BITCOUNT", key, start, end);
-    else if (start != null)
+    } else if (start != null) {
       return this.execIntegerReply("BITCOUNT", key, start);
-    else return this.execIntegerReply("BITCOUNT", key);
+    } else return this.execIntegerReply("BITCOUNT", key);
   }
 
   bitfield() {

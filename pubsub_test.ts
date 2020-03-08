@@ -16,7 +16,7 @@ async function wait(duration: number) {
 test(async function testSubscribe() {
   const redis = await connect(addr);
   const sub = await redis.subscribe("subsc");
-  //const hoge = await redis.get("hoge");
+  // const hoge = await redis.get("hoge");
   const unsub = await sub.unsubscribe("subsc");
   await sub.close();
   assertEquals(sub.isClosed, true);

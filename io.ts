@@ -1,7 +1,13 @@
-import { BufReader, BufWriter } from "./vendor/https/deno.land/std/io/bufio.ts";
+import {
+  BufReader,
+  BufWriter
+} from "./vendor/https/deno.land/std/io/bufio.ts";
 import Buffer = Deno.Buffer;
 import { ErrorReplyError } from "./errors.ts";
-import { deferred, Deferred } from "./vendor/https/deno.land/std/util/async.ts";
+import {
+  deferred,
+  Deferred
+} from "./vendor/https/deno.land/std/util/async.ts";
 import { assert } from "./vendor/https/deno.land/std/testing/asserts.ts";
 
 export type BulkResult = string | undefined;
@@ -9,7 +15,8 @@ export type StatusReply = ["status", string];
 export type IntegerReply = ["integer", number];
 export type BulkReply = ["bulk", BulkResult];
 export type ArrayReply = ["array", any[]];
-export type RedisRawReply = StatusReply | IntegerReply | BulkReply | ArrayReply;
+export type RedisRawReply = StatusReply | IntegerReply | BulkReply
+  | ArrayReply;
 
 export type CommandFunc<T> = (
   comand: string,
@@ -240,7 +247,9 @@ export function muxExecutor(
     ...args: (string | number)[]
   ): Promise<BulkResult> {
     const [type, reply] = await execRawReply(command, ...args);
-    if (type !== "bulk" || (typeof reply !== "string" && reply !== undefined)) {
+    if (type !== "bulk" ||
+      (typeof reply !== "string" && reply !== undefined))
+    {
       console.warn(
         `wrong type definition for bulk: ${command} ${type} ${reply}`
       );

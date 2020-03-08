@@ -88,21 +88,21 @@ test("pipeline in concurrent", async () => {
   promises.push(tx.flush());
   const res = await Promise.all(promises);
   assertEquals(res, [
-    "OK", //set(a)
-    "OK", //set(b)
-    "OK", //set(c)
+    "OK", // set(a)
+    "OK", // set(b)
+    "OK", // set(c)
     [
       ["status", "OK"],
       ["status", "OK"],
       ["status", "OK"]
-    ], //flush()
+    ], // flush()
     "OK", // get(a)
     "OK", // get(b)
-    "OK", //get(c)
+    "OK", // get(c)
     [
       ["bulk", "a"],
       ["bulk", "b"],
       ["bulk", "c"]
-    ] //flush()
+    ] // flush()
   ]);
 });
