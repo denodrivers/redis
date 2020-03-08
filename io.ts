@@ -184,7 +184,7 @@ export function muxExecutor(
   string,
   number,
   BulkResult,
-  (number | string | undefined)[],
+  any[],
   undefined
 > {
   let queue: {

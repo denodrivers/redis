@@ -1,7 +1,7 @@
 import { makeTest } from "./test_util.ts";
 import { assertEquals } from "../vendor/https/deno.land/std/testing/asserts.ts";
 
-const { test, client } = await makeTest("hash");
+const { test, client } = await makeTest("hll");
 
 test("pdfadd", async () => {
   assertEquals(await client.pfadd("hll", "a", "b", "c", "d"), 1);
