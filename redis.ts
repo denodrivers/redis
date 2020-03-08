@@ -11,7 +11,7 @@ import {
 } from "./io.ts";
 import { createRedisPipeline, RedisPipeline } from "./pipeline.ts";
 
-export type Redis<TRaw, TStatus, TInteger, TBulk, TArray, TBulkNil> = {
+export type RedisCommands<TRaw, TStatus, TInteger, TBulk, TArray, TBulkNil> = {
   // Connection
   auth(password: string): Promise<TStatus>;
   echo(message: string): Promise<TBulk>;
@@ -22,7 +22,7 @@ export type Redis<TRaw, TStatus, TInteger, TBulk, TArray, TBulkNil> = {
   swapdb(index: number, index2: number): Promise<TStatus>;
   // Keys
   del(...keys: string[]): Promise<TInteger>;
-  dump(key: string): Promise<TStatus>;
+  dump(key: string): Promise<TBulk>;
   exists(...keys: string[]): Promise<TInteger>;
   expire(key: string, seconds: number): Promise<TInteger>;
   expireat(key: string, timestamp: string): Promise<TInteger>;
@@ -188,9 +188,12 @@ export type Redis<TRaw, TStatus, TInteger, TBulk, TArray, TBulkNil> = {
   hkeys(key: string): Promise<TArray>;
   hlen(key: string): Promise<TInteger>;
   hmget(key: string, ...fields: string[]): Promise<TArray>;
+  /** @deprecated >= 4.0.0 use hset */
   hmset(key: string, field: string, value: string): Promise<TStatus>;
+  /** @deprecated >= 4.0.0 use hset */
   hmset(key: string, ...field_values: string[]): Promise<TStatus>;
   hset(key: string, field: string, value: string): Promise<TInteger>;
+  hset(key: string, ...field_values: string[]): Promise<TInteger>;
   hsetnx(key: string, field: string, value: string): Promise<TInteger>;
   hstrlen(key: string, field: string): Promise<TInteger>;
   hvals(key: string): Promise<TArray>;
@@ -201,8 +204,8 @@ export type Redis<TRaw, TStatus, TInteger, TBulk, TArray, TBulkNil> = {
     source: string,
     destination: string,
     timeout: number
-  ): Promise<TStatus>;
-  lindex(key: string, index: number): Promise<TStatus>;
+  ): Promise<TBulk>;
+  lindex(key: string, index: number): Promise<TBulk>;
   linsert(
     key: string,
     loc: "BEFORE" | "AFTER",
@@ -210,15 +213,15 @@ export type Redis<TRaw, TStatus, TInteger, TBulk, TArray, TBulkNil> = {
     value: string
   ): Promise<TInteger>;
   llen(key: string): Promise<TInteger>;
-  lpop(key: string): Promise<TStatus>;
+  lpop(key: string): Promise<TBulk>;
   lpush(key: string, ...values: string[]): Promise<TInteger>;
   lpushx(key: string, value: string): Promise<TInteger>;
   lrange(key: string, start: number, stop: number): Promise<TArray>;
   lrem(key: string, count: number, value: string): Promise<TInteger>;
   lset(key: string, index: number, value: string): Promise<TStatus>;
   ltrim(key: string, start: number, stop: number): Promise<TStatus>;
-  rpop(key: string): Promise<TStatus>;
-  rpoplpush(source: string, destination: string): Promise<TStatus>;
+  rpop(key: string): Promise<TBulk>;
+  rpoplpush(source: string, destination: string): Promise<TBulk>;
   rpush(key: string, ...values: string[]): Promise<TInteger>;
   rpushx(key: string, value: string): Promise<TInteger>;
   // HypeprLogLog
@@ -247,7 +250,8 @@ export type Redis<TRaw, TStatus, TInteger, TBulk, TArray, TBulkNil> = {
   smove(source: string, destination: string, member: string): Promise<TInteger>;
   spop(key: string): Promise<TBulk>;
   spop(key: string, count: number): Promise<TArray>;
-  srandmember(key: string, count?: number): Promise<TStatus>;
+  srandmember(key: string): Promise<TBulk>;
+  srandmember(key: string, count: number): Promise<TArray>;
   srem(key: string, ...members: string[]): Promise<TInteger>;
   sunion(...keys: string[]): Promise<TArray>;
   sunionstore(destination: string, ...keys: string[]): Promise<TInteger>;
@@ -451,8 +455,17 @@ export type Redis<TRaw, TStatus, TInteger, TBulk, TArray, TBulkNil> = {
   close(): void;
 };
 
+export type Redis = RedisCommands<
+  RedisRawReply,
+  string,
+  number,
+  BulkResult,
+  any[],
+  undefined
+>;
+
 class RedisImpl<TRaw, TStatus, TInteger, TBulk, TArray, TBulkNil>
-  implements Redis<TRaw, TStatus, TInteger, TBulk, TArray, TBulkNil> {
+  implements RedisCommands<TRaw, TStatus, TInteger, TBulk, TArray, TBulkNil> {
   _isClosed = false;
   get isClosed() {
     return this._isClosed;
@@ -537,7 +550,7 @@ class RedisImpl<TRaw, TStatus, TInteger, TBulk, TArray, TBulkNil>
   }
 
   brpoplpush(source: string, destination: string, timeout: number) {
-    return this.execStatusReply("BRPOPLPUSH", source, destination, timeout);
+    return this.execBulkReply("BRPOPLPUSH", source, destination, timeout);
   }
 
   bzpopmin(keys: string | string[], timeout: number) {
@@ -617,7 +630,7 @@ class RedisImpl<TRaw, TStatus, TInteger, TBulk, TArray, TBulkNil>
   }
 
   dump(key: string) {
-    return this.execStatusReply("DUMP", key);
+    return this.execBulkReply("DUMP", key);
   }
 
   echo(message: string) {
@@ -841,8 +854,8 @@ class RedisImpl<TRaw, TStatus, TInteger, TBulk, TArray, TBulkNil>
     return this.execStatusReply("HMSET", key, ...field_values);
   }
 
-  hset(key: string, field: string, value: string) {
-    return this.execIntegerReply("HSET", key, field, value);
+  hset(key: string, ...args: string[]) {
+    return this.execIntegerReply("HSET", key, ...args);
   }
 
   hsetnx(key: string, field: string, value: string) {
@@ -886,11 +899,11 @@ class RedisImpl<TRaw, TStatus, TInteger, TBulk, TArray, TBulkNil>
   }
 
   lindex(key: string, index: number) {
-    return this.execStatusReply("LINDEX", key, index);
+    return this.execBulkReply("LINDEX", key, index);
   }
 
-  linsert(key: string, arg: "BEFORE" | "AFTER", pivot: string, value: string) {
-    return this.execIntegerReply("LINSERT", key, arg);
+  linsert(key: string, loc: "BEFORE" | "AFTER", pivot: string, value: string) {
+    return this.execIntegerReply("LINSERT", key, loc, pivot, value);
   }
 
   llen(key: string) {
@@ -898,7 +911,7 @@ class RedisImpl<TRaw, TStatus, TInteger, TBulk, TArray, TBulkNil>
   }
 
   lpop(key: string) {
-    return this.execStatusReply("LPOP", key);
+    return this.execBulkReply("LPOP", key);
   }
 
   lpush(key: string, ...values: (string | number)[]) {
@@ -1143,11 +1156,11 @@ class RedisImpl<TRaw, TStatus, TInteger, TBulk, TArray, TBulkNil>
   }
 
   rpop(key: string) {
-    return this.execStatusReply("RPOP", key);
+    return this.execBulkReply("RPOP", key);
   }
 
   rpoplpush(source: string, destination: string) {
-    return this.execStatusReply("RPOPLPUSH", source, destination);
+    return this.execBulkReply("RPOPLPUSH", source, destination);
   }
 
   rpush(key: string, ...values: (string | number)[]) {
@@ -1350,9 +1363,14 @@ class RedisImpl<TRaw, TStatus, TInteger, TBulk, TArray, TBulkNil>
     }
   }
 
+  srandmember(key: string): Promise<TBulk>;
+  srandmember(key: string, count: number): Promise<TArray>;
   srandmember(key: string, count?: number) {
-    if (count != null) return this.execStatusReply("SRANDMEMBER", key, count);
-    else return this.execStatusReply("SRANDMEMBER", key);
+    if (count != null) {
+      return this.execArrayReply("SRANDMEMBER", key, count);
+    } else {
+      return this.execBulkReply("SRANDMEMBER", key);
+    }
   }
 
   srem(key: string, ...members: string[]) {
@@ -1758,9 +1776,7 @@ export async function connect({
   port,
   tls,
   db
-}: RedisConnectOptions): Promise<
-  Redis<RedisRawReply, string, number, BulkResult, any[], undefined>
-> {
+}: RedisConnectOptions): Promise<Redis> {
   const dialOpts: Deno.ConnectOptions = {
     hostname,
     port: prasePortLike(port)
@@ -1787,7 +1803,7 @@ export function create<TRaw, TStatus, TInteger, TBulk, TArray, TBulkNil>(
   writer: Writer,
   reader: Reader,
   executor: CommandExecutor<TRaw, TStatus, TInteger, TBulk, TArray, TBulkNil>
-) {
+): RedisCommands<TRaw, TStatus, TInteger, TBulk, TArray, TBulkNil> {
   return new RedisImpl(
     closer,
     new BufWriter(writer),

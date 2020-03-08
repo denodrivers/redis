@@ -1,18 +1,8 @@
 import { connect } from "../redis.ts";
 import { assertEquals } from "../vendor/https/deno.land/std/testing/asserts.ts";
+import { makeTest } from "./test_util.ts";
 
-const client = await connect({ hostname: "127.0.0.1", port: 6379, db: 1 });
-
-async function beforeEach() {
-  await client.flushdb(false);
-}
-
-const test = (desc: string, func: () => void | Promise<void>) => {
-  Deno.test(desc, async () => {
-    await beforeEach();
-    await func();
-  })
-};
+const { test, client } = await makeTest("geo");
 
 test("geoadd", async () => {
   assertEquals(
