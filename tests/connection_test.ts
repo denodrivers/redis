@@ -1,8 +1,8 @@
 import { connect } from "../redis.ts";
 import { assertEquals } from "../vendor/https/deno.land/std/testing/asserts.ts";
+import { makeTest } from "./test_util.ts";
 
-const { test } = Deno;
-const client = await connect({ hostname: "127.0.0.1", port: 6379 });
+const { test, client} = await makeTest("connection");
 /** Connection */
 test("echo", async () => {
   assertEquals(await client.echo("Hello World"), "Hello World");

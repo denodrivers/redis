@@ -8,7 +8,7 @@ import {
   CommandExecutor
 } from "./io.ts";
 import { ErrorReplyError } from "./errors.ts";
-import { create, Redis } from "./redis.ts";
+import { create, RedisCommands } from "./redis.ts";
 import { deferred, Deferred } from "./vendor/https/deno.land/std/util/async.ts";
 
 const encoder = new TextEncoder();
@@ -16,7 +16,14 @@ type OkStatus = string;
 export type RedisPipeline = {
   enqueue(command: string, ...args: (number | string)[]): void;
   flush(): Promise<RedisRawReply[]>;
-} & Redis<StatusReply, OkStatus, OkStatus, OkStatus, OkStatus, OkStatus>;
+} & RedisCommands<
+  StatusReply,
+  OkStatus,
+  OkStatus,
+  OkStatus,
+  OkStatus,
+  OkStatus
+>;
 
 export function createRedisPipeline(
   writer: BufWriter,

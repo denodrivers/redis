@@ -11,7 +11,7 @@ import {
 } from "./io.ts";
 import { createRedisPipeline, RedisPipeline } from "./pipeline.ts";
 
-export type Redis<TRaw, TStatus, TInteger, TBulk, TArray, TBulkNil> = {
+export type RedisCommands<TRaw, TStatus, TInteger, TBulk, TArray, TBulkNil> = {
   // Connection
   auth(password: string): Promise<TStatus>;
   echo(message: string): Promise<TBulk>;
@@ -188,9 +188,12 @@ export type Redis<TRaw, TStatus, TInteger, TBulk, TArray, TBulkNil> = {
   hkeys(key: string): Promise<TArray>;
   hlen(key: string): Promise<TInteger>;
   hmget(key: string, ...fields: string[]): Promise<TArray>;
+  /** @deprecated >= 4.0.0 use hset */
   hmset(key: string, field: string, value: string): Promise<TStatus>;
+  /** @deprecated >= 4.0.0 use hset */
   hmset(key: string, ...field_values: string[]): Promise<TStatus>;
   hset(key: string, field: string, value: string): Promise<TInteger>;
+  hset(key: string, ...field_values: string[]): Promise<TInteger>;
   hsetnx(key: string, field: string, value: string): Promise<TInteger>;
   hstrlen(key: string, field: string): Promise<TInteger>;
   hvals(key: string): Promise<TArray>;
@@ -451,8 +454,17 @@ export type Redis<TRaw, TStatus, TInteger, TBulk, TArray, TBulkNil> = {
   close(): void;
 };
 
+export type Redis = RedisCommands<
+  RedisRawReply,
+  string,
+  number,
+  BulkResult,
+  any[],
+  undefined
+>;
+
 class RedisImpl<TRaw, TStatus, TInteger, TBulk, TArray, TBulkNil>
-  implements Redis<TRaw, TStatus, TInteger, TBulk, TArray, TBulkNil> {
+  implements RedisCommands<TRaw, TStatus, TInteger, TBulk, TArray, TBulkNil> {
   _isClosed = false;
   get isClosed() {
     return this._isClosed;
@@ -841,8 +853,8 @@ class RedisImpl<TRaw, TStatus, TInteger, TBulk, TArray, TBulkNil>
     return this.execStatusReply("HMSET", key, ...field_values);
   }
 
-  hset(key: string, field: string, value: string) {
-    return this.execIntegerReply("HSET", key, field, value);
+  hset(key: string, ...args: string[]) {
+    return this.execIntegerReply("HSET", key, ...args);
   }
 
   hsetnx(key: string, field: string, value: string) {
@@ -1758,9 +1770,7 @@ export async function connect({
   port,
   tls,
   db
-}: RedisConnectOptions): Promise<
-  Redis<RedisRawReply, string, number, BulkResult, any[], undefined>
-> {
+}: RedisConnectOptions): Promise<Redis> {
   const dialOpts: Deno.ConnectOptions = {
     hostname,
     port: prasePortLike(port)
@@ -1787,7 +1797,7 @@ export function create<TRaw, TStatus, TInteger, TBulk, TArray, TBulkNil>(
   writer: Writer,
   reader: Reader,
   executor: CommandExecutor<TRaw, TStatus, TInteger, TBulk, TArray, TBulkNil>
-) {
+): RedisCommands<TRaw, TStatus, TInteger, TBulk, TArray, TBulkNil> {
   return new RedisImpl(
     closer,
     new BufWriter(writer),

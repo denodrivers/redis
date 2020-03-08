@@ -219,3 +219,4 @@ test(async function testDb1Option() {
 
 import "./tests/connection_test.ts";
 import "./tests/geo_test.ts";
+import "./tests/hash_test.ts";
