@@ -20,7 +20,6 @@ test("lindex", async () => {
   assertEquals(await client.lindex("list", 0), "1");
   assertEquals(await client.lindex("list", 3), undefined);
 });
-
 test("linsert", async () => {
   await client.rpush("list", "1", "2");
   assertEquals(await client.linsert("list", "BEFORE", "2", "1.5"), 3);

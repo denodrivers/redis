@@ -250,7 +250,8 @@ export type RedisCommands<TRaw, TStatus, TInteger, TBulk, TArray, TBulkNil> = {
   smove(source: string, destination: string, member: string): Promise<TInteger>;
   spop(key: string): Promise<TBulk>;
   spop(key: string, count: number): Promise<TArray>;
-  srandmember(key: string, count?: number): Promise<TStatus>;
+  srandmember(key: string): Promise<TBulk>;
+  srandmember(key: string, count: number): Promise<TArray>;
   srem(key: string, ...members: string[]): Promise<TInteger>;
   sunion(...keys: string[]): Promise<TArray>;
   sunionstore(destination: string, ...keys: string[]): Promise<TInteger>;
@@ -1362,9 +1363,14 @@ class RedisImpl<TRaw, TStatus, TInteger, TBulk, TArray, TBulkNil>
     }
   }
 
+  srandmember(key: string): Promise<TBulk>;
+  srandmember(key: string, count: number): Promise<TArray>;
   srandmember(key: string, count?: number) {
-    if (count != null) return this.execStatusReply("SRANDMEMBER", key, count);
-    else return this.execStatusReply("SRANDMEMBER", key);
+    if (count != null) {
+      return this.execArrayReply("SRANDMEMBER", key, count);
+    } else {
+      return this.execBulkReply("SRANDMEMBER", key);
+    }
   }
 
   srem(key: string, ...members: string[]) {

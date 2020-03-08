@@ -83,18 +83,6 @@ test(async function testDecrby() {
   assertEquals(await redis.get("decryby"), "-101");
 });
 
-test(async function testSpop() {
-  await redis.sadd("spop", "a");
-  const v = await redis.spop("spop");
-  assertEquals(v, "a");
-});
-
-test(async function testSpopWithCount() {
-  await redis.sadd("spopWithCount", "a", "b");
-  const v = await redis.spop("spopWithCount", 2);
-  assertArrayContains(v, ["a", "b"]);
-});
-
 test(async function testZrange() {
   redis.zadd("zrange", 1, "one");
   redis.zadd("zrange", 2, "two");
@@ -222,3 +210,4 @@ import "./tests/geo_test.ts";
 import "./tests/hash_test.ts";
 import "./tests/hyper_loglog_test.ts";
 import "./tests/list_test.ts";
+import "./tests/set_test.ts";
