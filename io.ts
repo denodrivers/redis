@@ -247,9 +247,10 @@ export function muxExecutor(
     ...args: (string | number)[]
   ): Promise<BulkResult> {
     const [type, reply] = await execRawReply(command, ...args);
-    if (type !== "bulk" ||
-      (typeof reply !== "string" && reply !== undefined))
-    {
+    if (
+      type !== "bulk" ||
+      (typeof reply !== "string" && reply !== undefined)
+    ) {
       console.warn(
         `wrong type definition for bulk: ${command} ${type} ${reply}`
       );

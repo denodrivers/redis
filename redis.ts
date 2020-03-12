@@ -275,7 +275,7 @@ export type RedisCommands<TRaw, TStatus, TInteger, TBulk, TArray, TBulkNil> = {
   ): Promise<TInteger>;
   zadd(
     key: string,
-    score_members: (number | string)[],
+    score_members: [number, string][],
     opts?: {
       nxx?: "NX" | "XX";
       ch?: boolean;
@@ -284,7 +284,7 @@ export type RedisCommands<TRaw, TStatus, TInteger, TBulk, TArray, TBulkNil> = {
   ): Promise<TInteger>;
   zcard(key: string): Promise<TInteger>;
   zcount(key: string, min: number, max: number): Promise<TInteger>;
-  zincrby(key: string, increment: number, member: string): Promise<TStatus>;
+  zincrby(key: string, increment: number, member: string): Promise<TBulk>;
   zinterstore(
     destination: string,
     numkeys: number,
@@ -292,7 +292,7 @@ export type RedisCommands<TRaw, TStatus, TInteger, TBulk, TArray, TBulkNil> = {
     weights?: number | number[],
     aggregate?: "SUM" | "MIN" | "MAX"
   ): Promise<TInteger>;
-  zlexcount(key: string, min: number, max: number): Promise<TInteger>;
+  zlexcount(key: string, min: string, max: string): Promise<TInteger>;
   zpopmax(key: string, count?: number): Promise<TArray>;
   zpopmin(key: string, count?: number): Promise<TArray>;
   zrange(
@@ -305,8 +305,8 @@ export type RedisCommands<TRaw, TStatus, TInteger, TBulk, TArray, TBulkNil> = {
   ): Promise<TArray>;
   zrangebylex(
     key: string,
-    min: number,
-    max: number,
+    min: string,
+    max: string,
     opts?: {
       offset?: number;
       count?: number;
@@ -314,8 +314,8 @@ export type RedisCommands<TRaw, TStatus, TInteger, TBulk, TArray, TBulkNil> = {
   ): Promise<TArray>;
   zrevrangebylex(
     key: string,
-    max: number,
-    min: number,
+    max: string,
+    min: string,
     opts?: {
       offset?: number;
       count?: number;
@@ -323,8 +323,8 @@ export type RedisCommands<TRaw, TStatus, TInteger, TBulk, TArray, TBulkNil> = {
   ): Promise<TArray>;
   zrangebyscore(
     key: string,
-    min: number,
-    max: number,
+    min: string,
+    max: string,
     opts?: {
       withScore?: boolean;
       offset?: number;
@@ -333,7 +333,7 @@ export type RedisCommands<TRaw, TStatus, TInteger, TBulk, TArray, TBulkNil> = {
   ): Promise<TArray>;
   zrank(key: string, member: string): Promise<TInteger | TBulkNil>;
   zrem(key: string, ...members: string[]): Promise<TInteger>;
-  zremrangebylex(key: string, min: number, max: number): Promise<TInteger>;
+  zremrangebylex(key: string, min: string, max: string): Promise<TInteger>;
   zremrangebyrank(key: string, start: number, stop: number): Promise<TInteger>;
   zremrangebyscore(key: string, min: number, max: number): Promise<TInteger>;
   zrevrange(
@@ -355,7 +355,7 @@ export type RedisCommands<TRaw, TStatus, TInteger, TBulk, TArray, TBulkNil> = {
     }
   ): Promise<TArray>;
   zrevrank(key: string, member: string): Promise<TInteger | TBulkNil>;
-  zscore(key: string, member: string): Promise<TStatus>;
+  zscore(key: string, member: string): Promise<TBulk>;
   zunionstore(
     destination: string,
     keys: string[],
@@ -470,8 +470,7 @@ export type Redis = RedisCommands<
 >;
 
 class RedisImpl<TRaw, TStatus, TInteger, TBulk, TArray, TBulkNil>
-  implements RedisCommands<TRaw, TStatus, TInteger, TBulk, TArray, TBulkNil>
-{
+  implements RedisCommands<TRaw, TStatus, TInteger, TBulk, TArray, TBulkNil> {
   _isClosed = false;
   get isClosed() {
     return this._isClosed;
@@ -1441,8 +1440,10 @@ class RedisImpl<TRaw, TStatus, TInteger, TBulk, TArray, TBulkNil>
     if (typeof scoreOrArr === "number") {
       args.push(scoreOrArr);
       args.push(memberOrOpts);
-    } else {
-      args.push(...scoreOrArr);
+    } else if (Array.isArray(scoreOrArr)) {
+      for (const [s, m] of scoreOrArr) {
+        args.push(s, m);
+      }
       _opts = memberOrOpts;
     }
     if (_opts) {
@@ -1468,7 +1469,7 @@ class RedisImpl<TRaw, TStatus, TInteger, TBulk, TArray, TBulkNil>
   }
 
   zincrby(key: string, increment: number, member: string) {
-    return this.execStatusReply("ZINCRBY", key, increment, member);
+    return this.execBulkReply("ZINCRBY", key, increment, member);
   }
 
   zinterstore(
@@ -1533,7 +1534,7 @@ class RedisImpl<TRaw, TStatus, TInteger, TBulk, TArray, TBulkNil>
     return args;
   }
 
-  zlexcount(key: string, min: number, max: number) {
+  zlexcount(key: string, min: string, max: string) {
     return this.execIntegerReply("ZLEXCOUNT", key, min, max);
   }
 
@@ -1561,8 +1562,8 @@ class RedisImpl<TRaw, TStatus, TInteger, TBulk, TArray, TBulkNil>
 
   zrangebylex(
     key: string,
-    min: number,
-    max: number,
+    min: string,
+    max: string,
     opts?: {
       withScore?: boolean;
       count?: number;
@@ -1574,8 +1575,8 @@ class RedisImpl<TRaw, TStatus, TInteger, TBulk, TArray, TBulkNil>
 
   zrevrangebylex(
     key: string,
-    max: number,
-    min: number,
+    max: string,
+    min: string,
     opts?: {
       withScore?: boolean;
       count?: number;
@@ -1587,8 +1588,8 @@ class RedisImpl<TRaw, TStatus, TInteger, TBulk, TArray, TBulkNil>
 
   zrangebyscore(
     key: string,
-    min: number,
-    max: number,
+    min: string,
+    max: string,
     opts?: {
       withScore?: boolean;
       count?: number;
@@ -1625,7 +1626,7 @@ class RedisImpl<TRaw, TStatus, TInteger, TBulk, TArray, TBulkNil>
     return this.execIntegerReply("ZREM", key, ...members);
   }
 
-  zremrangebylex(key: string, min: number, max: number) {
+  zremrangebylex(key: string, min: string, max: string) {
     return this.execIntegerReply("ZREMRANGEBYLEX", key, min, max);
   }
 
@@ -1668,7 +1669,7 @@ class RedisImpl<TRaw, TStatus, TInteger, TBulk, TArray, TBulkNil>
   }
 
   zscore(key: string, member: string) {
-    return this.execStatusReply("ZSCORE", key, member);
+    return this.execBulkReply("ZSCORE", key, member);
   }
 
   scan(
