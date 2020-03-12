@@ -83,80 +83,6 @@ test(async function testDecrby() {
   assertEquals(await redis.get("decryby"), "-101");
 });
 
-test(async function testZrange() {
-  redis.zadd("zrange", 1, "one");
-  redis.zadd("zrange", 2, "two");
-  redis.zadd("zrange", 3, "three");
-  const v = await redis.zrange("zrange", 0, 1);
-  assertEquals(v, ["one", "two"]);
-});
-
-test(async function testZrangeWithScores() {
-  redis.zadd("zrangeWithScores", 1, "one");
-  redis.zadd("zrangeWithScores", 2, "two");
-  redis.zadd("zrangeWithScores", 3, "three");
-  const v = await redis.zrange("zrangeWithScores", 0, 1, { withScore: true });
-  assertEquals(v, ["one", "1", "two", "2"]);
-});
-
-test(async function testZrevrange() {
-  redis.zadd("zrevrange", 1, "one");
-  redis.zadd("zrevrange", 2, "two");
-  redis.zadd("zrevrange", 3, "three");
-  const v = await redis.zrevrange("zrevrange", 0, 1);
-  assertEquals(v, ["three", "two"]);
-});
-
-test(async function testZrevrangeWithScores() {
-  redis.zadd("zrevrangeWithScores", 1, "one");
-  redis.zadd("zrevrangeWithScores", 2, "two");
-  redis.zadd("zrevrangeWithScores", 3, "three");
-  const v = await redis.zrevrange("zrevrangeWithScores", 0, 1, {
-    withScore: true
-  });
-  assertEquals(v, ["three", "3", "two", "2"]);
-});
-
-test(async function testZrangebyscore() {
-  redis.zadd("zrangebyscore", 2, "m1");
-  redis.zadd("zrangebyscore", 5, "m2");
-  redis.zadd("zrangebyscore", 8, "m3");
-  redis.zadd("zrangebyscore", 10, "m4");
-  const v = await redis.zrangebyscore("zrangebyscore", 3, 9);
-  assertEquals(v, ["m2", "m3"]);
-});
-
-test(async function testZrangebyscoreWithScores() {
-  redis.zadd("zrangebyscoreWithScores", 2, "m1");
-  redis.zadd("zrangebyscoreWithScores", 5, "m2");
-  redis.zadd("zrangebyscoreWithScores", 8, "m3");
-  redis.zadd("zrangebyscoreWithScores", 10, "m4");
-  const v = await redis.zrangebyscore("zrangebyscoreWithScores", 3, 9, {
-    withScore: true
-  });
-  assertEquals(v, ["m2", "5", "m3", "8"]);
-});
-
-test(async function testZrevrangebyscore() {
-  redis.zadd("zrevrangebyscore", 2, "m1");
-  redis.zadd("zrevrangebyscore", 5, "m2");
-  redis.zadd("zrevrangebyscore", 8, "m3");
-  redis.zadd("zrevrangebyscore", 10, "m4");
-  const v = await redis.zrevrangebyscore("zrevrangebyscore", 9, 4);
-  assertEquals(v, ["m3", "m2"]);
-});
-
-test(async function testZrevrangebyscore() {
-  redis.zadd("zrevrangebyscoreWithScores", 2, "m1");
-  redis.zadd("zrevrangebyscoreWithScores", 5, "m2");
-  redis.zadd("zrevrangebyscoreWithScores", 8, "m3");
-  redis.zadd("zrevrangebyscoreWithScores", 10, "m4");
-  const v = await redis.zrevrangebyscore("zrevrangebyscoreWithScores", 9, 4, {
-    withScore: true
-  });
-  assertEquals(v, ["m3", "8", "m2", "5"]);
-});
-
 test(async function testConcurrent() {
   let promises: Promise<any>[] = [];
   for (const key of ["a", "b", "c"]) {
@@ -207,3 +133,4 @@ import "./tests/hash_test.ts";
 import "./tests/hyper_loglog_test.ts";
 import "./tests/list_test.ts";
 import "./tests/set_test.ts";
+import "./tests/sorted_set_test.ts";

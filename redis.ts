@@ -314,8 +314,8 @@ export type RedisCommands<TRaw, TStatus, TInteger, TBulk, TArray, TBulkNil> = {
   ): Promise<TArray>;
   zrevrangebylex(
     key: string,
-    max: string,
-    min: string,
+    max: number | string,
+    min: number | string,
     opts?: {
       offset?: number;
       count?: number;
@@ -323,8 +323,8 @@ export type RedisCommands<TRaw, TStatus, TInteger, TBulk, TArray, TBulkNil> = {
   ): Promise<TArray>;
   zrangebyscore(
     key: string,
-    min: string,
-    max: string,
+    min: number | string,
+    max: number | string,
     opts?: {
       withScore?: boolean;
       offset?: number;
