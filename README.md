@@ -45,15 +45,13 @@ const redis = await connect({
   port: 6379
 });
 const pl = redis.pipeline();
-await Promise.all([
-  pl.ping(),
-  pl.ping(),
-  pl.set("set1", "value1"),
-  pl.set("set2", "value2"),
-  pl.mget("set1", "set2"),
-  pl.del("set1"),
-  pl.del("set2")
-]);
+pl.ping();
+pl.ping();
+pl.set("set1", "value1");
+pl.set("set2", "value2");
+pl.mget("set1", "set2");
+pl.del("set1");
+pl.del("set2");
 const replies = await pl.flush();
 ```
 
@@ -68,7 +66,9 @@ See detail https://redis.io/topics/transactions
 
 ```ts
 const tx = redis.tx();
-await Promise.all([tx.set("a", "aa"), tx.set("b", "bb"), tx.del("c")]);
+tx.set("a", "aa");
+tx.set("b", "bb");
+tx.del("c");
 await tx.flush();
 // MULTI
 // SET a aa
