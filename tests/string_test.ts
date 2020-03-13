@@ -1,4 +1,4 @@
-import { makeTest, sleep } from "./test_util.ts";
+import { makeTest } from "./test_util.ts";
 import {
   assertEquals,
   assert
@@ -120,13 +120,10 @@ test("msetnx", async () => {
   assertEquals(await client.get("key3"), undefined);
 });
 
-// This test is a bit slow.
-test("psetex #slow", async () => {
+test("psetex", async () => {
   const rep = await client.psetex("key1", 1000, "test");
   assertEquals(rep, "OK");
   assertEquals(await client.get("key1"), "test");
-  await sleep(1000);
-  assert(!await client.exists("key1"));
 });
 
 test("set", async () => {
@@ -150,13 +147,10 @@ test("setbit", async () => {
   assertEquals(v, "b");
 });
 
-// This test is a bit slow.
-test("setex #slow", async () => {
+test("setex", async () => {
   const rep = await client.setex("key", 1, "test");
   assertEquals(rep, "OK");
   assertEquals(await client.get("key"), "test");
-  await sleep(1000);
-  assert(!await client.exists("key"));
 });
 
 test("setnx", async () => {
