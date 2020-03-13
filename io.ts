@@ -9,12 +9,12 @@ import {
   Deferred
 } from "./vendor/https/deno.land/std/util/async.ts";
 import { assert } from "./vendor/https/deno.land/std/testing/asserts.ts";
+import { ConditionalArray, Bulk, Integer, Status, Raw } from "./command.ts";
 
-export type BulkResult = string | undefined;
-export type StatusReply = ["status", string];
-export type IntegerReply = ["integer", number];
-export type BulkReply = ["bulk", BulkResult];
-export type ArrayReply = ["array", any[]];
+export type StatusReply = ["status", Status];
+export type IntegerReply = ["integer", Integer];
+export type BulkReply = ["bulk", Bulk];
+export type ArrayReply = ["array", ConditionalArray];
 export type RedisRawReply = StatusReply | IntegerReply | BulkReply
   | ArrayReply;
 
@@ -23,20 +23,8 @@ export type CommandFunc<T> = (
   ...args: (string | number)[]
 ) => Promise<T>;
 
-export interface CommandExecutor<
-  TRaw,
-  TStatus,
-  TInteger,
-  TBulk,
-  TArray,
-  TBulkNil
-> {
-  execRawReply: CommandFunc<TRaw>;
-  execStatusReply: CommandFunc<TStatus>;
-  execIntegerReply: CommandFunc<TInteger>;
-  execBulkReply: CommandFunc<TBulk>;
-  execArrayReply: CommandFunc<TArray>;
-  execStatusOrNilReply: CommandFunc<TStatus | TBulkNil>;
+export interface CommandExecutor {
+  execRawReply: CommandFunc<RedisRawReply>;
 }
 
 const IntegerReplyCode = ":".charCodeAt(0);
@@ -132,7 +120,7 @@ export async function readIntegerReply(reader: BufReader): Promise<number> {
   tryParseErrorReply(line);
 }
 
-export async function readBulkReply(reader: BufReader): Promise<BulkResult> {
+export async function readBulkReply(reader: BufReader): Promise<Bulk> {
   const line = await readLine(reader);
   if (line[0] !== "$") {
     tryParseErrorReply(line);
@@ -186,14 +174,7 @@ function tryParseErrorReply(line: string): never {
 export function muxExecutor(
   r: BufReader,
   w: BufWriter
-): CommandExecutor<
-  RedisRawReply,
-  string,
-  number,
-  BulkResult,
-  any[],
-  undefined
-> {
+): CommandExecutor {
   let queue: {
     command: string;
     args: (string | number)[];
@@ -204,89 +185,15 @@ export function muxExecutor(
     const [e] = queue;
     if (!e) return;
     sendCommand(w, r, e.command, ...e.args)
-      .then(v => e.d.resolve(v))
+      .then(v => {
+        // console.log(e.command, e.args, v);
+        e.d.resolve(v);
+      })
       .catch(err => e.d.reject(err))
       .finally(() => {
         queue.shift();
         dequeue();
       });
-  }
-
-  async function execStatusReply(
-    command: string,
-    ...args: (string | number)[]
-  ): Promise<string> {
-    const [type, reply] = await execRawReply(command, ...args);
-    if (type !== "status" || typeof reply !== "string") {
-      console.warn(
-        `wrong type definition for status: ${command} ${type} ${reply}`
-      );
-    }
-    // TODO: enable assertion
-    // assert(
-    //   type === "status" && typeof reply === "string",
-    //   `${command} ${type} ${reply}`
-    // );
-    return reply as string;
-  }
-
-  async function execIntegerReply(
-    command: string,
-    ...args: (string | number)[]
-  ): Promise<number> {
-    const [type, reply] = await execRawReply(command, ...args);
-    assert(
-      type === "integer" && typeof reply === "number",
-      `${command} ${type} ${reply}`
-    );
-    return reply;
-  }
-
-  async function execBulkReply(
-    command: string,
-    ...args: (string | number)[]
-  ): Promise<BulkResult> {
-    const [type, reply] = await execRawReply(command, ...args);
-    if (
-      type !== "bulk" ||
-      (typeof reply !== "string" && reply !== undefined)
-    ) {
-      console.warn(
-        `wrong type definition for bulk: ${command} ${type} ${reply}`
-      );
-    }
-    // assert(
-    //   (type === "bulk" && typeof reply === "string") || reply === undefined,
-    //   `${command} ${type} ${reply}`
-    // );
-    return reply as BulkResult;
-  }
-
-  async function execArrayReply(
-    command: string,
-    ...args: (string | number)[]
-  ): Promise<any[]> {
-    const [type, reply] = await execRawReply(command, ...args);
-    assert(
-      type === "array" && Array.isArray(reply),
-      `${command} ${type} ${reply}`
-    );
-    return reply;
-  }
-
-  async function execStatusOrNilReply(
-    command: string,
-    ...args: (string | number)[]
-  ): Promise<string | undefined> {
-    const [type, reply] = await execRawReply(command, ...args);
-    if (type === "status") {
-      assert(typeof reply === "string");
-      return reply;
-    } else if (type === "bulk") {
-      assert(reply === undefined);
-      return reply;
-    }
-    throw new Error("unexpected type: " + type);
   }
 
   async function execRawReply(
@@ -301,11 +208,6 @@ export function muxExecutor(
     return d;
   }
   return {
-    execRawReply,
-    execIntegerReply,
-    execArrayReply,
-    execStatusReply,
-    execStatusOrNilReply,
-    execBulkReply
+    execRawReply
   };
 }
