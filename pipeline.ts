@@ -11,25 +11,19 @@ import {
   CommandExecutor
 } from "./io.ts";
 import { ErrorReplyError } from "./errors.ts";
-import { create, RedisCommands } from "./redis.ts";
+import { create } from "./redis.ts";
 import {
   deferred,
   Deferred
 } from "./vendor/https/deno.land/std/util/async.ts";
+import { RedisCommands } from "./command.ts";
 
 const encoder = new TextEncoder();
-type OkStatus = string;
+
 export type RedisPipeline = {
   enqueue(command: string, ...args: (number | string)[]): void;
   flush(): Promise<RedisRawReply[]>;
-} & RedisCommands<
-  StatusReply,
-  OkStatus,
-  OkStatus,
-  OkStatus,
-  OkStatus,
-  OkStatus
->;
+} & RedisCommands;
 
 export function createRedisPipeline(
   writer: BufWriter,
@@ -54,7 +48,7 @@ export function createRedisPipeline(
       });
   }
 
-  async function exec(cmds: string[]) {
+  async function exec(cmds: string[]): Promise<RedisRawReply[]> {
     const msg = cmds.join("");
     await writer.write(encoder.encode(msg));
     await writer.flush();
@@ -78,11 +72,12 @@ export function createRedisPipeline(
     const msg = createRequest(command, ...args);
     commands.push(msg);
   }
+
   async function flush(): Promise<RedisRawReply[]> {
     // wrap pipelined commands with MULTI/EXEC
-    if (opts && opts.tx) {
-      commands.splice(0, 0, createRequest("MULTI"));
-      commands.push(createRequest("EXEC"));
+    if (opts?.tx) {
+      commands.unshift("MULTI");
+      commands.push("EXEC");
     }
     const d = deferred<RedisRawReply[]>();
     queue.push({ commands, d });
@@ -95,34 +90,13 @@ export function createRedisPipeline(
   async function execRawReply(
     command: string,
     ...args: (string | number)[]
-  ): Promise<["status", "OK"]> {
+  ): Promise<RedisRawReply> {
     enqueue(command, ...args);
     return ["status", "OK"];
   }
-  const _execOk: CommandFunc<OkStatus> = async (command, ...args) => {
-    const [_, ok] = await execRawReply(command, ...args);
-    return ok;
-  };
-  const execStatusReply = _execOk;
-  const execIntegerReply = _execOk;
-  const execBulkReply = _execOk;
-  const execArrayReply = _execOk;
-  const execStatusOrNilReply = _execOk;
   const d = dummyReadWriteCloser();
-  const executor: CommandExecutor<
-    StatusReply,
-    OkStatus,
-    OkStatus,
-    OkStatus,
-    OkStatus,
-    OkStatus
-  > = {
-    execRawReply,
-    execIntegerReply,
-    execStatusReply,
-    execBulkReply,
-    execArrayReply,
-    execStatusOrNilReply
+  const executor: CommandExecutor = {
+    execRawReply
   };
   const fakeRedis = create(d, d, d, executor);
   return Object.assign(fakeRedis, executor, { enqueue, flush });

@@ -7,6 +7,12 @@ import {
 } from "../vendor/https/deno.land/std/testing/asserts.ts";
 const { test, client } = await makeTest("zet");
 
+test("bzpopmin", async () => {
+});
+
+test("bzpopmax", async () => {
+});
+
 test("zadd", async () => {
   assertEquals(await client.zadd("key", [
     [1, "1"],

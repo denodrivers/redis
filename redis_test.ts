@@ -83,3 +83,4 @@ import "./tests/hyper_loglog_test.ts";
 import "./tests/list_test.ts";
 import "./tests/set_test.ts";
 import "./tests/sorted_set_test.ts";
+import "./tests/string_test.ts";
