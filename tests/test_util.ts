@@ -36,3 +36,7 @@ export async function makeTest(
   };
   return { test, client };
 }
+
+export function sleep(ms: number): Promise<void> {
+  return new Promise<any>(resolve => setTimeout(resolve, ms));
+}

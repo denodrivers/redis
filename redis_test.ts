@@ -23,33 +23,6 @@ test(async function testExists() {
   assertEquals(exists, 1);
 });
 
-test(async function testGetWhenNil() {
-  const hoge = await redis.get("none");
-  assertEquals(hoge, undefined);
-});
-
-test(async function testSet() {
-  const s = await redis.set("get", "fuga你好こんにちは");
-  assertEquals(s, "OK");
-  const fuga = await redis.get("get");
-  assertEquals(fuga, "fuga你好こんにちは");
-});
-
-test(async function testGetSet() {
-  await redis.set("getset", "val");
-  const v = await redis.getset("getset", "lav");
-  assertEquals(v, "val");
-  assertEquals(await redis.get("getset"), "lav");
-});
-
-test(async function testMget() {
-  await redis.set("mget1", "val1");
-  await redis.set("mget2", "val2");
-  await redis.set("mget3", "val3");
-  const v = await redis.mget("mget1", "mget2", "mget3");
-  assertEquals(v, ["val1", "val2", "val3"]);
-});
-
 test(async function testDel() {
   let s = await redis.set("del1", "fuga");
   assertEquals(s, "OK");
@@ -57,30 +30,6 @@ test(async function testDel() {
   assertEquals(s, "OK");
   const deleted = await redis.del("del1", "del2");
   assertEquals(deleted, 2);
-});
-
-test(async function testIncr() {
-  const rep = await redis.incr("incr");
-  assertEquals(rep, 1);
-  assertEquals(await redis.get("incr"), "1");
-});
-
-test(async function testIncrby() {
-  const rep = await redis.incrby("incrby", 101);
-  assertEquals(rep, 101);
-  assertEquals(await redis.get("incrby"), "101");
-});
-
-test(async function testDecr() {
-  const rep = await redis.decr("decr");
-  assertEquals(rep, -1);
-  assertEquals(await redis.get("decr"), "-1");
-});
-
-test(async function testDecrby() {
-  const rep = await redis.decrby("decryby", 101);
-  assertEquals(rep, -101);
-  assertEquals(await redis.get("decryby"), "-101");
 });
 
 test(async function testConcurrent() {
