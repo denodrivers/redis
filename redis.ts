@@ -82,7 +82,7 @@ export type RedisCommands<TRaw, TStatus, TInteger, TBulk, TArray, TBulkNil> = {
   append(key: string, value: string): Promise<TInteger>;
   bitcount(key: string): Promise<TInteger>;
   bitcount(key: string, start: number, end: number): Promise<TInteger>;
-  bitfield(): Promise<TArray>;
+  bitfield(key: string): Promise<TArray>;
   bitop(
     operation: "AND" | "OR" | "XOR" | "NOT",
     destkey: string,
@@ -98,7 +98,7 @@ export type RedisCommands<TRaw, TStatus, TInteger, TBulk, TArray, TBulkNil> = {
   decrby(key: string, decrement: number): Promise<TInteger>;
   incr(key: string): Promise<TInteger>;
   incrby(key: string, increment: number): Promise<TInteger>;
-  incrbyfloat(key: string, increment: number): Promise<TStatus>;
+  incrbyfloat(key: string, increment: number): Promise<TBulk>;
   mget(...keys: string[]): Promise<TArray>;
   mset(key: string, value: string): Promise<TStatus>;
   mset(...key_values: string[]): Promise<TStatus>;
@@ -129,7 +129,7 @@ export type RedisCommands<TRaw, TStatus, TInteger, TBulk, TArray, TBulkNil> = {
   strlen(key: string): Promise<TInteger>;
   get(key: string): Promise<TBulk>;
   getbit(key: string, offset: number): Promise<TInteger>;
-  getrange(key: string, start: number, end: number): Promise<TStatus>;
+  getrange(key: string, start: number, end: number): Promise<TBulk>;
   getset(key: string, value: string): Promise<TBulk>;
   // Geo
   geoadd(
@@ -520,8 +520,8 @@ class RedisImpl<TRaw, TStatus, TInteger, TBulk, TArray, TBulkNil>
     } else return this.execIntegerReply("BITCOUNT", key);
   }
 
-  bitfield() {
-    return this.execArrayReply("BITFIELD");
+  bitfield(key: string) {
+    return this.execArrayReply("BITFIELD", key);
   }
 
   bitop(operation: string, destkey: string, ...keys: string[]) {
@@ -812,7 +812,7 @@ class RedisImpl<TRaw, TStatus, TInteger, TBulk, TArray, TBulkNil>
   }
 
   getrange(key: string, start: number, end: number) {
-    return this.execStatusReply("GETRANGE", key, start, end);
+    return this.execBulkReply("GETRANGE", key, start, end);
   }
 
   getset(key: string, value: string) {
@@ -884,7 +884,7 @@ class RedisImpl<TRaw, TStatus, TInteger, TBulk, TArray, TBulkNil>
   }
 
   incrbyfloat(key: string, increment: number) {
-    return this.execStatusReply("INCRBYFLOAT", key, increment);
+    return this.execBulkReply("INCRBYFLOAT", key, increment);
   }
 
   info(section?: string) {
