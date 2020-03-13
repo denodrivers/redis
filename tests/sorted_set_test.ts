@@ -8,9 +8,29 @@ import {
 const { test, client } = await makeTest("zet");
 
 test("bzpopmin", async () => {
+  await client.zadd("key", [
+    [1, "1"],
+    [2, "2"]
+  ]);
+  assertEquals(await client.bzpopmin("key", 1), ["key", "1", "1"]);
+});
+
+test("bzpopmin timeout", async () => {
+  const arr = await client.bzpopmin("key", 1);
+  assertEquals(arr.length, 0);
 });
 
 test("bzpopmax", async () => {
+  await client.zadd("key", [
+    [1, "1"],
+    [2, "2"]
+  ]);
+  assertEquals(await client.bzpopmax("key", 1), ["key", "2", "2"]);
+});
+
+test("bzpopmax timeout", async () => {
+  const arr = await client.bzpopmax("key", 1);
+  assertEquals(arr.length, 0);
 });
 
 test("zadd", async () => {

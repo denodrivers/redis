@@ -185,7 +185,10 @@ export function muxExecutor(
     const [e] = queue;
     if (!e) return;
     sendCommand(w, r, e.command, ...e.args)
-      .then(v => e.d.resolve(v))
+      .then(v => {
+        // console.log(e.command, e.args, v);
+        e.d.resolve(v);
+      })
       .catch(err => e.d.reject(err))
       .finally(() => {
         queue.shift();

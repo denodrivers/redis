@@ -151,7 +151,7 @@ class RedisImpl implements RedisCommands {
   }
 
   bzpopmin(key: string | string[], timeout: number): Promise<
-    [BulkString, BulkString, BulkString] | [BulkNil, BulkString]
+    [BulkString, BulkString, BulkString] | []
   >;
   bzpopmin(keys: string | string[], timeout: number) {
     if (typeof keys === "string") {
@@ -162,7 +162,7 @@ class RedisImpl implements RedisCommands {
   }
 
   bzpopmax(key: string | string[], timeout: number): Promise<
-    [BulkString, BulkString, BulkString] | [BulkNil, BulkString]
+    [BulkString, BulkString, BulkString] | []
   >;
   bzpopmax(keys: string[], timeout: number) {
     if (typeof keys === "string") {

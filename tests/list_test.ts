@@ -9,13 +9,22 @@ test("blpoop", async () => {
   await client.rpush("list", "1", "2");
   assertEquals(await client.blpop("list", 2), ["list", "1"]);
 });
+test("blpoop timeout", async () => {
+  assertEquals(await client.blpop("list", 1), []);
+});
 test("brpoop", async () => {
   await client.rpush("list", "1", "2");
   assertEquals(await client.brpop("list", 2), ["list", "2"]);
 });
+test("brpoop timeout", async () => {
+  assertEquals(await client.brpop("list", 1), []);
+});
 test("brpoplpush", async () => {
   await client.rpush("list", "1", "2");
   assertEquals(await client.brpoplpush("list", "list", 2), "2");
+});
+test("brpoplpush timeout", async () => {
+  assertEquals(await client.brpoplpush("list", "list", 1), []);
 });
 test("lindex", async () => {
   await client.rpush("list", "1", "2");

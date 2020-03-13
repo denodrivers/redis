@@ -232,7 +232,7 @@ export type RedisCommands = {
     source: string,
     destination: string,
     timeout: number
-  ): Promise<Bulk>;
+  ): Promise<Bulk | []>;
   lindex(key: string, index: number): Promise<Bulk>;
   linsert(
     key: string,
@@ -287,10 +287,10 @@ export type RedisCommands = {
   sunionstore(destination: string, ...keys: string[]): Promise<Integer>;
   // SortedSet
   bzpopmin(key: string | string[], timeout: number): Promise<
-    [BulkString, BulkString, BulkString] | [BulkNil, BulkString]
+    [BulkString, BulkString, BulkString] | []
   >;
   bzpopmax(key: string | string[], timeout: number): Promise<
-    [BulkString, BulkString, BulkString] | [BulkNil, BulkString]
+    [BulkString, BulkString, BulkString] | []
   >;
   zadd(
     key: string,
