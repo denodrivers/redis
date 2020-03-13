@@ -76,8 +76,8 @@ export function createRedisPipeline(
   async function flush(): Promise<RedisRawReply[]> {
     // wrap pipelined commands with MULTI/EXEC
     if (opts?.tx) {
-      commands.unshift("MULTI");
-      commands.push("EXEC");
+      commands.unshift(createRequest("MULTI"));
+      commands.push(createRequest("EXEC"));
     }
     const d = deferred<RedisRawReply[]>();
     queue.push({ commands, d });

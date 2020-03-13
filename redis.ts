@@ -44,12 +44,7 @@ class RedisImpl implements RedisCommands {
     command: string,
     ...args: (string | number)[]
   ): Promise<Status> {
-    const [type, reply] = await this.executor.execRawReply(command, ...args);
-    if (type !== "status" || typeof reply !== "string") {
-      console.warn(
-        `wrong type definition for status: ${command} ${type} ${reply}`
-      );
-    }
+    const [_, reply] = await this.executor.execRawReply(command, ...args);
     return reply as Status;
   }
 
@@ -57,12 +52,7 @@ class RedisImpl implements RedisCommands {
     command: string,
     ...args: (string | number)[]
   ): Promise<Integer> {
-    const [type, reply] = await this.executor.execRawReply(command, ...args);
-    if (!(type === "integer" && typeof reply === "number")) {
-      console.warn(
-        `wrong type definition for integer: ${command} ${type} ${reply}`
-      );
-    }
+    const [_, reply] = await this.executor.execRawReply(command, ...args);
     return reply as number;
   }
 
@@ -70,15 +60,7 @@ class RedisImpl implements RedisCommands {
     command: string,
     ...args: (string | number)[]
   ): Promise<T> {
-    const [type, reply] = await this.executor.execRawReply(command, ...args);
-    if (
-      type !== "bulk" ||
-      (typeof reply !== "string" && reply !== undefined)
-    ) {
-      console.warn(
-        `wrong type definition for bulk: ${command} ${type} ${reply}`
-      );
-    }
+    const [_, reply] = await this.executor.execRawReply(command, ...args);
     return reply as T;
   }
 
@@ -86,12 +68,7 @@ class RedisImpl implements RedisCommands {
     command: string,
     ...args: (string | number)[]
   ): Promise<T[]> {
-    const [type, reply] = await this.executor.execRawReply(command, ...args);
-    if (!(type === "array" && Array.isArray(reply))) {
-      console.warn(
-        `wrong type definition for array: ${command} ${type} ${reply}`
-      );
-    }
+    const [_, reply] = await this.executor.execRawReply(command, ...args);
     return reply as T[];
   }
 
@@ -99,15 +76,7 @@ class RedisImpl implements RedisCommands {
     command: string,
     ...args: (string | number)[]
   ): Promise<Integer | BulkNil> {
-    const [type, reply] = await this.executor.execRawReply(command, ...args);
-    if (
-      !(type === "integer" && typeof reply === "number") &&
-      !(type === "bulk" && reply !== undefined)
-    ) {
-      console.warn(
-        `wrong type definition for integer or nil: ${command} ${type} ${reply}`
-      );
-    }
+    const [_, reply] = await this.executor.execRawReply(command, ...args);
     return reply as Integer | BulkNil;
   }
 
@@ -115,15 +84,7 @@ class RedisImpl implements RedisCommands {
     command: string,
     ...args: (string | number)[]
   ): Promise<Status | BulkNil> {
-    const [type, reply] = await this.executor.execRawReply(command, ...args);
-    if (
-      !(type === "status" && typeof reply === "string") &&
-      !(type === "bulk" && reply !== undefined)
-    ) {
-      console.warn(
-        `wrong type definition for status or nil: ${command} ${type} ${reply}`
-      );
-    }
+    const [_, reply] = await this.executor.execRawReply(command, ...args);
     return reply as Status | BulkNil;
   }
 
