@@ -112,8 +112,29 @@ class RedisImpl implements RedisCommands {
     } else return this.execIntegerReply("BITCOUNT", key);
   }
 
-  bitfield(key: string) {
-    return this.execArrayReply("BITFIELD", key) as Promise<number[]>;
+  bitfield(key: string, opts?: {
+    get?: { type: string; offset: number | string };
+    set?: { type: string; offset: number | string; value: number };
+    incrby?: { type: string; offset: number | string; increment: number };
+    overflow?: "WRAP" | "SAT" | "FAIL";
+  }) {
+    const args: (number | string)[] = [key];
+    if (opts?.get) {
+      const { type, offset } = opts.get;
+      args.push("GET", type, offset);
+    }
+    if (opts?.set) {
+      const { type, offset, value } = opts.set;
+      args.push("SET", type, offset, value);
+    }
+    if (opts?.incrby) {
+      const { type, offset, increment } = opts.incrby;
+      args.push("INCRBY", type, offset, increment);
+    }
+    if (opts?.overflow) {
+      args.push("OVERFLOW", opts.overflow);
+    }
+    return this.execArrayReply("BITFIELD", ...args) as Promise<number[]>;
   }
 
   bitop(operation: string, destkey: string, ...keys: string[]) {

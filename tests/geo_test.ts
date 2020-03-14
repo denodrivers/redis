@@ -1,4 +1,3 @@
-import { connect } from "../redis.ts";
 import {
   assertEquals
 } from "../vendor/https/deno.land/std/testing/asserts.ts";

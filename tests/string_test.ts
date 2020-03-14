@@ -25,6 +25,23 @@ test("bitfieldWithoutOperations", async () => {
   assertEquals(v, []);
 });
 
+test("bitfield with opts", async () => {
+  await client.set("key", "4660");
+  const v = await client.bitfield("key", {
+    get: { type: "u8", offset: 0 },
+    set: { type: "i5", offset: 1, value: 0 },
+    incrby: { type: "u16", offset: 2, increment: 2 }
+  });
+  assertEquals(v, [52, 13, 218]);
+});
+
+test("bitfield with overflow", async () => {
+  const v = await client.bitfield("key", {
+    overflow: "FAIL"
+  });
+  assertEquals(v, []);
+});
+
 test("bitop", async () => {
   await client.set("key1", "foo"); // 01100110 01101111 01101111
   await client.set("key2", "bar"); // 01100010 01100001 01110010
