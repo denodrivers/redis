@@ -35,6 +35,16 @@ const sub = await redis.subscribe("channel");
 
 ## Advanced Usage
 
+### Execute raw commands
+
+`redis.executor` is raw level [redis protocol](https://redis.io/topics/protoco) executor.
+You can send raw redis commands and receive replies.
+
+```ts
+await redis.executor.exec("SET", "redis", "nice"); // => ["status", "OK"]
+await redis.executor.exec("GET", "redis"); // => ["bulk", "nice"]
+```
+
 ### Pipelining
 
 https://redis.io/topics/pipelining

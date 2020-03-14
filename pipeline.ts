@@ -39,7 +39,7 @@ export function createRedisPipeline(
   function dequeue() {
     const [e] = queue;
     if (!e) return;
-    exec(e.commands)
+    send(e.commands)
       .then(e.d.resolve)
       .catch(e.d.reject)
       .finally(() => {
@@ -48,7 +48,7 @@ export function createRedisPipeline(
       });
   }
 
-  async function exec(cmds: string[]): Promise<RedisRawReply[]> {
+  async function send(cmds: string[]): Promise<RedisRawReply[]> {
     const msg = cmds.join("");
     await writer.write(encoder.encode(msg));
     await writer.flush();
@@ -87,7 +87,7 @@ export function createRedisPipeline(
     commands = [];
     return d;
   }
-  async function execRawReply(
+  async function exec(
     command: string,
     ...args: (string | number)[]
   ): Promise<RedisRawReply> {
@@ -95,9 +95,7 @@ export function createRedisPipeline(
     return ["status", "OK"];
   }
   const d = dummyReadWriteCloser();
-  const executor: CommandExecutor = {
-    execRawReply
-  };
+  const executor: CommandExecutor = { exec };
   const fakeRedis = create(d, d, d, executor);
   return Object.assign(fakeRedis, executor, { enqueue, flush });
 }

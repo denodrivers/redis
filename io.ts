@@ -8,7 +8,6 @@ import {
   deferred,
   Deferred
 } from "./vendor/https/deno.land/std/util/async.ts";
-import { assert } from "./vendor/https/deno.land/std/testing/asserts.ts";
 import { ConditionalArray, Bulk, Integer, Status, Raw } from "./command.ts";
 
 export type StatusReply = ["status", Status];
@@ -24,7 +23,7 @@ export type CommandFunc<T> = (
 ) => Promise<T>;
 
 export interface CommandExecutor {
-  execRawReply: CommandFunc<RedisRawReply>;
+  exec: CommandFunc<RedisRawReply>;
 }
 
 const IntegerReplyCode = ":".charCodeAt(0);
@@ -196,7 +195,7 @@ export function muxExecutor(
       });
   }
 
-  async function execRawReply(
+  async function exec(
     command: string,
     ...args: (string | number)[]
   ): Promise<RedisRawReply> {
@@ -207,7 +206,5 @@ export function muxExecutor(
     }
     return d;
   }
-  return {
-    execRawReply
-  };
+  return { exec };
 }
