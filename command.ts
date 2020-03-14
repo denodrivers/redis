@@ -92,13 +92,13 @@ export type RedisCommands = {
   bitcount(key: string): Promise<Integer>;
   bitcount(key: string, start: number, end: number): Promise<Integer>;
   bitfield(key: string, opts?: {
-    get?: { type: string; offset: number };
-    set?: { type: string; offset: number };
-    incrby?: { type: string; offset: number; increment: number };
+    get?: { type: string; offset: number | string };
+    set?: { type: string; offset: number | string; value: number };
+    incrby?: { type: string; offset: number | string; increment: number };
   }): Promise<Integer[]>;
   bitfield(key: string, opts?: {
     get?: { type: string; offset: number };
-    set?: { type: string; offset: number };
+    set?: { type: string; offset: number; value: number };
     incrby?: { type: string; offset: number; increment: number };
     overflow: "WRAP" | "SAT" | "FAIL";
   }): Promise<(Integer | BulkNil)[]>;
