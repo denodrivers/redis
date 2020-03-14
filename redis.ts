@@ -22,7 +22,9 @@ import {
   BulkNil
 } from "./command.ts";
 
-export type Redis = RedisCommands & CommandExecutor;
+export type Redis = RedisCommands & {
+  executor: CommandExecutor;
+};
 
 class RedisImpl implements RedisCommands {
   _isClosed = false;
@@ -34,17 +36,15 @@ class RedisImpl implements RedisCommands {
     private closer: Closer,
     private writer: BufWriter,
     private reader: BufReader,
-    private executor: CommandExecutor
+    readonly executor: CommandExecutor
   ) {
   }
-
-  readonly execRawReply = this.executor.execRawReply;
 
   async execStatusReply(
     command: string,
     ...args: (string | number)[]
   ): Promise<Status> {
-    const [_, reply] = await this.executor.execRawReply(command, ...args);
+    const [_, reply] = await this.executor.exec(command, ...args);
     return reply as Status;
   }
 
@@ -52,7 +52,7 @@ class RedisImpl implements RedisCommands {
     command: string,
     ...args: (string | number)[]
   ): Promise<Integer> {
-    const [_, reply] = await this.executor.execRawReply(command, ...args);
+    const [_, reply] = await this.executor.exec(command, ...args);
     return reply as number;
   }
 
@@ -60,7 +60,7 @@ class RedisImpl implements RedisCommands {
     command: string,
     ...args: (string | number)[]
   ): Promise<T> {
-    const [_, reply] = await this.executor.execRawReply(command, ...args);
+    const [_, reply] = await this.executor.exec(command, ...args);
     return reply as T;
   }
 
@@ -68,7 +68,7 @@ class RedisImpl implements RedisCommands {
     command: string,
     ...args: (string | number)[]
   ): Promise<T[]> {
-    const [_, reply] = await this.executor.execRawReply(command, ...args);
+    const [_, reply] = await this.executor.exec(command, ...args);
     return reply as T[];
   }
 
@@ -76,7 +76,7 @@ class RedisImpl implements RedisCommands {
     command: string,
     ...args: (string | number)[]
   ): Promise<Integer | BulkNil> {
-    const [_, reply] = await this.executor.execRawReply(command, ...args);
+    const [_, reply] = await this.executor.exec(command, ...args);
     return reply as Integer | BulkNil;
   }
 
@@ -84,7 +84,7 @@ class RedisImpl implements RedisCommands {
     command: string,
     ...args: (string | number)[]
   ): Promise<Status | BulkNil> {
-    const [_, reply] = await this.executor.execRawReply(command, ...args);
+    const [_, reply] = await this.executor.exec(command, ...args);
     return reply as Status | BulkNil;
   }
 
@@ -298,7 +298,7 @@ class RedisImpl implements RedisCommands {
     } else {
       _args.push(...args);
     }
-    return this.executor.execRawReply(cmd, ..._args);
+    return this.executor.exec(cmd, ..._args);
   }
 
   exec() {
@@ -957,7 +957,7 @@ class RedisImpl implements RedisCommands {
   }
 
   slowlog(subcommand: string, ...argument: string[]) {
-    return this.executor.execRawReply("SLOWLOG", subcommand, ...argument);
+    return this.executor.exec("SLOWLOG", subcommand, ...argument);
   }
 
   smembers(key: string) {

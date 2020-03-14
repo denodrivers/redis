@@ -1,4 +1,4 @@
-import { Redis, connect } from "../redis.ts";
+import { Redis, connect, RedisConnectOptions } from "../redis.ts";
 import { assert } from "../vendor/https/deno.land/std/testing/asserts.ts";
 
 function* dbIndex() {
@@ -20,11 +20,11 @@ export async function makeTest(
   prefix: string
 ): Promise<{
   client: Redis;
+  opts: RedisConnectOptions;
   test: (desc: string, func: Deno.TestFunction) => void | Promise<void>;
 }> {
-  const client = await connect(
-    { hostname: "127.0.0.1", port: 6379, db: db() }
-  );
+  const opts = { hostname: "127.0.0.1", port: 6379, db: db() };
+  const client = await connect(opts);
   async function beforeEach() {
     await client.flushdb(false);
   }
@@ -34,5 +34,5 @@ export async function makeTest(
       await func();
     });
   };
-  return { test, client };
+  return { test, client, opts };
 }
