@@ -15,23 +15,6 @@ const addr = {
 let redis = await connect({ ...addr, db: 0 });
 await redis.flushdb(false);
 
-test(async function testExists() {
-  const none = await redis.exists("none", "none2");
-  assertEquals(none, 0);
-  await redis.set("exists", "aaa");
-  const exists = await redis.exists("exists", "none");
-  assertEquals(exists, 1);
-});
-
-test(async function testDel() {
-  let s = await redis.set("del1", "fuga");
-  assertEquals(s, "OK");
-  s = await redis.set("del2", "fugaaa");
-  assertEquals(s, "OK");
-  const deleted = await redis.del("del1", "del2");
-  assertEquals(deleted, 2);
-});
-
 test(async function testConcurrent() {
   let promises: Promise<any>[] = [];
   for (const key of ["a", "b", "c"]) {
@@ -84,3 +67,4 @@ import "./tests/list_test.ts";
 import "./tests/set_test.ts";
 import "./tests/sorted_set_test.ts";
 import "./tests/string_test.ts";
+import "./tests/key_test.ts";
