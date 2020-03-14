@@ -19,9 +19,8 @@ test("del", async () => {
 test("dump and restore", async () => {
   await client.set("key", "hello");
   const v = await client.dump("key");
-  assert(!v);
   await client.del("key");
-  await client.restore("key", 2000, v);
+  await client.restore("key", 2000, v!);
 });
 */
 
