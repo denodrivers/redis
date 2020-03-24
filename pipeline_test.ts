@@ -1,7 +1,6 @@
 import { assertEquals } from "./vendor/https/deno.land/std/testing/asserts.ts";
 import { connect } from "./redis.ts";
-const { test } = Deno;
-
+const test = Deno.test;
 const addr = {
   hostname: "127.0.0.1",
   port: 6379
@@ -29,6 +28,7 @@ test(async function testPipeline() {
     ["integer", 1],
     ["integer", 1]
   ]);
+  redis.close();
 });
 
 test(async function testTx() {
@@ -71,6 +71,7 @@ test(async function testTx() {
     parseInt(rep3[4][1] as string),
     parseInt(rep3[0][1] as string) + 3
   );
+  redis.close();
 });
 
 test("pipeline in concurrent", async () => {
@@ -105,4 +106,5 @@ test("pipeline in concurrent", async () => {
       ["bulk", "c"]
     ] // flush()
   ]);
+  redis.close();
 });

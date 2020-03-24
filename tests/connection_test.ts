@@ -14,9 +14,10 @@ test("ping", async () => {
   assertEquals(await client.ping("Deno"), "Deno");
 });
 test("quit", async () => {
-  const cli = await connect({ hostname: "127.0.0.1", port: 6379 });
-  assertEquals(await cli.quit(), "OK");
-  assertEquals(cli.isClosed, true);
+  const redis = await connect({ hostname: "127.0.0.1", port: 6379 });
+  assertEquals(await redis.quit(), "OK");
+  assertEquals(redis.isClosed, true);
+  redis.close();
 });
 test("select", async () => {
   assertEquals(await client.select(1), "OK");
