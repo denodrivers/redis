@@ -28,7 +28,7 @@ export type RedisPipeline = {
 export function createRedisPipeline(
   writer: BufWriter,
   reader: BufReader,
-  opts?: { tx: true }
+  opts?: { tx: true },
 ): RedisPipeline {
   let commands: string[] = [];
   let queue: {
@@ -108,6 +108,6 @@ function dummyReadWriteCloser(): Deno.ReadWriteCloser {
     },
     async write(p) {
       return 0;
-    }
+    },
   };
 }
