@@ -48,7 +48,7 @@ test("exists", async function testDb1Option() {
   client2.close();
 });
 
-[Infinity, NaN, "", "port"].forEach(v => {
+[Infinity, NaN, "", "port"].forEach((v) => {
   test(`invalid port: ${v}`, () => {
     assertThrowsAsync(async () => {
       await connect({ hostname: "127.0.0.1", port: v });
@@ -59,7 +59,7 @@ test("exists", async function testDb1Option() {
 test("execRawReply", async () => {
   assertEquals(
     await redis.executor.exec("SET", "key", "a"),
-    ["status", "OK"]
+    ["status", "OK"],
   );
   assertEquals(await redis.executor.exec("GET", "key"), ["bulk", "a"]);
 });

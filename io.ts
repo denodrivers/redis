@@ -14,8 +14,7 @@ export type StatusReply = ["status", Status];
 export type IntegerReply = ["integer", Integer];
 export type BulkReply = ["bulk", Bulk];
 export type ArrayReply = ["array", ConditionalArray];
-export type RedisRawReply = StatusReply | IntegerReply | BulkReply
-  | ArrayReply;
+export type RedisRawReply = StatusReply | IntegerReply | BulkReply | ArrayReply;
 
 export type CommandFunc<T> = (
   comand: string,
@@ -38,7 +37,7 @@ export function createRequest(
   command: string,
   ...args: (string | number)[]
 ): string {
-  const _args = args.filter(v => v !== void 0 && v !== null);
+  const _args = args.filter((v) => v !== void 0 && v !== null);
   let msg = "";
   msg += `*${1 + _args.length}\r\n`;
   msg += `$${command.length}\r\n`;
@@ -172,7 +171,7 @@ function tryParseErrorReply(line: string): never {
 
 export function muxExecutor(
   r: BufReader,
-  w: BufWriter
+  w: BufWriter,
 ): CommandExecutor {
   let queue: {
     command: string;
@@ -184,11 +183,11 @@ export function muxExecutor(
     const [e] = queue;
     if (!e) return;
     sendCommand(w, r, e.command, ...e.args)
-      .then(v => {
+      .then((v) => {
         // console.log(e.command, e.args, v);
         e.d.resolve(v);
       })
-      .catch(err => e.d.reject(err))
+      .catch((err) => e.d.reject(err))
       .finally(() => {
         queue.shift();
         dequeue();
