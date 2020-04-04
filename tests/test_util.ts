@@ -21,7 +21,7 @@ export async function makeTest(
 ): Promise<{
   client: Redis;
   opts: RedisConnectOptions;
-  test: (desc: string, func: Deno.TestFunction) => void | Promise<void>;
+  test: (name: string, func: () => void | Promise<void>) => void;
 }> {
   const opts = { hostname: "127.0.0.1", port: 6379, db: db() };
   const client = await connect(opts);
