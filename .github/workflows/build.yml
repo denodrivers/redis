@@ -23,6 +23,10 @@ jobs:
       - uses: denolib/setup-deno@master
         with:
           deno-version: ${{ env.DENO_VERSION }}
+      - name: Check mod.ts
+        run: |
+          deno --allow-read --allow-write tools/make_mod.ts
+          git diff --exit-code
       - name: Run Tests
         run: |
-          make test
+          make test      
