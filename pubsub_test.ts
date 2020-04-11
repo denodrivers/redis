@@ -3,7 +3,7 @@ import { connect } from "./redis.ts";
 const { test } = Deno;
 const addr = {
   hostname: "127.0.0.1",
-  port: 6379,
+  port: 6379
 };
 
 async function wait(duration: number) {
@@ -26,7 +26,7 @@ test(async function testSubscribe2() {
   const redis = await connect(addr);
   const pub = await connect(addr);
   const sub = await redis.subscribe("subsc2");
-  const p = (async function () {
+  const p = (async function() {
     const it = sub.receive();
     return (await it.next()).value;
   })();
@@ -34,7 +34,7 @@ test(async function testSubscribe2() {
   const message = await p;
   assertEquals(message, {
     channel: "subsc2",
-    message: "wayway",
+    message: "wayway"
   });
   await sub.close();
   const a = await redis.get("aaa");
@@ -50,7 +50,7 @@ test(async function testPsubscribe() {
   let message1;
   let message2;
   const it = sub.receive();
-  const p = (async function () {
+  const p = (async function() {
     message1 = (await it.next()).value;
     message2 = (await it.next()).value;
   })();
@@ -60,12 +60,12 @@ test(async function testPsubscribe() {
   assertEquals(message1, {
     pattern: "ps*",
     channel: "psub",
-    message: "wayway",
+    message: "wayway"
   });
   assertEquals(message2, {
     pattern: "ps*",
     channel: "psubs",
-    message: "heyhey",
+    message: "heyhey"
   });
   await sub.close();
   pub.close();

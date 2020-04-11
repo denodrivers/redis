@@ -66,13 +66,13 @@ class RedisSubscriptionImpl implements RedisSubscription {
       if (ev === "message" && rep.length === 3) {
         yield {
           channel: rep[1],
-          message: rep[2],
+          message: rep[2]
         };
       } else if (ev === "pmessage" && rep.length === 4) {
         yield {
           pattern: rep[1],
           channel: rep[2],
-          message: rep[3],
+          message: rep[3]
         };
       }
     }
