@@ -13,7 +13,7 @@ needs `--allow-net` privilege
 **Stateless Commands**
 
 ```ts
-import { connect } from "https://denopkg.com/keroxp/deno-redis/redis.ts";
+import { connect } from "https://denopkg.com/keroxp/deno-redis/mod.ts";
 const redis = await connect({
   hostname: "127.0.0.1",
   port: 6379
@@ -37,7 +37,7 @@ const sub = await redis.subscribe("channel");
 
 ### Execute raw commands
 
-`redis.executor` is raw level [redis protocol](https://redis.io/topics/protoco) executor.
+`redis.executor` is raw level [redis protocol](https://redis.io/topics/protocol) executor.
 You can send raw redis commands and receive replies.
 
 ```ts
