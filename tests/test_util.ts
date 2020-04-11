@@ -17,7 +17,7 @@ function db(): number {
 }
 
 export async function makeTest(
-  prefix: string,
+  prefix: string
 ): Promise<{
   client: Redis;
   opts: RedisConnectOptions;

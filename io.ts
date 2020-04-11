@@ -14,7 +14,8 @@ export type StatusReply = ["status", Status];
 export type IntegerReply = ["integer", Integer];
 export type BulkReply = ["bulk", Bulk];
 export type ArrayReply = ["array", ConditionalArray];
-export type RedisRawReply = StatusReply | IntegerReply | BulkReply | ArrayReply;
+export type RedisRawReply = StatusReply | IntegerReply | BulkReply
+  | ArrayReply;
 
 export type CommandFunc<T> = (
   comand: string,
@@ -171,7 +172,7 @@ function tryParseErrorReply(line: string): never {
 
 export function muxExecutor(
   r: BufReader,
-  w: BufWriter,
+  w: BufWriter
 ): CommandExecutor {
   let queue: {
     command: string;

@@ -34,7 +34,7 @@ export type RedisCommands = {
       copy?: boolean;
       replace?: boolean;
       keys?: string[];
-    },
+    }
   ): Promise<Status>;
   move(key: string, db: string): Promise<Integer>;
   object_refcount(key: string): Promise<Integer | BulkNil>;
@@ -54,7 +54,7 @@ export type RedisCommands = {
     key: string,
     ttl: number,
     serialized_value: string,
-    replace?: boolean,
+    replace?: boolean
   ): Promise<Status>;
 
   sort(
@@ -66,7 +66,7 @@ export type RedisCommands = {
       patterns?: string[];
       order: "ASC" | "DESC";
       alpha?: boolean;
-    },
+    }
   ): Promise<BulkString[]>;
 
   sort(
@@ -79,7 +79,7 @@ export type RedisCommands = {
       order: "ASC" | "DESC";
       alpha?: boolean;
       destination: string;
-    },
+    }
   ): Promise<Integer>;
 
   touch(...keys: string[]): Promise<Integer>;
@@ -111,7 +111,7 @@ export type RedisCommands = {
     key: string,
     bit: number,
     start?: number,
-    end?: number,
+    end?: number
   ): Promise<Integer>;
   decr(key: string): Promise<Integer>;
   decrby(key: string, decrement: number): Promise<Integer>;
@@ -130,7 +130,7 @@ export type RedisCommands = {
     opts?: {
       ex?: number;
       px?: number;
-    },
+    }
   ): Promise<Status>;
   set(
     key: string,
@@ -139,7 +139,7 @@ export type RedisCommands = {
       ex?: number;
       px?: number;
       mode: "NX" | "XX";
-    },
+    }
   ): Promise<Status | BulkNil>;
   setbit(key: string, offset: number, value: string): Promise<Integer>;
   setex(key: string, seconds: number, value: string): Promise<Status>;
@@ -155,7 +155,7 @@ export type RedisCommands = {
     key: string,
     longitude: number,
     latitude: number,
-    member: string,
+    member: string
   ): Promise<Integer>;
   geoadd(
     key: string,
@@ -169,7 +169,7 @@ export type RedisCommands = {
     key: string,
     member1: string,
     member2: string,
-    unit?: "m" | "km" | "ft" | "mi",
+    unit?: "m" | "km" | "ft" | "mi"
   ): Promise<Bulk>;
   // FIXME: Return type is too conditional
   georadius(
@@ -186,7 +186,7 @@ export type RedisCommands = {
       sort?: "ASC" | "DESC";
       store?: string;
       storeDist?: string;
-    },
+    }
   ): Promise<ConditionalArray>;
   // FIXME: Return type is too conditional
   georadiusbymember(
@@ -202,7 +202,7 @@ export type RedisCommands = {
       sort?: "ASC" | "DESC";
       store?: string;
       storeDist?: string;
-    },
+    }
   ): Promise<ConditionalArray>;
   // Hash
   hdel(key: string, ...fields: string[]): Promise<Integer>;
@@ -231,14 +231,14 @@ export type RedisCommands = {
   brpoplpush(
     source: string,
     destination: string,
-    timeout: number,
+    timeout: number
   ): Promise<Bulk | []>;
   lindex(key: string, index: number): Promise<Bulk>;
   linsert(
     key: string,
     loc: "BEFORE" | "AFTER",
     pivot: string,
-    value: string,
+    value: string
   ): Promise<Integer>;
   llen(key: string): Promise<Integer>;
   lpop(key: string): Promise<Bulk>;
@@ -300,7 +300,7 @@ export type RedisCommands = {
       nxx?: "NX" | "XX";
       ch?: boolean;
       incr?: boolean;
-    },
+    }
   ): Promise<Integer>;
   zadd(
     key: string,
@@ -309,7 +309,7 @@ export type RedisCommands = {
       nxx?: "NX" | "XX";
       ch?: boolean;
       incr?: boolean;
-    },
+    }
   ): Promise<Integer>;
   zcard(key: string): Promise<Integer>;
   zcount(key: string, min: number, max: number): Promise<Integer>;
@@ -319,7 +319,7 @@ export type RedisCommands = {
     numkeys: number,
     keys: string | string[],
     weights?: number | number[],
-    aggregate?: "SUM" | "MIN" | "MAX",
+    aggregate?: "SUM" | "MIN" | "MAX"
   ): Promise<Integer>;
   zlexcount(key: string, min: string, max: string): Promise<Integer>;
   zpopmax(key: string, count?: number): Promise<BulkString[]>;
@@ -330,7 +330,7 @@ export type RedisCommands = {
     stop: number,
     opts?: {
       withScore?: boolean;
-    },
+    }
   ): Promise<BulkString[]>;
   zrangebylex(
     key: string,
@@ -339,7 +339,7 @@ export type RedisCommands = {
     opts?: {
       offset?: number;
       count?: number;
-    },
+    }
   ): Promise<BulkString[]>;
   zrevrangebylex(
     key: string,
@@ -348,7 +348,7 @@ export type RedisCommands = {
     opts?: {
       offset?: number;
       count?: number;
-    },
+    }
   ): Promise<BulkString[]>;
   zrangebyscore(
     key: string,
@@ -358,7 +358,7 @@ export type RedisCommands = {
       withScore?: boolean;
       offset?: number;
       count?: number;
-    },
+    }
   ): Promise<BulkString[]>;
   zrank(key: string, member: string): Promise<Integer | BulkNil>;
   zrem(key: string, ...members: string[]): Promise<Integer>;
@@ -371,7 +371,7 @@ export type RedisCommands = {
     stop: number,
     opts?: {
       withScore?: boolean;
-    },
+    }
   ): Promise<BulkString[]>;
   zrevrangebyscore(
     key: string,
@@ -381,7 +381,7 @@ export type RedisCommands = {
       withScore?: boolean;
       offset?: number;
       count?: number;
-    },
+    }
   ): Promise<BulkString[]>;
   zrevrank(key: string, member: string): Promise<Integer | BulkNil>;
   zscore(key: string, member: string): Promise<Bulk>;
@@ -391,7 +391,7 @@ export type RedisCommands = {
     opts?: {
       weights?: number[];
       aggregate?: "SUM" | "MIN" | "MAX";
-    },
+    }
   ): Promise<Integer>;
   // Cluster
   // cluster //
@@ -411,7 +411,7 @@ export type RedisCommands = {
     Integer,
     Integer,
     Integer,
-    [BulkString[]],
+    [BulkString[]]
   ] | BulkNil]>;
   config_get(parameter: string): Promise<BulkString[]>;
   config_rewrite(): Promise<Status>;
@@ -433,11 +433,11 @@ export type RedisCommands = {
     key: string,
     opts?: {
       samples?: number;
-    },
+    }
   ): Promise<Integer>;
   monitor(): void;
   role(): Promise<
-      | ["master", Integer, BulkString[][]]
+    ["master", Integer, BulkString[][]]
       | ["slave", BulkString, Integer, BulkString, Integer]
       | ["sentinel", BulkString[]]
   >;
@@ -475,7 +475,7 @@ export type RedisCommands = {
     opts?: {
       pattern?: string;
       count?: number;
-    },
+    }
   ): Promise<[BulkString, BulkString[]]>;
   hscan(
     key: string,
@@ -483,7 +483,7 @@ export type RedisCommands = {
     opts?: {
       pattern?: string;
       count?: number;
-    },
+    }
   ): Promise<[BulkString, BulkString[]]>;
   sscan(
     key: string,
@@ -491,14 +491,14 @@ export type RedisCommands = {
     opts?: {
       pattern?: string;
       count?: number;
-    },
+    }
   ): Promise<[BulkString, BulkString[]]>;
   zscan(
     key: string,
     cursor: number,
     opts?: {
       pattern?: string;
-    },
+    }
   ): Promise<[BulkString, BulkString[]]>;
 
   readonly isClosed: boolean;
