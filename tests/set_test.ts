@@ -2,7 +2,7 @@ import { makeTest } from "./test_util.ts";
 import {
   assertEquals,
   assertArrayContains,
-  assert
+  assert,
 } from "../vendor/https/deno.land/std/testing/asserts.ts";
 const { test, client } = await makeTest("set");
 
