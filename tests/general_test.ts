@@ -1,7 +1,7 @@
 import { connect } from "../redis.ts";
 import {
   assertEquals,
-  assertThrowsAsync
+  assertThrowsAsync,
 } from "../vendor/https/deno.land/std/testing/asserts.ts";
 import { makeTest } from "./test_util.ts";
 
@@ -59,7 +59,7 @@ test("exists", async function testDb1Option() {
 test("execRawReply", async () => {
   assertEquals(
     await redis.executor.exec("SET", "key", "a"),
-    ["status", "OK"]
+    ["status", "OK"],
   );
   assertEquals(await redis.executor.exec("GET", "key"), ["bulk", "a"]);
 });

@@ -1,12 +1,12 @@
 import {
   BufReader,
-  BufWriter
+  BufWriter,
 } from "./vendor/https/deno.land/std/io/bufio.ts";
 import Buffer = Deno.Buffer;
 import { ErrorReplyError } from "./errors.ts";
 import {
   deferred,
-  Deferred
+  Deferred,
 } from "./vendor/https/deno.land/std/util/async.ts";
 import { ConditionalArray, Bulk, Integer, Status, Raw } from "./command.ts";
 
@@ -14,8 +14,7 @@ export type StatusReply = ["status", Status];
 export type IntegerReply = ["integer", Integer];
 export type BulkReply = ["bulk", Bulk];
 export type ArrayReply = ["array", ConditionalArray];
-export type RedisRawReply = StatusReply | IntegerReply | BulkReply
-  | ArrayReply;
+export type RedisRawReply = StatusReply | IntegerReply | BulkReply | ArrayReply;
 
 export type CommandFunc<T> = (
   comand: string,
@@ -172,7 +171,7 @@ function tryParseErrorReply(line: string): never {
 
 export function muxExecutor(
   r: BufReader,
-  w: BufWriter
+  w: BufWriter,
 ): CommandExecutor {
   let queue: {
     command: string;

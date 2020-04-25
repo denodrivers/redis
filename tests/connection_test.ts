@@ -1,6 +1,6 @@
 import { connect } from "../redis.ts";
 import {
-  assertEquals
+  assertEquals,
 } from "../vendor/https/deno.land/std/testing/asserts.ts";
 import { makeTest } from "./test_util.ts";
 

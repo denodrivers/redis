@@ -1,6 +1,6 @@
 import { makeTest } from "./test_util.ts";
 import {
-  assertEquals
+  assertEquals,
 } from "../vendor/https/deno.land/std/testing/asserts.ts";
 
 const { test, client } = await makeTest("hash");
@@ -49,7 +49,7 @@ test("hmget", async () => {
   assertEquals(await client.hmget("key", "f1", "f2", "f3"), [
     "1",
     "2",
-    undefined
+    undefined,
   ]);
 });
 test("hmset", async () => {

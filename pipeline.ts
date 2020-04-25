@@ -1,6 +1,6 @@
 import {
   BufReader,
-  BufWriter
+  BufWriter,
 } from "./vendor/https/deno.land/std/io/bufio.ts";
 import {
   createRequest,
@@ -8,13 +8,13 @@ import {
   RedisRawReply,
   StatusReply,
   CommandFunc,
-  CommandExecutor
+  CommandExecutor,
 } from "./io.ts";
 import { ErrorReplyError } from "./errors.ts";
 import { create } from "./redis.ts";
 import {
   deferred,
-  Deferred
+  Deferred,
 } from "./vendor/https/deno.land/std/util/async.ts";
 import { RedisCommands } from "./command.ts";
 
@@ -28,7 +28,7 @@ export type RedisPipeline = {
 export function createRedisPipeline(
   writer: BufWriter,
   reader: BufReader,
-  opts?: { tx: true }
+  opts?: { tx: true },
 ): RedisPipeline {
   let commands: string[] = [];
   let queue: {
@@ -108,6 +108,6 @@ function dummyReadWriteCloser(): Deno.ReadWriteCloser {
     },
     async write(p) {
       return 0;
-    }
+    },
   };
 }

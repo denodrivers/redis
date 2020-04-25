@@ -3,7 +3,7 @@ import { connect } from "./redis.ts";
 const test = Deno.test;
 const addr = {
   hostname: "127.0.0.1",
-  port: 6379
+  port: 6379,
 };
 
 test(async function testPipeline() {
@@ -16,7 +16,7 @@ test(async function testPipeline() {
     pl.set("set2", "value2"),
     pl.mget("set1", "set2"),
     pl.del("set1"),
-    pl.del("set2")
+    pl.del("set2"),
   ]);
   const ret = await pl.flush();
   assertEquals(ret, [
@@ -26,7 +26,7 @@ test(async function testPipeline() {
     ["status", "OK"],
     ["array", ["value1", "value2"]],
     ["integer", 1],
-    ["integer", 1]
+    ["integer", 1],
   ]);
   redis.close();
 });
@@ -54,22 +54,22 @@ test(async function testTx() {
     tx3.incr("key"),
     tx3.incr("key"),
     tx3.incr("key"),
-    tx3.get("key")
+    tx3.get("key"),
   ]);
   const rep1 = await tx1.flush();
   const rep2 = await tx2.flush();
   const rep3 = await tx3.flush();
   assertEquals(
     parseInt(rep1[4][1] as string),
-    parseInt(rep1[0][1] as string) + 3
+    parseInt(rep1[0][1] as string) + 3,
   );
   assertEquals(
     parseInt(rep2[4][1] as string),
-    parseInt(rep2[0][1] as string) + 3
+    parseInt(rep2[0][1] as string) + 3,
   );
   assertEquals(
     parseInt(rep3[4][1] as string),
-    parseInt(rep3[0][1] as string) + 3
+    parseInt(rep3[0][1] as string) + 3,
   );
   redis.close();
 });
@@ -95,7 +95,7 @@ test("pipeline in concurrent", async () => {
     [
       ["status", "OK"],
       ["status", "OK"],
-      ["status", "OK"]
+      ["status", "OK"],
     ], // flush()
     "OK", // get(a)
     "OK", // get(b)
@@ -103,8 +103,8 @@ test("pipeline in concurrent", async () => {
     [
       ["bulk", "a"],
       ["bulk", "b"],
-      ["bulk", "c"]
-    ] // flush()
+      ["bulk", "c"],
+    ], // flush()
   ]);
   redis.close();
 });

@@ -1,7 +1,7 @@
 import { makeTest } from "./test_util.ts";
 import {
   assertEquals,
-  assert
+  assert,
 } from "../vendor/https/deno.land/std/testing/asserts.ts";
 const { test, client } = await makeTest("string");
 
@@ -30,14 +30,14 @@ test("bitfield with opts", async () => {
   const v = await client.bitfield("key", {
     get: { type: "u8", offset: 0 },
     set: { type: "i5", offset: 1, value: 0 },
-    incrby: { type: "u16", offset: 2, increment: 2 }
+    incrby: { type: "u16", offset: 2, increment: 2 },
   });
   assertEquals(v, [52, 13, 218]);
 });
 
 test("bitfield with overflow", async () => {
   const v = await client.bitfield("key", {
-    overflow: "FAIL"
+    overflow: "FAIL",
   });
   assertEquals(v, []);
 });
@@ -154,11 +154,11 @@ test("setbit", async () => {
   await client.set("key", "2"); // 00110010
   assertEquals(
     0,
-    await client.setbit("key", 1, "1") // 01110010
+    await client.setbit("key", 1, "1"), // 01110010
   );
   assertEquals(
     1,
-    await client.setbit("key", 3, "0") // 01100010 => b
+    await client.setbit("key", 3, "0"), // 01100010 => b
   );
   const v = await client.get("key");
   assertEquals(v, "b");
