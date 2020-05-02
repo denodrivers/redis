@@ -34,10 +34,13 @@ test("bzpopmax timeout", async () => {
 });
 
 test("zadd", async () => {
-  assertEquals(await client.zadd("key", [
-    [1, "1"],
-    [2, "2"],
-  ]), 2);
+  assertEquals(
+    await client.zadd("key", [
+      [1, "1"],
+      [2, "2"],
+    ]),
+    2,
+  );
 });
 
 test("zcount", async () => {

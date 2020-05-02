@@ -209,15 +209,17 @@ class RedisImpl implements RedisCommands {
 
   command_info(...command_names: string[]) {
     return this.execArrayReply("COMMAND", "INFO", ...command_names) as Promise<
-      [[
-        BulkString,
-        Integer,
-        BulkString[],
-        Integer,
-        Integer,
-        Integer,
-        [BulkString[]],
-      ] | BulkNil]
+      [
+        [
+          BulkString,
+          Integer,
+          BulkString[],
+          Integer,
+          Integer,
+          Integer,
+          [BulkString[]],
+        ] | BulkNil,
+      ]
     >;
   }
 
@@ -1482,7 +1484,7 @@ export async function connect({
     throw new Error("deno-redis: opts.port is invalid");
   }
   const conn: Deno.Conn = tls
-    ? await Deno.connectTLS(dialOpts)
+    ? await Deno.connectTls(dialOpts)
     : await Deno.connect(dialOpts);
 
   const bufr = new BufReader(conn);
