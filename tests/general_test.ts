@@ -50,9 +50,13 @@ test("exists", async function testDb1Option() {
 
 [Infinity, NaN, "", "port"].forEach((v) => {
   test(`invalid port: ${v}`, () => {
-    assertThrowsAsync(async () => {
-      await connect({ hostname: "127.0.0.1", port: v });
-    }, Error, "invalid");
+    assertThrowsAsync(
+      async () => {
+        await connect({ hostname: "127.0.0.1", port: v });
+      },
+      Error,
+      "invalid",
+    );
   });
 });
 

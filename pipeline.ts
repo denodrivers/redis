@@ -6,8 +6,6 @@ import {
   createRequest,
   readReply,
   RedisRawReply,
-  StatusReply,
-  CommandFunc,
   CommandExecutor,
 } from "./io.ts";
 import { ErrorReplyError } from "./errors.ts";
@@ -100,7 +98,7 @@ export function createRedisPipeline(
   return Object.assign(fakeRedis, executor, { enqueue, flush });
 }
 
-function dummyReadWriteCloser(): Deno.ReadWriteCloser {
+function dummyReadWriteCloser(): Deno.Reader & Deno.Writer & Deno.Closer {
   return {
     close() {},
     async read(p) {

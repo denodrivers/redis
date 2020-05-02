@@ -2,7 +2,6 @@ import {
   BufReader,
   BufWriter,
 } from "./vendor/https/deno.land/std/io/bufio.ts";
-import Buffer = Deno.Buffer;
 import { ErrorReplyError } from "./errors.ts";
 import {
   deferred,
@@ -65,8 +64,8 @@ export async function sendCommand(
 
 export async function readReply(reader: BufReader): Promise<RedisRawReply> {
   const res = await reader.peek(1);
-  if (res === Deno.EOF) {
-    throw Deno.EOF;
+  if (res === null) {
+    throw new Error("EOF");
   }
   switch (res[0]) {
     case IntegerReplyCode:
@@ -83,17 +82,18 @@ export async function readReply(reader: BufReader): Promise<RedisRawReply> {
   throw new Error("Invalid state");
 }
 
+const decoder = new TextDecoder();
 export async function readLine(reader: BufReader): Promise<string> {
   let buf = new Uint8Array(1024);
   let loc = 0;
-  let d: number | Deno.EOF;
-  while ((d = await reader.readByte()) && d !== Deno.EOF) {
+  let d: number | null = null;
+  while ((d = await reader.readByte()) && d !== null) {
     if (d === "\r".charCodeAt(0)) {
       const d1 = await reader.readByte();
       if (d1 === "\n".charCodeAt(0)) {
         buf[loc++] = d;
         buf[loc++] = d1;
-        return new Buffer(buf.subarray(0, loc)).toString();
+        return decoder.decode(new Deno.Buffer(buf.subarray(0, loc)).bytes());
       }
     }
     buf[loc++] = d;
@@ -131,7 +131,9 @@ export async function readBulkReply(reader: BufReader): Promise<Bulk> {
   }
   const dest = new Uint8Array(size + 2);
   await reader.readFull(dest);
-  return new Buffer(dest.subarray(0, dest.length - 2)).toString();
+  return decoder.decode(
+    new Deno.Buffer(dest.subarray(0, dest.length - 2)).bytes(),
+  );
 }
 
 export async function readArrayReply(reader: BufReader): Promise<any[]> {
@@ -140,8 +142,8 @@ export async function readArrayReply(reader: BufReader): Promise<any[]> {
   const result: any[] = [];
   for (let i = 0; i < argCount; i++) {
     const res = await reader.peek(1);
-    if (res === Deno.EOF) {
-      throw Deno.EOF;
+    if (res === null) {
+      throw new Error("EOF");
     }
     switch (res[0]) {
       case SimpleStringCode:

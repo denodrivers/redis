@@ -404,15 +404,17 @@ export type RedisCommands = {
   >;
   command_count(): Promise<Integer>;
   command_getkeys(): Promise<BulkString[]>;
-  command_info(...command_names: string[]): Promise<[[
-    BulkString,
-    Integer,
-    BulkString[],
-    Integer,
-    Integer,
-    Integer,
-    [BulkString[]],
-  ] | BulkNil]>;
+  command_info(...command_names: string[]): Promise<[
+    [
+      BulkString,
+      Integer,
+      BulkString[],
+      Integer,
+      Integer,
+      Integer,
+      [BulkString[]],
+    ] | BulkNil,
+  ]>;
   config_get(parameter: string): Promise<BulkString[]>;
   config_rewrite(): Promise<Status>;
   config_set(parameter: string, value: string): Promise<Status>;
