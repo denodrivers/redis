@@ -25,7 +25,7 @@ jobs:
           deno-version: ${{ env.DENO_VERSION }}
       - name: Check mod.ts
         run: |
-          deno --allow-read --allow-write tools/make_mod.ts
+          deno run --allow-read --allow-write tools/make_mod.ts
           git diff --exit-code
       - name: Run Tests
         run: |
