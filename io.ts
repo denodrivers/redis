@@ -6,7 +6,7 @@ import { ErrorReplyError } from "./errors.ts";
 import {
   deferred,
   Deferred,
-} from "./vendor/https/deno.land/std/util/async.ts";
+} from "./vendor/https/deno.land/std/async/mod.ts";
 import { ConditionalArray, Bulk, Integer, Status, Raw } from "./command.ts";
 
 export type StatusReply = ["status", Status];

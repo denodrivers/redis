@@ -13,7 +13,7 @@ import { create } from "./redis.ts";
 import {
   deferred,
   Deferred,
-} from "./vendor/https/deno.land/std/util/async.ts";
+} from "./vendor/https/deno.land/std/async/mod.ts";
 import { RedisCommands } from "./command.ts";
 
 const encoder = new TextEncoder();
