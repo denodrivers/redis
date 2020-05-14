@@ -1,5 +1,9 @@
-import { assertEquals } from "./vendor/https/deno.land/std/testing/asserts.ts";
+import {
+  assertEquals,
+  assert,
+} from "./vendor/https/deno.land/std/testing/asserts.ts";
 import { connect } from "./redis.ts";
+import { ErrorReplyError } from "./errors.ts";
 const test = Deno.test;
 const addr = {
   hostname: "127.0.0.1",
@@ -117,5 +121,23 @@ test({
       ]);
       redis.close();
     }
+  },
+});
+
+test({
+  name: "error while pipeline",
+  async fn() {
+    const redis = await connect(addr);
+    const tx = redis.pipeline();
+    tx.set("a", "a");
+    tx.eval("var", 1, "k", "v");
+    tx.get("a");
+    const resp = await tx.flush();
+    assertEquals(resp.length, 3);
+    assertEquals(resp[0], ["status", "OK"]);
+    assertEquals(resp[1][0], "error");
+    assert(resp[1][1] instanceof ErrorReplyError);
+    assertEquals(resp[2], ["bulk", "a"]);
+    redis.close();
   },
 });

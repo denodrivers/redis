@@ -7,6 +7,7 @@ import {
   readReply,
   RedisRawReply,
   CommandExecutor,
+  ErrorReply,
 } from "./io.ts";
 import { ErrorReplyError } from "./errors.ts";
 import { create } from "./redis.ts";
@@ -17,10 +18,10 @@ import {
 import { RedisCommands } from "./command.ts";
 
 const encoder = new TextEncoder();
-
+export type RawReplyOrError = RedisRawReply | ErrorReply;
 export type RedisPipeline = {
   enqueue(command: string, ...args: (number | string)[]): void;
-  flush(): Promise<RedisRawReply[]>;
+  flush(): Promise<RawReplyOrError[]>;
 } & RedisCommands;
 
 export function createRedisPipeline(
@@ -31,7 +32,7 @@ export function createRedisPipeline(
   let commands: string[] = [];
   let queue: {
     commands: string[];
-    d: Deferred<RedisRawReply[]>;
+    d: Deferred<RawReplyOrError[]>;
   }[] = [];
 
   function dequeue() {
@@ -46,18 +47,18 @@ export function createRedisPipeline(
       });
   }
 
-  async function send(cmds: string[]): Promise<RedisRawReply[]> {
+  async function send(cmds: string[]): Promise<RawReplyOrError[]> {
     const msg = cmds.join("");
     await writer.write(encoder.encode(msg));
     await writer.flush();
-    const ret: RedisRawReply[] = [];
+    const ret: RawReplyOrError[] = [];
     for (let i = 0; i < cmds.length; i++) {
       try {
         const rep = await readReply(reader);
         ret.push(rep);
       } catch (e) {
-        if (e.constructor === ErrorReplyError) {
-          ret.push(e);
+        if (e instanceof ErrorReplyError) {
+          ret.push(["error", e]);
         } else {
           throw e;
         }
@@ -71,13 +72,13 @@ export function createRedisPipeline(
     commands.push(msg);
   }
 
-  async function flush(): Promise<RedisRawReply[]> {
+  async function flush(): Promise<RawReplyOrError[]> {
     // wrap pipelined commands with MULTI/EXEC
     if (opts?.tx) {
       commands.unshift(createRequest("MULTI"));
       commands.push(createRequest("EXEC"));
     }
-    const d = deferred<RedisRawReply[]>();
+    const d = deferred<RawReplyOrError[]>();
     queue.push({ commands, d });
     if (queue.length === 1) {
       dequeue();

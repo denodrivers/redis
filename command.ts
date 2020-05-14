@@ -439,9 +439,9 @@ export type RedisCommands = {
   ): Promise<Integer>;
   monitor(): void;
   role(): Promise<
-      | ["master", Integer, BulkString[][]]
-      | ["slave", BulkString, Integer, BulkString, Integer]
-      | ["sentinel", BulkString[]]
+    | ["master", Integer, BulkString[][]]
+    | ["slave", BulkString, Integer, BulkString, Integer]
+    | ["sentinel", BulkString[]]
   >;
   save(): Promise<Status>;
   shutdown(arg: "NOSAVE" | "SAVE"): Promise<Status>;
@@ -453,10 +453,25 @@ export type RedisCommands = {
   sync(): void;
   time(): Promise<[BulkString, BulkString]>;
   // Scripting
-  eval(script: string, key: string, arg: string): Promise<Raw>;
-  eval(script: string, keys: string[], args: string[]): Promise<Raw>;
-  evalsha(sha1: string, key: string, arg: string): Promise<Raw>;
-  evalsha(sha1: string, keys: string[], args: string[]): Promise<Raw>;
+  eval(script: string, numkeys: number, key: string, arg: string): Promise<Raw>;
+  eval(
+    script: string,
+    numkeys: number,
+    keys: string[],
+    args: string[],
+  ): Promise<Raw>;
+  evalsha(
+    sha1: string,
+    numkeys: number,
+    key: string,
+    arg: string,
+  ): Promise<Raw>;
+  evalsha(
+    sha1: string,
+    numkeys: number,
+    keys: string[],
+    args: string[],
+  ): Promise<Raw>;
   script_debug(arg: "YES" | "SYNC" | "NO"): Promise<Status>;
   script_exists(...sha1s: string[]): Promise<Integer[]>;
   script_flush(): Promise<Status>;
