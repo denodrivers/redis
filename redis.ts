@@ -9,6 +9,7 @@ import { psubscribe, RedisSubscription, subscribe } from "./pubsub.ts";
 import {
   muxExecutor,
   CommandExecutor,
+  RedisRawReply,
 } from "./io.ts";
 import { createRedisPipeline, RedisPipeline } from "./pipeline.ts";
 import {
@@ -275,21 +276,32 @@ class RedisImpl implements RedisCommands {
     return this.execBulkReply<BulkString>("ECHO", message);
   }
 
-  eval(script: string, keys: string | string[], arg: string | string[]) {
-    return this.doEval("EVAL", script, keys, arg);
-  }
-
-  evalsha(sha1: string, keys: string | string[], args: string | string[]) {
-    return this.doEval("EVALSHA", sha1, keys, args);
-  }
-
-  private doEval(
-    cmd: string,
+  eval(
     script: string,
+    numkeys: number,
+    keys: string | string[],
+    arg: string | string[],
+  ) {
+    return this.doEval("EVAL", script, numkeys, keys, arg);
+  }
+
+  evalsha(
+    sha1: string,
+    numkeys: number,
     keys: string | string[],
     args: string | string[],
   ) {
-    const _args = [script];
+    return this.doEval("EVALSHA", sha1, numkeys, keys, args);
+  }
+
+  private async doEval(
+    cmd: string,
+    script: string,
+    numkeys: number,
+    keys: string | string[],
+    args: string | string[],
+  ) {
+    const _args = [script, numkeys];
     if (typeof keys === "string") {
       _args.push(keys);
     } else {
@@ -300,7 +312,8 @@ class RedisImpl implements RedisCommands {
     } else {
       _args.push(...args);
     }
-    return this.executor.exec(cmd, ..._args);
+    const [_, raw] = await this.executor.exec(cmd, ..._args);
+    return raw;
   }
 
   exec() {
@@ -808,9 +821,9 @@ class RedisImpl implements RedisCommands {
 
   role() {
     return this.execArrayReply("ROLE") as Promise<
-        | ["master", Integer, BulkString[][]]
-        | ["slave", BulkString, Integer, BulkString, Integer]
-        | ["sentinel", BulkString[]]
+      | ["master", Integer, BulkString[][]]
+      | ["slave", BulkString, Integer, BulkString, Integer]
+      | ["sentinel", BulkString[]]
     >;
   }
 

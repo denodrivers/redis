@@ -13,6 +13,7 @@ export type StatusReply = ["status", Status];
 export type IntegerReply = ["integer", Integer];
 export type BulkReply = ["bulk", Bulk];
 export type ArrayReply = ["array", ConditionalArray];
+export type ErrorReply = ["error", ErrorReplyError];
 export type RedisRawReply = StatusReply | IntegerReply | BulkReply | ArrayReply;
 
 export type CommandFunc<T> = (
