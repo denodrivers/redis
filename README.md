@@ -87,10 +87,6 @@ await tx.flush();
 // EXEC
 ```
 
-## unimplmeneted features (5.0.3)
+## Roadmap for v1
 
-There are still unimplmeneted API
-
-- Server: [#35](https://github.com/keroxp/deno-redis/issues/35)
-- Stream: [#36](https://github.com/keroxp/deno-redis/issues/36)
-- Cluster: [#37](https://github.com/keroxp/deno-redis/issues/37)
+- See https://github.com/keroxp/deno-redis/issues/78
