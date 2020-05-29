@@ -4,6 +4,8 @@ import {
   assertThrowsAsync,
 } from "../vendor/https/deno.land/std/testing/asserts.ts";
 import { makeTest } from "./test_util.ts";
+import { ErrorReplyError } from "../errors.ts";
+import { Redis } from "../redis.ts";
 
 const { test, client: redis, opts } = await makeTest("general");
 test("conccurent", async function testConcurrent() {
@@ -33,6 +35,15 @@ test("db0", async function testDb0Option() {
   assertEquals(exists2, 1);
   client1.close();
   client2.close();
+});
+
+test("connect with wrong password", async function testConnectWithPassword() {
+  await assertThrowsAsync(async () => {
+    await connect({
+      ...opts,
+      password: "wrong_password",
+    });
+  }, ErrorReplyError);
 });
 
 test("exists", async function testDb1Option() {
