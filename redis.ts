@@ -1511,7 +1511,7 @@ export async function connect({
       await client.auth(password);
     } catch (err) {
       client.close();
-      return Promise.reject(err);
+      throw err;
     }
   }
   if (db) {
