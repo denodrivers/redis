@@ -1506,7 +1506,7 @@ export async function connect({
   const bufw = new BufWriter(conn);
   const exec = muxExecutor(bufr, bufw);
   const client = await create(conn, conn, conn, exec);
-  if (password) {
+  if (password != null) {
     try {
       await client.auth(password);
     } catch (err) {

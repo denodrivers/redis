@@ -37,11 +37,21 @@ test("db0", async function testDb0Option() {
   client2.close();
 });
 
-test("connect with wrong password", async function testConnectWithPassword() {
+test("connect with wrong password", async function testConnectWithWrongPassword() {
   await assertThrowsAsync(async () => {
     await connect({
       ...opts,
       password: "wrong_password",
+    });
+  }, ErrorReplyError);
+});
+
+test("connect with empty password", async function testConnectWithEmptyPassword() {
+  // In Redis, authentication with an empty password will always fail.
+  await assertThrowsAsync(async () => {
+    await connect({
+      ...opts,
+      password: "",
     });
   }, ErrorReplyError);
 });
