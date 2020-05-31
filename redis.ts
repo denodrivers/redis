@@ -1462,6 +1462,7 @@ export type RedisConnectOptions = {
   port?: number | string;
   tls?: boolean;
   db?: number;
+  password?: string;
 };
 
 function prasePortLike(port: string | number | undefined): number {
@@ -1488,6 +1489,7 @@ export async function connect({
   port,
   tls,
   db,
+  password,
 }: RedisConnectOptions): Promise<Redis> {
   const dialOpts: Deno.ConnectOptions = {
     hostname,
@@ -1504,6 +1506,14 @@ export async function connect({
   const bufw = new BufWriter(conn);
   const exec = muxExecutor(bufr, bufw);
   const client = await create(conn, conn, conn, exec);
+  if (password != null) {
+    try {
+      await client.auth(password);
+    } catch (err) {
+      client.close();
+      throw err;
+    }
+  }
   if (db) {
     await client.select(db);
   }
