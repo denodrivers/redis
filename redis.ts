@@ -1465,7 +1465,7 @@ export type RedisConnectOptions = {
   password?: string;
 };
 
-function prasePortLike(port: string | number | undefined): number {
+function parsePortLike(port: string | number | undefined): number {
   if (typeof port === "string") {
     return parseInt(port);
   } else if (typeof port === "number") {
@@ -1493,7 +1493,7 @@ export async function connect({
 }: RedisConnectOptions): Promise<Redis> {
   const dialOpts: Deno.ConnectOptions = {
     hostname,
-    port: prasePortLike(port),
+    port: parsePortLike(port),
   };
   if (!Number.isSafeInteger(dialOpts.port)) {
     throw new Error("deno-redis: opts.port is invalid");
