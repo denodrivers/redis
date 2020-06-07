@@ -22,6 +22,9 @@ import {
   Raw,
   BulkNil,
 } from "./command.ts";
+import {
+  XReadKeyData,
+} from "./stream.ts";
 
 export type Redis = RedisCommands & {
   executor: CommandExecutor;
@@ -1123,6 +1126,63 @@ class RedisImpl implements RedisCommands {
 
   watch(key: string, ...keys: string[]) {
     return this.execStatusReply("WATCH", key, ...keys);
+  }
+
+  xadd(
+    key: string,
+    streamId: string,
+    maxlen?: {
+      approx?: boolean;
+      elements: number;
+    },
+    ...field_values: (string | number)[]
+  ) {
+    const args: (string | number)[] = [key];
+    if (maxlen) {
+      args.push("MAXLEN");
+      if (maxlen.approx) {
+        args.push("~");
+      }
+      args.push(maxlen.elements);
+    }
+
+    args.push(streamId);
+
+    for (const x of field_values) {
+      args.push(x);
+    }
+
+    return this.execBulkReply<BulkString>("XADD", ...args);
+  }
+
+  xread(
+    keys: string[],
+    ids: string[],
+    opts?: { count?: number; block?: number },
+  ) {
+    const args = [];
+    if (opts) {
+      if (opts.count) {
+        args.push("COUNT");
+        args.push(opts.count);
+      }
+      if (opts.block) {
+        args.push("BLOCK");
+        args.push(opts.block);
+      }
+    }
+    args.push("STREAMS");
+    for (const key of keys) {
+      args.push(key);
+    }
+
+    for (const id of ids) {
+      args.push(id);
+    }
+    return this.execArrayReply<XReadKeyData>(
+      "XREAD",
+      ...args,
+    );
   }
 
   zadd(key: string, scoreOrArr: any, memberOrOpts: any, opts?: any) {

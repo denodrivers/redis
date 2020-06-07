@@ -1,5 +1,6 @@
 import { RedisSubscription } from "./pubsub.ts";
 import { RedisPipeline } from "./pipeline.ts";
+import { XReadReply } from "./stream.ts";
 
 export type Raw = Status | Integer | Bulk | ConditionalArray;
 export type Status = string;
@@ -285,6 +286,16 @@ export type RedisCommands = {
   srem(key: string, ...members: string[]): Promise<Integer>;
   sunion(...keys: string[]): Promise<BulkString[]>;
   sunionstore(destination: string, ...keys: string[]): Promise<Integer>;
+  // Stream
+  xadd(key: string, streamId: string, maxlen?: {
+    approx?: boolean;
+    elements: number;
+  }, ...field_values: (string | number)[]): Promise<BulkString>;
+  xread(
+    keys: string[],
+    ids: string[],
+    opts?: { count?: number; block?: number },
+  ): Promise<XReadReply>;
   // SortedSet
   bzpopmin(key: string | string[], timeout: number): Promise<
     [BulkString, BulkString, BulkString] | []
