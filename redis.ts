@@ -1133,13 +1133,12 @@ class RedisImpl implements RedisCommands {
     streamId: string,
     ...field_values: (string | number)[]
   ) {
-    const args: (string | number)[] = [];
-
-    for (const x of field_values) {
-      args.push(x);
-    }
-
-    return this.execBulkReply<BulkString>("XADD", key, streamId, ...args);
+    return this.execBulkReply<BulkString>(
+      "XADD",
+      key,
+      streamId,
+      ...field_values,
+    );
   }
 
   xadd_map(

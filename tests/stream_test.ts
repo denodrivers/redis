@@ -105,6 +105,35 @@ test("xread", async () => {
   ]);
 });
 
+test("xadd_map_then_xread", async () => {
+  const m = new Map();
+  m.set("zoo", "theorize");
+  m.set("gable", "train");
+  const addedId = await client.xadd_map(
+    "key5",
+    "*",
+    m,
+  );
+  assert(addedId !== null);
+
+  const idMillis = parseInt(addedId.split("-")[0]);
+
+  const v = await client.xread(
+    ["key5"],
+    [(idMillis - 1).toString()],
+    { block: 5000, count: 500 },
+  );
+
+  assert(v != null);
+
+  assertEquals(v, [
+    ["key5", [[
+      addedId,
+      ["zoo", "theorize", "gable", "train"],
+    ]]],
+  ]);
+});
+
 test("xdel", async () => {
   const id0 = await client.xadd_maxlen(
     "key3",
