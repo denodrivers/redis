@@ -1128,19 +1128,19 @@ class RedisImpl implements RedisCommands {
     return this.execStatusReply("WATCH", key, ...keys);
   }
 
-  xadd(
+  xaddMaxlen(
     key: string,
-    streamId: string,
-    maxlen?: {
-      approx?: boolean;
+    maxlen: {
+      exact?: boolean;
       elements: number;
     },
+    streamId: string,
     ...field_values: (string | number)[]
   ) {
     const args: (string | number)[] = [key];
     if (maxlen) {
       args.push("MAXLEN");
-      if (maxlen.approx) {
+      if (!maxlen.exact) {
         args.push("~");
       }
       args.push(maxlen.elements);

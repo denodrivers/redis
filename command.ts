@@ -287,11 +287,16 @@ export type RedisCommands = {
   sunion(...keys: string[]): Promise<BulkString[]>;
   sunionstore(destination: string, ...keys: string[]): Promise<Integer>;
   // Stream
-  xadd(key: string, streamId: string, maxlen?: {
-    approx?: boolean;
-    elements: number;
-  }, ...field_values: (string | number)[]): Promise<BulkString>;
-  xdel(key: string, ...ids:string[]): Promise<Integer>;
+  xaddMaxlen(
+    key: string,
+    maxlen: {
+      exact?: boolean;
+      elements: number;
+    },
+    streamId: string,
+    ...field_values: (string | number)[]
+  ): Promise<BulkString>;
+  xdel(key: string, ...ids: string[]): Promise<Integer>;
   xlen(key: string): Promise<Integer>;
   xread(
     keys: string[],

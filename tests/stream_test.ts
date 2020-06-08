@@ -12,11 +12,11 @@ import {
 } from "../vendor/https/deno.land/std/testing/asserts.ts";
 const { test, client } = await makeTest("stream");
 
-test("xadd", async () => {
-  const v = await client.xadd(
+test("xaddMaxlen", async () => {
+  const v = await client.xaddMaxlen(
     "key1",
-    "*",
     { elements: 10 },
+    "*",
     "cat",
     "meow",
     "dog",
@@ -25,10 +25,10 @@ test("xadd", async () => {
     "quack",
   );
   assert(v != null);
-  const x = await client.xadd(
+  const x = await client.xaddMaxlen(
     "key1",
+    { exact: true, elements: 10 },
     "*",
-    { approx: true, elements: 10 },
     "cat",
     "oo",
     "dog",
@@ -40,10 +40,10 @@ test("xadd", async () => {
 });
 
 test("xread", async () => {
-  const a = await client.xadd(
+  const a = await client.xaddMaxlen(
     "key1",
-    "1000-0",
     { elements: 10 },
+    "1000-0",
     "cat",
     "moo",
     "dog",
@@ -52,19 +52,19 @@ test("xread", async () => {
     "yodel",
   );
   assert(a != null);
-  const b = await client.xadd(
+  const b = await client.xaddMaxlen(
     "key2",
-    "1000-0",
     { elements: 10 },
+    "1000-0",
     "air",
     "ball",
     "friend",
     "table",
   );
-  const c = await client.xadd(
+  const c = await client.xaddMaxlen(
     "key2",
-    "1001-1",
     { elements: 10 },
+    "1001-1",
     "air",
     "horn",
     "friend",
@@ -93,17 +93,35 @@ test("xread", async () => {
 });
 
 test("xdel", async () => {
-  const id0 = await client.xadd("key3", "*", undefined, "foo", "bar");
-  const id1 = await client.xadd("key3", "*", undefined, "foo", "baz");
-  const id2 = await client.xadd("key3", "*", undefined, "foo", "qux");
+  const id0 = await client.xaddMaxlen(
+    "key3",
+    { elements: 10 },
+    "*",
+    "foo",
+    "bar",
+  );
+  const id1 = await client.xaddMaxlen(
+    "key3",
+    { elements: 10 },
+    "*",
+    "foo",
+    "baz",
+  );
+  const id2 = await client.xaddMaxlen(
+    "key3",
+    { elements: 10 },
+    "*",
+    "foo",
+    "qux",
+  );
 
   const v = await client.xdel("key3", id0, id1, id2);
   assert(v === 3);
 });
 
 test("xlen", async () => {
-  await client.xadd("key3", "*", undefined, "foo", "qux");
-  await client.xadd("key3", "*", undefined, "foo", "bux");
+  await client.xaddMaxlen("key3", { elements: 5 }, "*", "foo", "qux");
+  await client.xaddMaxlen("key3", { elements: 5 }, "*", "foo", "bux");
 
   const v = await client.xlen("key3");
   assert(v === 2);
