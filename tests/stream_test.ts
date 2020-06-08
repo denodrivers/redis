@@ -116,6 +116,7 @@ test("xadd_map_then_xread", async () => {
   );
   assert(addedId !== null);
 
+  // TODO
   const idMillis = parseInt(addedId.split("-")[0]);
 
   const v = await client.xread(
