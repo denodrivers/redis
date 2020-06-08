@@ -1,3 +1,8 @@
+// TODO think about cleanup// TODO think about cleanup
+// TODO think about cleanup// TODO think about cleanup
+// TODO think about cleanup// TODO think about cleanup
+// TODO think about cleanup// TODO think about cleanup
+
 import { makeTest } from "./test_util.ts";
 import {
   assertEquals,
@@ -95,3 +100,18 @@ test("xdel", async () => {
   const v = await client.xdel("key3", id0, id1, id2);
   assert(v === 3);
 });
+
+test("xlen", async () => {
+  await client.xadd("key3", "*", undefined, "foo", "qux");
+  await client.xadd("key3", "*", undefined, "foo", "bux");
+
+  const v = await client.xlen("key3");
+  assert(v === 2);
+});
+
+// TODO think about cleanup// TODO think about cleanup
+// TODO think about cleanup// TODO think about cleanup
+// TODO think about cleanup// TODO think about cleanup
+// TODO think about cleanup// TODO think about cleanup
+// TODO think about cleanup// TODO think about cleanup
+// TODO think about cleanup// TODO think about cleanup

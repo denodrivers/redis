@@ -292,6 +292,7 @@ export type RedisCommands = {
     elements: number;
   }, ...field_values: (string | number)[]): Promise<BulkString>;
   xdel(key: string, ...ids:string[]): Promise<Integer>;
+  xlen(key: string): Promise<Integer>;
   xread(
     keys: string[],
     ids: string[],

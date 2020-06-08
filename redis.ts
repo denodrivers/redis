@@ -1163,6 +1163,10 @@ class RedisImpl implements RedisCommands {
     );
   }
 
+  xlen(key: string) {
+    return this.execIntegerReply("XLEN", key);
+  }
+
   xread(
     keys: string[],
     ids: string[],
