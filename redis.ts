@@ -1128,6 +1128,20 @@ class RedisImpl implements RedisCommands {
     return this.execStatusReply("WATCH", key, ...keys);
   }
 
+  xadd(
+    key: string,
+    streamId: string,
+    ...field_values: (string | number)[]
+  ) {
+    const args: (string | number)[] = [];
+
+    for (const x of field_values) {
+      args.push(x);
+    }
+
+    return this.execBulkReply<BulkString>("XADD", key, streamId, ...args);
+  }
+
   xaddMaxlen(
     key: string,
     maxlen: {
@@ -1137,7 +1151,8 @@ class RedisImpl implements RedisCommands {
     streamId: string,
     ...field_values: (string | number)[]
   ) {
-    const args: (string | number)[] = [key];
+    const args: (string | number)[] = [];
+
     if (maxlen) {
       args.push("MAXLEN");
       if (!maxlen.exact) {
@@ -1152,7 +1167,7 @@ class RedisImpl implements RedisCommands {
       args.push(x);
     }
 
-    return this.execBulkReply<BulkString>("XADD", ...args);
+    return this.execBulkReply<BulkString>("XADD", key, ...args);
   }
 
   xdel(key: string, ...ids: string[]) {
