@@ -1155,6 +1155,14 @@ class RedisImpl implements RedisCommands {
     return this.execBulkReply<BulkString>("XADD", ...args);
   }
 
+  xdel(key: string, ...ids: string[]) {
+    return this.execIntegerReply(
+      "XDEL",
+      key,
+      ...ids,
+    );
+  }
+
   xread(
     keys: string[],
     ids: string[],

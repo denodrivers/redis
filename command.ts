@@ -291,6 +291,7 @@ export type RedisCommands = {
     approx?: boolean;
     elements: number;
   }, ...field_values: (string | number)[]): Promise<BulkString>;
+  xdel(key: string, ...ids:string[]): Promise<Integer>;
   xread(
     keys: string[],
     ids: string[],

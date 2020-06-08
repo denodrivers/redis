@@ -86,3 +86,12 @@ test("xread", async () => {
     ]],
   ]);
 });
+
+test("xdel", async () => {
+  const id0 = await client.xadd("key3", "*", undefined, "foo", "bar");
+  const id1 = await client.xadd("key3", "*", undefined, "foo", "baz");
+  const id2 = await client.xadd("key3", "*", undefined, "foo", "qux");
+
+  const v = await client.xdel("key3", id0, id1, id2);
+  assert(v === 3);
+});
