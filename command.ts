@@ -292,7 +292,14 @@ export type RedisCommands = {
     streamId: string,
     ...field_values: (string | number)[]
   ): Promise<BulkString>;
-  xaddMaxlen(
+
+  xadd_map(
+    key: string,
+    streamId: string,
+    field_values: Map<(string | number), (string | number)>,
+  ): Promise<BulkString>;
+
+  xadd_maxlen(
     key: string,
     maxlen: {
       exact?: boolean;

@@ -1142,7 +1142,20 @@ class RedisImpl implements RedisCommands {
     return this.execBulkReply<BulkString>("XADD", key, streamId, ...args);
   }
 
-  xaddMaxlen(
+  xadd_map(
+    key: string,
+    streamId: string,
+    field_values: Map<(string | number), (string | number)>,
+  ) {
+    const args: (string | number)[] = [];
+    for (let [f, v] of field_values) {
+      args.push(f);
+      args.push(v);
+    }
+    return this.execBulkReply<BulkString>("XADD", key, streamId, ...args);
+  }
+
+  xadd_maxlen(
     key: string,
     maxlen: {
       exact?: boolean;
