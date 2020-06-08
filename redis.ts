@@ -23,6 +23,7 @@ import {
   BulkNil,
 } from "./command.ts";
 import {
+  XAddMaxlen,
   XReadKeyData,
 } from "./stream.ts";
 
@@ -1156,10 +1157,7 @@ class RedisImpl implements RedisCommands {
 
   xadd_maxlen(
     key: string,
-    maxlen: {
-      exact?: boolean;
-      elements: number;
-    },
+    maxlen: XAddMaxlen,
     streamId: string,
     ...field_values: (string | number)[]
   ) {
@@ -1177,6 +1175,32 @@ class RedisImpl implements RedisCommands {
 
     for (const x of field_values) {
       args.push(x);
+    }
+
+    return this.execBulkReply<BulkString>("XADD", key, ...args);
+  }
+
+  xadd_maxlen_map(
+    key: string,
+    maxlen: XAddMaxlen,
+    streamId: string,
+    field_values: Map<(string | number), (string | number)>,
+  ) {
+    const args: (string | number)[] = [];
+
+    if (maxlen) {
+      args.push("MAXLEN");
+      if (!maxlen.exact) {
+        args.push("~");
+      }
+      args.push(maxlen.elements);
+    }
+
+    args.push(streamId);
+
+    for (const [f, v] of field_values) {
+      args.push(f);
+      args.push(v);
     }
 
     return this.execBulkReply<BulkString>("XADD", key, ...args);

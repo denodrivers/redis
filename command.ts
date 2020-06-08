@@ -1,6 +1,6 @@
 import { RedisSubscription } from "./pubsub.ts";
 import { RedisPipeline } from "./pipeline.ts";
-import { XReadReply } from "./stream.ts";
+import { XReadReply, XAddMaxlen } from "./stream.ts";
 
 export type Raw = Status | Integer | Bulk | ConditionalArray;
 export type Status = string;
@@ -298,16 +298,19 @@ export type RedisCommands = {
     streamId: string,
     field_values: Map<(string | number), (string | number)>,
   ): Promise<BulkString>;
-
   xadd_maxlen(
     key: string,
-    maxlen: {
-      exact?: boolean;
-      elements: number;
-    },
+    maxlen: XAddMaxlen,
     streamId: string,
     ...field_values: (string | number)[]
   ): Promise<BulkString>;
+  xadd_maxlen_map(
+    key: string,
+    maxlen: XAddMaxlen,
+    streamId: string,
+    field_values: Map<(string | number), (string | number)>,
+  ): Promise<BulkString>;
+  xdel(key: string, ...ids: string[]): Promise<Integer>;
   xdel(key: string, ...ids: string[]): Promise<Integer>;
   xlen(key: string): Promise<Integer>;
   xread(
