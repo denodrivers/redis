@@ -292,7 +292,6 @@ export type RedisCommands = {
     streamId: string,
     ...field_values: (string | number)[]
   ): Promise<BulkString>;
-
   xadd_map(
     key: string,
     streamId: string,
