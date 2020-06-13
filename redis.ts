@@ -1259,12 +1259,33 @@ class RedisImpl implements RedisCommands {
       block?: number;
     },
   ) {
-    // TODO
-    // TODO
-    // TODO
-    // TODO
-    // TODO
-    return this.execArrayReply<XReadKeyData>("XREADGROUP");
+    const args: (string | number)[] = [
+      "GROUP",
+      opts.groupName,
+      opts.consumerName,
+    ];
+
+    if (opts.count) {
+      args.push("COUNT");
+      args.push(opts.count);
+    }
+    if (opts.block) {
+      args.push("BLOCK");
+      args.push(opts.block);
+    }
+
+    args.push("STREAMS");
+    for (const key of keys) {
+      args.push(key);
+    }
+
+    for (const id of ids) {
+      args.push(id);
+    }
+    return this.execArrayReply<XReadKeyData>(
+      "XREADGROUP",
+      ...args,
+    );
   }
 
   zadd(key: string, scoreOrArr: any, memberOrOpts: any, opts?: any) {
