@@ -317,6 +317,27 @@ export type RedisCommands = {
     ids: string[],
     opts?: { count?: number; block?: number },
   ): Promise<XReadReply>;
+  /**
+   * length of keys and ids needs to be equal
+   * 
+   * @param keys keys to read
+   * @param ids ids to start from for each key.
+   * @param opts you must specify group name and consumer name.  
+   *              those must be created using the XGROUP command,
+   *              prior to invoking this command.  you may optionally
+   *              include a count of records to read, and the number
+   *              of milliseconds to block
+   */
+  xreadgroup(
+    keys: string[],
+    ids: string[],
+    opts: {
+      groupName: string;
+      consumerName: string;
+      count?: number;
+      block?: number;
+    },
+  ): Promise<XReadReply>;
   // SortedSet
   bzpopmin(key: string | string[], timeout: number): Promise<
     [BulkString, BulkString, BulkString] | []

@@ -25,6 +25,7 @@ import {
 import {
   XAddMaxlen,
   XReadKeyData,
+  XReadReply,
 } from "./stream.ts";
 
 export type Redis = RedisCommands & {
@@ -1246,6 +1247,24 @@ class RedisImpl implements RedisCommands {
       "XREAD",
       ...args,
     );
+  }
+
+  xreadgroup(
+    keys: string[],
+    ids: string[],
+    opts: {
+      groupName: string;
+      consumerName: string;
+      count?: number;
+      block?: number;
+    },
+  ) {
+    // TODO
+    // TODO
+    // TODO
+    // TODO
+    // TODO
+    return this.execArrayReply<XReadKeyData>("XREADGROUP");
   }
 
   zadd(key: string, scoreOrArr: any, memberOrOpts: any, opts?: any) {
