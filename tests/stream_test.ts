@@ -105,6 +105,10 @@ test("xread", async () => {
   ]);
 });
 
+test("xreadgroup", async () => {
+  assert(false); // TODO write this test
+});
+
 test("xadd_map_then_xread", async () => {
   const m = new Map();
   m.set("zoo", "theorize");
