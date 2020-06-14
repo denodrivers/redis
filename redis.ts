@@ -1219,6 +1219,10 @@ class RedisImpl implements RedisCommands {
     return this.execIntegerReply("XLEN", key);
   }
 
+  xgrouphelp() {
+    return this.execBulkReply<BulkString>("XGROUP", "HELP");
+  }
+
   xread(
     keys: string[],
     ids: string[],

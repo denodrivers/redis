@@ -105,8 +105,15 @@ test("xread", async () => {
   ]);
 });
 
-test("xreadgroup", async () => {
+test("xgroup create, then xreadgroup", async () => {
   assert(false); // TODO write this test
+});
+
+test("xgrouphelp", async () => {
+  const helpText = await client.xgrouphelp();
+  console.log(helpText);
+  assert(helpText.length > 4);
+  assert(helpText[0].length > 10);
 });
 
 test("xadd_map_then_xread", async () => {
