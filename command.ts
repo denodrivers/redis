@@ -310,13 +310,37 @@ export type RedisCommands = {
     field_values: Map<(string | number), (string | number)>,
   ): Promise<BulkString>;
   xdel(key: string, ...ids: string[]): Promise<Integer>;
+  /**
+   * This command is used to create a new consumer group associated
+   * with a stream.
+   * 
+   * <pre>
+   127.0.0.1:6379> XGROUP CREATE test-man-000 test-group $ MKSTREAM
+   OK
+   </pre>
+   * 
+   * See https://redis.io/commands/xgroup
+   * @param key stream key
+   * @param groupName the name of the consumer group
+   * @param id The last argument is the ID of the last item in the stream to consider already delivered. In the above case we used the special ID '$' (that means: the ID of the last item in the stream). In this case the consumers fetching data from that consumer group will only see new elements arriving in the stream.  If instead you want consumers to fetch the whole stream history, use zero as the starting ID for the consumer group
+   * @param mkstream You can use the optional MKSTREAM subcommand as the last argument after the ID to automatically create the stream, if it doesn't exist. Note that if the stream is created in this way it will have a length of 0.
+   */
   xgroupcreate(
     key: string,
     groupName: string,
     id: number | "$",
     mkstream?: boolean,
   ): Promise<Status>;
-  xgroupdestroy(key: string, groupName: string): Promise<BulkString>;
+  /**
+   *
+<pre>
+127.0.0.1:6379> XGROUP DESTROY test-man-000 test-group
+(integer) 1
+</pre>
+   * @param key stream key
+   * @param groupName the consumer group to destroy
+   */
+  xgroupdestroy(key: string, groupName: string): Promise<Integer>;
   /** A support command which displays text about the 
    * various subcommands in XGROUP. */
   xgrouphelp(): Promise<BulkString>;
