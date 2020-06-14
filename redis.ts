@@ -1218,7 +1218,14 @@ class RedisImpl implements RedisCommands {
   xlen(key: string) {
     return this.execIntegerReply("XLEN", key);
   }
-
+  xgroupcreate(
+    key: string,
+    group: string,
+    opts?: { consumer?: string; mkstream?: boolean },
+  ) {
+    throw "not impl";
+    return this.execBulkReply<BulkString>("XGROUP", "CREATE");
+  }
   xgrouphelp() {
     return this.execBulkReply<BulkString>("XGROUP", "HELP");
   }

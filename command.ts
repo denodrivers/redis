@@ -311,6 +311,11 @@ export type RedisCommands = {
   ): Promise<BulkString>;
   xdel(key: string, ...ids: string[]): Promise<Integer>;
   xdel(key: string, ...ids: string[]): Promise<Integer>;
+  xgroupcreate(
+    key: string,
+    group: string,
+    opts?: { consumer?: string; mkstream?: boolean },
+  ): Promise<BulkString>;
   /** A support command which displays text about the 
    * various subcommands in XGROUP. */
   xgrouphelp(): Promise<BulkString>;
