@@ -425,7 +425,7 @@ XGROUP SETID mystream consumer-group-name 0
    * Length of keys and ids needs to be equal.
    * 
    * You may specify `autoAck` in the options, to generate
-   * an automatic acknowledgement!
+   * an automatic acknowledgement of all IDs!
    * 
    * @param keys keys to read
    * @param ids ids to start from for each key.
@@ -443,6 +443,7 @@ XGROUP SETID mystream consumer-group-name 0
       consumerName: string;
       count?: number;
       block?: number;
+      autoAck?: boolean;
     },
   ): Promise<XReadReply>;
   // SortedSet
