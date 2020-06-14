@@ -171,6 +171,14 @@ test("xgroup setid and delconsumer", async () => {
   );
 });
 
+test("xreadgroup auto ack", async () => {
+  assert(false);
+});
+
+test("xack", async () => {
+  assert(false);
+});
+
 test("xadd_map_then_xread", async () => {
   const m = new Map();
   m.set("zoo", "theorize");
