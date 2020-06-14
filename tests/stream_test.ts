@@ -121,8 +121,7 @@ test("xgroup management", async () => {
   const groupName = "test-group";
 
   let created = await client.xgroupcreate(stream, groupName, "$", true);
-  console.log(created);
-  assert(created);
+  assertEquals(created, "OK");
   try {
     await client.xgroupcreate(
       stream,
@@ -136,6 +135,9 @@ test("xgroup management", async () => {
     assert(true);
   }
   assertEquals(await client.xgroupdestroy(stream, groupName), 1);
+});
+
+test("xgroupdelconsumer", async () => {
 });
 
 test("xadd_map_then_xread", async () => {
