@@ -105,15 +105,37 @@ test("xread", async () => {
   ]);
 });
 
+/*
 test("xgroup create, then xreadgroup", async () => {
   assert(false); // TODO write this test
-});
+});*/
 
 test("xgrouphelp", async () => {
   const helpText = await client.xgrouphelp();
-  console.log(helpText);
   assert(helpText.length > 4);
   assert(helpText[0].length > 10);
+});
+
+test("xgroup management", async () => {
+  const stream = `test-deno-${Math.floor(Math.random() * 1000)}`;
+  const groupName = "test-group";
+
+  let created = await client.xgroupcreate(stream, groupName, "$", true);
+  console.log(created);
+  assert(created);
+  try {
+    await client.xgroupcreate(
+      stream,
+      groupName,
+      0,
+      true,
+    );
+    // it should throw -BUSYERR on duplicate
+    assert(false);
+  } catch {
+    assert(true);
+  }
+  await client.xgroupdestroy(stream, groupName);
 });
 
 test("xadd_map_then_xread", async () => {

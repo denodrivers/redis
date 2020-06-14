@@ -1218,15 +1218,52 @@ class RedisImpl implements RedisCommands {
   xlen(key: string) {
     return this.execIntegerReply("XLEN", key);
   }
+
+  /**
+   * This command is used to create a new consumer group associated
+   * with a stream.
+   * 
+   * <pre>
+   127.0.0.1:6379> XGROUP CREATE test-man-000 test-group $ MKSTREAM
+   OK
+   </pre>
+   * 
+   * See https://redis.io/commands/xgroup
+   * @param key stream key
+   * @param groupName the name of the consumer group
+   * @param id The last argument is the ID of the last item in the stream to consider already delivered. In the above case we used the special ID '$' (that means: the ID of the last item in the stream). In this case the consumers fetching data from that consumer group will only see new elements arriving in the stream.  If instead you want consumers to fetch the whole stream history, use zero as the starting ID for the consumer group
+   * @param mkstream You can use the optional MKSTREAM subcommand as the last argument after the ID to automatically create the stream, if it doesn't exist. Note that if the stream is created in this way it will have a length of 0.
+   */
   xgroupcreate(
     key: string,
-    group: string,
-    id: string,
+    groupName: string,
+    id: number | "$",
     mkstream?: boolean,
   ) {
-    throw "not impl";
-    return this.execBulkReply<BulkString>("XGROUP", "CREATE");
+    const args = [];
+    if (mkstream) {
+      args.push("MKSTREAM");
+    }
+
+    return this.execStatusReply(
+      "XGROUP",
+      "CREATE",
+      key,
+      groupName,
+      id,
+      ...args,
+    );
   }
+
+  /**
+   * A consumer group can be destroyed completely with this command
+   * @param key stream key
+   * @param groupName consumer group name
+   */
+  xgroupdestroy(key: string, groupName: string) {
+    return this.execBulkReply<BulkString>("XGROUP", "DESTROY", key, groupName);
+  }
+
   xgrouphelp() {
     return this.execBulkReply<BulkString>("XGROUP", "HELP");
   }
