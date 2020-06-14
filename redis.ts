@@ -1221,7 +1221,8 @@ class RedisImpl implements RedisCommands {
   xgroupcreate(
     key: string,
     group: string,
-    opts?: { consumer?: string; mkstream?: boolean },
+    id: string,
+    mkstream?: boolean,
   ) {
     throw "not impl";
     return this.execBulkReply<BulkString>("XGROUP", "CREATE");
