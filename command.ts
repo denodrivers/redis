@@ -332,7 +332,28 @@ export type RedisCommands = {
     mkstream?: boolean,
   ): Promise<Status>;
   /**
-   *
+   * Delete a specific consumer from a group, leaving
+   * the group itself intact.
+   * 
+   * <pre>
+127.0.0.1:6379> XGROUP DELCONSUMER test-man-000 hellogroup 4
+(integer) 0
+</pre>
+   * @param key stream key
+   * @param groupName the name of the consumer group
+   * @param consumerName the specific consumer to delete
+   */
+  xgroupdelconsumer(
+    key: string,
+    groupName: string,
+    consumerName: string,
+  ): Promise<Integer>;
+  /**
+   * Destroy a consumer group completely.  The consumer 
+   * group will be destroyed even if there are active 
+   * consumers and pending messages, so make sure to
+   * call this command only when really needed.
+   * 
 <pre>
 127.0.0.1:6379> XGROUP DESTROY test-man-000 test-group
 (integer) 1

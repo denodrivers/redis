@@ -1239,13 +1239,22 @@ class RedisImpl implements RedisCommands {
     );
   }
 
-  /**
-   * A consumer group can be destroyed completely with this command
-   * @param key stream key
-   * @param groupName consumer group name
-   */
+  xgroupdelconsumer(
+    key: string,
+    groupName: string,
+    consumerName: string,
+  ) {
+    return this.execIntegerReply(
+      "XGROUP",
+      "DELCONSUMER",
+      key,
+      groupName,
+      consumerName,
+    );
+  }
+
   xgroupdestroy(key: string, groupName: string) {
-    return this.execBulkReply<BulkString>("XGROUP", "DESTROY", key, groupName);
+    return this.execIntegerReply("XGROUP", "DESTROY", key, groupName);
   }
 
   xgrouphelp() {
