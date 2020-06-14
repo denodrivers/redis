@@ -1130,6 +1130,10 @@ class RedisImpl implements RedisCommands {
     return this.execStatusReply("WATCH", key, ...keys);
   }
 
+  xack(key: string, group: string, ...ids: string[]) {
+    return this.execIntegerReply("XACK", key, group, ...ids);
+  }
+
   xadd(
     key: string,
     streamId: string,
@@ -1313,6 +1317,7 @@ class RedisImpl implements RedisCommands {
       consumerName: string;
       count?: number;
       block?: number;
+      autoAck?: boolean;
     },
   ) {
     const args: (string | number)[] = [
@@ -1341,7 +1346,19 @@ class RedisImpl implements RedisCommands {
     return this.execArrayReply<XReadKeyData>(
       "XREADGROUP",
       ...args,
-    );
+    ).then((replies) => {
+      if (opts.autoAck) {
+        const handles = [];
+        for (const [streamKey, idData] of replies) {
+          let ids = idData.map((d) => d[0]);
+          handles.push(this.xack(streamKey, opts.groupName, ...ids));
+        }
+        // send the XACK automatically
+        return Promise.all(handles).then((_) => replies);
+      } else {
+        return replies;
+      }
+    });
   }
 
   zadd(key: string, scoreOrArr: any, memberOrOpts: any, opts?: any) {
