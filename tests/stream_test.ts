@@ -159,6 +159,8 @@ test("xgroup setid and delconsumer", async () => {
 
   assertEquals(data.length, 1);
 
+  assertEquals(await client.xgroupsetid(), "OK");
+
   assertEquals(
     await client.xgroupdelconsumer(stream, groupName, "test-consumer"),
     1,

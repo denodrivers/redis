@@ -365,6 +365,31 @@ export type RedisCommands = {
   /** A support command which displays text about the 
    * various subcommands in XGROUP. */
   xgrouphelp(): Promise<BulkString>;
+  /**
+     * Finally it possible to set the next message to deliver
+     * using the SETID subcommand. Normally the next ID is set
+     * when the consumer is created, as the last argument of
+     * XGROUP CREATE. However using this form the next ID can
+     * be modified later without deleting and creating the
+     * consumer group again. For instance if you want the
+     * consumers in a consumer group to re-process all the
+     * messages in a stream, you may want to set its next ID
+     * to 0:
+<pre>
+XGROUP SETID mystream consumer-group-name 0
+</pre>
+     * 
+     * @param key  stream key
+     * @param groupName   the consumer group
+     * @param consumerName   the specific consumer whose ID to update
+     * @param id the ID to use for the new value
+     */
+  xgroupsetid(
+    key: string,
+    groupName: string,
+    consumerName: string,
+    id: string,
+  ): Promise<Status>;
   xlen(key: string): Promise<Integer>;
   xread(
     keys: string[],
