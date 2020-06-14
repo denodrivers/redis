@@ -381,13 +381,11 @@ XGROUP SETID mystream consumer-group-name 0
      * 
      * @param key  stream key
      * @param groupName   the consumer group
-     * @param consumerName   the specific consumer whose ID to update
-     * @param id the ID to use for the new value
+     * @param id the ID to use for the next message delivered
      */
   xgroupsetid(
     key: string,
     groupName: string,
-    consumerName: string,
     id: string,
   ): Promise<Status>;
   xlen(key: string): Promise<Integer>;

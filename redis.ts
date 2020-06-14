@@ -1261,6 +1261,20 @@ class RedisImpl implements RedisCommands {
     return this.execBulkReply<BulkString>("XGROUP", "HELP");
   }
 
+  xgroupsetid(
+    key: string,
+    groupName: string,
+    id: string,
+  ) {
+    return this.execStatusReply(
+      "XGROUP",
+      "SETID",
+      key,
+      groupName,
+      id,
+    );
+  }
+
   xread(
     keys: string[],
     ids: string[],
