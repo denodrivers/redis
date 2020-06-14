@@ -135,7 +135,7 @@ test("xgroup management", async () => {
   } catch {
     assert(true);
   }
-  await client.xgroupdestroy(stream, groupName);
+  assertEquals(await client.xgroupdestroy(stream, groupName), 1);
 });
 
 test("xadd_map_then_xread", async () => {
