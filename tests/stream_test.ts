@@ -116,7 +116,7 @@ test("xgrouphelp", async () => {
   assert(helpText[0].length > 10);
 });
 
-test("xgroup management", async () => {
+test("xgroup create and destroy", async () => {
   const stream = `test-deno-${Math.floor(Math.random() * 1000)}`;
   const groupName = "test-group";
 
@@ -134,10 +134,12 @@ test("xgroup management", async () => {
   } catch {
     assert(true);
   }
+
   assertEquals(await client.xgroupdestroy(stream, groupName), 1);
 });
 
-test("xgroupdelconsumer", async () => {
+test("xgroup setid and delconsumer", async () => {
+  assert(false);
 });
 
 test("xadd_map_then_xread", async () => {
