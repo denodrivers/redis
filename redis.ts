@@ -1313,8 +1313,8 @@ class RedisImpl implements RedisCommands {
     keys: string[],
     ids: string[],
     opts: {
-      groupName: string;
-      consumerName: string;
+      group: string;
+      consumer: string;
       count?: number;
       block?: number;
       autoAck?: boolean;
@@ -1322,8 +1322,8 @@ class RedisImpl implements RedisCommands {
   ) {
     const args: (string | number)[] = [
       "GROUP",
-      opts.groupName,
-      opts.consumerName,
+      opts.group,
+      opts.consumer,
     ];
 
     if (opts.count) {
@@ -1350,8 +1350,8 @@ class RedisImpl implements RedisCommands {
       if (opts.autoAck) {
         const handles = [];
         for (const [streamKey, idData] of replies) {
-          let ids = idData.map((d) => d[0]);
-          handles.push(this.xack(streamKey, opts.groupName, ...ids));
+          const ids = idData.map((d) => d[0]);
+          handles.push(this.xack(streamKey, opts.group, ...ids));
         }
         // send the XACK automatically
         return Promise.all(handles).then((_) => replies);

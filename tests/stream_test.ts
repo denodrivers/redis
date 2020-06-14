@@ -105,11 +105,6 @@ test("xread", async () => {
   ]);
 });
 
-/*
-test("xgroup create, then xreadgroup", async () => {
-  assert(false); // TODO write this test
-});*/
-
 test("xgrouphelp", async () => {
   const helpText = await client.xgrouphelp();
   assert(helpText.length > 4);
@@ -155,7 +150,7 @@ test("xgroup setid and delconsumer", async () => {
   let data = await client.xreadgroup(
     [stream],
     [">"],
-    { groupName, consumerName },
+    { group: groupName, consumer: consumerName },
   );
 
   assertEquals(data.length, 1);

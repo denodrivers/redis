@@ -439,8 +439,8 @@ XGROUP SETID mystream consumer-group-name 0
     keys: string[],
     ids: string[],
     opts: {
-      groupName: string;
-      consumerName: string;
+      group: string;
+      consumer: string;
       count?: number;
       block?: number;
       autoAck?: boolean;
