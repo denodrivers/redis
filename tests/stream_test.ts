@@ -283,6 +283,18 @@ test("xadd_maxlen_map_then_xread", async () => {
   ]);
 });
 
+test("unique message per consumer", async () => {
+  withConsumerGroup(async (key, group) => {
+    const addedIds = [];
+    const a0 = await client.xadd(key, "*", "field1", "val1");
+    assert(a0);
+    addedIds.push(a0);
+
+    const c0 = "consumer-0";
+    throw ("TODO");
+  });
+});
+
 test("xdel", async () => {
   const id0 = await client.xadd_maxlen(
     "key3",
@@ -317,6 +329,20 @@ test("xlen", async () => {
   const v = await client.xlen("key3");
   assert(v === 2);
 });
+
+const withConsumerGroup = async (
+  fn: (stream: string, group: string) => any,
+) => {
+  const stream = `test-deno-${Math.floor(Math.random() * 1000)}`;
+  const group = "test-group";
+
+  let created = await client.xgroupcreate(stream, group, "$", true);
+  assertEquals(created, "OK");
+
+  fn(stream, group);
+
+  assertEquals(await client.xgroupdestroy(stream, group), 1);
+};
 
 // TODO think about cleanup// TODO think about cleanup
 // TODO think about cleanup// TODO think about cleanup
