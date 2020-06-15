@@ -89,6 +89,34 @@ class RedisImpl implements RedisCommands {
     return reply as Status | BulkNil;
   }
 
+  acl_getuser(username: string) {
+    return this.execArrayReply<BulkString>("ACL", "GETUSER", username);
+  }
+
+  acl_help() {
+    return this.execArrayReply<BulkString>("ACL", "HELP");
+  }
+
+  acl_list() {
+    return this.execArrayReply<BulkString>("ACL", "LIST");
+  }
+
+  acl_load() {
+    return this.execStatusReply("ACL", "LOAD");
+  }
+
+  acl_save() {
+    return this.execStatusReply("ACL", "SAVE");
+  }
+
+  acl_users() {
+    return this.execStatusReply("ACL", "USERS");
+  }
+
+  acl_whoami() {
+    return this.execStatusReply("ACL", "WHOAMI");
+  }
+
   append(key: string, value: string | number) {
     return this.execIntegerReply("APPEND", key, value);
   }

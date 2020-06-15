@@ -396,16 +396,16 @@ export type RedisCommands = {
   // Cluster
   // cluster //
   // Server
-  acl_cat(): Promise<Status>;
-  acl_deluser(): Promise<Status>;
-  acl_genpass(): Promise<Status>;
-  acl_getuser(): Promise<Status>;
-  acl_help(): Promise<Status>;
-  acl_list(): Promise<Status>;
+  // acl_cat(): Promise<Status>;
+  // acl_deluser(): Promise<Status>;
+  // acl_genpass(): Promise<Status>;
+  acl_getuser(parameter: string): Promise<BulkString[]>;
+  acl_help(): Promise<BulkString[]>;
+  acl_list(): Promise<BulkString[]>;
   acl_load(): Promise<Status>;
-  acl_log(): Promise<Status>;
+  // acl_log(): Promise<Status>;
   acl_save(): Promise<Status>;
-  acl_setuser(): Promise<Status>;
+  // acl_setuser(): Promise<Status>;
   acl_users(): Promise<Status>;
   acl_whoami(): Promise<Status>;
   bgrewriteaof(): Promise<Status>;
