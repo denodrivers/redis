@@ -167,7 +167,32 @@ test("xgroup setid and delconsumer", async () => {
 });
 
 test("xreadgroup auto ack", async () => {
-  assert(false);
+  const stream = `test-deno-${Math.floor(Math.random() * 1000)}`;
+  const group = "test-group";
+
+  let created = await client.xgroupcreate(stream, group, "$", true);
+  assertEquals(created, "OK");
+
+  let addedId = await client.xadd(stream, "*", "anyfield", "anyval");
+
+  assert(addedId);
+
+  let dataOut = await client.xreadgroup(
+    [stream],
+    [">"],
+    { group, consumer: "test-consumer", autoAck: true },
+  );
+
+  assertEquals(dataOut.length, 1);
+  assertEquals(dataOut[0].length, 2);
+
+  // will have already been acknowledged
+  const ackSize = await client.xack(stream, group, addedId);
+  assertEquals(ackSize, 0);
+
+  assertEquals(await client.xgroupdestroy(stream, group), 1);
+
+  // TODO xtrim xdel
 });
 
 test("xack", async () => {
@@ -181,9 +206,20 @@ test("xack", async () => {
 
   assert(addedId);
 
-  assertEquals(await client.xack(stream, group, addedId), 1);
+  // read but DO NOT auto-ack, which places
+  // the message on the PEL
+  await client.xreadgroup(
+    [stream],
+    [">"],
+    { group, consumer: "test-consumer", autoAck: false },
+  );
+
+  const acked = await client.xack(stream, group, addedId);
+
+  assertEquals(acked, 1);
 
   assertEquals(await client.xgroupdestroy(stream, group), 1);
+  // TODO xtrim xdel
 });
 
 test("xadd_map_then_xread", async () => {
