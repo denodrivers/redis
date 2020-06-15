@@ -171,7 +171,19 @@ test("xreadgroup auto ack", async () => {
 });
 
 test("xack", async () => {
-  assert(false);
+  const stream = `test-deno-${Math.floor(Math.random() * 1000)}`;
+  const group = "test-group";
+
+  let created = await client.xgroupcreate(stream, group, "$", true);
+  assertEquals(created, "OK");
+
+  let addedId = await client.xadd(stream, "*", "anyfield", "anyval");
+
+  assert(addedId);
+
+  assertEquals(await client.xack(stream, group, addedId), 1);
+
+  assertEquals(await client.xgroupdestroy(stream, group), 1);
 });
 
 test("xadd_map_then_xread", async () => {
