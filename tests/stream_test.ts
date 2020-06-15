@@ -135,10 +135,10 @@ test("xgroup create and destroy", async () => {
 
 test("xgroup setid and delconsumer", async () => {
   const stream = `test-deno-${Math.floor(Math.random() * 1000)}`;
-  const groupName = "test-group";
-  const consumerName = "test-consumer";
+  const group = "test-group";
+  const consumer = "test-consumer";
 
-  let created = await client.xgroupcreate(stream, groupName, "$", true);
+  let created = await client.xgroupcreate(stream, group, "$", true);
   assertEquals(created, "OK");
 
   let addedId = await client.xadd(stream, "*", "anyfield", "anyval");
@@ -150,18 +150,18 @@ test("xgroup setid and delconsumer", async () => {
   let data = await client.xreadgroup(
     [stream],
     [">"],
-    { group: groupName, consumer: consumerName },
+    { group, consumer },
   );
 
   assertEquals(data.length, 1);
 
   assertEquals(
-    await client.xgroupsetid(stream, groupName, "0-0"),
+    await client.xgroupsetid(stream, group, "0-0"),
     "OK",
   );
 
   assertEquals(
-    await client.xgroupdelconsumer(stream, groupName, consumerName),
+    await client.xgroupdelconsumer(stream, group, consumer),
     1,
   );
 });
