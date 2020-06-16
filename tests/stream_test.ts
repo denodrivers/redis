@@ -180,15 +180,15 @@ test("xreadgroup auto ack", async () => {
   let dataOut = await client.xreadgroup(
     [stream],
     [">"],
-    { group, consumer: "test-consumer"  },
+    { group, consumer: "test-consumer" },
   );
 
   assertEquals(dataOut.length, 1);
   assertEquals(dataOut[0].length, 2);
 
-  // will have already been acknowledged
+  // > symbol causes automatic acknowledgement by Redis
   const ackSize = await client.xack(stream, group, addedId);
-  assertEquals(ackSize, 0);
+  assertEquals(ackSize, 1);
 
   assertEquals(await client.xgroupdestroy(stream, group), 1);
 
@@ -211,7 +211,7 @@ test("xack", async () => {
   await client.xreadgroup(
     [stream],
     [">"],
-    { group, consumer: "test-consumer"  },
+    { group, consumer: "test-consumer" },
   );
 
   const acked = await client.xack(stream, group, addedId);
@@ -283,32 +283,6 @@ test("xadd_maxlen_map_then_xread", async () => {
   ]);
 });
 
-test("unique message per consumer", async () => {
-  await withConsumerGroup(async (key, group) => {
-    const addedIds = [];
-    const c0 = "consumer-0";
-    const c1 = "consumer-1";
-    const c2 = "consumer-2";
-
-    for (const consumer of [c0, c1, c2]) {
-      console.log(`xadd ${key}`);
-      const a = await client.xadd(key, "*", "target", `data-for-${consumer}`);
-      assert(a);
-      addedIds.push(a);
-      console.log(`added ID ${a}`);
-
-      let data = await client.xreadgroup(
-        [key],
-        [">"],
-        { group, consumer },
-      );
-
-      assertEquals(data.length, 1);
-      console.log(JSON.stringify(data));
-    }
-  });
-});
-
 test("xdel", async () => {
   const id0 = await client.xadd_maxlen(
     "key3",
@@ -354,10 +328,36 @@ const withConsumerGroup = async (
   let created = await client.xgroupcreate(stream, group, "$", true);
   assertEquals(created, "OK");
 
-  fn(stream, group);
+  await fn(stream, group);
 
   assertEquals(await client.xgroupdestroy(stream, group), 1);
 };
+
+test("unique message per consumer", async () => {
+  await withConsumerGroup(async (key, group) => {
+    const addedIds = [];
+    const c0 = "consumer-0";
+    const c1 = "consumer-1";
+    const c2 = "consumer-2";
+
+    for (const consumer of [c0, c1, c2]) {
+      console.log(`xadd ${key}`);
+      const a = await client.xadd(key, "*", "target", `data-for-${consumer}`);
+      assert(a);
+      addedIds.push(a);
+      console.log(`added ID ${a}`);
+
+      let data = await client.xreadgroup(
+        [key],
+        [">"],
+        { group, consumer },
+      );
+
+      assertEquals(data.length, 1);
+      console.log(JSON.stringify(data));
+    }
+  });
+});
 
 // TODO think about cleanup// TODO think about cleanup
 // TODO think about cleanup// TODO think about cleanup
