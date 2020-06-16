@@ -397,7 +397,7 @@ export type RedisCommands = {
   // cluster //
   // Server
   acl_cat(parameter?: string): Promise<BulkString[]>;
-  // acl_deluser(): Promise<Status>;
+  acl_deluser(parameter: string): Promise<Integer>;
   // acl_genpass(): Promise<Status>;
   acl_getuser(parameter: string): Promise<BulkString[]>;
   acl_help(): Promise<BulkString[]>;

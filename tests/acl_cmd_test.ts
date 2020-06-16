@@ -80,3 +80,7 @@ test("cat", async () => {
     "slowlog"
   ]);
 });
+
+test("deluser", async () => {
+  assertEquals(await client.acl_deluser("balhblahblah"), 0);
+});

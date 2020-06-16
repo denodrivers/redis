@@ -97,6 +97,10 @@ class RedisImpl implements RedisCommands {
     }
   }
 
+  acl_deluser(username: string) {
+    return this.execIntegerReply("ACL", "DELUSER", username);
+  }
+
   acl_getuser(username: string) {
     return this.execArrayReply<BulkString>("ACL", "GETUSER", username);
   }
