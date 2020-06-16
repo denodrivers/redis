@@ -1,4 +1,6 @@
 import { assertEquals } from "./vendor/https/deno.land/std/testing/asserts.ts";
+import { delay } from "./vendor/https/deno.land/std/async/mod.ts";
+
 import { connect } from "./redis.ts";
 const { test } = Deno;
 const addr = {
@@ -72,5 +74,62 @@ test({
     await sub.close();
     pub.close();
     redis.close();
+  },
+});
+
+test({
+  name: "testSubscribe4 (#83)",
+  async fn() {
+    const throwawayRedisClientPort = 6464;
+    const throwawayRedisClientChildProcess = Deno.run(
+      {
+        cmd: [ "redis-server", "--port", throwawayRedisClientPort.toString() ],
+        stdin: "null",
+        stdout: "null"
+      }
+    );
+
+    await delay(500);
+
+    const redisClient = await connect({ ...addr, port: throwawayRedisClientPort });
+    const publisherRedisClient = await connect({ ...addr, port: throwawayRedisClientPort });
+    const subscriberRedisClient = await redisClient.psubscribe("ps*");
+
+    const messageIterator = subscriberRedisClient.receive();
+
+    try {
+      const interval = setInterval(
+        () => publisherRedisClient.publish("psub", "wayway"),
+        500
+      );
+
+      // Force kill the Redis server to cause the error
+      setTimeout(() => throwawayRedisClientChildProcess.kill(Deno.Signal.SIGTERM), 900);
+
+      const promiseList = Promise.all([
+        messageIterator.next(),
+        messageIterator.next(),
+        messageIterator.next()
+      ]);
+
+      await delay(500 * 3 + 500);
+
+      clearInterval(interval);
+
+      // We received the 3 messages as expected
+      await promiseList;
+
+    } finally {
+      // Final clean up
+
+      // Ensure that the child process is killed and closed
+      try {
+        throwawayRedisClientChildProcess.kill(Deno.Signal.SIGTERM);
+        throwawayRedisClientChildProcess.close();
+      } catch (error) {}
+
+      publisherRedisClient.close();
+      redisClient.close();
+    }
   },
 });
