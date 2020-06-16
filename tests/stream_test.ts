@@ -286,14 +286,24 @@ test("xadd_maxlen_map_then_xread", async () => {
 test("unique message per consumer", () => {
   withConsumerGroup(async (key, group) => {
     const addedIds = [];
-    const a0 = await client.xadd(key, "*", "field1", "val1");
-    assert(a0);
-    addedIds.push(a0);
-
     const c0 = "consumer-0";
-    // TODO
-    // TODO
-    throw ("todo");
+    const c1 = "consumer-1";
+    const c2 = "consumer-2";
+
+    for (const consumer of [c0, c1, c2]) {
+      const a = await client.xadd(key, "*", "target", `data-for-${consumer}`);
+      assert(a);
+      addedIds.push(a);
+
+      let data = await client.xreadgroup(
+        [key],
+        [">"],
+        { group, consumer },
+      );
+
+      assertEquals(data.length, 1);
+      console.log(JSON.stringify(data));
+    }
   });
 });
 
