@@ -453,7 +453,6 @@ XGROUP SETID mystream consumer-group-name 0
       consumer: string;
       count?: number;
       block?: number;
-      autoAck?: boolean;
     },
   ): Promise<XReadReply>;
   // SortedSet

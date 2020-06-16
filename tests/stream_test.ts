@@ -180,7 +180,7 @@ test("xreadgroup auto ack", async () => {
   let dataOut = await client.xreadgroup(
     [stream],
     [">"],
-    { group, consumer: "test-consumer", autoAck: true },
+    { group, consumer: "test-consumer"  },
   );
 
   assertEquals(dataOut.length, 1);
@@ -211,7 +211,7 @@ test("xack", async () => {
   await client.xreadgroup(
     [stream],
     [">"],
-    { group, consumer: "test-consumer", autoAck: false },
+    { group, consumer: "test-consumer"  },
   );
 
   const acked = await client.xack(stream, group, addedId);
@@ -295,11 +295,12 @@ test("unique message per consumer", async () => {
       const a = await client.xadd(key, "*", "target", `data-for-${consumer}`);
       assert(a);
       addedIds.push(a);
+      console.log(`added ID ${a}`);
 
       let data = await client.xreadgroup(
         [key],
         [">"],
-        { group, consumer, autoAck: true },
+        { group, consumer },
       );
 
       assertEquals(data.length, 1);
