@@ -314,9 +314,19 @@ export type RedisCommands = {
    * @param ids the ids to acknowledge
    */
   xack(key: string, group: string, ...ids: string[]): Promise<Integer>;
+  /**
+   * Returns bulk string reply, specifically:
+   * The command returns the ID of the added entry. 
+   * The ID is the one auto-generated if * is passed 
+   * as ID argument, otherwise the command just returns
+   *  the same ID specified by the user during insertion.
+   * @param key  write to this stream
+   * @param id the ID of the entity written to the stream
+   * @param field_values  alternating pairs of fields and values
+   */
   xadd(
     key: string,
-    streamId: string,
+    id: string,
     ...field_values: (string | number)[]
   ): Promise<BulkString>;
   xadd_map(

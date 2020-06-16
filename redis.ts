@@ -1136,13 +1136,13 @@ class RedisImpl implements RedisCommands {
 
   xadd(
     key: string,
-    streamId: string,
+    id: string,
     ...field_values: (string | number)[]
   ) {
     return this.execBulkReply<BulkString>(
       "XADD",
       key,
-      streamId,
+      id,
       ...field_values,
     );
   }
@@ -1232,6 +1232,12 @@ class RedisImpl implements RedisCommands {
     if (mkstream) {
       args.push("MKSTREAM");
     }
+
+    console.log(
+      `invoke ${
+        JSON.stringify(["XGROUP", "CREATE", key, groupName, id, ...args])
+      }`,
+    );
 
     return this.execStatusReply(
       "XGROUP",
@@ -1343,6 +1349,8 @@ class RedisImpl implements RedisCommands {
     for (const id of ids) {
       args.push(id);
     }
+
+    console.log(`xreadgroup ${JSON.stringify(["XREADGROUP", ...args])}`);
     return this.execArrayReply<XReadKeyData>(
       "XREADGROUP",
       ...args,
