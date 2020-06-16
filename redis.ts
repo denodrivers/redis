@@ -89,6 +89,14 @@ class RedisImpl implements RedisCommands {
     return reply as Status | BulkNil;
   }
 
+  acl_cat(categoryname?: string) {
+    if (categoryname) {
+      return this.execArrayReply<BulkString>("ACL", "CAT", categoryname);
+    } else {
+      return this.execArrayReply<BulkString>("ACL", "CAT");
+    }
+  }
+
   acl_getuser(username: string) {
     return this.execArrayReply<BulkString>("ACL", "GETUSER", username);
   }

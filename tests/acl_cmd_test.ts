@@ -19,3 +19,64 @@ test("getuser", async () => {
     "passwords", [], "commands", "+@all", "keys", [ "*" ]
   ]);
 });
+
+test("cat", async () => {
+  assertEquals(await client.acl_cat(),
+  [
+    "keyspace",
+    "read",
+    "write",
+    "set",
+    "sortedset",
+    "list",
+    "hash",
+    "string",
+    "bitmap",
+    "hyperloglog",
+    "geo",
+    "stream",
+    "pubsub",
+    "admin",
+    "fast",
+    "slow",
+    "blocking",
+    "dangerous",
+    "connection",
+    "transaction",
+    "scripting"
+  ]);
+  assertEquals(await client.acl_cat("dangerous"),
+  [
+    "lastsave",
+    "shutdown",
+    "module",
+    "monitor",
+    "role",
+    "client",
+    "replconf",
+    "config",
+    "pfselftest",
+    "save",
+    "replicaof",
+    "restore-asking",
+    "restore",
+    "latency",
+    "swapdb",
+    "slaveof",
+    "bgsave",
+    "debug",
+    "bgrewriteaof",
+    "sync",
+    "flushdb",
+    "keys",
+    "psync",
+    "pfdebug",
+    "flushall",
+    "cluster",
+    "info",
+    "migrate",
+    "acl",
+    "sort",
+    "slowlog"
+  ]);
+});
