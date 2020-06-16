@@ -283,7 +283,7 @@ test("xadd_maxlen_map_then_xread", async () => {
   ]);
 });
 
-test("unique message per consumer", async () => {
+test("unique message per consumer", () => {
   withConsumerGroup(async (key, group) => {
     const addedIds = [];
     const a0 = await client.xadd(key, "*", "field1", "val1");
@@ -291,7 +291,9 @@ test("unique message per consumer", async () => {
     addedIds.push(a0);
 
     const c0 = "consumer-0";
-    throw ("TODO");
+    // TODO
+    // TODO
+    throw ("todo");
   });
 });
 
@@ -333,8 +335,9 @@ test("xlen", async () => {
 const withConsumerGroup = async (
   fn: (stream: string, group: string) => any,
 ) => {
-  const stream = `test-deno-${Math.floor(Math.random() * 1000)}`;
-  const group = "test-group";
+  const rn = Math.floor(Math.random() * 1000);
+  const stream = `test-deno-${rn}`;
+  const group = `test-group-${rn}`;
 
   let created = await client.xgroupcreate(stream, group, "$", true);
   assertEquals(created, "OK");
