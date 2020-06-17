@@ -19,6 +19,21 @@ const cleanupStream = async (client: Redis, ...keys: string[]) => {
   await Promise.all(keys.map((key) => client.xtrim(key, { elements: 0 })));
 };
 
+const withConsumerGroup = async (
+  fn: (stream: string, group: string) => any,
+) => {
+  const rn = Math.floor(Math.random() * 1000);
+  const stream = randomStream();
+  const group = `test-group-${rn}`;
+
+  let created = await client.xgroupcreate(stream, group, "$", true);
+  assertEquals(created, "OK");
+
+  await fn(stream, group);
+
+  assertEquals(await client.xgroupdestroy(stream, group), 1);
+};
+
 test("xadd", async () => {
   const key = randomStream();
   const v = await client.xadd(
@@ -309,54 +324,43 @@ test("xadd_maxlen_map_then_xread", async () => {
 });
 
 test("xdel", async () => {
+  const key = randomStream();
   const id0 = await client.xadd_maxlen(
-    "key3",
+    key,
     { elements: 10 },
     "*",
     "foo",
     "bar",
   );
   const id1 = await client.xadd_maxlen(
-    "key3",
+    key,
     { elements: 10 },
     "*",
     "foo",
     "baz",
   );
   const id2 = await client.xadd_maxlen(
-    "key3",
+    key,
     { elements: 10 },
     "*",
     "foo",
     "qux",
   );
 
-  const v = await client.xdel("key3", id0, id1, id2);
+  const v = await client.xdel(key, id0, id1, id2);
   assert(v === 3);
+  await cleanupStream(client, key);
 });
 
 test("xlen", async () => {
-  await client.xadd_maxlen("key3", { elements: 5 }, "*", "foo", "qux");
-  await client.xadd_maxlen("key3", { elements: 5 }, "*", "foo", "bux");
+  const key = randomStream();
+  await client.xadd_maxlen(key, { elements: 5 }, "*", "foo", "qux");
+  await client.xadd_maxlen(key, { elements: 5 }, "*", "foo", "bux");
 
-  const v = await client.xlen("key3");
+  const v = await client.xlen(key);
   assert(v === 2);
+  await cleanupStream(client, key);
 });
-
-const withConsumerGroup = async (
-  fn: (stream: string, group: string) => any,
-) => {
-  const rn = Math.floor(Math.random() * 1000);
-  const stream = `test-deno-${rn}`;
-  const group = `test-group-${rn}`;
-
-  let created = await client.xgroupcreate(stream, group, "$", true);
-  assertEquals(created, "OK");
-
-  await fn(stream, group);
-
-  assertEquals(await client.xgroupdestroy(stream, group), 1);
-};
 
 test("unique message per consumer", async () => {
   await withConsumerGroup(async (key, group) => {
