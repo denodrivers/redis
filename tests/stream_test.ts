@@ -355,10 +355,59 @@ test("unique message per consumer", async () => {
       );
 
       assertEquals(data.length, 1);
-      console.log(JSON.stringify(data));
+
+      // TODO this isn't a great way to navigate
+      // TODO we should have a more legible way
+      // TODO to deal with the payload
       assertEquals(data[0][1][0][1][1], payload);
     }
   });
+});
+
+test("broadcast pattern, all groups read their own version of the stream", async () => {
+  const rn = Math.floor(Math.random() * 1000);
+  const key = `test-deno-${rn}`;
+  const group0 = `test-group-${rn}0`;
+  const group1 = `test-group-${rn}1`;
+  const group2 = `test-group-${rn}2`;
+  const groups = [group0, group1, group2];
+
+  for (const g of groups) {
+    let created = await client.xgroupcreate(key, g, "$", true);
+    assertEquals(created, "OK");
+  }
+
+  const addedIds = [];
+
+  let msgCount = 0;
+  for (const group of groups) {
+    console.log(`xadd ${key}`);
+    const payload = `data-${msgCount}`;
+    const a = await client.xadd(key, "*", "target", payload);
+    assert(a);
+    addedIds.push(a);
+    console.log(`added ID ${a}`);
+
+    const consumer = "someconsumer";
+    let data = await client.xreadgroup(
+      [key],
+      [">"],
+      { group, consumer },
+    );
+
+    // each group should see ALL the messages
+    // that have been emitted
+    assertEquals(data.length, msgCount + 1);
+
+    // TODO this isn't a great way to navigate
+    // TODO we should have a more legible way
+    // TODO to deal with the payload
+    // TODO assert ?? assertEquals(data[0][1][0][1][1], payload);
+  }
+
+  for (const g of groups) {
+    assertEquals(await client.xgroupdestroy(key, g), 1);
+  }
 });
 
 // TODO think about cleanup// TODO think about cleanup
