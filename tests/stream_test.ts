@@ -1,31 +1,19 @@
-// TODO think about cleanup// TODO think about cleanup
-// TODO think about cleanup// TODO think about cleanup
-// TODO think about cleanup// TODO think about cleanup
-// TODO think about cleanup// TODO think about cleanup
 import { Redis } from "../redis.ts";
 import { makeTest } from "./test_util.ts";
 import {
   assertEquals,
-  assertArrayContains,
   assert,
-  assertThrows,
 } from "../vendor/https/deno.land/std/testing/asserts.ts";
 const { test, client } = await makeTest("stream");
 
 /** Return the millisecond timestamp for a given
- * streams identifier.  It may be quite large,
- * and is returned as a string.
+ * streams identifier.  
  * 
  * @param id for example "1526984818136-0"
  */
-const idMillis = (id: string) => id.split("-")[0];
-/**
- * Return the sequence number timestamp for a given
- * streams identifier.  It may be quite large,
- * and is returned as a string.
- * @param id for example "1526984818136-1"
- */
-const idSeqNo = (id: string) => id.split("-")[1];
+const idMillis = (id: string) => parseInt(id.split("-")[0]);
+
+const randomStream = () => `test-deno-${Math.floor(Math.random() * 1000)}`;
 
 const cleanupStream = async (client: Redis, ...keys: string[]) => {
   await Promise.all(keys.map((key) => client.xtrim(key, { elements: 0 })));
@@ -138,8 +126,6 @@ test("xgrouphelp", async () => {
   assert(helpText.length > 4);
   assert(helpText[0].length > 10);
 });
-
-const randomStream = () => `test-deno-${Math.floor(Math.random() * 1000)}`;
 
 test("xgroup create and destroy", async () => {
   const groupName = "test-group";
@@ -268,7 +254,7 @@ test("xadd_map_then_xread", async () => {
   );
   assert(addedId !== null);
 
-  const ms = parseInt(idMillis(addedId));
+  const ms = idMillis(addedId);
 
   const v = await client.xread(
     [key],
@@ -468,10 +454,3 @@ test("xrange and xrevrange", async () => {
   const revLim = await client.xrevrange(stream, "+", "-", 1);
   assertEquals(revLim.length, 1);
 });
-
-// TODO think about cleanup// TODO think about cleanup
-// TODO think about cleanup// TODO think about cleanup
-// TODO think about cleanup// TODO think about cleanup
-// TODO think about cleanup// TODO think about cleanup
-// TODO think about cleanup// TODO think about cleanup
-// TODO think about cleanup// TODO think about cleanup
