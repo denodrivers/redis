@@ -450,6 +450,9 @@ export type RedisCommands = {
       samples?: number;
     },
   ): Promise<Integer>;
+  module_list(): Promise<BulkString[]>;
+  module_load(path: string, args: string): Promise<Status>;
+  module_unload(name: string): Promise<Status>;
   monitor(): void;
   role(): Promise<
     | ["master", Integer, BulkString[][]]

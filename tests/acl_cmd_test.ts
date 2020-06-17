@@ -114,3 +114,7 @@ test("log", async () => {
   assertEquals((await client.acl_log(1))[0][9], username);
   assertEquals((await client.acl_log("RESET")), "OK");
 });
+
+test("module_list", async () => {
+  assertEquals(await client.module_list(), []);
+});

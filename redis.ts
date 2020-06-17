@@ -728,6 +728,18 @@ class RedisImpl implements RedisCommands {
     return this.execStatusReply("MIGRATE", ...args);
   }
 
+  module_list() {
+    return this.execArrayReply<BulkString>("MODULE", "LIST");
+  }
+
+  module_load(path: string, args: string) {
+    return this.execStatusReply("MODULE", "LOAD", path, args);
+  }
+
+  module_unload(name: string) {
+    return this.execStatusReply("MODULE", "UNLOAD", name);
+  }
+
   monitor() {
     throw new Error("not supported yet");
   }
