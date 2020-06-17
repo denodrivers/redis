@@ -12,6 +12,21 @@ import {
 } from "../vendor/https/deno.land/std/testing/asserts.ts";
 const { test, client } = await makeTest("stream");
 
+/** Return the millisecond timestamp for a given
+ * streams identifier.  It may be quite large,
+ * and is returned as a string.
+ * 
+ * @param id for example "1526984818136-0"
+ */
+const idMillis = (id: string) => id.split("-")[0];
+/**
+ * Return the sequence number timestamp for a given
+ * streams identifier.  It may be quite large,
+ * and is returned as a string.
+ * @param id for example "1526984818136-1"
+ */
+const idSeqNo = (id: string) => id.split("-")[1];
+
 const cleanupStream = async (client: Redis, ...keys: string[]) => {
   await Promise.all(keys.map((key) => client.xtrim(key, { elements: 0 })));
 };
@@ -253,12 +268,11 @@ test("xadd_map_then_xread", async () => {
   );
   assert(addedId !== null);
 
-  // TODO
-  const idMillis = parseInt(addedId.split("-")[0]);
+  const ms = parseInt(idMillis(addedId));
 
   const v = await client.xread(
     [key],
-    [(idMillis - 1).toString()],
+    [(ms - 1).toString()],
     { block: 5000, count: 500 },
   );
 
