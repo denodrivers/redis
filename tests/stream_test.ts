@@ -437,15 +437,15 @@ test("broadcast pattern, all groups read their own version of the stream", async
 });
 
 test("xrange and xrevrange", async () => {
-  const stream = randomStream();
-  const firstId = await client.xadd(stream, "*", "f", "v0");
-  const basicResult = await client.xrange(stream, "-", "+");
+  const key = randomStream();
+  const firstId = await client.xadd(key, "*", "f", "v0");
+  const basicResult = await client.xrange(key, "-", "+");
   assertEquals(basicResult.length, 1);
   assertEquals(basicResult[0][0], firstId);
   assertEquals(basicResult[0][1], ["f", "v0"]);
 
-  const secondId = await client.xadd(stream, "*", "f", "v1");
-  const revResult = await client.xrevrange(stream, "+", "-");
+  const secondId = await client.xadd(key, "*", "f", "v1");
+  const revResult = await client.xrevrange(key, "+", "-");
   console.log("greetings");
   console.log(JSON.stringify(revResult));
   assertEquals(revResult.length, 2);
@@ -455,8 +455,10 @@ test("xrange and xrevrange", async () => {
   assertEquals(revResult[1][1], ["f", "v0"]);
 
   // count should limit results
-  const lim = await client.xrange(stream, "-", "+", 1);
+  const lim = await client.xrange(key, "-", "+", 1);
   assertEquals(lim.length, 1);
-  const revLim = await client.xrevrange(stream, "+", "-", 1);
+  const revLim = await client.xrevrange(key, "+", "-", 1);
   assertEquals(revLim.length, 1);
+
+  await cleanupStream(client, key);
 });
