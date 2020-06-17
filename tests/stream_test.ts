@@ -382,13 +382,11 @@ test("broadcast pattern, all groups read their own version of the stream", async
 
   let msgCount = 0;
   for (const group of groups) {
-    console.log(`xadd ${key}`);
     const payload = `data-${msgCount}`;
     const a = await client.xadd(key, "*", "target", payload);
     assert(a);
     addedIds.push(a);
     msgCount++;
-    console.log(`added ID ${a}`);
 
     const consumer = "someconsumer";
     let data = await client.xreadgroup(
@@ -396,8 +394,6 @@ test("broadcast pattern, all groups read their own version of the stream", async
       [">"],
       { group, consumer },
     );
-
-    console.log(JSON.stringify(data));
 
     // each group should see ALL the messages
     // that have been emitted
