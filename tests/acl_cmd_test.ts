@@ -21,7 +21,7 @@ test("getuser", async () => {
 });
 
 test("cat", async () => {
-  assertEquals(await client.acl_cat(),
+  assertEquals((await client.acl_cat()).sort(),
   [
     "keyspace",
     "read",
@@ -44,8 +44,8 @@ test("cat", async () => {
     "connection",
     "transaction",
     "scripting"
-  ]);
-  assertEquals(await client.acl_cat("dangerous"),
+  ].sort());
+  assertEquals((await client.acl_cat("dangerous")).sort(),
   [
     "lastsave",
     "shutdown",
@@ -78,9 +78,39 @@ test("cat", async () => {
     "acl",
     "sort",
     "slowlog"
-  ]);
+  ].sort());
+});
+
+test("users", async () => {
+  assertEquals(await client.acl_users(), ["default"])
+});
+
+test("acl_setuser", async () => {
+  assertEquals(await client.acl_setuser("alan", "+get"), "OK")
+  assertEquals(await client.acl_deluser("alan"), 1);
 });
 
 test("deluser", async () => {
-  assertEquals(await client.acl_deluser("balhblahblah"), 0);
+  assertEquals(await client.acl_deluser("alan"), 0);
+});
+
+test("genpass", async () => {
+  assertEquals((await client.acl_genpass()).length, 64);
+  let testlen = 32
+  assertEquals((await client.acl_genpass(testlen)).length, testlen / 4);
+});
+
+test("aclauth", async () => {
+  assertEquals(await client.acl_auth("default", ""), "OK")
+});
+
+test("log", async () => {
+  let username = "balh"
+  try {
+    await client.acl_auth(username, username)
+  } catch (error) {
+    // skip invalid username-password pair error
+  }
+  assertEquals((await client.acl_log(1))[0][9], username);
+  assertEquals((await client.acl_log("RESET")), "OK");
 });
