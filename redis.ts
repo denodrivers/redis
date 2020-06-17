@@ -1292,8 +1292,24 @@ class RedisImpl implements RedisCommands {
     end: string,
     count?: number,
   ) {
-    throw "TODO";
-    return this.execArrayReply<XReadKeyData>("XRANGE");
+    const args: (string | number)[] = [key, start, end];
+    if (count) {
+      args.push(count);
+    }
+    return this.execArrayReply<XReadKeyData>("XRANGE", ...args);
+  }
+
+  xrevrange(
+    key: string,
+    start: string,
+    end: string,
+    count?: number,
+  ) {
+    const args: (string | number)[] = [key, start, end];
+    if (count) {
+      args.push(count);
+    }
+    return this.execArrayReply<XReadKeyData>("XREVRANGE", ...args);
   }
 
   xread(

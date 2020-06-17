@@ -111,9 +111,12 @@ test("xgrouphelp", async () => {
   assert(helpText[0].length > 10);
 });
 
+const randomStream = () => `test-deno-${Math.floor(Math.random() * 1000)}`;
+
 test("xgroup create and destroy", async () => {
-  const stream = `test-deno-${Math.floor(Math.random() * 1000)}`;
   const groupName = "test-group";
+
+  const stream = randomStream();
 
   let created = await client.xgroupcreate(stream, groupName, "$", true);
   assertEquals(created, "OK");
@@ -341,12 +344,10 @@ test("unique message per consumer", async () => {
     const c2 = "consumer-2";
 
     for (const consumer of [c0, c1, c2]) {
-      console.log(`xadd ${key}`);
       const payload = `data-for-${consumer}`;
       const a = await client.xadd(key, "*", "target", payload);
       assert(a);
       addedIds.push(a);
-      console.log(`added ID ${a}`);
 
       let data = await client.xreadgroup(
         [key],
@@ -412,6 +413,31 @@ test("broadcast pattern, all groups read their own version of the stream", async
   for (const g of groups) {
     assertEquals(await client.xgroupdestroy(key, g), 1);
   }
+});
+
+test("xrange and xrevrange", async () => {
+  const stream = randomStream();
+  const firstId = await client.xadd(stream, "*", "f", "v0");
+  const basicResult = await client.xrange(stream, "-", "+");
+  assertEquals(basicResult.length, 1);
+  assertEquals(basicResult[0][0], firstId);
+  assertEquals(basicResult[0][1], ["f", "v0"]);
+
+  const secondId = await client.xadd(stream, "*", "f", "v1");
+  const revResult = await client.xrevrange(stream, "+", "-");
+  console.log("greetings");
+  console.log(JSON.stringify(revResult));
+  assertEquals(revResult.length, 2);
+  assertEquals(revResult[0][0], secondId);
+  assertEquals(revResult[0][1], ["f", "v1"]);
+  assertEquals(revResult[1][0], firstId);
+  assertEquals(revResult[1][1], ["f", "v0"]);
+
+  // count should limit results
+  const lim = await client.xrange(stream, "-", "+", 1);
+  assertEquals(lim.length, 1);
+  const revLim = await client.xrevrange(stream, "-", "+", 1);
+  assertEquals(revLim.length, 1);
 });
 
 // TODO think about cleanup// TODO think about cleanup

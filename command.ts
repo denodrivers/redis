@@ -432,6 +432,12 @@ XGROUP SETID mystream consumer-group-name 0
     end: string,
     count?: number,
   ): Promise<XReadReply>;
+  xrevrange(
+    key: string,
+    start: string,
+    end: string,
+    count?: number,
+  ): Promise<XReadReply>;
   xread(
     keys: string[],
     ids: string[],
