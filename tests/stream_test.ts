@@ -354,7 +354,7 @@ test("unique message per consumer", async () => {
         { group, consumer },
       );
 
-      assertEquals(data.length, 1);
+      assertEquals(data[0][1].length, 1);
 
       // TODO this isn't a great way to navigate
       // TODO we should have a more legible way
@@ -386,6 +386,7 @@ test("broadcast pattern, all groups read their own version of the stream", async
     const a = await client.xadd(key, "*", "target", payload);
     assert(a);
     addedIds.push(a);
+    msgCount++;
     console.log(`added ID ${a}`);
 
     const consumer = "someconsumer";
@@ -395,9 +396,12 @@ test("broadcast pattern, all groups read their own version of the stream", async
       { group, consumer },
     );
 
+    console.log(JSON.stringify(data));
+
     // each group should see ALL the messages
     // that have been emitted
-    assertEquals(data.length, msgCount + 1);
+    const toCheck = data[0][1];
+    assertEquals(toCheck.length, msgCount);
 
     // TODO this isn't a great way to navigate
     // TODO we should have a more legible way
