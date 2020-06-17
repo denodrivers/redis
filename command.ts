@@ -426,6 +426,12 @@ XGROUP SETID mystream consumer-group-name 0
     id: string,
   ): Promise<Status>;
   xlen(key: string): Promise<Integer>;
+  xrange(
+    key: string,
+    start: string,
+    end: string,
+    count?: number,
+  ): Promise<XReadReply>;
   xread(
     keys: string[],
     ids: string[],

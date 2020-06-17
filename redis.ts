@@ -1222,6 +1222,7 @@ class RedisImpl implements RedisCommands {
   xlen(key: string) {
     return this.execIntegerReply("XLEN", key);
   }
+
   xgroupcreate(
     key: string,
     groupName: string,
@@ -1283,6 +1284,16 @@ class RedisImpl implements RedisCommands {
       groupName,
       id,
     );
+  }
+
+  xrange(
+    key: string,
+    start: string,
+    end: string,
+    count?: number,
+  ) {
+    throw "TODO";
+    return this.execArrayReply<XReadKeyData>("XRANGE");
   }
 
   xread(
