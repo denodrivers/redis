@@ -23,7 +23,7 @@ import {
   BulkNil,
 } from "./command.ts";
 import {
-  XAddMaxlen,
+  XMaxlen,
   XReadKeyData,
   XReadReply,
 } from "./stream.ts";
@@ -1162,7 +1162,7 @@ class RedisImpl implements RedisCommands {
 
   xadd_maxlen(
     key: string,
-    maxlen: XAddMaxlen,
+    maxlen: XMaxlen,
     streamId: string,
     ...field_values: (string | number)[]
   ) {
@@ -1170,7 +1170,7 @@ class RedisImpl implements RedisCommands {
 
     if (maxlen) {
       args.push("MAXLEN");
-      if (!maxlen.exact) {
+      if (maxlen.approx) {
         args.push("~");
       }
       args.push(maxlen.elements);
@@ -1187,7 +1187,7 @@ class RedisImpl implements RedisCommands {
 
   xadd_maxlen_map(
     key: string,
-    maxlen: XAddMaxlen,
+    maxlen: XMaxlen,
     streamId: string,
     field_values: Map<(string | number), (string | number)>,
   ) {
@@ -1195,7 +1195,7 @@ class RedisImpl implements RedisCommands {
 
     if (maxlen) {
       args.push("MAXLEN");
-      if (!maxlen.exact) {
+      if (maxlen.approx) {
         args.push("~");
       }
       args.push(maxlen.elements);
@@ -1376,6 +1376,17 @@ class RedisImpl implements RedisCommands {
       "XREADGROUP",
       ...args,
     );
+  }
+
+  xtrim(key: string, maxlen: XMaxlen) {
+    const args = [];
+    if (maxlen.approx) {
+      args.push("~");
+    }
+
+    args.push(maxlen.elements);
+
+    return this.execIntegerReply("XTRIM", key, "MAXLEN", ...args);
   }
 
   zadd(key: string, scoreOrArr: any, memberOrOpts: any, opts?: any) {

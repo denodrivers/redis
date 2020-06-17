@@ -40,7 +40,7 @@ test("xadd_maxlen", async () => {
   assert(v != null);
   const x = await client.xadd_maxlen(
     "key1",
-    { exact: true, elements: 10 },
+    { approx: false, elements: 10 },
     "*",
     "cat",
     "oo",
