@@ -62,8 +62,9 @@ test("xadd_maxlen", async () => {
 });
 
 test("xread", async () => {
+  const key = randomStream();
   const a = await client.xadd_maxlen(
-    "key1",
+    key,
     { elements: 10 },
     "1000-0",
     "cat",
@@ -74,8 +75,9 @@ test("xread", async () => {
     "yodel",
   );
   assert(a != null);
+  const key2 = randomStream();
   const b = await client.xadd_maxlen(
-    "key2",
+    key2,
     { elements: 10 },
     "1000-0",
     "air",
@@ -84,7 +86,7 @@ test("xread", async () => {
     "table",
   );
   const c = await client.xadd_maxlen(
-    "key2",
+    key2,
     { elements: 10 },
     "1001-1",
     "air",
@@ -95,7 +97,7 @@ test("xread", async () => {
   assert(c != null);
 
   const v = await client.xread(
-    ["key1", "key2"],
+    [key, key2],
     ["0-0", "0-0"],
     { block: 5000, count: 500 },
   );
@@ -103,17 +105,17 @@ test("xread", async () => {
   assert(v != null);
 
   assertEquals(v, [
-    ["key1", [[
+    [key, [[
       "1000-0",
       ["cat", "moo", "dog", "honk", "duck", "yodel"],
     ]]],
-    ["key2", [
+    [key2, [
       ["1000-0", ["air", "ball", "friend", "table"]],
       ["1001-1", ["air", "horn", "friend", "fiend"]],
     ]],
   ]);
 
-  await cleanupStream(client, "key1", "key2");
+  await cleanupStream(client, key, key2);
 });
 
 test("xgrouphelp", async () => {
