@@ -278,31 +278,34 @@ test("xadd_maxlen_map_then_xread", async () => {
   const m = new Map();
   m.set("hop", 4);
   m.set("blip", 5);
+
+  const key = randomStream();
   const addedId = await client.xadd_maxlen_map(
-    "key6",
+    key,
     { elements: 8 },
     "*",
     m,
   );
   assert(addedId !== null);
 
-  // TODO
-  const idMillis = parseInt(addedId.split("-")[0]);
+  const ms = idMillis(addedId);
 
   const v = await client.xread(
-    ["key6"],
-    [(idMillis - 1).toString()],
+    [key],
+    [(ms - 1).toString()],
     { block: 5000, count: 500 },
   );
 
   assert(v != null);
 
   assertEquals(v, [
-    ["key6", [[
+    [key, [[
       addedId,
       ["hop", "4", "blip", "5"],
     ]]],
   ]);
+
+  await cleanupStream(client, key);
 });
 
 test("xdel", async () => {
