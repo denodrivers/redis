@@ -185,18 +185,18 @@ test("xgroup setid and delconsumer", async () => {
 });
 
 test("xreadgroup auto ack", async () => {
-  const stream = `test-deno-${Math.floor(Math.random() * 1000)}`;
+  const key = randomStream();
   const group = "test-group";
 
-  let created = await client.xgroupcreate(stream, group, "$", true);
+  let created = await client.xgroupcreate(key, group, "$", true);
   assertEquals(created, "OK");
 
-  let addedId = await client.xadd(stream, "*", "anyfield", "anyval");
+  let addedId = await client.xadd(key, "*", "anyfield", "anyval");
 
   assert(addedId);
 
   let dataOut = await client.xreadgroup(
-    [stream],
+    [key],
     [">"],
     { group, consumer: "test-consumer" },
   );
@@ -205,39 +205,39 @@ test("xreadgroup auto ack", async () => {
   assertEquals(dataOut[0].length, 2);
 
   // > symbol causes automatic acknowledgement by Redis
-  const ackSize = await client.xack(stream, group, addedId);
+  const ackSize = await client.xack(key, group, addedId);
   assertEquals(ackSize, 1);
 
-  assertEquals(await client.xgroupdestroy(stream, group), 1);
+  assertEquals(await client.xgroupdestroy(key, group), 1);
 
-  // TODO xtrim xdel
+  await cleanupStream(client, key);
 });
 
 test("xack", async () => {
-  const stream = `test-deno-${Math.floor(Math.random() * 1000)}`;
+  const key = randomStream();
   const group = "test-group";
 
-  let created = await client.xgroupcreate(stream, group, "$", true);
+  let created = await client.xgroupcreate(key, group, "$", true);
   assertEquals(created, "OK");
 
-  let addedId = await client.xadd(stream, "*", "anyfield", "anyval");
+  let addedId = await client.xadd(key, "*", "anyfield", "anyval");
 
   assert(addedId);
 
   // read but DO NOT auto-ack, which places
   // the message on the PEL
   await client.xreadgroup(
-    [stream],
+    [key],
     [">"],
     { group, consumer: "test-consumer" },
   );
 
-  const acked = await client.xack(stream, group, addedId);
+  const acked = await client.xack(key, group, addedId);
 
   assertEquals(acked, 1);
 
-  assertEquals(await client.xgroupdestroy(stream, group), 1);
-  // TODO xtrim xdel
+  assertEquals(await client.xgroupdestroy(key, group), 1);
+  await cleanupStream(client, key);
 });
 
 test("xadd_map_then_xread", async () => {
