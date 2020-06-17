@@ -1288,6 +1288,7 @@ class RedisImpl implements RedisCommands {
   ) {
     const args: (string | number)[] = [key, start, end];
     if (count) {
+      args.push("COUNT");
       args.push(count);
     }
     return this.execArrayReply<XReadKeyData>("XRANGE", ...args);
@@ -1301,6 +1302,7 @@ class RedisImpl implements RedisCommands {
   ) {
     const args: (string | number)[] = [key, start, end];
     if (count) {
+      args.push("COUNT");
       args.push(count);
     }
     return this.execArrayReply<XReadKeyData>("XREVRANGE", ...args);

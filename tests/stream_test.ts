@@ -432,7 +432,7 @@ test("xrange and xrevrange", async () => {
   // count should limit results
   const lim = await client.xrange(stream, "-", "+", 1);
   assertEquals(lim.length, 1);
-  const revLim = await client.xrevrange(stream, "-", "+", 1);
+  const revLim = await client.xrevrange(stream, "+", "-", 1);
   assertEquals(revLim.length, 1);
 });
 
