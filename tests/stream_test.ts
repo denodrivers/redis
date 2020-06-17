@@ -46,6 +46,7 @@ test("xadd", async () => {
     "duck",
     "when",
   );
+  assert(v != null);
 
   await cleanupStream(client, key);
 });
@@ -145,13 +146,13 @@ test("xgrouphelp", async () => {
 test("xgroup create and destroy", async () => {
   const groupName = "test-group";
 
-  const stream = randomStream();
+  const key = randomStream();
 
-  let created = await client.xgroupcreate(stream, groupName, "$", true);
+  let created = await client.xgroupcreate(key, groupName, "$", true);
   assertEquals(created, "OK");
   try {
     await client.xgroupcreate(
-      stream,
+      key,
       groupName,
       0,
       true,
@@ -162,7 +163,7 @@ test("xgroup create and destroy", async () => {
     assert(true);
   }
 
-  assertEquals(await client.xgroupdestroy(stream, groupName), 1);
+  assertEquals(await client.xgroupdestroy(key, groupName), 1);
 });
 
 test("xgroup setid and delconsumer", async () => {
@@ -387,6 +388,8 @@ test("unique message per consumer", async () => {
       // TODO we should have a more legible way
       // TODO to deal with the payload
       assertEquals(data[0][1][0][1][1], payload);
+
+      await cleanupStream(client, key);
     }
   });
 });
@@ -425,16 +428,13 @@ test("broadcast pattern, all groups read their own version of the stream", async
     // that have been emitted
     const toCheck = data[0][1];
     assertEquals(toCheck.length, msgCount);
-
-    // TODO this isn't a great way to navigate
-    // TODO we should have a more legible way
-    // TODO to deal with the payload
-    // TODO assert ?? assertEquals(data[0][1][0][1][1], payload);
   }
 
   for (const g of groups) {
     assertEquals(await client.xgroupdestroy(key, g), 1);
   }
+
+  await cleanupStream(client, key);
 });
 
 test("xrange and xrevrange", async () => {
