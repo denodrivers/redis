@@ -395,11 +395,10 @@ test("unique message per consumer", async () => {
 });
 
 test("broadcast pattern, all groups read their own version of the stream", async () => {
-  const rn = Math.floor(Math.random() * 1000);
-  const key = `test-deno-${rn}`;
-  const group0 = `test-group-${rn}0`;
-  const group1 = `test-group-${rn}1`;
-  const group2 = `test-group-${rn}2`;
+  const key = randomStream();
+  const group0 = "tg0";
+  const group1 = "tg1";
+  const group2 = "tg2";
   const groups = [group0, group1, group2];
 
   for (const g of groups) {
