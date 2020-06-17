@@ -342,7 +342,8 @@ test("unique message per consumer", async () => {
 
     for (const consumer of [c0, c1, c2]) {
       console.log(`xadd ${key}`);
-      const a = await client.xadd(key, "*", "target", `data-for-${consumer}`);
+      const payload = `data-for-${consumer}`;
+      const a = await client.xadd(key, "*", "target", payload);
       assert(a);
       addedIds.push(a);
       console.log(`added ID ${a}`);
@@ -355,6 +356,7 @@ test("unique message per consumer", async () => {
 
       assertEquals(data.length, 1);
       console.log(JSON.stringify(data));
+      assertEquals(data[0][1][0][1][1], payload);
     }
   });
 });
