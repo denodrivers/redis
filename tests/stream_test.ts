@@ -2,7 +2,7 @@
 // TODO think about cleanup// TODO think about cleanup
 // TODO think about cleanup// TODO think about cleanup
 // TODO think about cleanup// TODO think about cleanup
-
+import { Redis } from "../redis.ts";
 import { makeTest } from "./test_util.ts";
 import {
   assertEquals,
@@ -12,9 +12,14 @@ import {
 } from "../vendor/https/deno.land/std/testing/asserts.ts";
 const { test, client } = await makeTest("stream");
 
+const cleanupStream = async (client: Redis, ...keys: string[]) => {
+  await Promise.all(keys.map((key) => client.xtrim(key, { elements: 0 })));
+};
+
 test("xadd", async () => {
+  const key = randomStream();
   const v = await client.xadd(
-    "key1",
+    key,
     "*",
     "cat",
     "what",
@@ -23,11 +28,14 @@ test("xadd", async () => {
     "duck",
     "when",
   );
+
+  await cleanupStream(client, key);
 });
 
 test("xadd_maxlen", async () => {
+  const key = randomStream();
   const v = await client.xadd_maxlen(
-    "key1",
+    key,
     { elements: 10 },
     "*",
     "cat",
@@ -39,7 +47,7 @@ test("xadd_maxlen", async () => {
   );
   assert(v != null);
   const x = await client.xadd_maxlen(
-    "key1",
+    key,
     { approx: false, elements: 10 },
     "*",
     "cat",
@@ -50,6 +58,7 @@ test("xadd_maxlen", async () => {
     "pp",
   );
   assert(x != null);
+  await cleanupStream(client, key);
 });
 
 test("xread", async () => {
@@ -103,6 +112,8 @@ test("xread", async () => {
       ["1001-1", ["air", "horn", "friend", "fiend"]],
     ]],
   ]);
+
+  await cleanupStream(client, "key1", "key2");
 });
 
 test("xgrouphelp", async () => {
