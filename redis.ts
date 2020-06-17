@@ -1234,12 +1234,6 @@ class RedisImpl implements RedisCommands {
       args.push("MKSTREAM");
     }
 
-    console.log(
-      `invoke ${
-        JSON.stringify(["XGROUP", "CREATE", key, groupName, id, ...args])
-      }`,
-    );
-
     return this.execStatusReply(
       "XGROUP",
       "CREATE",
@@ -1376,7 +1370,6 @@ class RedisImpl implements RedisCommands {
       args.push(id);
     }
 
-    console.log(`xreadgroup ${JSON.stringify(["XREADGROUP", ...args])}`);
     return this.execArrayReply<XReadKeyData>(
       "XREADGROUP",
       ...args,
