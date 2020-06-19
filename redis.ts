@@ -25,7 +25,7 @@ import {
 import {
   XMaxlen,
   XReadKeyData,
-  XReadReply,
+  XClaimOpts,
 } from "./stream.ts";
 
 export type Redis = RedisCommands & {
@@ -1209,6 +1209,11 @@ class RedisImpl implements RedisCommands {
     }
 
     return this.execBulkReply<BulkString>("XADD", key, ...args);
+  }
+
+  xclaim(key: string, opts: XClaimOpts, ...ids: string[]) {
+    throw "TODO";
+    return this.execArrayReply<BulkString>("XCLAIM");
   }
 
   xdel(key: string, ...ids: string[]) {

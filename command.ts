@@ -1,6 +1,6 @@
 import { RedisSubscription } from "./pubsub.ts";
 import { RedisPipeline } from "./pipeline.ts";
-import { XReadReply, XMaxlen } from "./stream.ts";
+import { XReadReply, XMaxlen, XClaimOpts } from "./stream.ts";
 
 export type Raw = Status | Integer | Bulk | ConditionalArray;
 export type Status = string;
@@ -346,6 +346,35 @@ export type RedisCommands = {
     streamId: string,
     field_values: Map<(string | number), (string | number)>,
   ): Promise<BulkString>;
+  /**
+   * In the context of a stream consumer group, this command changes the ownership of a pending message, so that the new owner is the
+   * consumer specified as the command argument.
+   * 
+   * This is a complex command!  Read more at https://redis.io/commands/xclaim
+   * 
+   * @param key the stream name
+   * @param opts Various arguments for the command.  The following are required:
+   *    GROUP: the name of the consumer group which will claim the messages
+   *    CONSUMER: the specific consumer which will claim the message
+   *    MIN-IDLE-TIME:  claim messages whose idle time is greater than this number (milliseconds)
+   * 
+   * The command has multiple options which can be omitted, however
+   * most are mainly for internal use in order to transfer the
+   * effects of XCLAIM or other commands to the AOF file and to
+   * propagate the same effects to the slaves, and are unlikely to
+   * be useful to normal users:
+   *    IDLE <ms>: Set the idle time (last time it was delivered) of the message. If IDLE is not specified, an IDLE of 0 is assumed, that is, the time count is reset because the message has now a new owner trying to process it.
+   *    TIME <ms-unix-time>: This is the same as IDLE but instead of a relative amount of milliseconds, it sets the idle time to a specific Unix time (in milliseconds). This is useful in order to rewrite the AOF file generating XCLAIM commands.
+   *    RETRYCOUNT <count>: Set the retry counter to the specified value. This counter is incremented every time a message is delivered again. Normally XCLAIM does not alter this counter, which is just served to clients when the XPENDING command is called: this way clients can detect anomalies, like messages that are never processed for some reason after a big number of delivery attempts.
+   *    FORCE: Creates the pending message entry in the PEL even if certain specified IDs are not already in the PEL assigned to a different client. However the message must be exist in the stream, otherwise the IDs of non existing messages are ignored.
+   *    JUSTID: Return just an array of IDs of messages successfully claimed, without returning the actual message. Using this option means the retry counter is not incremented.
+   * @param ids the message IDs to claim
+   */
+  xclaim(
+    key: string,
+    opts: XClaimOpts,
+    ...ids: string[]
+  ): Promise<ConditionalArray>;
   xdel(key: string, ...ids: string[]): Promise<Integer>;
   /**
    * This command is used to create a new consumer group associated
