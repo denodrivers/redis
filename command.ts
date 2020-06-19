@@ -350,6 +350,9 @@ export type RedisCommands = {
    * In the context of a stream consumer group, this command changes the ownership of a pending message, so that the new owner is the
    * consumer specified as the command argument.
    * 
+   * It returns the claimed messages unless called with the JUSTIDs
+   * option, in which case it returns only their IDs.
+   * 
    * This is a complex command!  Read more at https://redis.io/commands/xclaim
    *
 <pre>
