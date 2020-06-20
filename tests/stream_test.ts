@@ -462,3 +462,7 @@ test("xrange and xrevrange", async () => {
 
   await cleanupStream(client, key);
 });
+
+test("xclaim", async () => {
+  throw "todo";
+});
