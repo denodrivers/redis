@@ -1149,7 +1149,7 @@ class RedisImpl implements RedisCommands {
 
   xadd_map(
     key: string,
-    streamId: string,
+    id: string,
     field_values: Map<(string | number), (string | number)>,
   ) {
     const args: (string | number)[] = [];
@@ -1157,13 +1157,13 @@ class RedisImpl implements RedisCommands {
       args.push(f);
       args.push(v);
     }
-    return this.execBulkReply<BulkString>("XADD", key, streamId, ...args);
+    return this.execBulkReply<BulkString>("XADD", key, id, ...args);
   }
 
   xadd_maxlen(
     key: string,
     maxlen: XMaxlen,
-    streamId: string,
+    id: string,
     ...field_values: (string | number)[]
   ) {
     const args: (string | number)[] = [];
@@ -1176,7 +1176,7 @@ class RedisImpl implements RedisCommands {
       args.push(maxlen.elements);
     }
 
-    args.push(streamId);
+    args.push(id);
 
     for (const x of field_values) {
       args.push(x);
@@ -1188,7 +1188,7 @@ class RedisImpl implements RedisCommands {
   xadd_maxlen_map(
     key: string,
     maxlen: XMaxlen,
-    streamId: string,
+    id: string,
     field_values: Map<(string | number), (string | number)>,
   ) {
     const args: (string | number)[] = [];
@@ -1201,7 +1201,7 @@ class RedisImpl implements RedisCommands {
       args.push(maxlen.elements);
     }
 
-    args.push(streamId);
+    args.push(id);
 
     for (const [f, v] of field_values) {
       args.push(f);

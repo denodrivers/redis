@@ -315,6 +315,8 @@ export type RedisCommands = {
    */
   xack(key: string, group: string, ...ids: string[]): Promise<Integer>;
   /**
+   * Write a message to a stream.
+   * 
    * Returns bulk string reply, specifically:
    * The command returns the ID of the added entry. 
    * The ID is the one auto-generated if * is passed 
@@ -331,19 +333,19 @@ export type RedisCommands = {
   ): Promise<BulkString>;
   xadd_map(
     key: string,
-    streamId: string,
+    id: string,
     field_values: Map<(string | number), (string | number)>,
   ): Promise<BulkString>;
   xadd_maxlen(
     key: string,
     maxlen: XMaxlen,
-    streamId: string,
+    id: string,
     ...field_values: (string | number)[]
   ): Promise<BulkString>;
   xadd_maxlen_map(
     key: string,
     maxlen: XMaxlen,
-    streamId: string,
+    id: string,
     field_values: Map<(string | number), (string | number)>,
   ): Promise<BulkString>;
   /**
