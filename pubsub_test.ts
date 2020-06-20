@@ -1,4 +1,7 @@
-import { assertEquals } from "./vendor/https/deno.land/std/testing/asserts.ts";
+import {
+  assertEquals,
+  assert,
+} from "./vendor/https/deno.land/std/testing/asserts.ts";
 import { connect } from "./redis.ts";
 const { test } = Deno;
 const addr = {
@@ -72,5 +75,20 @@ test({
     await sub.close();
     pub.close();
     redis.close();
+  },
+});
+
+test({
+  name:
+    "testSubscriptionShouldNotThrowBadResourceErrorWhenConnectionIsClosed (#89)",
+  async fn() {
+    const redis = await connect(addr);
+    const sub = await redis.subscribe("test");
+    const subscriptionPromise = (async () => {
+      for await (const _ of sub.receive()) {}
+    })();
+    redis.close();
+    await subscriptionPromise;
+    assert(sub.isClosed);
   },
 });
