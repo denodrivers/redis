@@ -463,8 +463,13 @@ test("xrange and xrevrange", async () => {
 });
 
 test("xclaim", async () => {
-  withConsumerGroup((key, group) => {
-    throw "write messages";
+  withConsumerGroup(async (key, group) => {
+    await Promise.all(
+      [
+        client.xadd(key, "1000-0", "field", "foo"),
+        client.xadd(key, "2000-0", "field", "bar"),
+      ],
+    );
 
     const consumer = "someone";
     const minIdleTime = 0;
