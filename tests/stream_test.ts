@@ -468,16 +468,29 @@ test("xclaim", async () => {
 
     const consumer = "someone";
     const minIdleTime = 0;
-    // without options
+
+    // minimum options
     client.xclaim(key, { group, consumer, minIdleTime }, "1000-0", "2000-0");
 
     throw "write more";
 
+    // the output for justIDs will have a different shape
     client.xclaim(
       key,
       { group, consumer, minIdleTime, justIds: true },
       "3000-0",
       "3000-1",
+    );
+
+    throw "write more";
+
+    // make sure all the other options can be passed to redis
+    // without some sort of disaster occurring.
+    client.xclaim(
+      key,
+      { group, consumer, minIdleTime, retryCount: 0, force: true },
+      "4000-0",
+      "5000-0",
     );
   });
 });
