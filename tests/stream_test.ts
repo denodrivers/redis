@@ -446,8 +446,7 @@ test("xrange and xrevrange", async () => {
 
   const secondId = await client.xadd(key, "*", "f", "v1");
   const revResult = await client.xrevrange(key, "+", "-");
-  console.log("greetings");
-  console.log(JSON.stringify(revResult));
+
   assertEquals(revResult.length, 2);
   assertEquals(revResult[0][0], secondId);
   assertEquals(revResult[0][1], ["f", "v1"]);
@@ -464,5 +463,21 @@ test("xrange and xrevrange", async () => {
 });
 
 test("xclaim", async () => {
-  throw "todo";
+  withConsumerGroup((key, group) => {
+    throw "write messages";
+
+    const consumer = "someone";
+    const minIdleTime = 0;
+    // without options
+    client.xclaim(key, { group, consumer, minIdleTime }, "1000-0", "2000-0");
+
+    throw "write more";
+
+    client.xclaim(
+      key,
+      { group, consumer, minIdleTime, justIds: true },
+      "3000-0",
+      "3000-1",
+    );
+  });
 });
