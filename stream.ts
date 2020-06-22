@@ -41,7 +41,23 @@ export interface XPendingCount {
   ids: [XPendingId];
 }
 
-export interface XPendingId {} // TODO
+/**
+ * Represents a pending message parsed from xpending.
+ * 
+ * @param id The ID of the message
+ * @param consumer The name of the consumer that fetched the message
+ *  and has still to acknowledge it. We call it the
+ *  current owner of the message.
+ * @param lastDeliveredMs The number of milliseconds that elapsed since the 
+ *  last time this message was delivered to this consumer.
+ * @param timesDelivered The number of times this message was delivered.
+ */
+export interface XPendingId {
+  id: string;
+  consumer: string;
+  lastDeliveredMs: number;
+  timesDelivered: number;
+}
 
 // TODO check command name against deno-redis API
 /**
