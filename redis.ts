@@ -26,6 +26,8 @@ import {
   XMaxlen,
   XReadKeyData,
   XClaimOpts,
+  XPendingReply,
+  StartEndCount,
 } from "./stream.ts";
 
 export type Redis = RedisCommands & {
@@ -1388,6 +1390,22 @@ class RedisImpl implements RedisCommands {
       groupName,
       id,
     );
+  }
+
+  xpending(
+    key: string,
+    group: string,
+    startEndCount?: StartEndCount,
+    consumer?: string,
+  ) {
+    return this.execArrayReply<BulkString>("XPENDING").then((raw) => {
+      throw "WRITE ME !";
+
+      const reply: XPendingReply = {
+        kind: "empty",
+      };
+      return reply;
+    });
   }
 
   xrange(

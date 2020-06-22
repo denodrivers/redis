@@ -1,6 +1,12 @@
 import { RedisSubscription } from "./pubsub.ts";
 import { RedisPipeline } from "./pipeline.ts";
-import { XReadReply, XMaxlen, XClaimOpts } from "./stream.ts";
+import {
+  XReadReply,
+  XMaxlen,
+  XClaimOpts,
+  StartEndCount,
+  XPendingReply,
+} from "./stream.ts";
 
 export type Raw = Status | Integer | Bulk | ConditionalArray;
 export type Status = string;
@@ -507,6 +513,12 @@ XGROUP SETID mystream consumer-group-name 0
     id: string,
   ): Promise<Status>;
   xlen(key: string): Promise<Integer>;
+  xpending(
+    key: string,
+    group: string,
+    startEndCount?: StartEndCount,
+    consumer?: string,
+  ): Promise<XPendingReply>;
   xrange(
     key: string,
     start: string,
