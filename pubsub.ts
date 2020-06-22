@@ -34,7 +34,7 @@ class RedisSubscriptionImpl implements RedisSubscription {
   async psubscribe(...patterns: string[]) {
     await sendCommand(this.writer, this.reader, "PSUBSCRIBE", ...patterns);
     for (const pat of patterns) {
-      this.channels[pat] = true;
+      this.patterns[pat] = true;
     }
   }
 
