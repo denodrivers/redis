@@ -7,15 +7,7 @@ export interface XMaxlen {
 
 export type XReadReply = XReadKeyData[];
 export type XReadKeyData = [string, XReadIdData[]];
-
-/** Used in the XPENDING command, all three of these
- * args must be specified if _any_ are specified.
- */
-export interface StartEndCount {
-  start: number;
-  end: number;
-  count: number;
-}
+type XReadIdData = [string, string[]];
 
 export type XPendingReply = XPendingEmpty | XPendingData | XPendingCount;
 export interface XPendingEmpty {
@@ -58,6 +50,14 @@ export interface XPendingId {
   lastDeliveredMs: number;
   timesDelivered: number;
 }
+/** Used in the XPENDING command, all three of these
+ * args must be specified if _any_ are specified.
+ */
+export interface StartEndCount {
+  start: number;
+  end: number;
+  count: number;
+}
 
 // TODO check command name against deno-redis API
 /**
@@ -83,5 +83,3 @@ export interface XClaimOpts {
   force?: boolean;
   justId?: boolean;
 }
-
-type XReadIdData = [string, string[]];
