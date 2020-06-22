@@ -464,6 +464,15 @@ test("xrange and xrevrange", async () => {
 
 test("xclaim", async () => {
   withConsumerGroup(async (key, group) => {
+    // xclaim test basic idea:
+    // 1. we need to test adding messages to a group
+    // 2. then xreadgroup needs to define a consumer and read pending
+    //    messages without acking them
+    // 3. then we need to sleep 5ms and call xpending
+    // 4. from here we should be able to claim message
+    //    past the idle time and read them from a different consumer
+    throw "try that tho";
+
     await Promise.all(
       [
         client.xadd(key, "1000-0", "field", "foo"),
