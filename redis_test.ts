@@ -9,3 +9,4 @@ import "./tests/sorted_set_test.ts";
 import "./tests/string_test.ts";
 import "./tests/key_test.ts";
 import "./tests/stream_test.ts";
+import "./tests/acl_cmd_test.ts";

@@ -94,12 +94,74 @@ class RedisImpl implements RedisCommands {
     return reply as Status | BulkNil;
   }
 
+  acl_cat(categoryname?: string) {
+    if (categoryname) {
+      return this.execArrayReply<BulkString>("ACL", "CAT", categoryname);
+    } else {
+      return this.execArrayReply<BulkString>("ACL", "CAT");
+    }
+  }
+
+  acl_deluser(username: string) {
+    return this.execIntegerReply("ACL", "DELUSER", username);
+  }
+
+  acl_genpass(bits?: Integer) {
+    if (bits) {
+      return this.execStatusReply("ACL", "GENPASS", bits);
+    } else {
+      return this.execStatusReply("ACL", "GENPASS");
+    }
+  }
+
+  acl_getuser(username: string) {
+    return this.execArrayReply<BulkString>("ACL", "GETUSER", username);
+  }
+
+  acl_help() {
+    return this.execArrayReply<BulkString>("ACL", "HELP");
+  }
+
+  acl_list() {
+    return this.execArrayReply<BulkString>("ACL", "LIST");
+  }
+
+  acl_load() {
+    return this.execStatusReply("ACL", "LOAD");
+  }
+
+  acl_log(param: string|number) {
+    if (param === "RESET" || param === "reset") {
+      return this.execStatusReply("ACL", "LOG", "RESET");
+    }
+    return this.execArrayReply<BulkString>("ACL", "LOG", param);
+  }
+
+  acl_save() {
+    return this.execStatusReply("ACL", "SAVE");
+  }
+
+  acl_setuser(username: string, rule: string) {
+    return this.execStatusReply("ACL", "SETUSER", username, rule);
+  }
+
+  acl_users() {
+    return this.execArrayReply<BulkString>("ACL", "USERS");
+  }
+
+  acl_whoami() {
+    return this.execStatusReply("ACL", "WHOAMI");
+  }
+
   append(key: string, value: string | number) {
     return this.execIntegerReply("APPEND", key, value);
   }
 
-  auth(password: string) {
-    return this.execStatusReply("AUTH", password);
+  auth(param1: string, param2?: string) {
+    if (typeof param2 === "string") {
+      return this.execStatusReply("AUTH", param1, param2);
+    }
+    return this.execStatusReply("AUTH", param1);
   }
 
   bgrewriteaof() {
@@ -665,6 +727,18 @@ class RedisImpl implements RedisCommands {
       }
     }
     return this.execStatusReply("MIGRATE", ...args);
+  }
+
+  module_list() {
+    return this.execArrayReply<BulkString>("MODULE", "LIST");
+  }
+
+  module_load(path: string, args: string) {
+    return this.execStatusReply("MODULE", "LOAD", path, args);
+  }
+
+  module_unload(name: string) {
+    return this.execStatusReply("MODULE", "UNLOAD", name);
   }
 
   monitor() {

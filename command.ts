@@ -12,6 +12,7 @@ export type ConditionalArray = Raw[];
 export type RedisCommands = {
   // Connection
   auth(password: string): Promise<Status>;
+  auth(username: string, password: string): Promise<Status>;
   echo(message: string): Promise<BulkString>;
   ping(): Promise<Status>;
   ping(message: string): Promise<BulkString>;
@@ -667,6 +668,18 @@ XGROUP SETID mystream consumer-group-name 0
   // Cluster
   // cluster //
   // Server
+  acl_cat(parameter?: string): Promise<BulkString[]>;
+  acl_deluser(parameter: string): Promise<Integer>;
+  acl_genpass(parameter?: number): Promise<Status>;
+  acl_getuser(parameter: string): Promise<BulkString[]>;
+  acl_help(): Promise<BulkString[]>;
+  acl_list(): Promise<BulkString[]>;
+  acl_load(): Promise<Status>;
+  acl_log(parameter: string | number): Promise<Status | BulkString[]>;
+  acl_save(): Promise<Status>;
+  acl_setuser(username: string, rule: string): Promise<Status>;
+  acl_users(): Promise<BulkString[]>;
+  acl_whoami(): Promise<Status>;
   bgrewriteaof(): Promise<Status>;
   bgsave(): Promise<Status>;
   // client //
@@ -708,6 +721,9 @@ XGROUP SETID mystream consumer-group-name 0
       samples?: number;
     },
   ): Promise<Integer>;
+  module_list(): Promise<BulkString[]>;
+  module_load(path: string, args: string): Promise<Status>;
+  module_unload(name: string): Promise<Status>;
   monitor(): void;
   role(): Promise<
     | ["master", Integer, BulkString[][]]
