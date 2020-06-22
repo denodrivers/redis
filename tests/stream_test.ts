@@ -463,15 +463,14 @@ test("xrange and xrevrange", async () => {
 });
 
 test("xclaim", async () => {
-  withConsumerGroup(async (key, group) => {
+  await withConsumerGroup(async (key, group) => {
     // xclaim test basic idea:
-    // 1. we need to test adding messages to a group
+    // 1. add messages to a group
     // 2. then xreadgroup needs to define a consumer and read pending
     //    messages without acking them
     // 3. then we need to sleep 5ms and call xpending
     // 4. from here we should be able to claim message
     //    past the idle time and read them from a different consumer
-    throw "try that tho";
 
     await Promise.all(
       [
@@ -484,23 +483,30 @@ test("xclaim", async () => {
     const minIdleTime = 0;
 
     // minimum options
-    client.xclaim(key, { group, consumer, minIdleTime }, "1000-0", "2000-0");
+    const firstClaimed = await client.xclaim(
+      key,
+      { group, consumer, minIdleTime },
+      "1000-0",
+      "2000-0",
+    );
+    console.log("GREETINGS");
+    console.log(JSON.stringify(firstClaimed));
 
-    throw "write more";
+    throw "checkity";
 
     // the output for justIDs will have a different shape
-    client.xclaim(
+    await client.xclaim(
       key,
-      { group, consumer, minIdleTime, justIds: true },
+      { group, consumer, minIdleTime, justId: true },
       "3000-0",
       "3000-1",
     );
 
-    throw "write more";
+    throw "maybe write more";
 
     // make sure all the other options can be passed to redis
     // without some sort of disaster occurring.
-    client.xclaim(
+    await client.xclaim(
       key,
       { group, consumer, minIdleTime, retryCount: 0, force: true },
       "4000-0",

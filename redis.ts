@@ -130,7 +130,7 @@ class RedisImpl implements RedisCommands {
     return this.execStatusReply("ACL", "LOAD");
   }
 
-  acl_log(param: string|number) {
+  acl_log(param: string | number) {
     if (param === "RESET" || param === "reset") {
       return this.execStatusReply("ACL", "LOG", "RESET");
     }
@@ -1286,8 +1286,39 @@ class RedisImpl implements RedisCommands {
   }
 
   xclaim(key: string, opts: XClaimOpts, ...ids: string[]) {
-    throw "TODO";
-    return this.execArrayReply<BulkString>("XCLAIM");
+    const args = [];
+    if (opts.idle) {
+      args.push("IDLE");
+      args.push(opts.idle);
+    }
+
+    if (opts.time) {
+      args.push("TIME");
+      args.push(opts.time);
+    }
+
+    if (opts.retryCount) {
+      args.push("RETRYCOUNT");
+      args.push(opts.retryCount);
+    }
+
+    if (opts.force) {
+      args.push("FORCE");
+    }
+
+    if (opts.justId) {
+      args.push("JUSTID");
+    }
+
+    return this.execArrayReply<BulkString>(
+      "XCLAIM",
+      key,
+      opts.group,
+      opts.consumer,
+      opts.minIdleTime,
+      ...ids,
+      ...args,
+    );
   }
 
   xdel(key: string, ...ids: string[]) {

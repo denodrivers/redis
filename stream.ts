@@ -16,7 +16,7 @@ export interface XClaimOpts {
   time?: number;
   retryCount?: number;
   force?: boolean;
-  justIds?: boolean;
+  justId?: boolean;
 }
 
 type XReadIdData = [string, string[]];
