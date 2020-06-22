@@ -11,6 +11,7 @@ export type ConditionalArray = Raw[];
 export type RedisCommands = {
   // Connection
   auth(password: string): Promise<Status>;
+  auth(username: string, password: string): Promise<Status>;
   echo(message: string): Promise<BulkString>;
   ping(): Promise<Status>;
   ping(message: string): Promise<BulkString>;
@@ -396,7 +397,6 @@ export type RedisCommands = {
   // Cluster
   // cluster //
   // Server
-  acl_auth(username: string, passwd: string): Promise<Status>;
   acl_cat(parameter?: string): Promise<BulkString[]>;
   acl_deluser(parameter: string): Promise<Integer>;
   acl_genpass(parameter?: number): Promise<Status>;

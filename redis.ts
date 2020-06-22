@@ -156,8 +156,11 @@ class RedisImpl implements RedisCommands {
     return this.execIntegerReply("APPEND", key, value);
   }
 
-  auth(password: string) {
-    return this.execStatusReply("AUTH", password);
+  auth(param1: string, param2?: string) {
+    if (typeof param2 === "string") {
+      return this.execStatusReply("AUTH", param1, param2);
+    }
+    return this.execStatusReply("AUTH", param1);
   }
 
   bgrewriteaof() {

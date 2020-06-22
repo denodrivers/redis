@@ -101,17 +101,17 @@ test("genpass", async () => {
 });
 
 test("aclauth", async () => {
-  assertEquals(await client.acl_auth("default", ""), "OK")
+  assertEquals(await client.auth("default", ""), "OK")
 });
 
 test("log", async () => {
-  let username = "balh"
+  let randString = "balh"
   try {
-    await client.acl_auth(username, username)
+    await client.auth(randString, randString)
   } catch (error) {
     // skip invalid username-password pair error
   }
-  assertEquals((await client.acl_log(1))[0][9], username);
+  assertEquals((await client.acl_log(1))[0][9], randString);
   assertEquals((await client.acl_log("RESET")), "OK");
 });
 
