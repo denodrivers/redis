@@ -63,7 +63,7 @@ export async function sendCommand(
   return readReply(reader);
 }
 
-export async function readReply(reader: BufReader): Promise<RedisRawReply> {
+export async function readReply(reader: BufReader  ): Promise<RedisRawReply> {
   const res = await reader.peek(1);
   if (res === null) {
     throw new Error("EOF");
