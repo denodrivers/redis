@@ -17,7 +17,6 @@ test("quit", async () => {
   const redis = await connect({ hostname: "127.0.0.1", port: 6379 });
   assertEquals(await redis.quit(), "OK");
   assertEquals(redis.isClosed, true);
-  redis.close();
 });
 test("select", async () => {
   assertEquals(await client.select(1), "OK");

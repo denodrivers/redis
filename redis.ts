@@ -1,17 +1,11 @@
 type Reader = Deno.Reader;
 type Writer = Deno.Writer;
 type Closer = Deno.Closer;
-import {
-  BufReader,
-  BufWriter,
-} from "./vendor/https/deno.land/std/io/bufio.ts";
-import { psubscribe, RedisSubscription, subscribe } from "./pubsub.ts";
-import {
-  muxExecutor,
-  CommandExecutor,
-  RedisRawReply,
-} from "./io.ts";
-import { createRedisPipeline, RedisPipeline } from "./pipeline.ts";
+
+import { BufReader, BufWriter } from "./vendor/https/deno.land/std/io/bufio.ts";
+import { psubscribe, subscribe } from "./pubsub.ts";
+import { CommandExecutor, CommandFunc, RedisRawReply } from "./io.ts";
+import { createRedisPipeline } from "./pipeline.ts";
 import {
   RedisCommands,
   Status,
@@ -22,30 +16,39 @@ import {
   Raw,
   BulkNil,
 } from "./command.ts";
+import { RedisConnection } from "./connection.ts";
 
 export type Redis = RedisCommands & {
   executor: CommandExecutor;
 };
 
 class RedisImpl implements RedisCommands {
-  _isClosed = false;
   get isClosed() {
-    return this._isClosed;
+    return this.connection?.isClosed;
+  }
+
+  get isConnected() {
+    return this.connection?.isConnected;
+  }
+
+  get executor() {
+    return this.connection?.executor!;
   }
 
   constructor(
-    private closer: Closer,
-    private writer: BufWriter,
-    private reader: BufReader,
-    readonly executor: CommandExecutor,
+    private connection: RedisConnection,
   ) {
+  }
+
+  close() {
+    return this.connection?.close();
   }
 
   async execStatusReply(
     command: string,
     ...args: (string | number)[]
   ): Promise<Status> {
-    const [_, reply] = await this.executor.exec(command, ...args);
+    const [_, reply] = await this.connection?.executor!.exec(command, ...args);
     return reply as Status;
   }
 
@@ -53,7 +56,7 @@ class RedisImpl implements RedisCommands {
     command: string,
     ...args: (string | number)[]
   ): Promise<Integer> {
-    const [_, reply] = await this.executor.exec(command, ...args);
+    const [_, reply] = await this.connection!.exec(command, ...args);
     return reply as number;
   }
 
@@ -61,7 +64,7 @@ class RedisImpl implements RedisCommands {
     command: string,
     ...args: (string | number)[]
   ): Promise<T> {
-    const [_, reply] = await this.executor.exec(command, ...args);
+    const [_, reply] = await this.connection!.exec(command, ...args);
     return reply as T;
   }
 
@@ -69,7 +72,7 @@ class RedisImpl implements RedisCommands {
     command: string,
     ...args: (string | number)[]
   ): Promise<T[]> {
-    const [_, reply] = await this.executor.exec(command, ...args);
+    const [_, reply] = await this.connection!.exec(command, ...args);
     return reply as T[];
   }
 
@@ -77,7 +80,7 @@ class RedisImpl implements RedisCommands {
     command: string,
     ...args: (string | number)[]
   ): Promise<Integer | BulkNil> {
-    const [_, reply] = await this.executor.exec(command, ...args);
+    const [_, reply] = await this.connection!.exec(command, ...args);
     return reply as Integer | BulkNil;
   }
 
@@ -85,7 +88,7 @@ class RedisImpl implements RedisCommands {
     command: string,
     ...args: (string | number)[]
   ): Promise<Status | BulkNil> {
-    const [_, reply] = await this.executor.exec(command, ...args);
+    const [_, reply] = await this.connection!.exec(command, ...args);
     return reply as Status | BulkNil;
   }
 
@@ -374,7 +377,7 @@ class RedisImpl implements RedisCommands {
     } else {
       _args.push(...args);
     }
-    const [_, raw] = await this.executor.exec(cmd, ..._args);
+    const [_, raw] = await this.connection!.exec(cmd, ..._args);
     return raw;
   }
 
@@ -820,11 +823,11 @@ class RedisImpl implements RedisCommands {
   }
 
   subscribe(...channels: string[]) {
-    return subscribe(this.writer, this.reader, ...channels);
+    return subscribe(this.connection, ...channels);
   }
 
   psubscribe(...patterns: string[]) {
-    return psubscribe(this.writer, this.reader, ...patterns);
+    return psubscribe(this.connection, ...patterns);
   }
 
   pubsub_channels(pattern: string) {
@@ -854,11 +857,10 @@ class RedisImpl implements RedisCommands {
   }
 
   quit() {
-    try {
-      return this.execStatusReply("QUIT");
-    } finally {
-      this._isClosed = true;
-    }
+    return this.execStatusReply("QUIT")
+      .finally(() => {
+        this.connection?.close();
+      });
   }
 
   randomkey() {
@@ -1047,7 +1049,7 @@ class RedisImpl implements RedisCommands {
   }
 
   slowlog(subcommand: string, ...argument: string[]) {
-    return this.executor.exec("SLOWLOG", subcommand, ...argument);
+    return this.connection!.exec("SLOWLOG", subcommand, ...argument);
   }
 
   smembers(key: string) {
@@ -1519,17 +1521,11 @@ class RedisImpl implements RedisCommands {
 
   // pipeline
   tx() {
-    return createRedisPipeline(this.writer, this.reader, { tx: true });
+    return createRedisPipeline(this.connection, { tx: true });
   }
 
   pipeline() {
-    return createRedisPipeline(this.writer, this.reader);
-  }
-
-  // Stream
-
-  close() {
-    this.closer.close();
+    return createRedisPipeline(this.connection);
   }
 }
 
@@ -1539,6 +1535,8 @@ export type RedisConnectOptions = {
   tls?: boolean;
   db?: number;
   password?: string;
+  name?: string;
+  maxRetryCount?: number;
 };
 
 function parsePortLike(port: string | number | undefined): number {
@@ -1562,38 +1560,22 @@ function parsePortLike(port: string | number | undefined): number {
  */
 export async function connect({
   hostname,
-  port,
+  port = 6379,
   tls,
   db,
   password,
+  name,
+  maxRetryCount,
 }: RedisConnectOptions): Promise<Redis> {
-  const dialOpts: Deno.ConnectOptions = {
+  const connection = new RedisConnection(
     hostname,
-    port: parsePortLike(port),
-  };
-  if (!Number.isSafeInteger(dialOpts.port)) {
-    throw new Error("deno-redis: opts.port is invalid");
-  }
-  const conn: Deno.Conn = tls
-    ? await Deno.connectTls(dialOpts)
-    : await Deno.connect(dialOpts);
+    port,
+    { tls, db, maxRetryCount, name, password },
+  );
 
-  const bufr = new BufReader(conn);
-  const bufw = new BufWriter(conn);
-  const exec = muxExecutor(bufr, bufw);
-  const client = await create(conn, conn, conn, exec);
-  if (password != null) {
-    try {
-      await client.auth(password);
-    } catch (err) {
-      client.close();
-      throw err;
-    }
-  }
-  if (db) {
-    await client.select(db);
-  }
-  return client;
+  await connection.connect();
+
+  return new RedisImpl(connection);
 }
 
 export function create(
@@ -1602,10 +1584,19 @@ export function create(
   reader: Reader,
   executor: CommandExecutor,
 ): Redis {
-  return new RedisImpl(
+  return new RedisImpl({
     closer,
-    new BufWriter(writer),
-    new BufReader(reader),
     executor,
-  );
+    reader,
+    writer,
+    get exec(): CommandFunc<RedisRawReply> {
+      return executor.exec;
+    },
+    get isConnected(): boolean {
+      return true;
+    },
+    get isClosed(): boolean {
+      return false;
+    },
+  } as RedisConnection);
 }

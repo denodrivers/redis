@@ -535,5 +535,6 @@ export type RedisCommands = {
   ): Promise<[BulkString, BulkString[]]>;
 
   readonly isClosed: boolean;
+  readonly isConnected: boolean;
   close(): void;
 };
