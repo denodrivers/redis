@@ -1408,14 +1408,14 @@ class RedisImpl implements RedisCommands {
       // consumer group.
       // This will return XPendingData or XPendingEmpty
       // depending on if there are any records!
-      const basicInvocation = startEndCount === undefined &&
+      const isSimpleInvocation = startEndCount === undefined &&
         consumer === undefined;
-      if (basicInvocation && raw.length === 0) {
+      if (isSimpleInvocation && raw.length === 0) {
         const reply: XPendingReply = {
           kind: "empty",
         };
         return reply;
-      } else if (basicInvocation) {
+      } else if (isSimpleInvocation) {
         throw "WRITE ME";
 
         const count = 0; // TODO
