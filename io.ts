@@ -137,10 +137,12 @@ export async function readBulkReply(reader: BufReader): Promise<Bulk> {
   );
 }
 
-export async function readArrayReply(reader: BufReader): Promise<any[]> {
+export async function readArrayReply(
+  reader: BufReader,
+): Promise<ConditionalArray> {
   const line = await readLine(reader);
   const argCount = parseInt(line.substr(1, line.length - 3));
-  const result: any[] = [];
+  const result: ConditionalArray = [];
   for (let i = 0; i < argCount; i++) {
     const res = await reader.peek(1);
     if (res === null) {

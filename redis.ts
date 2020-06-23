@@ -404,6 +404,7 @@ class RedisImpl implements RedisCommands {
     return this.execStatusReply("FLUSHDB", ...args);
   }
 
+  // deno-lint-ignore no-explicit-any
   geoadd(key: string, ...args: any[]) {
     const _args = [];
     if (Array.isArray(args[0])) {
@@ -1199,6 +1200,7 @@ class RedisImpl implements RedisCommands {
     return this.execStatusReply("WATCH", key, ...keys);
   }
 
+  // deno-lint-ignore no-explicit-any
   zadd(key: string, scoreOrArr: any, memberOrOpts: any, opts?: any) {
     const args: (string | number)[] = [key];
     let _opts = opts;

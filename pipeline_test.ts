@@ -46,7 +46,7 @@ test({
     const tx2 = redis.tx();
     const tx3 = redis.tx();
     await redis.del("key");
-    await Promise.all<any>([
+    await Promise.all<unknown>([
       tx1.get("key"),
       tx1.incr("key"),
       tx1.incr("key"),
@@ -90,7 +90,7 @@ test({
     {
       const redis = await connect(addr);
       const tx = redis.pipeline();
-      let promises: Promise<any>[] = [];
+      let promises: Promise<unknown>[] = [];
       await redis.del("a", "b", "c");
       for (const key of ["a", "b", "c"]) {
         promises.push(tx.set(key, key));

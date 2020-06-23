@@ -9,7 +9,7 @@ import { Redis } from "../redis.ts";
 
 const { test, client: redis, opts } = await makeTest("general");
 test("conccurent", async function testConcurrent() {
-  let promises: Promise<any>[] = [];
+  let promises: Promise<string | undefined>[] = [];
   for (const key of ["a", "b", "c"]) {
     promises.push(redis.set(key, key));
   }

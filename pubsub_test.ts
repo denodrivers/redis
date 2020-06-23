@@ -85,6 +85,7 @@ test({
     const redis = await connect(addr);
     const sub = await redis.subscribe("test");
     const subscriptionPromise = (async () => {
+      // deno-lint-ignore no-empty
       for await (const _ of sub.receive()) {}
     })();
     redis.close();
