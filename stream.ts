@@ -26,11 +26,11 @@ export interface XPendingData {
   count: number;
   startId: string;
   endId: string;
-  consumers: [XInfoConsumer];
+  consumers: XInfoConsumer[];
 }
 export interface XPendingCount {
   kind: "count";
-  ids: [XPendingId];
+  ids: XPendingId[];
 }
 
 /**

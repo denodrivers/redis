@@ -14,79 +14,92 @@ test("list", async () => {
 });
 
 test("getuser", async () => {
-  assertEquals(await client.acl_getuser("default"),
-  [ "flags",[ "on", "allkeys", "allcommands", "nopass" ],
-    "passwords", [], "commands", "+@all", "keys", [ "*" ]
-  ]);
+  assertEquals(
+    await client.acl_getuser("default"),
+    [
+      "flags",
+      ["on", "allkeys", "allcommands", "nopass"],
+      "passwords",
+      [],
+      "commands",
+      "+@all",
+      "keys",
+      ["*"],
+    ],
+  );
 });
 
 test("cat", async () => {
-  assertEquals((await client.acl_cat()).sort(),
-  [
-    "keyspace",
-    "read",
-    "write",
-    "set",
-    "sortedset",
-    "list",
-    "hash",
-    "string",
-    "bitmap",
-    "hyperloglog",
-    "geo",
-    "stream",
-    "pubsub",
-    "admin",
-    "fast",
-    "slow",
-    "blocking",
-    "dangerous",
-    "connection",
-    "transaction",
-    "scripting"
-  ].sort());
-  assertEquals((await client.acl_cat("dangerous")).sort(),
-  [
-    "lastsave",
-    "shutdown",
-    "module",
-    "monitor",
-    "role",
-    "client",
-    "replconf",
-    "config",
-    "pfselftest",
-    "save",
-    "replicaof",
-    "restore-asking",
-    "restore",
-    "latency",
-    "swapdb",
-    "slaveof",
-    "bgsave",
-    "debug",
-    "bgrewriteaof",
-    "sync",
-    "flushdb",
-    "keys",
-    "psync",
-    "pfdebug",
-    "flushall",
-    "cluster",
-    "info",
-    "migrate",
-    "acl",
-    "sort",
-    "slowlog"
-  ].sort());
+  assertEquals(
+    (await client.acl_cat()).sort(),
+    [
+      "keyspace",
+      "read",
+      "write",
+      "set",
+      "sortedset",
+      "list",
+      "hash",
+      "string",
+      "bitmap",
+      "hyperloglog",
+      "geo",
+      "stream",
+      "pubsub",
+      "admin",
+      "fast",
+      "slow",
+      "blocking",
+      "dangerous",
+      "connection",
+      "transaction",
+      "scripting",
+    ].sort(),
+  );
+  assertEquals(
+    (await client.acl_cat("dangerous")).sort(),
+    [
+      "lastsave",
+      "shutdown",
+      "module",
+      "monitor",
+      "role",
+      "client",
+      "replconf",
+      "config",
+      "pfselftest",
+      "save",
+      "replicaof",
+      "restore-asking",
+      "restore",
+      "latency",
+      "swapdb",
+      "slaveof",
+      "bgsave",
+      "debug",
+      "bgrewriteaof",
+      "sync",
+      "flushdb",
+      "keys",
+      "psync",
+      "pfdebug",
+      "flushall",
+      "cluster",
+      "info",
+      "migrate",
+      "acl",
+      "sort",
+      "slowlog",
+    ].sort(),
+  );
 });
 
 test("users", async () => {
-  assertEquals(await client.acl_users(), ["default"])
+  assertEquals(await client.acl_users(), ["default"]);
 });
 
 test("acl_setuser", async () => {
-  assertEquals(await client.acl_setuser("alan", "+get"), "OK")
+  assertEquals(await client.acl_setuser("alan", "+get"), "OK");
   assertEquals(await client.acl_deluser("alan"), 1);
 });
 
@@ -96,18 +109,18 @@ test("deluser", async () => {
 
 test("genpass", async () => {
   assertEquals((await client.acl_genpass()).length, 64);
-  let testlen = 32
+  let testlen = 32;
   assertEquals((await client.acl_genpass(testlen)).length, testlen / 4);
 });
 
 test("aclauth", async () => {
-  assertEquals(await client.auth("default", ""), "OK")
+  assertEquals(await client.auth("default", ""), "OK");
 });
 
 test("log", async () => {
-  let randString = "balh"
+  let randString = "balh";
   try {
-    await client.auth(randString, randString)
+    await client.auth(randString, randString);
   } catch (error) {
     // skip invalid username-password pair error
   }

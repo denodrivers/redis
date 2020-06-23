@@ -28,6 +28,8 @@ import {
   XClaimOpts,
   XPendingReply,
   StartEndCount,
+  XPendingData,
+  XInfoConsumer,
 } from "./stream.ts";
 
 export type Redis = RedisCommands & {
@@ -1398,13 +1400,43 @@ class RedisImpl implements RedisCommands {
     startEndCount?: StartEndCount,
     consumer?: string,
   ) {
+    throw "WRITE ME!";
     return this.execArrayReply<BulkString>("XPENDING").then((raw) => {
-      throw "WRITE ME !";
+      // When XPENDING is called with just a key name
+      // and a consumer group name, it just outputs a
+      // summary about the pending messages in a given
+      // consumer group.
+      // This will return XPendingData or XPendingEmpty
+      // depending on if there are any records!
+      const basicInvocation = startEndCount === undefined &&
+        consumer === undefined;
+      if (basicInvocation && raw.length === 0) {
+        const reply: XPendingReply = {
+          kind: "empty",
+        };
+        return reply;
+      } else if (basicInvocation) {
+        throw "WRITE ME";
 
-      const reply: XPendingReply = {
-        kind: "empty",
-      };
-      return reply;
+        const count = 0; // TODO
+        const startId = "0-0"; // TODO
+        const endId = "0-0"; // TODO
+        const consumers: XInfoConsumer[] = []; // TODO
+        const reply: XPendingData = {
+          kind: "data",
+          count,
+          startId,
+          endId,
+          consumers,
+        };
+        return reply;
+      } else {
+        throw "WRITE ME";
+        const reply: XPendingReply = {
+          kind: "empty",
+        };
+        return reply;
+      }
     });
   }
 
