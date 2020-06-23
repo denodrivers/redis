@@ -125,7 +125,7 @@ class RedisImpl implements RedisCommands {
     return this.execStatusReply("ACL", "LOAD");
   }
 
-  acl_log(param: string|number) {
+  acl_log(param: string | number) {
     if (param === "RESET" || param === "reset") {
       return this.execStatusReply("ACL", "LOG", "RESET");
     }
