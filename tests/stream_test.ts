@@ -499,8 +499,6 @@ test("xclaim", async () => {
     );
     assertEquals(firstClaimed.length, 2);
 
-    console.log("GREETINGS");
-    console.log(JSON.stringify(firstClaimed));
     throw "checkity";
 
     // the output for justIDs will have a different shape
