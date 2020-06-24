@@ -488,7 +488,7 @@ test("xclaim", async () => {
 
     await sleep(5); //millis
 
-    const minIdleTime = 0;
+    const minIdleTime = 4;
 
     // minimum options
     const firstClaimed = await client.xclaim(
@@ -497,9 +497,10 @@ test("xclaim", async () => {
       "1000-0",
       "2000-0",
     );
+    assertEquals(firstClaimed.length, 2);
+
     console.log("GREETINGS");
     console.log(JSON.stringify(firstClaimed));
-
     throw "checkity";
 
     // the output for justIDs will have a different shape
