@@ -201,7 +201,7 @@ test("xgroup setid and delconsumer", async () => {
   await cleanupStream(client, key);
 });
 
-test("xreadgroup auto ack", async () => {
+test("xreadgroup but no ack", async () => {
   const key = randomStream();
   const group = "test-group";
 
@@ -221,7 +221,7 @@ test("xreadgroup auto ack", async () => {
   assertEquals(dataOut.length, 1);
   assertEquals(dataOut[0].length, 2);
 
-  // > symbol causes automatic acknowledgement by Redis
+  // > symbol does NOT cause automatic acknowledgement by Redis
   const ackSize = await client.xack(key, group, addedId);
   assertEquals(ackSize, 1);
 
