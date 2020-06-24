@@ -1,5 +1,26 @@
 export const MAX_SEQ_NO = "18446744073709551615";
 
+// TODO ... do we like it ?
+export interface XMessage {
+  id: string;
+  field_values: Map<string, string>;
+}
+
+// TODO .. do we like it?
+export function parseXMessage(raw: [string, string[]]): XMessage {
+  let m = 0;
+  let field_values: Map<string, string> = new Map();
+  let f: string | undefined = undefined;
+  for (const data of raw[1]) {
+    if (m % 2 === 0) {
+      f = data;
+    } else if (f) {
+      field_values.set(f, data);
+    }
+  }
+  return { id: raw[0], field_values };
+}
+
 export interface XMaxlen {
   approx?: boolean;
   elements: number;
