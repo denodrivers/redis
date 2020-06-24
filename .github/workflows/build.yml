@@ -27,6 +27,9 @@ jobs:
         run: |
           deno run --allow-read --allow-write tools/make_mod.ts
           git diff --exit-code
+      - name: Run lint
+        run: |
+          make lint
       - name: Run Tests
         run: |
           make test      
