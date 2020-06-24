@@ -480,6 +480,14 @@ test("xclaim", async () => {
     );
 
     const consumer = "someone";
+    await client.xreadgroup(
+      [key],
+      [">"],
+      { group, consumer },
+    );
+
+    await sleep(5); //millis
+
     const minIdleTime = 0;
 
     // minimum options
@@ -514,3 +522,7 @@ test("xclaim", async () => {
     );
   });
 });
+
+const sleep = (ms: number) => {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+};
