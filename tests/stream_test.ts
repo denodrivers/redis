@@ -123,15 +123,32 @@ test("xread", async () => {
 
   assert(v != null);
 
+  const expectedAnimals = new Map();
+  expectedAnimals.set("cat", "moo");
+  expectedAnimals.set("dog", "honk");
+  expectedAnimals.set("duck", "yodel");
+
+  const expectedWeird = new Map();
+  expectedWeird.set("air", "ball");
+  expectedWeird.set("friend", "table");
+  const expectedOdd = new Map();
+  expectedOdd.set("air", "horn");
+  expectedOdd.set("friend", "fiend");
   assertEquals(v, [
-    [key, [[
-      "1000-0",
-      ["cat", "moo", "dog", "honk", "duck", "yodel"],
-    ]]],
-    [key2, [
-      ["1000-0", ["air", "ball", "friend", "table"]],
-      ["1001-1", ["air", "horn", "friend", "fiend"]],
-    ]],
+    {
+      key,
+      messages: [{
+        id: "1000-0",
+        field_values: expectedAnimals,
+      }],
+    },
+    {
+      key: key2,
+      messages: [
+        { id: "1000-0", field_values: expectedWeird },
+        { id: "1001-1", field_values: expectedOdd },
+      ],
+    },
   ]);
 
   await cleanupStream(client, key, key2);
