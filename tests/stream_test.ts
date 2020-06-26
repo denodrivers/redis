@@ -479,7 +479,7 @@ test("xrange and xrevrange", async () => {
   assertEquals(revResult.length, 2);
   assertEquals(revResult[0].id, secondId);
   assertEquals(revResult[0].field_values.get("f"), "v1");
-  assertEquals(revResult[1], firstId);
+  assertEquals(revResult[1].id, firstId);
   assertEquals(revResult[1].field_values.get("f"), "v0");
 
   // count should limit results
