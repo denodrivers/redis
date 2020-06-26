@@ -25,7 +25,7 @@ import {
 import {
   XMaxlen,
   XReadStreamRaw,
-  XReadReplyRaw,
+  XKeyId,
   XReadIdData,
   XClaimOpts,
   XPendingReply,
@@ -1478,8 +1478,7 @@ class RedisImpl implements RedisCommands {
   }
 
   xread(
-    keys: string[],
-    ids: string[],
+    key_ids: XKeyId[],
     opts?: { count?: number; block?: number },
   ) {
     const args = [];
@@ -1494,13 +1493,13 @@ class RedisImpl implements RedisCommands {
       }
     }
     args.push("STREAMS");
-    for (const key of keys) {
+    for (const { key } of key_ids) {
       args.push(key);
     }
-
-    for (const id of ids) {
+    for (const { id } of key_ids) {
       args.push(id);
     }
+
     return this.execArrayReply<XReadStreamRaw>(
       "XREAD",
       ...args,
@@ -1508,8 +1507,7 @@ class RedisImpl implements RedisCommands {
   }
 
   xreadgroup(
-    keys: string[],
-    ids: string[],
+    key_ids: XKeyId[],
     opts: {
       group: string;
       consumer: string;
@@ -1533,11 +1531,10 @@ class RedisImpl implements RedisCommands {
     }
 
     args.push("STREAMS");
-    for (const key of keys) {
+    for (const { key } of key_ids) {
       args.push(key);
     }
-
-    for (const id of ids) {
+    for (const { id } of key_ids) {
       args.push(id);
     }
 

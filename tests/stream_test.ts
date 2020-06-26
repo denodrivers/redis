@@ -115,9 +115,9 @@ test("xread", async () => {
   );
   assert(c != null);
 
+  const id = "0-0";
   const v = await client.xread(
-    [key, key2],
-    ["0-0", "0-0"],
+    [{ key, id }, { key: key2, id }],
     { block: 5000, count: 500 },
   );
 
@@ -197,9 +197,9 @@ test("xgroup setid and delconsumer", async () => {
 
   //  must read from a given stream to create the
   //  consumer
+  const id = ">";
   let data = await client.xreadgroup(
-    [key],
-    [">"],
+    [{ key, id }],
     { group, consumer },
   );
 
@@ -229,9 +229,9 @@ test("xreadgroup but no ack", async () => {
 
   assert(addedId);
 
+  const id = ">";
   let dataOut = await client.xreadgroup(
-    [key],
-    [">"],
+    [{ key, id }],
     { group, consumer: "test-consumer" },
   );
 
@@ -265,11 +265,11 @@ test("xack", async () => {
 
   assert(addedId);
 
+  const id = ">";
   // read but DO NOT auto-ack, which places
   // the message on the PEL
   await client.xreadgroup(
-    [key],
-    [">"],
+    [{ key, id }],
     { group, consumer: "test-consumer" },
   );
 
@@ -296,9 +296,9 @@ test("xadd_map_then_xread", async () => {
 
   const ms = idMillis(addedId);
 
+  const id = (ms - 1).toString();
   const v = await client.xread(
-    [key],
-    [(ms - 1).toString()],
+    [{ key, id }],
     { block: 5000, count: 500 },
   );
 
@@ -337,9 +337,9 @@ test("xadd_maxlen_map_then_xread", async () => {
 
   const ms = idMillis(addedId);
 
+  const id = (ms - 1).toString();
   const v = await client.xread(
-    [key],
-    [(ms - 1).toString()],
+    [{ key, id }],
     { block: 5000, count: 500 },
   );
 
@@ -408,9 +408,9 @@ test("unique message per consumer", async () => {
       assert(a);
       addedIds.push(a);
 
-      let data = await client.xreadgroup(
-        [key],
-        [">"],
+      const id = ">";
+      const data = await client.xreadgroup(
+        [{ key, id }],
         { group, consumer },
       );
 
@@ -446,9 +446,9 @@ test("broadcast pattern, all groups read their own version of the stream", async
     msgCount++;
 
     const consumer = "someconsumer";
-    let data = await client.xreadgroup(
-      [key],
-      [">"],
+    const id = ">";
+    const data = await client.xreadgroup(
+      [{ key, id }],
       { group, consumer },
     );
 
@@ -509,9 +509,9 @@ test("xclaim", async () => {
     );
 
     const consumer = "someone";
+    const id = ">";
     await client.xreadgroup(
-      [key],
-      [">"],
+      [{ key, id }],
       { group, consumer },
     );
 

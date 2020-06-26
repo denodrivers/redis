@@ -1,23 +1,27 @@
 export const MAX_SEQ_NO = "18446744073709551615";
 
+export interface XKeyId {
+  key: string;
+  id: string;
+}
+
+// parsed
 export interface XMessage {
   id: string;
   field_values: Map<string, string>;
 }
+export type XReadStream = { key: string; messages: XMessage[] };
+export type XReadReply = XReadStream[];
+
+// basic data returned by redis
+export type XReadIdData = [string, string[]];
+export type XReadStreamRaw = [string, XReadIdData[]];
+export type XReadReplyRaw = XReadStreamRaw[];
 
 export interface XMaxlen {
   approx?: boolean;
   elements: number;
 }
-
-// parsed
-export type XReadReply = XReadStream[];
-export type XReadStream = { key: string; messages: XMessage[] };
-
-// basic data returned by redis
-export type XReadReplyRaw = XReadStreamRaw[];
-export type XReadStreamRaw = [string, XReadIdData[]];
-export type XReadIdData = [string, string[]];
 
 export type XPendingReply = XPendingEmpty | XPendingData | XPendingCount;
 export interface XPendingEmpty {

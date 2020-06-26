@@ -6,7 +6,7 @@ import {
   XClaimOpts,
   StartEndCount,
   XPendingReply,
-  XReadStream,
+  XKeyId,
   XMessage,
 } from "./stream.ts";
 
@@ -534,18 +534,13 @@ XGROUP SETID mystream consumer-group-name 0
     count?: number,
   ): Promise<XMessage[]>;
   xread(
-    keys: string[],
-    ids: string[],
+    key_ids: XKeyId[],
     opts?: { count?: number; block?: number },
   ): Promise<XReadReply>;
   /**
    * Length of keys and ids needs to be equal.
-   * 
-   * You may specify `autoAck` in the options, to generate
-   * an automatic acknowledgement of all IDs!
-   * 
-   * @param keys keys to read
-   * @param ids ids to start from for each key.
+   *  
+   * @param key_ids { key, id } pairs to read
    * @param opts you must specify group name and consumer name.  
    *              those must be created using the XGROUP command,
    *              prior to invoking this command.  you may optionally
@@ -553,8 +548,7 @@ XGROUP SETID mystream consumer-group-name 0
    *              of milliseconds to block
    */
   xreadgroup(
-    keys: string[],
-    ids: string[],
+    key_ids: XKeyId[],
     opts: {
       group: string;
       consumer: string;
