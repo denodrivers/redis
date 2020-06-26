@@ -538,7 +538,7 @@ XGROUP SETID mystream consumer-group-name 0
     opts?: { count?: number; block?: number },
   ): Promise<XReadReply>;
   /**
-   * Length of keys and ids needs to be equal.
+   * The XREADGROUP command is a special version of the XREAD command with support for consumer groups. 
    *  
    * @param key_ids { key, id } pairs to read
    * @param opts you must specify group name and consumer name.  
