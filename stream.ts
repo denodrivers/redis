@@ -17,7 +17,7 @@ export type XReadStream = { key: string; messages: XMessage[] };
 // basic data returned by redis
 export type XReadReplyRaw = XReadStreamRaw[];
 export type XReadStreamRaw = [string, XReadIdData[]];
-type XReadIdData = [string, string[]];
+export type XReadIdData = [string, string[]];
 
 export type XPendingReply = XPendingEmpty | XPendingData | XPendingCount;
 export interface XPendingEmpty {

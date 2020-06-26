@@ -26,12 +26,14 @@ import {
   XMaxlen,
   XReadStreamRaw,
   XReadReplyRaw,
+  XReadIdData,
   XClaimOpts,
   XPendingReply,
   StartEndCount,
   XPendingData,
   XInfoConsumer,
   parseXReadReply,
+  parseXMessage,
 } from "./stream.ts";
 
 export type Redis = RedisCommands & {
@@ -1454,8 +1456,8 @@ class RedisImpl implements RedisCommands {
       args.push("COUNT");
       args.push(count);
     }
-    return this.execArrayReply<XReadStreamRaw>("XRANGE", ...args).then((raw) =>
-      parseXReadReply(raw)
+    return this.execArrayReply<XReadIdData>("XRANGE", ...args).then(
+      (raw) => raw.map((m) => parseXMessage(m)),
     );
   }
 
@@ -1470,8 +1472,8 @@ class RedisImpl implements RedisCommands {
       args.push("COUNT");
       args.push(count);
     }
-    return this.execArrayReply<XReadStreamRaw>("XREVRANGE", ...args).then(
-      (raw) => parseXReadReply(raw),
+    return this.execArrayReply<XReadIdData>("XREVRANGE", ...args).then(
+      (raw) => raw.map((m) => parseXMessage(m)),
     );
   }
 

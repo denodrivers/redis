@@ -6,6 +6,8 @@ import {
   XClaimOpts,
   StartEndCount,
   XPendingReply,
+  XReadStream,
+  XMessage,
 } from "./stream.ts";
 
 export type Raw = Status | Integer | Bulk | ConditionalArray;
@@ -524,13 +526,13 @@ XGROUP SETID mystream consumer-group-name 0
     start: string,
     end: string,
     count?: number,
-  ): Promise<XReadReply>;
+  ): Promise<XMessage[]>;
   xrevrange(
     key: string,
     start: string,
     end: string,
     count?: number,
-  ): Promise<XReadReply>;
+  ): Promise<XMessage[]>;
   xread(
     keys: string[],
     ids: string[],

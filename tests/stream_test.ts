@@ -453,17 +453,17 @@ test("xrange and xrevrange", async () => {
   const firstId = await client.xadd(key, "*", "f", "v0");
   const basicResult = await client.xrange(key, "-", "+");
   assertEquals(basicResult.length, 1);
-  assertEquals(basicResult[0].messages[0].id, firstId);
-  assertEquals(basicResult[0].messages[1].field_values.get("f"), "v0");
+  assertEquals(basicResult[0].id, firstId);
+  assertEquals(basicResult[0].field_values.get("f"), "v0");
 
   const secondId = await client.xadd(key, "*", "f", "v1");
   const revResult = await client.xrevrange(key, "+", "-");
 
   assertEquals(revResult.length, 2);
-  assertEquals(revResult[0].messages[0].id, secondId);
-  assertEquals(revResult[0].messages[0].field_values.get("f"), "v1");
-  assertEquals(revResult[1].messages[0], firstId);
-  assertEquals(revResult[1].messages[0].field_values.get("f"), "v0");
+  assertEquals(revResult[0].id, secondId);
+  assertEquals(revResult[0].field_values.get("f"), "v1");
+  assertEquals(revResult[1], firstId);
+  assertEquals(revResult[1].field_values.get("f"), "v0");
 
   // count should limit results
   const lim = await client.xrange(key, "-", "+", 1);
