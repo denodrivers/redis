@@ -219,7 +219,14 @@ test("xreadgroup but no ack", async () => {
   );
 
   assertEquals(dataOut.length, 1);
-  assertEquals(dataOut[0].messages.length, 2);
+  const actualFirstStream = dataOut[0];
+  assertEquals(actualFirstStream.key, key);
+  assertEquals(actualFirstStream.messages[0].id, addedId);
+  assertEquals(actualFirstStream.messages.length, 1);
+  assertEquals(
+    actualFirstStream.messages[0].field_values.get("anyfield"),
+    "anyval",
+  );
 
   // > symbol does NOT cause automatic acknowledgement by Redis
   const ackSize = await client.xack(key, group, addedId);
@@ -325,7 +332,6 @@ test("xadd_maxlen_map_then_xread", async () => {
   expectedMap.set("hop", "4");
   expectedMap.set("blip", "5");
 
-  console.log("CHECK IT " + JSON.stringify(v));
   assertEquals(v, [
     { key, messages: [{ id: addedId, field_values: expectedMap }] },
   ]);
