@@ -219,7 +219,7 @@ test("xreadgroup but no ack", async () => {
   );
 
   assertEquals(dataOut.length, 1);
-  assertEquals(dataOut[0].length, 2);
+  assertEquals(dataOut[0].messages.length, 2);
 
   // > symbol does NOT cause automatic acknowledgement by Redis
   const ackSize = await client.xack(key, group, addedId);
@@ -280,11 +280,18 @@ test("xadd_map_then_xread", async () => {
 
   assert(v != null);
 
+  const expectedMap = new Map();
+  expectedMap.set("zoo", "theorize");
+  expectedMap.set("gable", "train");
+
   assertEquals(v, [
-    [key, [[
-      addedId,
-      ["zoo", "theorize", "gable", "train"],
-    ]]],
+    {
+      key,
+      messages: [{
+        id: addedId,
+        field_values: expectedMap,
+      }],
+    },
   ]);
 
   await cleanupStream(client, key);
@@ -314,11 +321,13 @@ test("xadd_maxlen_map_then_xread", async () => {
 
   assert(v != null);
 
+  const expectedMap = new Map();
+  expectedMap.set("hop", "4");
+  expectedMap.set("blip", "5");
+
+  console.log("CHECK IT " + JSON.stringify(v));
   assertEquals(v, [
-    [key, [[
-      addedId,
-      ["hop", "4", "blip", "5"],
-    ]]],
+    { key, messages: [{ id: addedId, field_values: expectedMap }] },
   ]);
 
   await cleanupStream(client, key);
@@ -382,12 +391,9 @@ test("unique message per consumer", async () => {
         { group, consumer },
       );
 
-      assertEquals(data[0][1].length, 1);
+      assertEquals(data[0].messages.length, 1);
 
-      // TODO this isn't a great way to navigate
-      // TODO we should have a more legible way
-      // TODO to deal with the payload
-      assertEquals(data[0][1][0][1][1], payload);
+      assertEquals(data[0].messages[0].field_values.get("target"), payload);
 
       await cleanupStream(client, key);
     }
@@ -425,7 +431,7 @@ test("broadcast pattern, all groups read their own version of the stream", async
 
     // each group should see ALL the messages
     // that have been emitted
-    const toCheck = data[0][1];
+    const toCheck = data[0].messages;
     assertEquals(toCheck.length, msgCount);
   }
 
@@ -441,17 +447,17 @@ test("xrange and xrevrange", async () => {
   const firstId = await client.xadd(key, "*", "f", "v0");
   const basicResult = await client.xrange(key, "-", "+");
   assertEquals(basicResult.length, 1);
-  assertEquals(basicResult[0][0], firstId);
-  assertEquals(basicResult[0][1], ["f", "v0"]);
+  assertEquals(basicResult[0].messages[0].id, firstId);
+  assertEquals(basicResult[0].messages[1].field_values.get("f"), "v0");
 
   const secondId = await client.xadd(key, "*", "f", "v1");
   const revResult = await client.xrevrange(key, "+", "-");
 
   assertEquals(revResult.length, 2);
-  assertEquals(revResult[0][0], secondId);
-  assertEquals(revResult[0][1], ["f", "v1"]);
-  assertEquals(revResult[1][0], firstId);
-  assertEquals(revResult[1][1], ["f", "v0"]);
+  assertEquals(revResult[0].messages[0].id, secondId);
+  assertEquals(revResult[0].messages[0].field_values.get("f"), "v1");
+  assertEquals(revResult[1].messages[0], firstId);
+  assertEquals(revResult[1].messages[0].field_values.get("f"), "v0");
 
   // count should limit results
   const lim = await client.xrange(key, "-", "+", 1);

@@ -24,12 +24,14 @@ import {
 } from "./command.ts";
 import {
   XMaxlen,
-  XReadKeyData,
+  XReadStreamRaw,
+  XReadReplyRaw,
   XClaimOpts,
   XPendingReply,
   StartEndCount,
   XPendingData,
   XInfoConsumer,
+  parseXReadReply,
 } from "./stream.ts";
 
 export type Redis = RedisCommands & {
@@ -1452,7 +1454,9 @@ class RedisImpl implements RedisCommands {
       args.push("COUNT");
       args.push(count);
     }
-    return this.execArrayReply<XReadKeyData>("XRANGE", ...args);
+    return this.execArrayReply<XReadStreamRaw>("XRANGE", ...args).then((raw) =>
+      parseXReadReply(raw)
+    );
   }
 
   xrevrange(
@@ -1466,7 +1470,9 @@ class RedisImpl implements RedisCommands {
       args.push("COUNT");
       args.push(count);
     }
-    return this.execArrayReply<XReadKeyData>("XREVRANGE", ...args);
+    return this.execArrayReply<XReadStreamRaw>("XREVRANGE", ...args).then(
+      (raw) => parseXReadReply(raw),
+    );
   }
 
   xread(
@@ -1493,10 +1499,10 @@ class RedisImpl implements RedisCommands {
     for (const id of ids) {
       args.push(id);
     }
-    return this.execArrayReply<XReadKeyData>(
+    return this.execArrayReply<XReadStreamRaw>(
       "XREAD",
       ...args,
-    );
+    ).then((raw) => parseXReadReply(raw));
   }
 
   xreadgroup(
@@ -1533,10 +1539,10 @@ class RedisImpl implements RedisCommands {
       args.push(id);
     }
 
-    return this.execArrayReply<XReadKeyData>(
+    return this.execArrayReply<XReadStreamRaw>(
       "XREADGROUP",
       ...args,
-    );
+    ).then((raw) => parseXReadReply(raw));
   }
 
   xtrim(key: string, maxlen: XMaxlen) {
