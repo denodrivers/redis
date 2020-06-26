@@ -113,6 +113,7 @@ export function parseXReadReply(raw: XReadReplyRaw): XReadReply {
   const out: XReadStream[] = [];
   for (const [key, idData] of raw) {
     const messages = [];
+    console.log(`idData: ${JSON.stringify(idData)}`);
     for (const rawMsg of idData) {
       messages.push(parseXMessage(rawMsg));
     }
