@@ -34,6 +34,7 @@ import {
   XInfoConsumer,
   parseXReadReply,
   parseXMessage,
+  isRecord,
 } from "./stream.ts";
 
 export type Redis = RedisCommands & {
@@ -1220,78 +1221,34 @@ class RedisImpl implements RedisCommands {
   xadd(
     key: string,
     id: string,
-    ...field_values: (string | number)[]
+    field_values: Record<string, string> | Map<string, string>,
+    maxlen?: XMaxlen,
   ) {
+    const args: (string | number)[] = [key];
+
+    if (maxlen) {
+      args.push("MAXLEN");
+      if (maxlen.approx) {
+        args.push("~");
+      }
+      args.push(maxlen.elements);
+    }
+
+    args.push(id);
+
+    const fvs = isRecord(field_values)
+      ? Object.entries(field_values)
+      : field_values;
+
+    for (const [f, v] of fvs) {
+      args.push(f);
+      args.push(v);
+    }
+
     return this.execBulkReply<BulkString>(
       "XADD",
-      key,
-      id,
-      ...field_values,
+      ...args,
     );
-  }
-
-  xadd_map(
-    key: string,
-    id: string,
-    field_values: Map<(string | number), (string | number)>,
-  ) {
-    const args: (string | number)[] = [];
-    for (let [f, v] of field_values) {
-      args.push(f);
-      args.push(v);
-    }
-    return this.execBulkReply<BulkString>("XADD", key, id, ...args);
-  }
-
-  xadd_maxlen(
-    key: string,
-    maxlen: XMaxlen,
-    id: string,
-    ...field_values: (string | number)[]
-  ) {
-    const args: (string | number)[] = [];
-
-    if (maxlen) {
-      args.push("MAXLEN");
-      if (maxlen.approx) {
-        args.push("~");
-      }
-      args.push(maxlen.elements);
-    }
-
-    args.push(id);
-
-    for (const x of field_values) {
-      args.push(x);
-    }
-
-    return this.execBulkReply<BulkString>("XADD", key, ...args);
-  }
-
-  xadd_maxlen_map(
-    key: string,
-    maxlen: XMaxlen,
-    id: string,
-    field_values: Map<(string | number), (string | number)>,
-  ) {
-    const args: (string | number)[] = [];
-
-    if (maxlen) {
-      args.push("MAXLEN");
-      if (maxlen.approx) {
-        args.push("~");
-      }
-      args.push(maxlen.elements);
-    }
-
-    args.push(id);
-
-    for (const [f, v] of field_values) {
-      args.push(f);
-      args.push(v);
-    }
-
-    return this.execBulkReply<BulkString>("XADD", key, ...args);
   }
 
   xclaim(key: string, opts: XClaimOpts, ...ids: string[]) {

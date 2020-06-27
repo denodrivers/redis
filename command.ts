@@ -333,12 +333,12 @@ export type RedisCommands = {
    *  the same ID specified by the user during insertion.
    * @param key  write to this stream
    * @param id the ID of the entity written to the stream
-   * @param field_values  alternating pairs of fields and values
+   * @param field_values  record object or map of field value pairs
    */
   xadd(
     key: string,
     id: string,
-    ...field_values: (string | number)[]
+    field_values: Record<string, string> | Map<string, string>,
   ): Promise<BulkString>;
   /**
    * Write a message to a stream.
@@ -350,51 +350,14 @@ export type RedisCommands = {
    *  the same ID specified by the user during insertion.
    * @param key  write to this stream
    * @param id the ID of the entity written to the stream
-   * @param field_values  Map of field, value entries
-   */
-  xadd_map(
-    key: string,
-    id: string,
-    field_values: Map<(string | number), (string | number)>,
-  ): Promise<BulkString>;
-  /**
-   * Write a message to a stream.
-   * 
-   * Returns bulk string reply, specifically:
-   * The command returns the ID of the added entry. 
-   * The ID is the one auto-generated if * is passed 
-   * as ID argument, otherwise the command just returns
-   *  the same ID specified by the user during insertion.
-   * @param key  write to this stream
-   * @param id the ID of the entity written to the stream
+   * @param field_values  record object or map of field value pairs
    * @param maxlen  number of elements, and whether or not to use an approximate comparison
-   * @param field_values  alternating pairs of fields and values
    */
-  xadd_maxlen(
+  xadd(
     key: string,
-    maxlen: XMaxlen,
     id: string,
-    ...field_values: (string | number)[]
-  ): Promise<BulkString>;
-  /**
-   * Write a message to a stream.
-   * 
-   * Returns bulk string reply, specifically:
-   * The command returns the ID of the added entry. 
-   * The ID is the one auto-generated if * is passed 
-   * as ID argument, otherwise the command just returns
-   *  the same ID specified by the user during insertion.
-   * @param key  write to this stream
-   * @param id the ID of the entity written to the stream
-   * @param maxlen trim the stream to this many elements,
-   *                and whether or not to use an approximate comparison
-   * @param field_values  Map of field, value entries
-   */
-  xadd_maxlen_map(
-    key: string,
+    field_values: Record<string, string> | Map<string, string>,
     maxlen: XMaxlen,
-    id: string,
-    field_values: Map<(string | number), (string | number)>,
   ): Promise<BulkString>;
   /**
    * In the context of a stream consumer group, this command changes the ownership of a pending message, so that the new owner is the

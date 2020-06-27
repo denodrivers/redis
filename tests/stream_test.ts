@@ -39,12 +39,7 @@ test("xadd", async () => {
   const v = await client.xadd(
     key,
     "*",
-    "cat",
-    "what",
-    "dog",
-    "who",
-    "duck",
-    "when",
+    { "cat": "what", "dog": "who", "duck": "when" },
   );
   assert(v != null);
 
@@ -53,28 +48,18 @@ test("xadd", async () => {
 
 test("xadd_maxlen", async () => {
   const key = randomStream();
-  const v = await client.xadd_maxlen(
+  const v = await client.xadd(
     key,
-    { elements: 10 },
     "*",
-    "cat",
-    "meow",
-    "dog",
-    "woof",
-    "duck",
-    "quack",
+    { "cat": "meow", "dog": "woof", "duck": "quack" },
+    { elements: 10 },
   );
   assert(v != null);
-  const x = await client.xadd_maxlen(
+  const x = await client.xadd(
     key,
-    { approx: false, elements: 10 },
     "*",
-    "cat",
-    "oo",
-    "dog",
-    "uu",
-    "duck",
-    "pp",
+    { "cat": "oo", "dog": "uu", "duck": "pp" },
+    { approx: false, elements: 10 },
   );
   assert(x != null);
   await cleanupStream(client, key);
@@ -82,36 +67,28 @@ test("xadd_maxlen", async () => {
 
 test("xread", async () => {
   const key = randomStream();
-  const a = await client.xadd_maxlen(
+  const a = await client.xadd(
     key,
-    { elements: 10 },
     "1000-0",
-    "cat",
-    "moo",
-    "dog",
-    "honk",
-    "duck",
-    "yodel",
+    { cat: "moo", dog: "honk", duck: "yodel" },
+    { elements: 10 },
   );
   assert(a != null);
   const key2 = randomStream();
-  const b = await client.xadd_maxlen(
+  const b = await client.xadd(
     key2,
-    { elements: 10 },
     "1000-0",
-    "air",
-    "ball",
-    "friend",
-    "table",
-  );
-  const c = await client.xadd_maxlen(
-    key2,
+    { air: "ball", friend: "table" },
     { elements: 10 },
+  );
+  const exampleMap = new Map();
+  exampleMap.set("air", "horn");
+  exampleMap.set("friend", "fiend");
+  const c = await client.xadd(
+    key2,
     "1001-1",
-    "air",
-    "horn",
-    "friend",
-    "fiend",
+    exampleMap,
+    { elements: 10 },
   );
   assert(c != null);
 
@@ -191,7 +168,7 @@ test("xgroup setid and delconsumer", async () => {
   let created = await client.xgroupcreate(key, group, "$", true);
   assertEquals(created, "OK");
 
-  let addedId = await client.xadd(key, "*", "anyfield", "anyval");
+  let addedId = await client.xadd(key, "*", { "anyfield": "anyval" });
 
   assert(addedId);
 
@@ -225,7 +202,7 @@ test("xreadgroup but no ack", async () => {
   let created = await client.xgroupcreate(key, group, "$", true);
   assertEquals(created, "OK");
 
-  let addedId = await client.xadd(key, "*", "anyfield", "anyval");
+  let addedId = await client.xadd(key, "*", { "anyfield": "anyval" });
 
   assert(addedId);
 
@@ -261,7 +238,7 @@ test("xack", async () => {
   let created = await client.xgroupcreate(key, group, "$", true);
   assertEquals(created, "OK");
 
-  let addedId = await client.xadd(key, "*", "anyfield", "anyval");
+  let addedId = await client.xadd(key, "*", { "anyfield": "anyval" });
 
   assert(addedId);
 
@@ -287,7 +264,7 @@ test("xadd_map_then_xread", async () => {
   m.set("gable", "train");
 
   const key = randomStream();
-  const addedId = await client.xadd_map(
+  const addedId = await client.xadd(
     key,
     "*",
     m,
@@ -327,11 +304,11 @@ test("xadd_maxlen_map_then_xread", async () => {
   m.set("blip", 5);
 
   const key = randomStream();
-  const addedId = await client.xadd_maxlen_map(
+  const addedId = await client.xadd(
     key,
-    { elements: 8 },
     "*",
     m,
+    { elements: 8 },
   );
   assert(addedId !== null);
 
@@ -358,26 +335,23 @@ test("xadd_maxlen_map_then_xread", async () => {
 
 test("xdel", async () => {
   const key = randomStream();
-  const id0 = await client.xadd_maxlen(
+  const id0 = await client.xadd(
     key,
-    { elements: 10 },
     "*",
-    "foo",
-    "bar",
+    { foo: "bar" },
+    { elements: 10 },
   );
-  const id1 = await client.xadd_maxlen(
+  const id1 = await client.xadd(
     key,
-    { elements: 10 },
     "*",
-    "foo",
-    "baz",
+    { "foo": "baz" },
+    { elements: 10 },
   );
-  const id2 = await client.xadd_maxlen(
+  const id2 = await client.xadd(
     key,
-    { elements: 10 },
     "*",
-    "foo",
-    "qux",
+    { "foo": "qux" },
+    { elements: 10 },
   );
 
   const v = await client.xdel(key, id0, id1, id2);
@@ -387,8 +361,8 @@ test("xdel", async () => {
 
 test("xlen", async () => {
   const key = randomStream();
-  await client.xadd_maxlen(key, { elements: 5 }, "*", "foo", "qux");
-  await client.xadd_maxlen(key, { elements: 5 }, "*", "foo", "bux");
+  await client.xadd(key, "*", { "foo": "qux" }, { elements: 5 });
+  await client.xadd(key, "*", { "foo": "bux" }, { elements: 5 });
 
   const v = await client.xlen(key);
   assert(v === 2);
@@ -404,7 +378,7 @@ test("unique message per consumer", async () => {
 
     for (const consumer of [c0, c1, c2]) {
       const payload = `data-for-${consumer}`;
-      const a = await client.xadd(key, "*", "target", payload);
+      const a = await client.xadd(key, "*", { target: payload });
       assert(a);
       addedIds.push(a);
 
@@ -440,7 +414,7 @@ test("broadcast pattern, all groups read their own version of the stream", async
   let msgCount = 0;
   for (const group of groups) {
     const payload = `data-${msgCount}`;
-    const a = await client.xadd(key, "*", "target", payload);
+    const a = await client.xadd(key, "*", { target: payload });
     assert(a);
     addedIds.push(a);
     msgCount++;
@@ -467,13 +441,13 @@ test("broadcast pattern, all groups read their own version of the stream", async
 
 test("xrange and xrevrange", async () => {
   const key = randomStream();
-  const firstId = await client.xadd(key, "*", "f", "v0");
+  const firstId = await client.xadd(key, "*", { "f": "v0" });
   const basicResult = await client.xrange(key, "-", "+");
   assertEquals(basicResult.length, 1);
   assertEquals(basicResult[0].id, firstId);
   assertEquals(basicResult[0].field_values.get("f"), "v0");
 
-  const secondId = await client.xadd(key, "*", "f", "v1");
+  const secondId = await client.xadd(key, "*", { "f": "v1" });
   const revResult = await client.xrevrange(key, "+", "-");
 
   assertEquals(revResult.length, 2);
@@ -503,8 +477,8 @@ test("xclaim", async () => {
 
     await Promise.all(
       [
-        client.xadd(key, "1000-0", "field", "foo"),
-        client.xadd(key, "2000-0", "field", "bar"),
+        client.xadd(key, "1000-0", { "field": "foo" }),
+        client.xadd(key, "2000-0", { "field": "bar" }),
       ],
     );
 

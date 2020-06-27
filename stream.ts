@@ -117,7 +117,6 @@ export function parseXReadReply(raw: XReadReplyRaw): XReadReply {
   const out: XReadStream[] = [];
   for (const [key, idData] of raw) {
     const messages = [];
-    console.log(`idData: ${JSON.stringify(idData)}`);
     for (const rawMsg of idData) {
       messages.push(parseXMessage(rawMsg));
     }
@@ -125,4 +124,14 @@ export function parseXReadReply(raw: XReadReplyRaw): XReadReply {
   }
 
   return out;
+}
+
+type SNS = string | number | symbol;
+export function isRecord(
+  input:
+    | Record<SNS, SNS>
+    | Map<SNS, SNS>,
+): input is Record<SNS, SNS> {
+  if ((input as Record<SNS, SNS>)) return true;
+  else return false;
 }
