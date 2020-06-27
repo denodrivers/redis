@@ -35,6 +35,7 @@ import {
   parseXReadReply,
   parseXMessage,
   isRecord,
+  isMap,
 } from "./stream.ts";
 
 export type Redis = RedisCommands & {
@@ -1224,26 +1225,25 @@ class RedisImpl implements RedisCommands {
     field_values: Record<string, string> | Map<string, string>,
     maxlen: XMaxlen | undefined = undefined,
   ) {
-    const args: (string | number)[] = [key];
+    const args: string[] = [key];
 
     if (maxlen) {
       args.push("MAXLEN");
       if (maxlen.approx) {
         args.push("~");
       }
-      args.push(maxlen.elements);
+      args.push(maxlen.elements.toString());
     }
 
     args.push(id);
 
-    console.log(`OK field_values ${JSON.stringify(field_values)}`);
-    if (isRecord(field_values)) {
-      for (const [f, v] of Object.entries(field_values)) {
+    if (field_values instanceof Map) {
+      for (const [f, v] of field_values) {
         args.push(f);
         args.push(v);
       }
-    } else { // it's a map
-      for (const [f, v] of field_values) {
+    } else {
+      for (const [f, v] of Object.entries(field_values)) {
         args.push(f);
         args.push(v);
       }

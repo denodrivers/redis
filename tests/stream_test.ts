@@ -298,16 +298,19 @@ test("xadd with map then xread", async () => {
   await cleanupStream(client, key);
 });
 
-test("xadd_maxlen_map_then_xread", async () => {
-  const m = new Map();
-  m.set("hop", 4);
-  m.set("blip", 5);
+test("xadd with maxlen on map then xread", async () => {
+  const mmm = new Map<string, string>();
+  mmm.set("hop", "4");
+  mmm.set("blip", "5");
 
+  console.log("try me");
+  mmm.forEach((v, f) => console.log(f, v));
+  
   const key = randomStream();
   const addedId = await client.xadd(
     key,
     "*",
-    m,
+    mmm,
     { elements: 8 },
   );
   assert(addedId !== null);

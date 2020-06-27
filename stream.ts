@@ -125,13 +125,3 @@ export function parseXReadReply(raw: XReadReplyRaw): XReadReply {
 
   return out;
 }
-
-type SNS = string | number | symbol;
-export function isRecord(
-  input:
-    | Record<SNS, SNS>
-    | Map<SNS, SNS>,
-): input is Record<SNS, SNS> {
-  if ((input as Record<SNS, SNS>)) return true;
-  else return false;
-}
