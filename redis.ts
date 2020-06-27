@@ -1222,7 +1222,7 @@ class RedisImpl implements RedisCommands {
     key: string,
     id: string,
     field_values: Record<string, string> | Map<string, string>,
-    maxlen?: XMaxlen,
+    maxlen: XMaxlen | undefined = undefined,
   ) {
     const args: (string | number)[] = [key];
 
@@ -1236,15 +1236,20 @@ class RedisImpl implements RedisCommands {
 
     args.push(id);
 
-    const fvs = isRecord(field_values)
-      ? Object.entries(field_values)
-      : field_values;
-
-    for (const [f, v] of fvs) {
-      args.push(f);
-      args.push(v);
+    console.log(`OK field_values ${JSON.stringify(field_values)}`);
+    if (isRecord(field_values)) {
+      for (const [f, v] of Object.entries(field_values)) {
+        args.push(f);
+        args.push(v);
+      }
+    } else { // it's a map
+      for (const [f, v] of field_values) {
+        args.push(f);
+        args.push(v);
+      }
     }
 
+    console.log(`XADD ${JSON.stringify(args)}`);
     return this.execBulkReply<BulkString>(
       "XADD",
       ...args,

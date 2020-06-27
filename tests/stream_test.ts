@@ -46,7 +46,7 @@ test("xadd", async () => {
   await cleanupStream(client, key);
 });
 
-test("xadd_maxlen", async () => {
+test("xadd maxlen", async () => {
   const key = randomStream();
   const v = await client.xadd(
     key,
@@ -81,7 +81,7 @@ test("xread", async () => {
     { air: "ball", friend: "table" },
     { elements: 10 },
   );
-  const exampleMap = new Map();
+  const exampleMap = new Map<string, string>();
   exampleMap.set("air", "horn");
   exampleMap.set("friend", "fiend");
   const c = await client.xadd(
@@ -258,8 +258,8 @@ test("xack", async () => {
   await cleanupStream(client, key);
 });
 
-test("xadd_map_then_xread", async () => {
-  const m = new Map();
+test("xadd with map then xread", async () => {
+  const m = new Map<string, string>();
   m.set("zoo", "theorize");
   m.set("gable", "train");
 
