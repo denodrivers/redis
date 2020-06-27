@@ -1249,7 +1249,6 @@ class RedisImpl implements RedisCommands {
       }
     }
 
-    console.log(`XADD ${JSON.stringify(args)}`);
     return this.execBulkReply<BulkString>(
       "XADD",
       ...args,

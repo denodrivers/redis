@@ -303,9 +303,6 @@ test("xadd with maxlen on map then xread", async () => {
   mmm.set("hop", "4");
   mmm.set("blip", "5");
 
-  console.log("try me");
-  mmm.forEach((v, f) => console.log(f, v));
-  
   const key = randomStream();
   const addedId = await client.xadd(
     key,
