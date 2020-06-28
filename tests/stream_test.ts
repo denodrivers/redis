@@ -1,6 +1,6 @@
 import { Redis } from "../redis.ts";
 import { makeTest } from "./test_util.ts";
-import { XId, xidstr } from "../stream.ts";
+import { XId, xidstr, parseXId } from "../stream.ts";
 import {
   assertEquals,
   assert,
@@ -117,15 +117,15 @@ test("xread", async () => {
     {
       key,
       messages: [{
-        id: "1000-0",
+        id: parseXId("1000-0"),
         field_values: expectedAnimals,
       }],
     },
     {
       key: key2,
       messages: [
-        { id: "1000-0", field_values: expectedWeird },
-        { id: "1001-1", field_values: expectedOdd },
+        { id: parseXId("1000-0"), field_values: expectedWeird },
+        { id: parseXId("1001-1"), field_values: expectedOdd },
       ],
     },
   ]);
@@ -382,6 +382,8 @@ test("unique message per consumer", async () => {
       assert(a);
       addedIds.push(a);
 
+      // This special  ID means that you want all
+      // "new" messages in the stream.
       const id = ">";
       const data = await client.xreadgroup(
         [{ key, id }],
