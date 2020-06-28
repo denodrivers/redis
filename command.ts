@@ -528,6 +528,30 @@ XGROUP SETID mystream consumer-group-name 0
     startEndCount?: StartEndCount,
     consumer?: string,
   ): Promise<XPendingReply>;
+  /**
+   * The command returns the stream entries matching a given 
+   * range of IDs. The range is specified by a minimum and
+   * maximum ID. All the entries having an ID between the
+   * two specified or exactly one of the two IDs specified
+   * (closed interval) are returned.
+   * 
+   * The command also has a reciprocal command returning 
+   * items in the reverse order, called XREVRANGE, which 
+   * is otherwise identical.
+   * 
+   * The - and + special IDs mean respectively the minimum
+   * ID possible and the maximum ID possible inside a stream,
+   * so the following command will just return every
+   * entry in the stream.
+
+<pre>
+> XRANGE somestream - +
+</pre>
+   * @param key  stream key
+   * @param start beginning XId, or -
+   * @param end  final XId, or +
+   * @param count max number of entries to return
+   */
   xrange(
     key: string,
     start: XIdNeg,
