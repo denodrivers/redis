@@ -521,6 +521,10 @@ XGROUP SETID mystream consumer-group-name 0
    * Print help text about the low level syntax.
    */
   xinfohelp(): void;
+  /**
+   * Returns the number of entries inside a stream. If the specified key does not exist the command returns zero, as if the stream was empty. However note that unlike other Redis types, zero-length streams are possible, so you should call TYPE or EXISTS in order to check if a key exists or not.
+   * @param key  the stream key to inspect
+   */
   xlen(key: string): Promise<Integer>;
   xpending(
     key: string,
