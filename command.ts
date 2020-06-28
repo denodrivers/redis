@@ -615,8 +615,7 @@ XRANGE somestream - +
   /**
    * Trims the stream to the indicated number
    * of elements.  
-   * 
-   * <pre>XTRIM mystream MAXLEN 1000</pre>
+<pre>XTRIM mystream MAXLEN 1000</pre>
    * @param key 
    * @param maxlen 
    */

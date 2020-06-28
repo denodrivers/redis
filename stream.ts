@@ -1,6 +1,9 @@
 import { ConditionalArray, Raw } from "./command.ts";
 
-export const MAX_SEQ_NO = "18446744073709551615";
+/** Redis manual recommends remembering this number
+ * for some use cases.
+ */
+export const MAX_SEQ_NO = BigInt("18446744073709551615");
 
 export interface XId {
   epochMillis: bigint;
