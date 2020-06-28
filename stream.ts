@@ -1,8 +1,8 @@
 export const MAX_SEQ_NO = "18446744073709551615";
 
 export interface XId {
-  epochMillis: bigint | number;
-  seqNo: bigint | number;
+  epochMillis: bigint;
+  seqNo: bigint;
 }
 
 export interface XMessage {
@@ -12,7 +12,12 @@ export interface XMessage {
 
 export interface XKeyId {
   key: string;
-  id: XId;
+  id: XIdInput;
+}
+
+export interface XKeyIdGroup {
+  key: string;
+  id: XIdGroupRead;
 }
 
 export type XReadStream = { key: string; messages: XMessage[] };
@@ -23,10 +28,39 @@ export type XReadIdData = [string, string[]];
 export type XReadStreamRaw = [string, XReadIdData[]];
 export type XReadReplyRaw = XReadStreamRaw[];
 
-/** ID input type for XADD, which is allowed to include the "*" operator */
-export type XIdAdd = XId | "*" | [bigint | number, bigint | number] | 0;
-/** ID input type for XGROUPREAD, which is allowed to include the ">" operator */
-export type XIdGroupRead = XId | ">";
+/** Flexible input type for commands which require message
+ * ID to be passed (represented in lower-level Redis API as
+ * "1000-0" etc).
+ * 
+ * We also include an array format for ease of use, where
+ * the first element is the epochMillis, second is seqNo.
+ * 
+ * We also allow passing a single BigInt or number,
+ * which will represent the the epoch Millis with
+ * seqNo of zero.  (Especially useful is to pass 0.)
+ * */
+export type XIdInput =
+  | XId
+  | [bigint | number, bigint | number]
+  | bigint
+  | number;
+/**
+ * ID input type for XADD, which is allowed to include the
+ * "*" operator.*/
+export type XIdAdd = XIdInput | "*";
+/**
+ * ID input type for XGROUPREAD, which is allowed to include
+ * the ">" operator.  We include an array format for ease of
+ * use, where the first element is the epochMillis, second
+ * is seqNo. */
+export type XIdGroupRead = XIdInput | ">";
+
+/** Allows special maximum ID for XRANGE and XREVRANGE */
+export type XIdPos = XIdInput | "+";
+/** Allows special minimum ID for XRANGE and XREVRANGE */
+export type XIdNeg = XIdInput | "-";
+/** Allow special $ ID for XGROUP CREATE */
+export type XIdDollar = XIdInput | "$";
 
 export interface XMaxlen {
   approx?: boolean;
@@ -48,8 +82,8 @@ export interface XPendingEmpty {
 export interface XPendingData {
   kind: "data";
   count: number;
-  startId: string;
-  endId: string;
+  startId: XId;
+  endId: XId;
   consumers: XInfoConsumer[];
 }
 export interface XPendingCount {
@@ -167,9 +201,9 @@ export function parseXId(raw: string) {
   return { epochMillis: BigInt(ms), seqNo: BigInt(sn) };
 }
 
-export function xidString(xid: XIdAdd) {
-  if (xid === 0) return "0-0";
-  if (xid === "*") return "*";
+export function xidstr(xid: XIdAdd | XIdNeg | XIdPos | XIdDollar) {
+  if (typeof xid === "string") return xid;
+  if (typeof xid === "bigint" || typeof xid === "number") return `${xid}-0`;
   if (xid instanceof Array && xid.length > 1) return `${xid[0]}-${xid[1]}`;
   if (isXId(xid)) return `${xid.epochMillis}-${xid.seqNo}`;
   throw "fail";

@@ -11,7 +11,11 @@ import {
   XId,
   XIdAdd,
   XIdGroupRead,
+  XIdInput,
+  XIdPos,
+  XIdNeg,
   XKeyId,
+  XKeyIdGroup,
   XMessage,
 } from "./stream.ts";
 
@@ -327,7 +331,7 @@ export type RedisCommands = {
    * @param group the group name
    * @param ids the ids to acknowledge
    */
-  xack(key: string, group: string, ...ids: string[]): Promise<Integer>;
+  xack(key: string, group: string, ...ids: XIdInput[]): Promise<Integer>;
   /**
    * Write a message to a stream.
    * 
@@ -344,7 +348,7 @@ export type RedisCommands = {
     key: string,
     id: XIdAdd,
     field_values: Record<string, string> | Map<string, string>,
-  ): Promise<BulkString>;
+  ): Promise<XId>;
   /**
    * Write a message to a stream.
    * 
@@ -363,7 +367,7 @@ export type RedisCommands = {
     id: XIdAdd,
     field_values: Record<string, string> | Map<string, string>,
     maxlen: XMaxlen,
-  ): Promise<BulkString>;
+  ): Promise<XId>;
   /**
    * In the context of a stream consumer group, this command changes the ownership of a pending message, so that the new owner is the
    * consumer specified as the command argument.
@@ -401,7 +405,7 @@ export type RedisCommands = {
   xclaim(
     key: string,
     opts: XClaimOpts,
-    ...ids: string[]
+    ...ids: XIdInput[]
   ): Promise<ConditionalArray>;
   xdel(key: string, ...ids: string[]): Promise<Integer>;
   /**
@@ -416,13 +420,23 @@ export type RedisCommands = {
    * See https://redis.io/commands/xgroup
    * @param key stream key
    * @param groupName the name of the consumer group
-   * @param id The last argument is the ID of the last item in the stream to consider already delivered. In the above case we used the special ID '$' (that means: the ID of the last item in the stream). In this case the consumers fetching data from that consumer group will only see new elements arriving in the stream.  If instead you want consumers to fetch the whole stream history, use zero as the starting ID for the consumer group
+   * @param id The last argument is the ID of the last
+   *            item in the stream to consider already
+   *            delivered. In the above case we used the
+   *            special ID '$' (that means: the ID of the
+   *            last item in the stream). In this case
+   *            the consumers fetching data from that
+   *            consumer group will only see new elements
+   *            arriving in the stream.  If instead you
+   *            want consumers to fetch the whole stream
+   *            history, use zero as the starting ID for
+   *            the consumer group
    * @param mkstream You can use the optional MKSTREAM subcommand as the last argument after the ID to automatically create the stream, if it doesn't exist. Note that if the stream is created in this way it will have a length of 0.
    */
   xgroupcreate(
     key: string,
     groupName: string,
-    id: number | "$",
+    id: XIdInput | "$",
     mkstream?: boolean,
   ): Promise<Status>;
   /**
@@ -480,7 +494,7 @@ XGROUP SETID mystream consumer-group-name 0
   xgroupsetid(
     key: string,
     groupName: string,
-    id: string,
+    id: XIdInput,
   ): Promise<Status>;
   xlen(key: string): Promise<Integer>;
   xpending(
@@ -491,14 +505,14 @@ XGROUP SETID mystream consumer-group-name 0
   ): Promise<XPendingReply>;
   xrange(
     key: string,
-    start: string,
-    end: string,
+    start: XIdNeg,
+    end: XIdPos,
     count?: number,
   ): Promise<XMessage[]>;
   xrevrange(
     key: string,
-    start: string,
-    end: string,
+    start: XIdPos,
+    end: XIdNeg,
     count?: number,
   ): Promise<XMessage[]>;
   xread(
@@ -516,7 +530,7 @@ XGROUP SETID mystream consumer-group-name 0
    *              of milliseconds to block
    */
   xreadgroup(
-    key_ids: XKeyId[],
+    key_ids: XKeyIdGroup[],
     opts: XReadGroupOpts,
   ): Promise<XReadReply>;
 

@@ -1,6 +1,6 @@
 import { Redis } from "../redis.ts";
 import { makeTest } from "./test_util.ts";
-import { XId, xidString } from "../stream.ts";
+import { XId, xidstr } from "../stream.ts";
 import {
   assertEquals,
   assert,
@@ -70,7 +70,7 @@ test("xread", async () => {
   const key = randomStream();
   const a = await client.xadd(
     key,
-    { epochMillis: 1000, seqNo: 0 },
+    1000, // epoch millis only, converts to "1000-0" for the low-level interface to redis
     { cat: "moo", dog: "honk", duck: "yodel" },
     { elements: 10 },
   );
@@ -185,7 +185,7 @@ test("xgroup setid and delconsumer", async () => {
   assertEquals(data.length, 1);
 
   assertEquals(
-    await client.xgroupsetid(key, group, "0-0"),
+    await client.xgroupsetid(key, group, 0),
     "OK",
   );
 
@@ -273,9 +273,8 @@ test("xadd with map then xread", async () => {
   );
   assert(addedId !== null);
 
-  const ms = idMillis(addedId);
-
-  const id = (ms - 1).toString();
+  // one millis before now
+  const id = (addedId.epochMillis - BigInt(1));
   const v = await client.xread(
     [{ key, id }],
     { block: 5000, count: 500 },

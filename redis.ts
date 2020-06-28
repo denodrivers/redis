@@ -32,7 +32,11 @@ import {
   parseXReadReply,
   parseXMessage,
   XReadGroupOpts,
-  xidString,
+  xidstr,
+  XIdInput,
+  XIdNeg,
+  XIdPos,
+  parseXId,
 } from "./stream.ts";
 import { RedisConnection } from "./connection.ts";
 
@@ -1220,8 +1224,13 @@ class RedisImpl implements RedisCommands {
     return this.execStatusReply("WATCH", key, ...keys);
   }
 
-  xack(key: string, group: string, ...ids: string[]) {
-    return this.execIntegerReply("XACK", key, group, ...ids);
+  xack(key: string, group: string, ...ids: XIdInput[]) {
+    return this.execIntegerReply(
+      "XACK",
+      key,
+      group,
+      ...ids.map((id) => xidstr(id)),
+    );
   }
 
   xadd(
@@ -1240,7 +1249,7 @@ class RedisImpl implements RedisCommands {
       args.push(maxlen.elements.toString());
     }
 
-    args.push(xidString(id));
+    args.push(xidstr(id));
 
     if (field_values instanceof Map) {
       for (const [f, v] of field_values) {
@@ -1257,10 +1266,10 @@ class RedisImpl implements RedisCommands {
     return this.execBulkReply<BulkString>(
       "XADD",
       ...args,
-    );
+    ).then((rawId) => parseXId(rawId));
   }
 
-  xclaim(key: string, opts: XClaimOpts, ...ids: string[]) {
+  xclaim(key: string, opts: XClaimOpts, ...ids: XIdInput[]) {
     const args = [];
     if (opts.idle) {
       args.push("IDLE");
@@ -1291,7 +1300,7 @@ class RedisImpl implements RedisCommands {
       opts.group,
       opts.consumer,
       opts.minIdleTime,
-      ...ids,
+      ...ids.map((id) => xidstr(id)),
       ...args,
     );
   }
@@ -1311,7 +1320,7 @@ class RedisImpl implements RedisCommands {
   xgroupcreate(
     key: string,
     groupName: string,
-    id: number | "$",
+    id: XIdInput | "$",
     mkstream?: boolean,
   ) {
     const args = [];
@@ -1324,7 +1333,7 @@ class RedisImpl implements RedisCommands {
       "CREATE",
       key,
       groupName,
-      id,
+      xidstr(id),
       ...args,
     );
   }
@@ -1413,11 +1422,11 @@ class RedisImpl implements RedisCommands {
 
   xrange(
     key: string,
-    start: string,
-    end: string,
+    start: XIdNeg,
+    end: XIdPos,
     count?: number,
   ) {
-    const args: (string | number)[] = [key, start, end];
+    const args: (string | number)[] = [key, xidstr(start), xidstr(end)];
     if (count) {
       args.push("COUNT");
       args.push(count);
@@ -1429,11 +1438,11 @@ class RedisImpl implements RedisCommands {
 
   xrevrange(
     key: string,
-    start: string,
-    end: string,
+    start: XIdPos,
+    end: XIdNeg,
     count?: number,
   ) {
-    const args: (string | number)[] = [key, start, end];
+    const args: (string | number)[] = [key, xidstr(start), xidstr(end)];
     if (count) {
       args.push("COUNT");
       args.push(count);
@@ -1463,7 +1472,7 @@ class RedisImpl implements RedisCommands {
       args.push(key);
     }
     for (const { id } of key_ids) {
-      args.push(xidString(id));
+      args.push(xidstr(id));
     }
 
     return this.execArrayReply<XReadStreamRaw>(
@@ -1496,7 +1505,7 @@ class RedisImpl implements RedisCommands {
       args.push(key);
     }
     for (const { id } of key_ids) {
-      args.push(xidString(id));
+      args.push(xidstr(id));
     }
 
     return this.execArrayReply<XReadStreamRaw>(
