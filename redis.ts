@@ -1363,7 +1363,7 @@ class RedisImpl implements RedisCommands {
   xgroupsetid(
     key: string,
     groupName: string,
-    id: XIdInput,
+    id: XId,
   ) {
     return this.execStatusReply(
       "XGROUP",

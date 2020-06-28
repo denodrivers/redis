@@ -496,6 +496,31 @@ XGROUP SETID mystream consumer-group-name 0
     groupName: string,
     id: XIdInput,
   ): Promise<Status>;
+  xinfostream(key: string): void;
+  /**
+   *  returns the entire state of the stream, including entries, groups, consumers and PELs. This form is available since Redis 6.0.
+   * @param key The stream key
+   */
+  xinfostreamfull(key: string): void;
+  /**
+   * Get as output all the consumer groups associated 
+   * with the stream.
+   * 
+   * @param key the stream key
+   */
+  xinfogroups(key: string): void;
+  /**
+   * Get the list of every consumer in a specific 
+   * consumer group.
+   * 
+   * @param key the stream key
+   * @param group list consumers for this group
+   */
+  xinfoconsumers(key: string, group: string): void;
+  /**
+   * Print help text about the low level syntax.
+   */
+  xinfohelp(): void;
   xlen(key: string): Promise<Integer>;
   xpending(
     key: string,
