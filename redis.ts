@@ -34,8 +34,7 @@ import {
   XInfoConsumer,
   parseXReadReply,
   parseXMessage,
-  isRecord,
-  isMap,
+  XReadGroupOpts,
 } from "./stream.ts";
 
 export type Redis = RedisCommands & {
@@ -1469,26 +1468,21 @@ class RedisImpl implements RedisCommands {
 
   xreadgroup(
     key_ids: XKeyId[],
-    opts: {
-      group: string;
-      consumer: string;
-      count?: number;
-      block?: number;
-    },
+    { group, consumer, count, block }: XReadGroupOpts,
   ) {
     const args: (string | number)[] = [
       "GROUP",
-      opts.group,
-      opts.consumer,
+      group,
+      consumer,
     ];
 
-    if (opts.count) {
+    if (count) {
       args.push("COUNT");
-      args.push(opts.count);
+      args.push(count);
     }
-    if (opts.block) {
+    if (block) {
       args.push("BLOCK");
-      args.push(opts.block);
+      args.push(block);
     }
 
     args.push("STREAMS");

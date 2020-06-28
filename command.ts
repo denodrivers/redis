@@ -2,6 +2,8 @@ import { RedisSubscription } from "./pubsub.ts";
 import { RedisPipeline } from "./pipeline.ts";
 import {
   XReadReply,
+  XReadOpts,
+  XReadGroupOpts,
   XMaxlen,
   XClaimOpts,
   StartEndCount,
@@ -498,7 +500,7 @@ XGROUP SETID mystream consumer-group-name 0
   ): Promise<XMessage[]>;
   xread(
     key_ids: XKeyId[],
-    opts?: { count?: number; block?: number },
+    opts?: XReadOpts,
   ): Promise<XReadReply>;
   /**
    * The XREADGROUP command is a special version of the XREAD command with support for consumer groups. 
@@ -512,13 +514,9 @@ XGROUP SETID mystream consumer-group-name 0
    */
   xreadgroup(
     key_ids: XKeyId[],
-    opts: {
-      group: string;
-      consumer: string;
-      count?: number;
-      block?: number;
-    },
+    opts: XReadGroupOpts,
   ): Promise<XReadReply>;
+
   /**
    * Trims the stream to the indicated number
    * of elements.  

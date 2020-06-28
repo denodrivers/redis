@@ -87,6 +87,18 @@ export interface XInfoConsumer {
   idle: number;
 }
 
+export interface XReadOpts {
+  count?: number;
+  block?: number;
+}
+
+export interface XReadGroupOpts {
+  group: string;
+  consumer: string;
+  count?: number;
+  block?: number;
+}
+
 export interface XClaimOpts {
   group: string;
   consumer: string;
@@ -98,7 +110,9 @@ export interface XClaimOpts {
   justId?: boolean;
 }
 
-export function parseXMessage(raw: XReadIdData): XMessage {
+export function parseXMessage(
+  raw: XReadIdData,
+): XMessage {
   let m = 0;
   let field_values: Map<string, string> = new Map();
   let f: string | undefined = undefined;
@@ -113,7 +127,9 @@ export function parseXMessage(raw: XReadIdData): XMessage {
   return { id: raw[0], field_values: field_values };
 }
 
-export function parseXReadReply(raw: XReadReplyRaw): XReadReply {
+export function parseXReadReply(
+  raw: XReadReplyRaw,
+): XReadReply {
   const out: XReadStream[] = [];
   for (const [key, idData] of raw) {
     const messages = [];
