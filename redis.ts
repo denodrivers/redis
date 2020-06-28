@@ -32,6 +32,7 @@ import {
   parseXReadReply,
   parseXMessage,
   XReadGroupOpts,
+  xidString,
 } from "./stream.ts";
 import { RedisConnection } from "./connection.ts";
 
@@ -1239,7 +1240,7 @@ class RedisImpl implements RedisCommands {
       args.push(maxlen.elements.toString());
     }
 
-    args.push(id);
+    args.push(xidString(id));
 
     if (field_values instanceof Map) {
       for (const [f, v] of field_values) {
@@ -1462,7 +1463,7 @@ class RedisImpl implements RedisCommands {
       args.push(key);
     }
     for (const { id } of key_ids) {
-      args.push(id);
+      args.push(xidString(id));
     }
 
     return this.execArrayReply<XReadStreamRaw>(
@@ -1495,7 +1496,7 @@ class RedisImpl implements RedisCommands {
       args.push(key);
     }
     for (const { id } of key_ids) {
-      args.push(id);
+      args.push(xidString(id));
     }
 
     return this.execArrayReply<XReadStreamRaw>(

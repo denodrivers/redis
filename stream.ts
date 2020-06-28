@@ -12,7 +12,7 @@ export interface XMessage {
 
 export interface XKeyId {
   key: string;
-  id: string;
+  id: XId;
 }
 
 export type XReadStream = { key: string; messages: XMessage[] };
@@ -23,7 +23,9 @@ export type XReadIdData = [string, string[]];
 export type XReadStreamRaw = [string, XReadIdData[]];
 export type XReadReplyRaw = XReadStreamRaw[];
 
+/** ID input type for XADD, which is allowed to include the "*" operator */
 export type XIdAdd = XId | "*" | [bigint | number, bigint | number] | 0;
+/** ID input type for XGROUPREAD, which is allowed to include the ">" operator */
 export type XIdGroupRead = XId | ">";
 
 export interface XMaxlen {
