@@ -18,6 +18,7 @@ import {
   XKeyIdGroup,
   XMessage,
   XInfoStream,
+  XAddFieldValues,
 } from "./stream.ts";
 
 export type Raw = Status | Integer | Bulk | ConditionalArray;
@@ -348,7 +349,7 @@ export type RedisCommands = {
   xadd(
     key: string,
     xid: XIdAdd,
-    field_values: Record<string, string> | Map<string, string>,
+    field_values: XAddFieldValues,
   ): Promise<XId>;
   /**
    * Write a message to a stream.

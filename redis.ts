@@ -40,6 +40,7 @@ import {
   rawnum,
   rawstr,
   fromRedisArray,
+  XAddFieldValues,
 } from "./stream.ts";
 import { RedisConnection } from "./connection.ts";
 
@@ -1239,10 +1240,10 @@ class RedisImpl implements RedisCommands {
   xadd(
     key: string,
     xid: XIdAdd,
-    field_values: Record<string, string> | Map<string, string>,
+    field_values: XAddFieldValues,
     maxlen: XMaxlen | undefined = undefined,
   ) {
-    const args: string[] = [key];
+    const args: (string | number)[] = [key];
 
     if (maxlen) {
       args.push("MAXLEN");

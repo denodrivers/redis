@@ -67,6 +67,10 @@ export type XIdNeg = XIdInput | "-";
 /** Allow special $ ID for XGROUP CREATE */
 export type XIdDollar = XIdInput | "$";
 
+export type XAddFieldValues =
+  | Record<string | number, string | number>
+  | Map<string | number, string | number>;
+
 export interface XMaxlen {
   approx?: boolean;
   elements: number;
