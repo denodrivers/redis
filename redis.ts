@@ -37,6 +37,9 @@ import {
   XIdNeg,
   XIdPos,
   parseXId,
+  rawnum,
+  rawstr,
+  fromRedisArray,
 } from "./stream.ts";
 import { RedisConnection } from "./connection.ts";
 
@@ -1374,7 +1377,30 @@ class RedisImpl implements RedisCommands {
     );
   }
 
-  xinfostream(key: string) {}
+  xinfostream(key: string) {
+    return this.execArrayReply<Raw>("XINFO", "STREAM", key).then(
+      (raw) => {
+        let data = fromRedisArray(raw);
+        return {
+          length: rawnum(data.get("length")),
+          radixTreeKeys: rawnum(data.get("radix-tree-keys")),
+          radixTreeNodes: rawnum(data.get("radix-tree-nodes")),
+          groups: rawnum(data.get("groups")),
+          lastGeneratedId: parseXId(rawstr(data.get("last-generated-id"))),
+          // TODO BELOW IS STUBBED
+          // TODO BELOW IS STUBBED
+          // TODO BELOW IS STUBBED
+          // TODO BELOW IS STUBBED
+          firstEntry: { xid: parseXId("0-0"), field_values: new Map() },
+          lastEntry: { xid: parseXId("0-0"), field_values: new Map() },
+          // TODO ABOVE IS STUBBED
+          // TODO ABOVE IS STUBBED
+          // TODO ABOVE IS STUBBED
+          // TODO ABOVE IS STUBBED
+        };
+      },
+    );
+  }
 
   xinfostreamfull(key: string) {}
 
@@ -1481,8 +1507,8 @@ class RedisImpl implements RedisCommands {
     for (const { key } of key_xids) {
       args.push(key);
     }
-    for (const { id } of key_xids) {
-      args.push(xidstr(id));
+    for (const { xid } of key_xids) {
+      args.push(xidstr(xid));
     }
 
     return this.execArrayReply<XReadStreamRaw>(
@@ -1514,8 +1540,8 @@ class RedisImpl implements RedisCommands {
     for (const { key } of key_xids) {
       args.push(key);
     }
-    for (const { id } of key_xids) {
-      args.push(xidstr(id));
+    for (const { xid } of key_xids) {
+      args.push(xidstr(xid));
     }
 
     return this.execArrayReply<XReadStreamRaw>(

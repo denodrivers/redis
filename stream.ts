@@ -1,3 +1,5 @@
+import { ConditionalArray, Raw } from "./command.ts";
+
 export const MAX_SEQ_NO = "18446744073709551615";
 
 export interface XId {
@@ -6,18 +8,18 @@ export interface XId {
 }
 
 export interface XMessage {
-  id: XId;
+  xid: XId;
   field_values: Map<string, string>;
 }
 
 export interface XKeyId {
   key: string;
-  id: XIdInput;
+  xid: XIdInput;
 }
 
 export interface XKeyIdGroup {
   key: string;
-  id: XIdGroupRead;
+  xid: XIdGroupRead;
 }
 
 export type XReadStream = { key: string; messages: XMessage[] };
@@ -167,9 +169,10 @@ export interface XClaimOpts {
 export function parseXMessage(
   raw: XReadIdData,
 ): XMessage {
-  let m = 0;
   let field_values: Map<string, string> = new Map();
   let f: string | undefined = undefined;
+
+  let m = 0;
   for (const data of raw[1]) {
     if (m % 2 === 0) {
       f = data;
@@ -178,7 +181,25 @@ export function parseXMessage(
     }
     m++;
   }
-  return { id: parseXId(raw[0]), field_values: field_values };
+
+  return { xid: parseXId(raw[0]), field_values: field_values };
+}
+
+export function fromRedisArray(raw: ConditionalArray): Map<string, Raw> {
+  let field_values: Map<string, Raw> = new Map();
+  let f: string | undefined = undefined;
+
+  let m = 0;
+  for (const data of raw) {
+    if (m % 2 === 0 && typeof data === "string") {
+      f = data;
+    } else if (m % 2 === 1 && f) {
+      field_values.set(f, data);
+    }
+    m++;
+  }
+
+  return field_values;
 }
 
 export function parseXReadReply(
@@ -209,6 +230,13 @@ export function xidstr(xid: XIdAdd | XIdNeg | XIdPos | XIdDollar) {
   throw "fail";
 }
 
-function isXId(id: XIdAdd): id is XId {
-  return (id as XId).epochMillis !== undefined;
+function isXId(xid: XIdAdd): xid is XId {
+  return (xid as XId).epochMillis !== undefined;
+}
+
+export function rawnum(raw: Raw): number {
+  return raw ? +raw.toString() : 0;
+}
+export function rawstr(raw: Raw): string {
+  return raw ? raw.toString() : "";
 }

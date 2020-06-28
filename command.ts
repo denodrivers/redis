@@ -17,6 +17,7 @@ import {
   XKeyId,
   XKeyIdGroup,
   XMessage,
+  XInfoStream,
 } from "./stream.ts";
 
 export type Raw = Status | Integer | Bulk | ConditionalArray;
@@ -506,7 +507,7 @@ XGROUP SETID mystream consumer-group-name 0
     groupName: string,
     xid: XIdInput,
   ): Promise<Status>;
-  xinfostream(key: string): void;
+  xinfostream(key: string): Promise<XInfoStream>;
   /**
    *  returns the entire state of the stream, including entries, groups, consumers and PELs. This form is available since Redis 6.0.
    * @param key The stream key

@@ -94,9 +94,9 @@ test("xread", async () => {
   );
   assert(c != null);
 
-  const id = 0;
+  const xid = 0;
   const v = await client.xread(
-    [{ key, id }, { key: key2, id }],
+    [{ key, xid }, { key: key2, xid }],
     { block: 5000, count: 500 },
   );
 
@@ -117,15 +117,15 @@ test("xread", async () => {
     {
       key,
       messages: [{
-        id: parseXId("1000-0"),
+        xid: parseXId("1000-0"),
         field_values: expectedAnimals,
       }],
     },
     {
       key: key2,
       messages: [
-        { id: parseXId("1000-0"), field_values: expectedWeird },
-        { id: parseXId("1001-1"), field_values: expectedOdd },
+        { xid: parseXId("1000-0"), field_values: expectedWeird },
+        { xid: parseXId("1001-1"), field_values: expectedOdd },
       ],
     },
   ]);
@@ -176,9 +176,9 @@ test("xgroup setid and delconsumer", async () => {
 
   //  must read from a given stream to create the
   //  consumer
-  const id = ">";
+  const xid = ">";
   let data = await client.xreadgroup(
-    [{ key, id }],
+    [{ key, xid }],
     { group, consumer },
   );
 
@@ -208,16 +208,16 @@ test("xreadgroup but no ack", async () => {
 
   assert(addedId);
 
-  const id = ">";
+  const xid = ">";
   let dataOut = await client.xreadgroup(
-    [{ key, id }],
+    [{ key, xid }],
     { group, consumer: "test-consumer" },
   );
 
   assertEquals(dataOut.length, 1);
   const actualFirstStream = dataOut[0];
   assertEquals(actualFirstStream.key, key);
-  assertEquals(actualFirstStream.messages[0].id, addedId);
+  assertEquals(actualFirstStream.messages[0].xid, addedId);
   assertEquals(actualFirstStream.messages.length, 1);
   assertEquals(
     actualFirstStream.messages[0].field_values.get("anyfield"),
@@ -244,11 +244,11 @@ test("xack", async () => {
 
   assert(addedId);
 
-  const id = ">";
+  const xid = ">";
   // read but DO NOT auto-ack, which places
   // the message on the PEL
   await client.xreadgroup(
-    [{ key, id }],
+    [{ key, xid }],
     { group, consumer: "test-consumer" },
   );
 
@@ -274,9 +274,9 @@ test("xadd with map then xread", async () => {
   assert(addedId !== null);
 
   // one millis before now
-  const id = (addedId.epochMillis - BigInt(1));
+  const xid = (addedId.epochMillis - BigInt(1));
   const v = await client.xread(
-    [{ key, id }],
+    [{ key, xid }],
     { block: 5000, count: 500 },
   );
 
@@ -290,7 +290,7 @@ test("xadd with map then xread", async () => {
     {
       key,
       messages: [{
-        id: addedId,
+        xid: addedId,
         field_values: expectedMap,
       }],
     },
@@ -316,7 +316,7 @@ test("xadd with maxlen on map then xread", async () => {
   const justBefore = addedId.epochMillis - BigInt(1);
 
   const v = await client.xread(
-    [{ key, id: justBefore }],
+    [{ key, xid: justBefore }],
     { block: 5000, count: 500 },
   );
 
@@ -327,7 +327,7 @@ test("xadd with maxlen on map then xread", async () => {
   expectedMap.set("blip", "5");
 
   assertEquals(v, [
-    { key, messages: [{ id: addedId, field_values: expectedMap }] },
+    { key, messages: [{ xid: addedId, field_values: expectedMap }] },
   ]);
 
   await cleanupStream(client, key);
@@ -384,9 +384,9 @@ test("unique message per consumer", async () => {
 
       // This special  ID means that you want all
       // "new" messages in the stream.
-      const id = ">";
+      const xid = ">";
       const data = await client.xreadgroup(
-        [{ key, id }],
+        [{ key, xid }],
         { group, consumer },
       );
 
@@ -422,9 +422,9 @@ test("broadcast pattern, all groups read their own version of the stream", async
     msgCount++;
 
     const consumer = "someconsumer";
-    const id = ">";
+    const xid = ">";
     const data = await client.xreadgroup(
-      [{ key, id }],
+      [{ key, xid }],
       { group, consumer },
     );
 
@@ -446,16 +446,16 @@ test("xrange and xrevrange", async () => {
   const firstId = await client.xadd(key, "*", { "f": "v0" });
   const basicResult = await client.xrange(key, "-", "+");
   assertEquals(basicResult.length, 1);
-  assertEquals(basicResult[0].id, firstId);
+  assertEquals(basicResult[0].xid, firstId);
   assertEquals(basicResult[0].field_values.get("f"), "v0");
 
   const secondId = await client.xadd(key, "*", { "f": "v1" });
   const revResult = await client.xrevrange(key, "+", "-");
 
   assertEquals(revResult.length, 2);
-  assertEquals(revResult[0].id, secondId);
+  assertEquals(revResult[0].xid, secondId);
   assertEquals(revResult[0].field_values.get("f"), "v1");
-  assertEquals(revResult[1].id, firstId);
+  assertEquals(revResult[1].xid, firstId);
   assertEquals(revResult[1].field_values.get("f"), "v0");
 
   // count should limit results
@@ -485,9 +485,9 @@ test("xclaim", async () => {
     );
 
     const consumer = "someone";
-    const id = ">";
+    const xid = ">";
     await client.xreadgroup(
-      [{ key, id }],
+      [{ key, xid }],
       { group, consumer },
     );
 
