@@ -1374,6 +1374,16 @@ class RedisImpl implements RedisCommands {
     );
   }
 
+  xinfostream(key: string) {}
+
+  xinfostreamfull(key: string) {}
+
+  xinfogroups(key: string) {}
+
+  xinfoconsumers(key: string, group: string) {}
+
+  xinfohelp() {}
+
   xpending(
     key: string,
     group: string,
