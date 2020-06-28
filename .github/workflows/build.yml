@@ -4,17 +4,17 @@ on:
     branches:
       - "**"      
   pull_request:
-    types:
-      - labeled
+    branches:
+      - "**"
 jobs:
   build:
-    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.label.name == 'CI start')
     runs-on: ubuntu-latest
     services:
       redis:
         image: redis
         ports:
         - 6379:6379
+        name: redis
     steps:
       - uses: actions/checkout@v1
       - name: Install Deno
