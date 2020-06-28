@@ -35,6 +35,28 @@ const sub = await redis.subscribe("channel");
 
 ## Advanced Usage
 
+### Retriable connection
+
+By default, a client's connection will throw an error if the server dies or the network becomes unavailable.
+A connection can be made "retriable" by setting the value `maxRetryCount` when connecting a new client.
+
+```ts
+const redis = await connect({ ...options, maxRetryCount: 10 });
+
+// The client will try to connect to the server 10 times if the server dies or the network becomes unavailable.
+```
+
+The property is set automatically to `10` when creating a subscriber client.
+After a reconnection succeeds, the client will subscribe again to all the channels and patterns.
+
+```ts
+const redis = await connect(options);
+const subscriberClient = await redis.subscribe("channel");
+
+// The client's connection will now be forced to try to connect to the server 10 times if the server dies or the network
+//   becomes unavailable.
+```
+
 ### Execute raw commands
 
 `redis.executor` is raw level [redis protocol](https://redis.io/topics/protocol) executor.

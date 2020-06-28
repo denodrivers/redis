@@ -8,6 +8,7 @@ import {
   Deferred,
 } from "./vendor/https/deno.land/std/async/mod.ts";
 import { ConditionalArray, Bulk, Integer, Status, Raw } from "./command.ts";
+import { RedisConnection } from "./connection.ts";
 
 export type StatusReply = ["status", Status];
 export type IntegerReply = ["integer", Integer];
@@ -175,8 +176,8 @@ function tryParseErrorReply(line: string): never {
 }
 
 export function muxExecutor(
-  r: BufReader,
-  w: BufWriter,
+  connection: RedisConnection,
+  attemptReconnect: boolean = false,
 ): CommandExecutor {
   let queue: {
     command: string;
@@ -187,12 +188,31 @@ export function muxExecutor(
   function dequeue(): void {
     const [e] = queue;
     if (!e) return;
-    sendCommand(w, r, e.command, ...e.args)
+    sendCommand(
+      connection.writer as BufWriter,
+      connection.reader as BufReader,
+      e.command,
+      ...e.args,
+    )
       .then((v) => {
-        // console.log(e.command, e.args, v);
         e.d.resolve(v);
       })
-      .catch((err) => e.d.reject(err))
+      .catch(async (err) => {
+        if (
+          (
+            // Error `BadResource` is thrown when an attempt is made to write to a closed connection,
+            //  Make sure that the connection wasn't explicitly closed by the user before trying to reconnect.
+            (err instanceof Deno.errors.BadResource && !connection.isClosed) ||
+            err instanceof Deno.errors.BrokenPipe ||
+            err instanceof Deno.errors.ConnectionAborted ||
+            err instanceof Deno.errors.ConnectionRefused ||
+            err instanceof Deno.errors.ConnectionReset
+          ) &&
+          attemptReconnect
+        ) {
+          await connection.reconnect();
+        } else e.d.reject(err);
+      })
       .finally(() => {
         queue.shift();
         dequeue();
