@@ -378,7 +378,7 @@ export type RedisCommands = {
    * This is a complex command!  Read more at https://redis.io/commands/xclaim
    *
 <pre>
-> XCLAIM mystream mygroup Alice 3600000 1526569498055-0
+XCLAIM mystream mygroup Alice 3600000 1526569498055-0
 1) 1) 1526569498055-0
    2) 1) "message"
       2) "orange"
@@ -413,7 +413,7 @@ export type RedisCommands = {
    * with a stream.
    * 
    * <pre>
-   > XGROUP CREATE test-man-000 test-group $ MKSTREAM
+   XGROUP CREATE test-man-000 test-group $ MKSTREAM
    OK
    </pre>
    * 
@@ -444,7 +444,7 @@ export type RedisCommands = {
    * the group itself intact.
    * 
    * <pre>
-> XGROUP DELCONSUMER test-man-000 hellogroup 4
+XGROUP DELCONSUMER test-man-000 hellogroup 4
 (integer) 0
 </pre>
    * @param key stream key
@@ -463,7 +463,7 @@ export type RedisCommands = {
    * call this command only when really needed.
    * 
 <pre>
-> XGROUP DESTROY test-man-000 test-group
+XGROUP DESTROY test-man-000 test-group
 (integer) 1
 </pre>
    * @param key stream key
@@ -545,7 +545,7 @@ XGROUP SETID mystream consumer-group-name 0
    * entry in the stream.
 
 <pre>
-> XRANGE somestream - +
+XRANGE somestream - +
 </pre>
    * @param key  stream key
    * @param start beginning XId, or -
