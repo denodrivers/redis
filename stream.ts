@@ -1,15 +1,20 @@
 export const MAX_SEQ_NO = "18446744073709551615";
 
+export interface XId {
+  epochMillis: bigint | number;
+  seqNo: bigint | number;
+}
+
+export interface XMessage {
+  id: XId;
+  field_values: Map<string, string>;
+}
+
 export interface XKeyId {
   key: string;
   id: string;
 }
 
-// parsed
-export interface XMessage {
-  id: string;
-  field_values: Map<string, string>;
-}
 export type XReadStream = { key: string; messages: XMessage[] };
 export type XReadReply = XReadStream[];
 
@@ -17,6 +22,9 @@ export type XReadReply = XReadStream[];
 export type XReadIdData = [string, string[]];
 export type XReadStreamRaw = [string, XReadIdData[]];
 export type XReadReplyRaw = XReadStreamRaw[];
+
+export type XIdAdd = XId | "*" | [bigint | number, bigint | number] | 0;
+export type XIdGroupRead = XId | ">";
 
 export interface XMaxlen {
   approx?: boolean;
@@ -73,6 +81,16 @@ export interface StartEndCount {
   count: number;
 }
 
+export interface XInfoStream {
+  length: number;
+  radixTreeKeys: number;
+  radixTreeNodes: number;
+  groups: number;
+  lastGeneratedId: XId;
+  firstEntry: XMessage;
+  lastEntry: XMessage;
+}
+
 // TODO check command name against deno-redis API
 /**
  * A consumer parsed from xinfo command.
@@ -124,7 +142,7 @@ export function parseXMessage(
     }
     m++;
   }
-  return { id: raw[0], field_values: field_values };
+  return { id: parseXId(raw[0]), field_values: field_values };
 }
 
 export function parseXReadReply(
@@ -140,4 +158,21 @@ export function parseXReadReply(
   }
 
   return out;
+}
+
+export function parseXId(raw: string) {
+  const [ms, sn] = raw.split("-");
+  return { epochMillis: BigInt(ms), seqNo: BigInt(sn) };
+}
+
+export function xidString(xid: XIdAdd) {
+  if (xid === 0) return "0-0";
+  if (xid === "*") return "*";
+  if (xid instanceof Array && xid.length > 1) return `${xid[0]}-${xid[1]}`;
+  if (isXId(xid)) return `${xid.epochMillis}-${xid.seqNo}`;
+  throw "fail";
+}
+
+function isXId(id: XIdAdd): id is XId {
+  return (id as XId).epochMillis !== undefined;
 }

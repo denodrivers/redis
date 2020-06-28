@@ -8,6 +8,9 @@ import {
   XClaimOpts,
   StartEndCount,
   XPendingReply,
+  XId,
+  XIdAdd,
+  XIdGroupRead,
   XKeyId,
   XMessage,
 } from "./stream.ts";
@@ -339,7 +342,7 @@ export type RedisCommands = {
    */
   xadd(
     key: string,
-    id: string,
+    id: XIdAdd,
     field_values: Record<string, string> | Map<string, string>,
   ): Promise<BulkString>;
   /**
@@ -357,7 +360,7 @@ export type RedisCommands = {
    */
   xadd(
     key: string,
-    id: string,
+    id: XIdAdd,
     field_values: Record<string, string> | Map<string, string>,
     maxlen: XMaxlen,
   ): Promise<BulkString>;

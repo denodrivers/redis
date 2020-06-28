@@ -1,5 +1,6 @@
 import { Redis } from "../redis.ts";
 import { makeTest } from "./test_util.ts";
+import { XId, xidString } from "../stream.ts";
 import {
   assertEquals,
   assert,
@@ -69,15 +70,16 @@ test("xread", async () => {
   const key = randomStream();
   const a = await client.xadd(
     key,
-    "1000-0",
+    { epochMillis: 1000, seqNo: 0 },
     { cat: "moo", dog: "honk", duck: "yodel" },
     { elements: 10 },
   );
   assert(a != null);
   const key2 = randomStream();
+
   const b = await client.xadd(
     key2,
-    "1000-0",
+    [1000, 0], // You may enter the ID as a numeric pair
     { air: "ball", friend: "table" },
     { elements: 10 },
   );
@@ -86,13 +88,13 @@ test("xread", async () => {
   exampleMap.set("friend", "fiend");
   const c = await client.xadd(
     key2,
-    "1001-1",
+    [1001, 1],
     exampleMap,
     { elements: 10 },
   );
   assert(c != null);
 
-  const id = "0-0";
+  const id = 0;
   const v = await client.xread(
     [{ key, id }, { key: key2, id }],
     { block: 5000, count: 500 },

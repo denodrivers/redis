@@ -19,6 +19,9 @@ import {
 import {
   XMaxlen,
   XReadStreamRaw,
+  XId,
+  XIdAdd,
+  XIdGroupRead,
   XKeyId,
   XReadIdData,
   XClaimOpts,
@@ -1222,7 +1225,7 @@ class RedisImpl implements RedisCommands {
 
   xadd(
     key: string,
-    id: string,
+    id: XIdAdd,
     field_values: Record<string, string> | Map<string, string>,
     maxlen: XMaxlen | undefined = undefined,
   ) {
