@@ -558,6 +558,20 @@ XRANGE somestream - +
     end: XIdPos,
     count?: number,
   ): Promise<XMessage[]>;
+  /**
+   * This command is exactly like XRANGE, but with the 
+   * notable difference of returning the entries in 
+   * reverse order, and also taking the start-end range 
+   * in reverse order: in XREVRANGE you need to state the
+   *  end ID and later the start ID, and the command will
+   *  produce all the element between (or exactly like) 
+   * the two IDs, starting from the end side.
+   * 
+   * @param key  the stream key
+   * @param start   reading backwards, start from this XId.  for the maximum, specify "+"
+   * @param end  stop at this XId.  for the minimum, specify "-"
+   * @param count max number of entries to return
+   */
   xrevrange(
     key: string,
     start: XIdPos,
