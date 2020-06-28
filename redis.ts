@@ -1224,18 +1224,18 @@ class RedisImpl implements RedisCommands {
     return this.execStatusReply("WATCH", key, ...keys);
   }
 
-  xack(key: string, group: string, ...ids: XIdInput[]) {
+  xack(key: string, group: string, ...xids: XIdInput[]) {
     return this.execIntegerReply(
       "XACK",
       key,
       group,
-      ...ids.map((id) => xidstr(id)),
+      ...xids.map((xid) => xidstr(xid)),
     );
   }
 
   xadd(
     key: string,
-    id: XIdAdd,
+    xid: XIdAdd,
     field_values: Record<string, string> | Map<string, string>,
     maxlen: XMaxlen | undefined = undefined,
   ) {
@@ -1249,7 +1249,7 @@ class RedisImpl implements RedisCommands {
       args.push(maxlen.elements.toString());
     }
 
-    args.push(xidstr(id));
+    args.push(xidstr(xid));
 
     if (field_values instanceof Map) {
       for (const [f, v] of field_values) {
@@ -1269,7 +1269,7 @@ class RedisImpl implements RedisCommands {
     ).then((rawId) => parseXId(rawId));
   }
 
-  xclaim(key: string, opts: XClaimOpts, ...ids: XIdInput[]) {
+  xclaim(key: string, opts: XClaimOpts, ...xids: XIdInput[]) {
     const args = [];
     if (opts.idle) {
       args.push("IDLE");
@@ -1300,16 +1300,16 @@ class RedisImpl implements RedisCommands {
       opts.group,
       opts.consumer,
       opts.minIdleTime,
-      ...ids.map((id) => xidstr(id)),
+      ...xids.map((xid) => xidstr(xid)),
       ...args,
     );
   }
 
-  xdel(key: string, ...ids: XIdInput[]) {
+  xdel(key: string, ...xids: XIdInput[]) {
     return this.execIntegerReply(
       "XDEL",
       key,
-      ...ids.map((rawId) => xidstr(rawId)),
+      ...xids.map((rawId) => xidstr(rawId)),
     );
   }
 
@@ -1320,7 +1320,7 @@ class RedisImpl implements RedisCommands {
   xgroupcreate(
     key: string,
     groupName: string,
-    id: XIdInput | "$",
+    xid: XIdInput | "$",
     mkstream?: boolean,
   ) {
     const args = [];
@@ -1333,7 +1333,7 @@ class RedisImpl implements RedisCommands {
       "CREATE",
       key,
       groupName,
-      xidstr(id),
+      xidstr(xid),
       ...args,
     );
   }
@@ -1363,14 +1363,14 @@ class RedisImpl implements RedisCommands {
   xgroupsetid(
     key: string,
     groupName: string,
-    id: XId,
+    xid: XId,
   ) {
     return this.execStatusReply(
       "XGROUP",
       "SETID",
       key,
       groupName,
-      xidstr(id),
+      xidstr(xid),
     );
   }
 
@@ -1453,7 +1453,7 @@ class RedisImpl implements RedisCommands {
   }
 
   xread(
-    key_ids: XKeyId[],
+    key_xids: XKeyId[],
     opts?: { count?: number; block?: number },
   ) {
     const args = [];
@@ -1468,10 +1468,10 @@ class RedisImpl implements RedisCommands {
       }
     }
     args.push("STREAMS");
-    for (const { key } of key_ids) {
+    for (const { key } of key_xids) {
       args.push(key);
     }
-    for (const { id } of key_ids) {
+    for (const { id } of key_xids) {
       args.push(xidstr(id));
     }
 
@@ -1482,7 +1482,7 @@ class RedisImpl implements RedisCommands {
   }
 
   xreadgroup(
-    key_ids: XKeyId[],
+    key_xids: XKeyId[],
     { group, consumer, count, block }: XReadGroupOpts,
   ) {
     const args: (string | number)[] = [
@@ -1501,10 +1501,10 @@ class RedisImpl implements RedisCommands {
     }
 
     args.push("STREAMS");
-    for (const { key } of key_ids) {
+    for (const { key } of key_xids) {
       args.push(key);
     }
-    for (const { id } of key_ids) {
+    for (const { id } of key_xids) {
       args.push(xidstr(id));
     }
 

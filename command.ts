@@ -316,7 +316,7 @@ export type RedisCommands = {
    * delivered to some consumer but the server is yet not
    *  sure it was processed at least once. So new calls
    *  to XREADGROUP to grab the messages history for a 
-   * consumer (for instance using an ID of 0), will 
+   * consumer (for instance using an XId of 0), will 
    * return such message. Similarly the pending message 
    * will be listed by the XPENDING command, that 
    * inspects the PEL.
@@ -331,40 +331,40 @@ export type RedisCommands = {
    * @param group the group name
    * @param ids the ids to acknowledge
    */
-  xack(key: string, group: string, ...ids: XIdInput[]): Promise<Integer>;
+  xack(key: string, group: string, ...xids: XIdInput[]): Promise<Integer>;
   /**
    * Write a message to a stream.
    * 
    * Returns bulk string reply, specifically:
-   * The command returns the ID of the added entry. 
-   * The ID is the one auto-generated if * is passed 
-   * as ID argument, otherwise the command just returns
-   *  the same ID specified by the user during insertion.
+   * The command returns the XId of the added entry. 
+   * The XId is the one auto-generated if * is passed 
+   * as XId argument, otherwise the command just returns
+   *  the same XId specified by the user during insertion.
    * @param key  write to this stream
-   * @param id the ID of the entity written to the stream
+   * @param id the XId of the entity written to the stream
    * @param field_values  record object or map of field value pairs
    */
   xadd(
     key: string,
-    id: XIdAdd,
+    xid: XIdAdd,
     field_values: Record<string, string> | Map<string, string>,
   ): Promise<XId>;
   /**
    * Write a message to a stream.
    * 
    * Returns bulk string reply, specifically:
-   * The command returns the ID of the added entry. 
-   * The ID is the one auto-generated if * is passed 
-   * as ID argument, otherwise the command just returns
-   *  the same ID specified by the user during insertion.
+   * The command returns the XId of the added entry. 
+   * The XId is the one auto-generated if * is passed 
+   * as XId argument, otherwise the command just returns
+   *  the same XId specified by the user during insertion.
    * @param key  write to this stream
-   * @param id the ID of the entity written to the stream
+   * @param id the XId of the entity written to the stream
    * @param field_values  record object or map of field value pairs
    * @param maxlen  number of elements, and whether or not to use an approximate comparison
    */
   xadd(
     key: string,
-    id: XIdAdd,
+    xid: XIdAdd,
     field_values: Record<string, string> | Map<string, string>,
     maxlen: XMaxlen,
   ): Promise<XId>;
@@ -373,7 +373,7 @@ export type RedisCommands = {
    * consumer specified as the command argument.
    * 
    * It returns the claimed messages unless called with the JUSTIDs
-   * option, in which case it returns only their IDs.
+   * option, in which case it returns only their XIds.
    * 
    * This is a complex command!  Read more at https://redis.io/commands/xclaim
    *
@@ -398,16 +398,26 @@ XCLAIM mystream mygroup Alice 3600000 1526569498055-0
    *    IDLE <ms>: Set the idle time (last time it was delivered) of the message. If IDLE is not specified, an IDLE of 0 is assumed, that is, the time count is reset because the message has now a new owner trying to process it.
    *    TIME <ms-unix-time>: This is the same as IDLE but instead of a relative amount of milliseconds, it sets the idle time to a specific Unix time (in milliseconds). This is useful in order to rewrite the AOF file generating XCLAIM commands.
    *    RETRYCOUNT <count>: Set the retry counter to the specified value. This counter is incremented every time a message is delivered again. Normally XCLAIM does not alter this counter, which is just served to clients when the XPENDING command is called: this way clients can detect anomalies, like messages that are never processed for some reason after a big number of delivery attempts.
-   *    FORCE: Creates the pending message entry in the PEL even if certain specified IDs are not already in the PEL assigned to a different client. However the message must be exist in the stream, otherwise the IDs of non existing messages are ignored.
-   *    JUSTID: Return just an array of IDs of messages successfully claimed, without returning the actual message. Using this option means the retry counter is not incremented.
-   * @param ids the message IDs to claim
+   *    FORCE: Creates the pending message entry in the PEL even if certain specified XIds are not already in the PEL assigned to a different client. However the message must be exist in the stream, otherwise the XIds of non existing messages are ignored.
+   *    JUSTID: Return just an array of XIds of messages successfully claimed, without returning the actual message. Using this option means the retry counter is not incremented.
+   * @param ids the message XIds to claim
    */
   xclaim(
     key: string,
     opts: XClaimOpts,
-    ...ids: XIdInput[]
+    ...xids: XIdInput[]
   ): Promise<ConditionalArray>;
-  xdel(key: string, ...ids: XIdInput[]): Promise<Integer>;
+  /**
+   * Removes the specified entries from a stream, 
+   * and returns the number of entries deleted,
+   * that may be different from the number of
+   * XIds passed to the command in case certain 
+   * XIds do not exist.
+   * 
+   * @param key the stream key
+   * @param ids ids to delete
+   */
+  xdel(key: string, ...xids: XIdInput[]): Promise<Integer>;
   /**
    * This command is used to create a new consumer group associated
    * with a stream.
@@ -420,23 +430,23 @@ XCLAIM mystream mygroup Alice 3600000 1526569498055-0
    * See https://redis.io/commands/xgroup
    * @param key stream key
    * @param groupName the name of the consumer group
-   * @param id The last argument is the ID of the last
+   * @param id The last argument is the XId of the last
    *            item in the stream to consider already
    *            delivered. In the above case we used the
-   *            special ID '$' (that means: the ID of the
+   *            special XId '$' (that means: the XId of the
    *            last item in the stream). In this case
    *            the consumers fetching data from that
    *            consumer group will only see new elements
    *            arriving in the stream.  If instead you
    *            want consumers to fetch the whole stream
-   *            history, use zero as the starting ID for
+   *            history, use zero as the starting XId for
    *            the consumer group
-   * @param mkstream You can use the optional MKSTREAM subcommand as the last argument after the ID to automatically create the stream, if it doesn't exist. Note that if the stream is created in this way it will have a length of 0.
+   * @param mkstream You can use the optional MKSTREAM subcommand as the last argument after the XId to automatically create the stream, if it doesn't exist. Note that if the stream is created in this way it will have a length of 0.
    */
   xgroupcreate(
     key: string,
     groupName: string,
-    id: XIdInput | "$",
+    xid: XIdInput | "$",
     mkstream?: boolean,
   ): Promise<Status>;
   /**
@@ -475,9 +485,9 @@ XGROUP DESTROY test-man-000 test-group
   xgrouphelp(): Promise<BulkString>;
   /**
      * Finally it possible to set the next message to deliver
-     * using the SETID subcommand. Normally the next ID is set
+     * using the SETID subcommand. Normally the next XId is set
      * when the consumer is created, as the last argument of
-     * XGROUP CREATE. However using this form the next ID can
+     * XGROUP CREATE. However using this form the next XId can
      * be modified later without deleting and creating the
      * consumer group again. For instance if you want the
      * consumers in a consumer group to re-process all the
@@ -489,12 +499,12 @@ XGROUP SETID mystream consumer-group-name 0
      * 
      * @param key  stream key
      * @param groupName   the consumer group
-     * @param id the ID to use for the next message delivered
+     * @param id the XId to use for the next message delivered
      */
   xgroupsetid(
     key: string,
     groupName: string,
-    id: XIdInput,
+    xid: XIdInput,
   ): Promise<Status>;
   xinfostream(key: string): void;
   /**
@@ -534,17 +544,17 @@ XGROUP SETID mystream consumer-group-name 0
   ): Promise<XPendingReply>;
   /**
    * The command returns the stream entries matching a given 
-   * range of IDs. The range is specified by a minimum and
-   * maximum ID. All the entries having an ID between the
-   * two specified or exactly one of the two IDs specified
+   * range of XIds. The range is specified by a minimum and
+   * maximum ID. All the entries having an XId between the
+   * two specified or exactly one of the two XIds specified
    * (closed interval) are returned.
    * 
    * The command also has a reciprocal command returning 
    * items in the reverse order, called XREVRANGE, which 
    * is otherwise identical.
    * 
-   * The - and + special IDs mean respectively the minimum
-   * ID possible and the maximum ID possible inside a stream,
+   * The - and + special XIds mean respectively the minimum
+   * XId possible and the maximum XId possible inside a stream,
    * so the following command will just return every
    * entry in the stream.
 
@@ -567,9 +577,9 @@ XRANGE somestream - +
    * notable difference of returning the entries in 
    * reverse order, and also taking the start-end range 
    * in reverse order: in XREVRANGE you need to state the
-   *  end ID and later the start ID, and the command will
+   *  end XId and later the start ID, and the command will
    *  produce all the element between (or exactly like) 
-   * the two IDs, starting from the end side.
+   * the two XIds, starting from the end side.
    * 
    * @param key  the stream key
    * @param start   reading backwards, start from this XId.  for the maximum, specify "+"
@@ -583,7 +593,7 @@ XRANGE somestream - +
     count?: number,
   ): Promise<XMessage[]>;
   xread(
-    key_ids: XKeyId[],
+    key_xids: XKeyId[],
     opts?: XReadOpts,
   ): Promise<XReadReply>;
   /**
@@ -597,7 +607,7 @@ XRANGE somestream - +
    *              of milliseconds to block
    */
   xreadgroup(
-    key_ids: XKeyIdGroup[],
+    key_xids: XKeyIdGroup[],
     opts: XReadGroupOpts,
   ): Promise<XReadReply>;
 
