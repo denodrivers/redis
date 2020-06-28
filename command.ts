@@ -407,7 +407,7 @@ export type RedisCommands = {
     opts: XClaimOpts,
     ...ids: XIdInput[]
   ): Promise<ConditionalArray>;
-  xdel(key: string, ...ids: string[]): Promise<Integer>;
+  xdel(key: string, ...ids: XIdInput[]): Promise<Integer>;
   /**
    * This command is used to create a new consumer group associated
    * with a stream.

@@ -313,11 +313,10 @@ test("xadd with maxlen on map then xread", async () => {
   );
   assert(addedId !== null);
 
-  const ms = idMillis(addedId);
+  const justBefore = addedId.epochMillis - BigInt(1);
 
-  const id = (ms - 1).toString();
   const v = await client.xread(
-    [{ key, id }],
+    [{ key, id: justBefore }],
     { block: 5000, count: 500 },
   );
 
@@ -478,8 +477,8 @@ test("xclaim", async () => {
 
     await Promise.all(
       [
-        client.xadd(key, "1000-0", { "field": "foo" }),
-        client.xadd(key, "2000-0", { "field": "bar" }),
+        client.xadd(key, 1000, { "field": "foo" }),
+        client.xadd(key, 2000, { "field": "bar" }),
       ],
     );
 
@@ -498,8 +497,8 @@ test("xclaim", async () => {
     const firstClaimed = await client.xclaim(
       key,
       { group, consumer, minIdleTime },
-      "1000-0",
-      "2000-0",
+      1000,
+      2000,
     );
     assertEquals(firstClaimed.length, 2);
 
@@ -509,8 +508,8 @@ test("xclaim", async () => {
     await client.xclaim(
       key,
       { group, consumer, minIdleTime, justId: true },
-      "3000-0",
-      "3000-1",
+      [3000, 0],
+      [3000, 1],
     );
 
     throw "maybe write more";
@@ -520,8 +519,8 @@ test("xclaim", async () => {
     await client.xclaim(
       key,
       { group, consumer, minIdleTime, retryCount: 0, force: true },
-      "4000-0",
-      "5000-0",
+      4000,
+      5000,
     );
   });
 });

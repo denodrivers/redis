@@ -1305,11 +1305,11 @@ class RedisImpl implements RedisCommands {
     );
   }
 
-  xdel(key: string, ...ids: string[]) {
+  xdel(key: string, ...ids: XIdInput[]) {
     return this.execIntegerReply(
       "XDEL",
       key,
-      ...ids,
+      ...ids.map((rawId) => xidstr(rawId)),
     );
   }
 
@@ -1363,14 +1363,14 @@ class RedisImpl implements RedisCommands {
   xgroupsetid(
     key: string,
     groupName: string,
-    id: string,
+    id: XIdInput,
   ) {
     return this.execStatusReply(
       "XGROUP",
       "SETID",
       key,
       groupName,
-      id,
+      xidstr(id),
     );
   }
 
@@ -1399,8 +1399,8 @@ class RedisImpl implements RedisCommands {
         throw "WRITE ME";
 
         const count = 0; // TODO
-        const startId = "0-0"; // TODO
-        const endId = "0-0"; // TODO
+        const startId = parseXId("0-0"); // TODO
+        const endId = parseXId("0-0"); // TODO
         const consumers: XInfoConsumer[] = []; // TODO
         const reply: XPendingData = {
           kind: "data",
