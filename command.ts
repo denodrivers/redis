@@ -775,5 +775,6 @@ XGROUP SETID mystream consumer-group-name 0
   ): Promise<[BulkString, BulkString[]]>;
 
   readonly isClosed: boolean;
+  readonly isConnected: boolean;
   close(): void;
 };

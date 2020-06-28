@@ -1,7 +1,4 @@
-import {
-  BufReader,
-  BufWriter,
-} from "./vendor/https/deno.land/std/io/bufio.ts";
+import { BufReader, BufWriter } from "./vendor/https/deno.land/std/io/bufio.ts";
 import {
   createRequest,
   readReply,
@@ -16,6 +13,7 @@ import {
   Deferred,
 } from "./vendor/https/deno.land/std/async/mod.ts";
 import { RedisCommands } from "./command.ts";
+import { RedisConnection } from "./connection.ts";
 
 const encoder = new TextEncoder();
 export type RawReplyOrError = RedisRawReply | ErrorReply;
@@ -25,8 +23,7 @@ export type RedisPipeline = {
 } & RedisCommands;
 
 export function createRedisPipeline(
-  writer: BufWriter,
-  reader: BufReader,
+  connection: RedisConnection,
   opts?: { tx: true },
 ): RedisPipeline {
   let commands: string[] = [];
@@ -49,12 +46,12 @@ export function createRedisPipeline(
 
   async function send(cmds: string[]): Promise<RawReplyOrError[]> {
     const msg = cmds.join("");
-    await writer.write(encoder.encode(msg));
-    await writer.flush();
+    await connection.writer!.write(encoder.encode(msg));
+    await connection.writer!.flush();
     const ret: RawReplyOrError[] = [];
     for (let i = 0; i < cmds.length; i++) {
       try {
-        const rep = await readReply(reader);
+        const rep = await readReply(connection.reader!);
         ret.push(rep);
       } catch (e) {
         if (e instanceof ErrorReplyError) {

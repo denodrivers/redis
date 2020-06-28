@@ -1,7 +1,10 @@
 import {
-  assertEquals,
   assert,
+  assertEquals,
+  assertThrowsAsync,
 } from "./vendor/https/deno.land/std/testing/asserts.ts";
+import { delay } from "./vendor/https/deno.land/std/async/mod.ts";
+
 import { connect } from "./redis.ts";
 const { test } = Deno;
 const addr = {
@@ -39,10 +42,14 @@ test({
       message: "wayway",
     });
     await sub.close();
-    const a = await redis.get("aaa");
-    assertEquals(a, undefined);
-    pub.close();
-    redis.close();
+
+    assertEquals(sub.isClosed, true);
+    assertEquals(redis.isClosed, true);
+
+    await pub.close();
+    await assertThrowsAsync(async () => {
+      await redis.get("aaa");
+    }, Deno.errors.BadResource);
   },
 });
 
@@ -79,17 +86,113 @@ test({
 });
 
 test({
-  name:
-    "testSubscriptionShouldNotThrowBadResourceErrorWhenConnectionIsClosed (#89)",
-  async fn() {
-    const redis = await connect(addr);
-    const sub = await redis.subscribe("test");
-    const subscriptionPromise = (async () => {
-      // deno-lint-ignore no-empty
-      for await (const _ of sub.receive()) {}
-    })();
-    redis.close();
-    await subscriptionPromise;
-    assert(sub.isClosed);
+  name: "testSubscribe4 (#83)",
+  ignore: true,
+
+  // sanitizeResources: false,
+  // sanitizeOps: false,
+  async fn(): Promise<void> {
+    let parallelPromiseList: Promise<number>[] = [];
+
+    const throwawayRedisServerPort = 6464;
+    let promiseList;
+    let throwawayRedisServerChildProcess = createThrowawayRedisServer(
+      throwawayRedisServerPort,
+    );
+
+    await delay(500);
+
+    const redisClient = await connect(
+      { ...addr, name: "Main", port: throwawayRedisServerPort },
+    );
+    const publisherRedisClient = await connect(
+      {
+        ...addr,
+        maxRetryCount: 10,
+        name: "Publisher",
+        port: throwawayRedisServerPort,
+      },
+    );
+    const subscriberRedisClient = await redisClient.psubscribe("ps*");
+
+    const messageIterator = subscriberRedisClient.receive();
+
+    const interval = setInterval(
+      () => {
+        parallelPromiseList.push(
+          publisherRedisClient.publish("psub", "wayway"),
+        );
+      },
+      900,
+    );
+
+    setTimeout(
+      async () => {
+        throwawayRedisServerChildProcess.close();
+      },
+      1000,
+    );
+
+    setTimeout(async () => {
+      assertEquals(
+        redisClient.isConnected,
+        false,
+        "The main client still thinks it is connected.",
+      );
+      assertEquals(
+        publisherRedisClient.isConnected,
+        false,
+        "The publisher client still thinks it is connected.",
+      );
+      assert(
+        parallelPromiseList.length < 5,
+        "Too many messages were published.",
+      );
+
+      throwawayRedisServerChildProcess = createThrowawayRedisServer(
+        throwawayRedisServerPort,
+      );
+
+      await delay(500);
+      const temporaryRedisClient = await connect(
+        { ...addr, port: throwawayRedisServerPort },
+      );
+      await temporaryRedisClient.ping();
+      temporaryRedisClient.close();
+
+      await delay(1000);
+
+      assert(redisClient.isConnected, "The main client is not connected.");
+      assert(
+        publisherRedisClient.isConnected,
+        "The publisher client is not connected.",
+      );
+    }, 2000);
+
+    promiseList = Promise.all([
+      messageIterator.next(),
+      messageIterator.next(),
+      messageIterator.next(),
+      messageIterator.next(),
+      messageIterator.next(),
+    ]);
+
+    await promiseList;
+
+    clearInterval(interval);
+
+    throwawayRedisServerChildProcess.close();
+    publisherRedisClient.close();
+    redisClient.close();
   },
 });
+
+function createThrowawayRedisServer(port: number) {
+  return Deno.run(
+    {
+      cmd: ["redis-server", "--port", port.toString()],
+      stdin: "null",
+      stdout: "null",
+    },
+  );
+}

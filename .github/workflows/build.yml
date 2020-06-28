@@ -4,11 +4,10 @@ on:
     branches:
       - "**"      
   pull_request:
-    types:
-      - labeled
+    branches:
+      - "**"
 jobs:
   build:
-    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.label.name == 'CI start')
     runs-on: ubuntu-latest
     services:
       redis:
@@ -27,6 +26,9 @@ jobs:
         run: |
           deno run --allow-read --allow-write tools/make_mod.ts
           git diff --exit-code
+      - name: Run lint
+        run: |
+          make lint
       - name: Run Tests
         run: |
           make test      

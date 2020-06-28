@@ -1,7 +1,5 @@
-import {
-  BufReader,
-  BufWriter,
-} from "./vendor/https/deno.land/std/io/bufio.ts";
+import { BufReader, BufWriter } from "./vendor/https/deno.land/std/io/bufio.ts";
+import { RedisConnection } from "./connection.ts";
 import { readArrayReply, sendCommand } from "./io.ts";
 
 export type RedisSubscription = {
@@ -21,68 +19,108 @@ export type RedisPubSubMessage = {
 };
 
 class RedisSubscriptionImpl implements RedisSubscription {
-  private _isClosed = false;
+  get isConnected(): boolean {
+    return this.connection.isConnected;
+  }
+
   get isClosed(): boolean {
-    return this._isClosed;
+    return this.connection.isClosed;
   }
 
   private channels = Object.create(null);
   private patterns = Object.create(null);
 
-  constructor(private writer: BufWriter, private reader: BufReader) {}
+  constructor(private connection: RedisConnection) {
+    // Force retriable connection for connection shared for pub/sub.
+    if (connection.maxRetryCount === 0) connection.maxRetryCount = 10;
+  }
 
   async psubscribe(...patterns: string[]) {
-    await sendCommand(this.writer, this.reader, "PSUBSCRIBE", ...patterns);
+    await sendCommand(
+      this.connection.writer!,
+      this.connection.reader!,
+      "PSUBSCRIBE",
+      ...patterns,
+    );
     for (const pat of patterns) {
       this.patterns[pat] = true;
     }
   }
 
   async punsubscribe(...patterns: string[]) {
-    await sendCommand(this.writer, this.reader, "PUNSUBSCRIBE", ...patterns);
+    await sendCommand(
+      this.connection.writer!,
+      this.connection.reader!,
+      "PUNSUBSCRIBE",
+      ...patterns,
+    );
     for (const pat of patterns) {
       delete this.patterns[pat];
     }
   }
 
   async subscribe(...channels: string[]) {
-    await sendCommand(this.writer, this.reader, "SUBSCRIBE", ...channels);
+    await sendCommand(
+      this.connection.writer!,
+      this.connection.reader!,
+      "SUBSCRIBE",
+      ...channels,
+    );
     for (const chan of channels) {
       this.channels[chan] = true;
     }
   }
 
   async unsubscribe(...channels: string[]) {
-    await sendCommand(this.writer, this.reader, "UNSUBSCRIBE", ...channels);
+    await sendCommand(
+      this.connection.writer!,
+      this.connection.reader!,
+      "UNSUBSCRIBE",
+      ...channels,
+    );
     for (const chan of channels) {
       delete this.channels[chan];
     }
   }
 
   async *receive(): AsyncIterableIterator<RedisPubSubMessage> {
-    while (!this._isClosed) {
-      let rep: string[];
+    let forceReconnect = false;
+    while (this.isConnected) {
       try {
-        rep = (await readArrayReply(this.reader)) as string[];
-      } catch (err) {
-        if (err instanceof Deno.errors.BadResource) { // Connection already closed.
-          this._isClosed = true;
-          break;
+        const rep = (await readArrayReply(this.connection.reader!)) as string[];
+        const ev = rep[0];
+
+        if (ev === "message" && rep.length === 3) {
+          yield {
+            channel: rep[1],
+            message: rep[2],
+          };
+        } else if (ev === "pmessage" && rep.length === 4) {
+          yield {
+            pattern: rep[1],
+            channel: rep[2],
+            message: rep[3],
+          };
         }
-        throw err;
-      }
-      const ev = rep[0];
-      if (ev === "message" && rep.length === 3) {
-        yield {
-          channel: rep[1],
-          message: rep[2],
-        };
-      } else if (ev === "pmessage" && rep.length === 4) {
-        yield {
-          pattern: rep[1],
-          channel: rep[2],
-          message: rep[3],
-        };
+      } catch (error) {
+        if (
+          error.message === "Invalid state" ||
+          error instanceof Deno.errors.BadResource
+        ) {
+          forceReconnect = true;
+        } else throw error;
+      } finally {
+        if ((!this.isClosed && !this.isConnected) || forceReconnect) {
+          await this.connection.reconnect();
+          forceReconnect = false;
+
+          if (Object.keys(this.channels).length > 0) {
+            await this.subscribe(...Object.keys(this.channels));
+          }
+          if (Object.keys(this.patterns).length > 0) {
+            await this.psubscribe(...Object.keys(this.patterns));
+          }
+        }
       }
     }
   }
@@ -92,27 +130,25 @@ class RedisSubscriptionImpl implements RedisSubscription {
       await this.unsubscribe(...Object.keys(this.channels));
       await this.punsubscribe(...Object.keys(this.patterns));
     } finally {
-      this._isClosed = true;
+      this.connection.close();
     }
   }
 }
 
 export async function subscribe(
-  writer: BufWriter,
-  reader: BufReader,
+  connection: RedisConnection,
   ...channels: string[]
 ): Promise<RedisSubscription> {
-  const sub = new RedisSubscriptionImpl(writer, reader);
+  const sub = new RedisSubscriptionImpl(connection);
   await sub.subscribe(...channels);
   return sub;
 }
 
 export async function psubscribe(
-  writer: BufWriter,
-  reader: BufReader,
+  connection: RedisConnection,
   ...patterns: string[]
 ): Promise<RedisSubscription> {
-  const sub = new RedisSubscriptionImpl(writer, reader);
+  const sub = new RedisSubscriptionImpl(connection);
   await sub.psubscribe(...patterns);
   return sub;
 }
