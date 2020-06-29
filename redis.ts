@@ -21,23 +21,22 @@ import {
   XReadStreamRaw,
   XId,
   XIdAdd,
-  XIdGroupRead,
   XKeyId,
   XReadIdData,
   XClaimOpts,
-  XPendingReply,
+  XIdInput,
+  XIdNeg,
+  XIdPos,
+  XAddFieldValues,
+  XClaimJustXId,
+  XClaimMessages,
+  XReadGroupOpts,
   StartEndCount,
-  XPendingData,
-  XInfoConsumer,
   parseXReadReply,
   parseXMessage,
   parseXPendingConsumers,
   parseXPendingCounts,
-  XReadGroupOpts,
   xidstr,
-  XIdInput,
-  XIdNeg,
-  XIdPos,
   parseXId,
   rawnum,
   rawstr,
@@ -45,10 +44,6 @@ import {
   isNumber,
   isString,
   fromRedisArray,
-  XAddFieldValues,
-  XPendingEmpty,
-  XClaimJustXId,
-  XClaimMessages,
 } from "./stream.ts";
 import { RedisConnection } from "./connection.ts";
 
@@ -1442,21 +1437,8 @@ class RedisImpl implements RedisCommands {
   xpending(
     key: string,
     group: string,
-    startEndCount?: StartEndCount,
-    consumer?: string,
   ) {
-    const args = [];
-    if (startEndCount) {
-      args.push(startEndCount.start);
-      args.push(startEndCount.end);
-      args.push(startEndCount.count);
-    }
-
-    if (consumer) {
-      args.push(consumer);
-    }
-
-    return this.execArrayReply<Raw>("XPENDING", key, group, ...args)
+    return this.execArrayReply<Raw>("XPENDING", key, group)
       .then((raw) => {
         // When XPENDING is called with just a key name
         // and a consumer group name, it just outputs a
@@ -1464,30 +1446,39 @@ class RedisImpl implements RedisCommands {
         // consumer group.
         // This will return XPendingData or XPendingEmpty
         // depending on if there are any records!
-        const isSimpleInvocation = startEndCount === undefined &&
-          consumer === undefined;
-
-        if (isSimpleInvocation && raw.length === 0) {
-          const empty: XPendingEmpty = { kind: "empty" };
-          return empty;
-        } else if (
-          isSimpleInvocation && isNumber(raw[0]) &&
-          isString(raw[1]) && isString(raw[2]) && isCondArray(raw[3])
+        if (
+          isNumber(raw[0]) && isString(raw[1]) &&
+          isString(raw[2]) && isCondArray(raw[3])
         ) {
-          const reply: XPendingData = {
-            kind: "data",
+          return {
             count: raw[0],
             startId: parseXId(raw[1]),
             endId: parseXId(raw[2]),
             consumers: parseXPendingConsumers(raw[3]),
           };
-          return reply;
-        } else if (startEndCount !== undefined) {
-          return parseXPendingCounts(raw);
         } else {
-          throw "unknown format";
+          throw "parse err";
         }
       });
+  }
+
+  xpending_count(
+    key: string,
+    group: string,
+    startEndCount: StartEndCount,
+    consumer?: string,
+  ) {
+    const args = [];
+    args.push(startEndCount.start);
+    args.push(startEndCount.end);
+    args.push(startEndCount.count);
+
+    if (consumer) {
+      args.push(consumer);
+    }
+
+    return this.execArrayReply<Raw>("XPENDING", key, group, ...args)
+      .then((raw) => parseXPendingCounts(raw));
   }
 
   xrange(

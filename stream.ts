@@ -86,11 +86,6 @@ export interface XClaimJustXId {
   xids: XId[];
 }
 
-export type XPendingReply = XPendingEmpty | XPendingData | XPendingCount;
-export interface XPendingEmpty {
-  kind: "empty";
-}
-
 /**
  * @param count Limit on the number of messages to return per call.
  * @param startId ID for the first pending record.
@@ -99,8 +94,7 @@ export interface XPendingEmpty {
  * with at least one pending message, and the number of
  * pending messages it has.
  */
-export interface XPendingData {
-  kind: "data";
+export interface XPendingReply {
   count: number;
   startId: XId;
   endId: XId;
@@ -109,10 +103,6 @@ export interface XPendingData {
 export interface XPendingConsumer {
   name: string;
   pending: number;
-}
-export interface XPendingCount {
-  kind: "count";
-  infos: XPendingMsgInfo[];
 }
 
 /**
@@ -126,7 +116,7 @@ export interface XPendingCount {
  *  last time this message was delivered to this consumer.
  * @param timesDelivered The number of times this message was delivered.
  */
-export interface XPendingMsgInfo {
+export interface XPendingCount {
   xid: XId;
   owner: string;
   lastDeliveredMs: number;
@@ -151,7 +141,6 @@ export interface XInfoStream {
   lastEntry: XMessage;
 }
 
-// TODO check command name against deno-redis API
 /**
  * A consumer parsed from xinfo command.
  * 
@@ -258,8 +247,8 @@ export function parseXPendingConsumers(
   return out;
 }
 
-export function parseXPendingCounts(raw: ConditionalArray): XPendingCount {
-  const infos: XPendingMsgInfo[] = [];
+export function parseXPendingCounts(raw: ConditionalArray): XPendingCount[] {
+  const infos: XPendingCount[] = [];
   for (const r of raw) {
     if (
       isCondArray(r) && isString(r[0]) &&
@@ -277,7 +266,7 @@ export function parseXPendingCounts(raw: ConditionalArray): XPendingCount {
     }
   }
 
-  return { kind: "count", infos };
+  return infos;
 }
 
 // TODO use
@@ -285,6 +274,9 @@ export function parseXInfoConsumers(raw: ConditionalArray): XInfoConsumer[] {
   const out: XInfoConsumer[] = [];
 
   for (const r of raw) {
+    // TODO
+    // TODO
+    // TODO
     // TODO
   }
 

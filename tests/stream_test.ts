@@ -1,6 +1,6 @@
 import { Redis } from "../redis.ts";
 import { makeTest } from "./test_util.ts";
-import { parseXId, XPendingData } from "../stream.ts";
+import { parseXId } from "../stream.ts";
 import {
   assertEquals,
   assert,
@@ -490,17 +490,11 @@ test("xclaim and xpending, all options", async () => {
 
     await sleepMillis(5);
 
-    switch (firstPending.kind) {
-      case "data":
-        assertEquals(firstPending.count, 2);
-        assertNotEquals(firstPending.startId, firstPending.endId);
-        assertEquals(firstPending.consumers.length, 1);
-        assertEquals(firstPending.consumers[0].name, "someone");
-        assertEquals(firstPending.consumers[0].pending, 2);
-        break;
-      default:
-        assert(false);
-    }
+    assertEquals(firstPending.count, 2);
+    assertNotEquals(firstPending.startId, firstPending.endId);
+    assertEquals(firstPending.consumers.length, 1);
+    assertEquals(firstPending.consumers[0].name, "someone");
+    assertEquals(firstPending.consumers[0].pending, 2);
 
     const minIdleTime = 4;
 
@@ -551,24 +545,18 @@ test("xclaim and xpending, all options", async () => {
     await sleepMillis(5);
 
     // try another form of xpending: counts for all consumers (we have only one)
-    const secondPending = await client.xpending(
+    const secondPending = await client.xpending_count(
       key,
       group,
       { start: "-", end: "+", count: 10 },
     );
-    switch (secondPending.kind) {
-      case "count":
-        assertEquals(secondPending.infos.length, 3);
-        for (const info of secondPending.infos) {
-          assertEquals(info.owner, "someone");
-          assert(info.lastDeliveredMs > 4);
-          // We called XREADGROUP so it was delivered once
-          // (but not acknowledged yet!)
-          assertEquals(info.timesDelivered, 1);
-        }
-        break;
-      default:
-        assert(false);
+    assertEquals(secondPending.length, 3);
+    for (const info of secondPending) {
+      assertEquals(info.owner, "someone");
+      assert(info.lastDeliveredMs > 4);
+      // We called XREADGROUP so it was delivered once
+      // (but not acknowledged yet!)
+      assertEquals(info.timesDelivered, 1);
     }
 
     // the output for justIDs will have a different shape
@@ -629,25 +617,19 @@ test("xclaim and xpending, all options", async () => {
     // We expect to see two of the three outstanding
     // messages here, since one was claimed by
     // weird-interloper.
-    const thirdPending = await client.xpending(
+    const thirdPending = await client.xpending_count(
       key,
       group,
       { start: "-", end: "+", count: 10 },
       "someone",
     );
-    switch (thirdPending.kind) {
-      case "count":
-        assertEquals(thirdPending.infos.length, 2);
-        for (const info of secondPending.infos) {
-          assertEquals(info.owner, "someone");
-          assert(info.lastDeliveredMs > 4);
-          // We called XREADGROUP so it was delivered once
-          // (but not acknowledged yet!)
-          assertEquals(info.timesDelivered, 1);
-        }
-        break;
-      default:
-        assert(false);
+    assertEquals(thirdPending.length, 2);
+    for (const info of thirdPending) {
+      assertEquals(info.owner, "someone");
+      assert(info.lastDeliveredMs > 4);
+      // We called XREADGROUP so it was delivered once
+      // (but not acknowledged yet!)
+      assertEquals(info.timesDelivered, 1);
     }
 
     // make sure all the other options can be passed to redis
@@ -680,15 +662,6 @@ test("xclaim and xpending, all options", async () => {
         assert(false);
     }
   });
-});
-
-test("xpending alternate forms", async () => {
-  // TODO
-  // TODO
-  // TODO
-  // TODO
-  // TODO
-  // TODO
 });
 
 test("xinfo", async () => {

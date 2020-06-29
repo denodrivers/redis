@@ -20,6 +20,7 @@ import {
   XInfoStream,
   XAddFieldValues,
   XClaimReply,
+  XPendingCount,
 } from "./stream.ts";
 
 export type Raw = Status | Integer | Bulk | ConditionalArray;
@@ -555,9 +556,13 @@ XGROUP SETID mystream consumer-group-name 0
   xpending(
     key: string,
     group: string,
-    startEndCount?: StartEndCount,
-    consumer?: string,
   ): Promise<XPendingReply>;
+  xpending_count(
+    key: string,
+    group: string,
+    startEndCount: StartEndCount,
+    consumer?: string,
+  ): Promise<XPendingCount[]>;
   /**
    * The command returns the stream entries matching a given 
    * range of XIds. The range is specified by a minimum and
