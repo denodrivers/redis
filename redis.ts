@@ -1557,21 +1557,26 @@ class RedisImpl implements RedisCommands {
     }
     args.push("STREAMS");
 
+    const the_keys = [];
+    const the_xids = [];
+
     for (const a of key_xids) {
       if (a instanceof Array) {
         // XKeyIdLike
-        args.push(a[0]);
-        args.push(xidstr(a[1]));
+        console.log("stream ID " + a[1]);
+        the_keys.push(a[0]);
+        the_xids.push(xidstr(a[1]));
       } else {
         // XKeyId
-        args.push(a.key);
-        args.push(xidstr(a.xid));
+        console.log("or have ye " + JSON.stringify(xidstr(a.xid)));
+        the_keys.push(a.key);
+        the_xids.push(xidstr(a.xid));
       }
     }
 
     return this.execArrayReply<XReadStreamRaw>(
       "XREAD",
-      ...args,
+      ...args.concat(the_keys).concat(the_xids),
     ).then((raw) => parseXReadReply(raw));
   }
 
@@ -1596,21 +1601,24 @@ class RedisImpl implements RedisCommands {
 
     args.push("STREAMS");
 
+    const the_keys = [];
+    const the_xids = [];
+
     for (const a of key_xids) {
       if (a instanceof Array) {
         // XKeyIdGroupLike
-        args.push(a[0]);
-        args.push(xidstr(a[1]));
+        the_keys.push(a[0]);
+        the_xids.push(a[1] === ">" ? ">" : xidstr(a[1]));
       } else {
         // XKeyIdGroup
-        args.push(a.key);
-        args.push(xidstr(a.xid));
+        the_keys.push(a.key);
+        the_xids.push(a.xid === ">" ? ">" : xidstr(a.xid));
       }
     }
 
     return this.execArrayReply<XReadStreamRaw>(
       "XREADGROUP",
-      ...args,
+      ...args.concat(the_keys).concat(the_xids),
     ).then((raw) => parseXReadReply(raw));
   }
 
