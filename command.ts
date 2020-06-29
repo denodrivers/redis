@@ -542,21 +542,29 @@ XGROUP SETID mystream consumer-group-name 0
   xlen(key: string): Promise<Integer>;
   /** Complex command to obtain info on messages in the Pending Entries List.
    * 
-   * When XPENDING is called with just a key name and a consumer group name, it just outputs a summary about the pending messages in a given consumer group.
-   * 
-   * When called with the startEndCount argument and no consumer,
-   * for each message four attributes are returned:
-   *    - The ID of the message.
-   *    - The name of the consumer that fetched the message and has still to acknowledge it. We call it the current owner of the message.
-   *    - The number of milliseconds that elapsed since the last time this message was delivered to this consumer.
-   *    - The number of times this message was delivered.
-   * 
-   * Finally it is possible to pass the consumer argument to the command, in order to see the messages having a specific owner.
+   * Outputs a summary about the pending messages in a given consumer group. 
+   *
+   * @param key get pending messages on this stream key
+   * @param group get pending messages for this group
    */
   xpending(
     key: string,
     group: string,
   ): Promise<XPendingReply>;
+  /**
+   * Output more detailed info about pending messages:
+   * 
+   *    - The ID of the message.
+   *    - The name of the consumer that fetched the message and has still to acknowledge it. We call it the current owner of the message.
+   *    - The number of milliseconds that elapsed since the last time this message was delivered to this consumer.
+   *    - The number of times this message was delivered.
+   * 
+   * If you pass the consumer argument to the command, it will efficiently filter for messages owned by that consumer.
+   * @param key get pending messages on this stream key
+   * @param group get pending messages for this group
+   * @param startEndCount start and end: XId range params. you may specify "-" for start and "+" for end. you must also provide a max count of messages.
+   * @param consumer optional, filter by this consumer as owner
+   */
   xpending_count(
     key: string,
     group: string,
