@@ -693,6 +693,12 @@ test("xinfo", async () => {
       },
     );
 
+    // Let's do an XREADGROUP so that we see some entries in the PEL
+    const _ = client.xreadgroup(
+      [[key, ">"]],
+      { group, consumer: "someone" },
+    );
+
     const fullStreamInfo = await client.xinfo_stream_full(key);
     assertEquals(fullStreamInfo.length, 2);
     assert(fullStreamInfo.radixTreeKeys > 0);

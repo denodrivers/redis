@@ -25,6 +25,8 @@ export interface XKeyIdGroup {
   xid: XIdGroupRead;
 }
 
+export type XKeyIdGroupLike = [string, XIdGroupRead];
+
 export type XReadStream = { key: string; messages: XMessage[] };
 export type XReadReply = XReadStream[];
 
@@ -345,7 +347,9 @@ export function parseXConsumerDetail(
   return out;
 }
 
-export function xidstr(xid: XIdAdd | XIdNeg | XIdPos | XIdCreateGroup) {
+export function xidstr(
+  xid: XIdAdd | XIdNeg | XIdPos | XIdCreateGroup | XIdGroupRead,
+) {
   if (typeof xid === "string") return xid;
   if (typeof xid === "bigint" || typeof xid === "number") return `${xid}-0`;
   if (xid instanceof Array && xid.length > 1) return `${xid[0]}-${xid[1]}`;

@@ -22,6 +22,7 @@ import {
   XAddFieldValues,
   XClaimReply,
   XPendingCount,
+  XKeyIdGroupLike,
 } from "./stream.ts";
 
 export type Raw = Status | Integer | Bulk | ConditionalArray;
@@ -643,7 +644,7 @@ XRANGE somestream - +
    *              of milliseconds to block
    */
   xreadgroup(
-    key_xids: XKeyIdGroup[],
+    key_xids: (XKeyIdGroup | XKeyIdGroupLike)[],
     opts: XReadGroupOpts,
   ): Promise<XReadReply>;
 
