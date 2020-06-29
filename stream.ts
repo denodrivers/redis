@@ -6,7 +6,7 @@ import { ConditionalArray, Raw } from "./command.ts";
 export const MAX_SEQ_NO = BigInt("18446744073709551615");
 
 export interface XId {
-  epochMillis: bigint;
+  unixMs: bigint;
   seqNo: bigint;
 }
 
@@ -141,6 +141,30 @@ export interface XInfoStream {
   lastEntry: XMessage;
 }
 
+export interface XInfoStreamFull {
+  length: number;
+  radixTreeKeys: number;
+  radixTreeNodes: number;
+  lastGeneratedId: XId;
+  entries: XMessage[];
+  groups: XInfoGroup[];
+}
+
+// TODO
+export interface XInfoGroup {
+  name: string;
+  lastDeliveredId: XId;
+  pelCount: number;
+  pending: XPendingCount[];
+  consumers: XConsumerDetail[];
+}
+
+export interface XConsumerDetail {
+  name: string;
+  seenTime: bigint;
+  pelCount: number;
+  pending: { xid: XId; lastDeliveredMs: bigint; timesDelivered: number };
+}
 /**
  * A consumer parsed from xinfo command.
  * 
@@ -228,9 +252,9 @@ export function parseXReadReply(
   return out;
 }
 
-export function parseXId(raw: string) {
+export function parseXId(raw: string): XId {
   const [ms, sn] = raw.split("-");
-  return { epochMillis: BigInt(ms), seqNo: BigInt(sn) };
+  return { unixMs: BigInt(ms), seqNo: BigInt(sn) };
 }
 
 export function parseXPendingConsumers(
@@ -286,12 +310,12 @@ export function xidstr(xid: XIdAdd | XIdNeg | XIdPos | XIdCreateGroup) {
   if (typeof xid === "string") return xid;
   if (typeof xid === "bigint" || typeof xid === "number") return `${xid}-0`;
   if (xid instanceof Array && xid.length > 1) return `${xid[0]}-${xid[1]}`;
-  if (isXId(xid)) return `${xid.epochMillis}-${xid.seqNo}`;
+  if (isXId(xid)) return `${xid.unixMs}-${xid.seqNo}`;
   throw "fail";
 }
 
 function isXId(xid: XIdAdd): xid is XId {
-  return (xid as XId).epochMillis !== undefined;
+  return (xid as XId).unixMs !== undefined;
 }
 
 export function rawnum(raw: Raw): number {

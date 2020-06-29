@@ -1426,7 +1426,11 @@ class RedisImpl implements RedisCommands {
     );
   }
 
-  xinfo_stream_full(key: string) {}
+  xinfo_stream_full(key: string) {
+    return this.execArrayReply<Raw>("XINFO", "STREAM", key).then((raw) => {
+      throw "try";
+    });
+  }
 
   xinfo_groups(key: string) {}
 

@@ -269,7 +269,7 @@ test("xadd with map then xread", async () => {
   assert(addedId !== null);
 
   // one millis before now
-  const xid = (addedId.epochMillis - BigInt(1));
+  const xid = (addedId.unixMs - BigInt(1));
   const v = await client.xread(
     [{ key, xid }],
     { block: 5000, count: 500 },
@@ -308,7 +308,7 @@ test("xadd with maxlen on map then xread", async () => {
   );
   assert(addedId !== null);
 
-  const justBefore = addedId.epochMillis - BigInt(1);
+  const justBefore = addedId.unixMs - BigInt(1);
 
   const v = await client.xread(
     [{ key, xid: justBefore }],
@@ -573,9 +573,9 @@ test("xclaim and xpending, all options", async () => {
         assertEquals(
           secondClaimedXIds.xids,
           [
-            { epochMillis: BigInt(3000), seqNo: BigInt(0) },
-            { epochMillis: BigInt(3000), seqNo: BigInt(1) },
-            { epochMillis: BigInt(3000), seqNo: BigInt(2) },
+            { unixMs: BigInt(3000), seqNo: BigInt(0) },
+            { unixMs: BigInt(3000), seqNo: BigInt(1) },
+            { unixMs: BigInt(3000), seqNo: BigInt(2) },
           ],
         );
         break;
@@ -676,19 +676,19 @@ test("xinfo", async () => {
     assert(basicStreamInfo.radixTreeNodes > 0);
     assertEquals(
       basicStreamInfo.lastGeneratedId,
-      { epochMillis: BigInt(2), seqNo: BigInt(0) },
+      { unixMs: BigInt(2), seqNo: BigInt(0) },
     );
     assertEquals(
       basicStreamInfo.firstEntry,
       {
-        xid: { epochMillis: BigInt(1), seqNo: BigInt(0) },
+        xid: { unixMs: BigInt(1), seqNo: BigInt(0) },
         field_values: new Map(Object.entries({ "hello": "no" })),
       },
     );
     assertEquals(
       basicStreamInfo.lastEntry,
       {
-        xid: { epochMillis: BigInt(2), seqNo: BigInt(0) },
+        xid: { unixMs: BigInt(2), seqNo: BigInt(0) },
         field_values: new Map(Object.entries({ "hello": "yes" })),
       },
     );
