@@ -96,7 +96,7 @@ export interface XPendingData {
   consumers: XPendingConsumer[];
 }
 export interface XPendingConsumer {
-  consumer: string;
+  name: string;
   pending: number;
 }
 export interface XPendingCount {
@@ -238,7 +238,7 @@ export function parseXPendingConsumers(
 ): XPendingConsumer[] {
   const out: XPendingConsumer[] = [];
   if (isString(raw[0]) && isNumber(raw[1])) {
-    out.push({ consumer: raw[0], pending: raw[1] });
+    out.push({ name: raw[0], pending: raw[1] });
   }
   return out;
 }
@@ -300,7 +300,7 @@ export function isString(x: any): x is string {
 }
 
 // deno-lint-ignore no-explicit-any
-function isNumber(x: any): x is number {
+export function isNumber(x: any): x is number {
   return typeof x === "number";
 }
 

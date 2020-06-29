@@ -1,9 +1,10 @@
 import { Redis } from "../redis.ts";
 import { makeTest } from "./test_util.ts";
-import { parseXId } from "../stream.ts";
+import { parseXId, XPendingData } from "../stream.ts";
 import {
   assertEquals,
   assert,
+  assertNotEquals,
 } from "../vendor/https/deno.land/std/testing/asserts.ts";
 const { test, client } = await makeTest("stream");
 
@@ -461,7 +462,7 @@ test("xrange and xrevrange", async () => {
   await cleanupStream(client, key);
 });
 
-test("xclaim", async () => {
+test("xclaim and xpending", async () => {
   await withConsumerGroup(async (key, group) => {
     // xclaim test basic idea:
     // 1. add messages to a group
@@ -484,6 +485,20 @@ test("xclaim", async () => {
       [{ key, xid }],
       { group, consumer },
     );
+
+    const firstPending = await client.xpending(key, group);
+
+    switch (firstPending.kind) {
+      case "data":
+        assertEquals(firstPending.count, 2);
+        assertNotEquals(firstPending.startId, firstPending.endId);
+        assertEquals(firstPending.consumers.length, 1);
+        assertEquals(firstPending.consumers[0].name, "someone");
+        assertEquals(firstPending.consumers[0].pending, 2);
+        break;
+      default:
+        assert(false);
+    }
 
     await sleep(5); //millis
 

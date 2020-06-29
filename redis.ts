@@ -42,6 +42,7 @@ import {
   rawnum,
   rawstr,
   isCondArray,
+  isNumber,
   isString,
   fromRedisArray,
   XAddFieldValues,
@@ -1443,16 +1444,19 @@ class RedisImpl implements RedisCommands {
         const isSimpleInvocation = startEndCount === undefined &&
           consumer === undefined;
 
+        const icc = [isString(raw[0]), isString(raw[1]), isString(raw[2])];
+        console.log(`icc ${icc}`);
+
         if (isSimpleInvocation && raw.length === 0) {
           const empty: XPendingEmpty = { kind: "empty" };
           return empty;
         } else if (
-          isSimpleInvocation && isString(raw[0]) &&
+          isSimpleInvocation && isNumber(raw[0]) &&
           isString(raw[1]) && isString(raw[2]) && isCondArray(raw[3])
         ) {
           const reply: XPendingData = {
             kind: "data",
-            count: parseInt(raw[0]),
+            count: raw[0],
             startId: parseXId(raw[1]),
             endId: parseXId(raw[2]),
             consumers: parseXPendingConsumers(raw[3]),
@@ -1463,7 +1467,7 @@ class RedisImpl implements RedisCommands {
         } else if (startEndCount !== undefined && consumer !== undefined) {
           throw "write me"; // TODO
         } else {
-          throw "fail pending";
+          throw `fail pending ${startEndCount} ${consumer}`;
         }
       });
   }
