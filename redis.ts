@@ -47,6 +47,8 @@ import {
   fromRedisArray,
   XAddFieldValues,
   XPendingEmpty,
+  XClaimJustXId,
+  XClaimMessages,
 } from "./stream.ts";
 import { RedisConnection } from "./connection.ts";
 
@@ -1300,11 +1302,11 @@ class RedisImpl implements RedisCommands {
       args.push("FORCE");
     }
 
-    if (opts.justId) {
+    if (opts.justXId) {
       args.push("JUSTID");
     }
 
-    return this.execArrayReply<BulkString>(
+    return this.execArrayReply<XReadIdData | BulkString>(
       "XCLAIM",
       key,
       opts.group,
@@ -1312,7 +1314,27 @@ class RedisImpl implements RedisCommands {
       opts.minIdleTime,
       ...xids.map((xid) => xidstr(xid)),
       ...args,
-    );
+    ).then((raw) => {
+      if (opts.justXId) {
+        const xids = [];
+        for (const r of raw) {
+          if (typeof r === "string") {
+            xids.push(parseXId(r));
+          }
+        }
+        const payload: XClaimJustXId = { kind: "justxid", xids };
+        return payload;
+      }
+
+      const messages = [];
+      for (const r of raw) {
+        if (typeof r !== "string") {
+          messages.push(parseXMessage(r));
+        }
+      }
+      const payload: XClaimMessages = { kind: "messages", messages };
+      return payload;
+    });
   }
 
   xdel(key: string, ...xids: XIdInput[]) {
@@ -1445,7 +1467,6 @@ class RedisImpl implements RedisCommands {
           consumer === undefined;
 
         const icc = [isString(raw[0]), isString(raw[1]), isString(raw[2])];
-        console.log(`icc ${icc}`);
 
         if (isSimpleInvocation && raw.length === 0) {
           const empty: XPendingEmpty = { kind: "empty" };

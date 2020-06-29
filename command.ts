@@ -19,6 +19,7 @@ import {
   XMessage,
   XInfoStream,
   XAddFieldValues,
+  XClaimReply,
 } from "./stream.ts";
 
 export type Raw = Status | Integer | Bulk | ConditionalArray;
@@ -401,14 +402,14 @@ XCLAIM mystream mygroup Alice 3600000 1526569498055-0
    *    TIME <ms-unix-time>: This is the same as IDLE but instead of a relative amount of milliseconds, it sets the idle time to a specific Unix time (in milliseconds). This is useful in order to rewrite the AOF file generating XCLAIM commands.
    *    RETRYCOUNT <count>: Set the retry counter to the specified value. This counter is incremented every time a message is delivered again. Normally XCLAIM does not alter this counter, which is just served to clients when the XPENDING command is called: this way clients can detect anomalies, like messages that are never processed for some reason after a big number of delivery attempts.
    *    FORCE: Creates the pending message entry in the PEL even if certain specified XIds are not already in the PEL assigned to a different client. However the message must be exist in the stream, otherwise the XIds of non existing messages are ignored.
-   *    JUSTID: Return just an array of XIds of messages successfully claimed, without returning the actual message. Using this option means the retry counter is not incremented.
+   *    JUSTXID: Return just an array of XIds of messages successfully claimed, without returning the actual message. Using this option means the retry counter is not incremented.
    * @param ids the message XIds to claim
    */
   xclaim(
     key: string,
     opts: XClaimOpts,
     ...xids: XIdInput[]
-  ): Promise<ConditionalArray>;
+  ): Promise<XClaimReply>;
   /**
    * Removes the specified entries from a stream, 
    * and returns the number of entries deleted,

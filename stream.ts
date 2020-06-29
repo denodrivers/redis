@@ -76,10 +76,21 @@ export interface XMaxlen {
   elements: number;
 }
 
+export type XClaimReply = XClaimMessages | XClaimJustXId;
+export interface XClaimMessages {
+  kind: "messages";
+  messages: XMessage[];
+}
+export interface XClaimJustXId {
+  kind: "justxid";
+  xids: XId[];
+}
+
 export type XPendingReply = XPendingEmpty | XPendingData | XPendingCount;
 export interface XPendingEmpty {
   kind: "empty";
 }
+
 /**
  * @param count Limit on the number of messages to return per call.
  * @param startId ID for the first pending record.
@@ -174,7 +185,7 @@ export interface XClaimOpts {
   time?: number;
   retryCount?: number;
   force?: boolean;
-  justId?: boolean;
+  justXId?: boolean;
 }
 
 export function parseXMessage(

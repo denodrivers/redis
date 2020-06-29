@@ -511,7 +511,18 @@ test("xclaim and xpending", async () => {
       1000,
       2000,
     );
-    assertEquals(firstClaimed.length, 2);
+    switch (firstClaimed.kind) {
+      case "messages":
+        assertEquals(firstClaimed.messages.length, 2);
+        assertEquals(
+          firstClaimed.messages[0].field_values,
+          new Map(Object.entries({ "field": "foo" })),
+        );
+        assertEquals(
+          firstClaimed.messages[1].field_values,
+          new Map(Object.entries({ "field": "bar" })),
+        );
+    }
 
     await Promise.all(
       [
@@ -523,7 +534,7 @@ test("xclaim and xpending", async () => {
     // the output for justIDs will have a different shape
     await client.xclaim(
       key,
-      { group, consumer, minIdleTime, justId: true },
+      { group, consumer, minIdleTime, justXId: true },
       [3000, 0],
       [3000, 1],
     );
