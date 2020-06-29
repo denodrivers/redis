@@ -23,6 +23,7 @@ import {
   XClaimReply,
   XPendingCount,
   XKeyIdGroupLike,
+  XKeyIdLike,
 } from "./stream.ts";
 
 export type Raw = Status | Integer | Bulk | ConditionalArray;
@@ -630,7 +631,7 @@ XRANGE somestream - +
    *                    milliseconds for which to block
    */
   xread(
-    key_xids: XKeyId[],
+    key_xids: (XKeyId | XKeyIdLike)[],
     opts?: XReadOpts,
   ): Promise<XReadReply>;
   /**

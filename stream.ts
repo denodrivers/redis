@@ -20,6 +20,8 @@ export interface XKeyId {
   xid: XIdInput;
 }
 
+export type XKeyIdLike = [string, XIdInput];
+
 export interface XKeyIdGroup {
   key: string;
   xid: XIdGroupRead;

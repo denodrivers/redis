@@ -48,6 +48,7 @@ import {
   XKeyIdGroup,
   XKeyIdGroupLike,
   XIdGroupRead,
+  XKeyIdLike,
 } from "./stream.ts";
 import { RedisConnection } from "./connection.ts";
 
@@ -1540,7 +1541,7 @@ class RedisImpl implements RedisCommands {
   }
 
   xread(
-    key_xids: XKeyId[],
+    key_xids: (XKeyId | XKeyIdLike)[],
     opts?: { count?: number; block?: number },
   ) {
     const args = [];
@@ -1555,11 +1556,17 @@ class RedisImpl implements RedisCommands {
       }
     }
     args.push("STREAMS");
-    for (const { key } of key_xids) {
-      args.push(key);
-    }
-    for (const { xid } of key_xids) {
-      args.push(xidstr(xid));
+
+    for (const a of key_xids) {
+      if (a instanceof Array) {
+        // XKeyIdLike
+        args.push(a[0]);
+        args.push(xidstr(a[1]));
+      } else {
+        // XKeyId
+        args.push(a.key);
+        args.push(xidstr(a.xid));
+      }
     }
 
     return this.execArrayReply<XReadStreamRaw>(
