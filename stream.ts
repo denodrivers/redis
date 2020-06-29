@@ -119,7 +119,7 @@ export interface XPendingConsumer {
 export interface XPendingCount {
   xid: XId;
   owner: string;
-  lastDeliveredMs: number;
+  lastDeliveredMs: bigint;
   timesDelivered: number;
 }
 /** Used in the XPENDING command, all three of these
@@ -283,7 +283,7 @@ export function parseXPendingCounts(raw: ConditionalArray): XPendingCount[] {
         {
           xid: parseXId(r[0]),
           owner: r[1],
-          lastDeliveredMs: r[2],
+          lastDeliveredMs: BigInt(r[2]),
           timesDelivered: r[3],
         },
       );
