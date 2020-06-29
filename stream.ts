@@ -234,12 +234,16 @@ export function parseXId(raw: string) {
 }
 
 export function parseXPendingConsumers(
-  raw: ConditionalArray,
+  raws: ConditionalArray,
 ): XPendingConsumer[] {
   const out: XPendingConsumer[] = [];
-  if (isString(raw[0]) && isNumber(raw[1])) {
-    out.push({ name: raw[0], pending: raw[1] });
+
+  for (const raw of raws) {
+    if (isCondArray(raw) && isString(raw[0]) && isString(raw[1])) {
+      out.push({ name: raw[0], pending: parseInt(raw[1]) });
+    }
   }
+
   return out;
 }
 
