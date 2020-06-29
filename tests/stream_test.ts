@@ -692,7 +692,14 @@ test("xinfo", async () => {
         field_values: new Map(Object.entries({ "hello": "yes" })),
       },
     );
-    // TODO  xinfo_stream_full
+
+    const fullStreamInfo = await client.xinfo_stream_full(key);
+    assertEquals(fullStreamInfo.length, 2);
+    assert(fullStreamInfo.radixTreeKeys > 0);
+    assert(fullStreamInfo.radixTreeNodes > 0);
+
+    const fullStreamInfoCount = await client.xinfo_stream_full(key, 1);
+    // TODO
     // TODO
     // TODO  xinfo_groups
     // TODO

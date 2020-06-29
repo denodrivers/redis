@@ -1430,24 +1430,33 @@ class RedisImpl implements RedisCommands {
     );
   }
 
-  xinfo_stream_full(key: string) {
-    return this.execArrayReply<Raw>("XINFO", "STREAM", key).then((raw) => {
-      // Note that you should not rely on the fields
-      // exact position, nor on the number of fields,
-      // new fields may be added in the future.
-      const data: Map<string, Raw> = convertMap(raw);
+  xinfo_stream_full(key: string, count?: number) {
+    const args = [];
+    if (count) {
+      args.push("COUNT");
+      args.push(count);
+    }
+    return this.execArrayReply<Raw>("XINFO", "STREAM", key, "FULL", ...args)
+      .then(
+        (raw) => {
+          // Note that you should not rely on the fields
+          // exact position, nor on the number of fields,
+          // new fields may be added in the future.
+          if (raw === undefined) throw "no data";
+          const data: Map<string, Raw> = convertMap(raw);
 
-      return {
-        length: rawnum(data.get("length")),
-        radixTreeKeys: rawnum(data.get("radix-tree-keys")),
-        radixTreeNodes: rawnum(data.get("radix-tree-nodes")),
-        lastGeneratedId: parseXId(rawstr(data.get("last-generated-id"))),
-        entries: (data.get("entries") as ConditionalArray).map((raw) =>
-          parseXMessage(raw as XReadIdData)
-        ),
-        groups: parseXGroupDetail(data.get("groups") as ConditionalArray),
-      };
-    });
+          return {
+            length: rawnum(data.get("length")),
+            radixTreeKeys: rawnum(data.get("radix-tree-keys")),
+            radixTreeNodes: rawnum(data.get("radix-tree-nodes")),
+            lastGeneratedId: parseXId(rawstr(data.get("last-generated-id"))),
+            entries: (data.get("entries") as ConditionalArray).map((raw) =>
+              parseXMessage(raw as XReadIdData)
+            ),
+            groups: parseXGroupDetail(data.get("groups") as ConditionalArray),
+          };
+        },
+      );
   }
 
   xinfo_groups(key: string) {}
