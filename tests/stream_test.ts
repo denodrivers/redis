@@ -531,6 +531,24 @@ test("xclaim", async () => {
   });
 });
 
+test("xpending alternate forms", async () => {
+  // TODO
+  // TODO
+  // TODO
+  // TODO
+  // TODO
+  // TODO
+});
+
+test("xinfo", async () => {
+  // TODO
+  // TODO
+  // TODO
+  // TODO
+  // TODO
+  // TODO
+});
+
 const sleep = (ms: number) => {
   return new Promise((resolve) => setTimeout(resolve, ms));
 };
