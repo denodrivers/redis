@@ -504,7 +504,12 @@ test("xclaim", async () => {
     );
     assertEquals(firstClaimed.length, 2);
 
-    throw "checkity";
+    await Promise.all(
+      [
+        client.xadd(key, 3000, { "field": "foo" }),
+        client.xadd(key, [3000, 1], { "field": "bar" }),
+      ],
+    );
 
     // the output for justIDs will have a different shape
     await client.xclaim(
@@ -514,7 +519,12 @@ test("xclaim", async () => {
       [3000, 1],
     );
 
-    throw "maybe write more";
+    await Promise.all(
+      [
+        client.xadd(key, 4000, { "field": "foo" }),
+        client.xadd(key, 5000, { "field": "bar" }),
+      ],
+    );
 
     // make sure all the other options can be passed to redis
     // without some sort of disaster occurring.

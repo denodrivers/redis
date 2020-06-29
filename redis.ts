@@ -31,6 +31,8 @@ import {
   XInfoConsumer,
   parseXReadReply,
   parseXMessage,
+  parseXPendingConsumers,
+  parseXPendingCounts,
   XReadGroupOpts,
   xidstr,
   XIdInput,
@@ -39,8 +41,11 @@ import {
   parseXId,
   rawnum,
   rawstr,
+  isCondArray,
+  isString,
   fromRedisArray,
   XAddFieldValues,
+  XPendingEmpty,
 } from "./stream.ts";
 import { RedisConnection } from "./connection.ts";
 
@@ -1417,44 +1422,50 @@ class RedisImpl implements RedisCommands {
     startEndCount?: StartEndCount,
     consumer?: string,
   ) {
-    throw "WRITE ME!";
-    return this.execArrayReply<BulkString>("XPENDING").then((raw) => {
-      // When XPENDING is called with just a key name
-      // and a consumer group name, it just outputs a
-      // summary about the pending messages in a given
-      // consumer group.
-      // This will return XPendingData or XPendingEmpty
-      // depending on if there are any records!
-      const isSimpleInvocation = startEndCount === undefined &&
-        consumer === undefined;
-      if (isSimpleInvocation && raw.length === 0) {
-        const reply: XPendingReply = {
-          kind: "empty",
-        };
-        return reply;
-      } else if (isSimpleInvocation) {
-        throw "WRITE ME";
+    const args = [];
+    if (startEndCount) {
+      args.push(startEndCount.start);
+      args.push(startEndCount.end);
+      args.push(startEndCount.count);
+    }
 
-        const count = 0; // TODO
-        const startId = parseXId("0-0"); // TODO
-        const endId = parseXId("0-0"); // TODO
-        const consumers: XInfoConsumer[] = []; // TODO
-        const reply: XPendingData = {
-          kind: "data",
-          count,
-          startId,
-          endId,
-          consumers,
-        };
-        return reply;
-      } else {
-        throw "WRITE ME";
-        const reply: XPendingReply = {
-          kind: "empty",
-        };
-        return reply;
-      }
-    });
+    if (consumer) {
+      args.push(consumer);
+    }
+    return this.execArrayReply<Raw>("XPENDING", key, group, ...args)
+      .then((raw) => {
+        // When XPENDING is called with just a key name
+        // and a consumer group name, it just outputs a
+        // summary about the pending messages in a given
+        // consumer group.
+        // This will return XPendingData or XPendingEmpty
+        // depending on if there are any records!
+        const isSimpleInvocation = startEndCount === undefined &&
+          consumer === undefined;
+
+        if (isSimpleInvocation && raw.length === 0) {
+          const empty: XPendingEmpty = { kind: "empty" };
+          return empty;
+        } else if (
+          isSimpleInvocation && isString(raw[0]) &&
+          isString(raw[1]) && isString(raw[2]) && isCondArray(raw[3])
+        ) {
+          const reply: XPendingData = {
+            kind: "data",
+            count: parseInt(raw[0]),
+            startId: parseXId(raw[1]),
+            endId: parseXId(raw[2]),
+            consumers: parseXPendingConsumers(raw[3]),
+          };
+          return reply;
+        } else if (startEndCount !== undefined && consumer === undefined) {
+          return parseXPendingCounts(raw);
+        } else if (startEndCount !== undefined && consumer !== undefined) {
+          throw "write me"; // TODO
+        } else {
+          throw "fail pending";
+        }
+      });
   }
 
   xrange(

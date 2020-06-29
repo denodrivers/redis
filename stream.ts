@@ -65,7 +65,7 @@ export type XIdPos = XIdInput | "+";
 /** Allows special minimum ID for XRANGE and XREVRANGE */
 export type XIdNeg = XIdInput | "-";
 /** Allow special $ ID for XGROUP CREATE */
-export type XIdDollar = XIdInput | "$";
+export type XIdCreateGroup = XIdInput | "$";
 
 export type XAddFieldValues =
   | Record<string | number, string | number>
@@ -93,11 +93,15 @@ export interface XPendingData {
   count: number;
   startId: XId;
   endId: XId;
-  consumers: XInfoConsumer[];
+  consumers: XPendingConsumer[];
+}
+export interface XPendingConsumer {
+  consumer: string;
+  pending: number;
 }
 export interface XPendingCount {
   kind: "count";
-  ids: XPendingId[];
+  infos: XPendingMsgInfo[];
 }
 
 /**
@@ -111,8 +115,8 @@ export interface XPendingCount {
  *  last time this message was delivered to this consumer.
  * @param timesDelivered The number of times this message was delivered.
  */
-export interface XPendingId {
-  id: string;
+export interface XPendingMsgInfo {
+  xid: XId;
   consumer: string;
   lastDeliveredMs: number;
   timesDelivered: number;
@@ -121,8 +125,8 @@ export interface XPendingId {
  * args must be specified if _any_ are specified.
  */
 export interface StartEndCount {
-  start: number;
-  end: number;
+  start: number | "-";
+  end: number | "+";
   count: number;
 }
 
@@ -229,7 +233,49 @@ export function parseXId(raw: string) {
   return { epochMillis: BigInt(ms), seqNo: BigInt(sn) };
 }
 
-export function xidstr(xid: XIdAdd | XIdNeg | XIdPos | XIdDollar) {
+export function parseXPendingConsumers(
+  raw: ConditionalArray,
+): XPendingConsumer[] {
+  const out: XPendingConsumer[] = [];
+  if (isString(raw[0]) && isNumber(raw[1])) {
+    out.push({ consumer: raw[0], pending: raw[1] });
+  }
+  return out;
+}
+
+export function parseXPendingCounts(raw: ConditionalArray): XPendingCount {
+  const infos: XPendingMsgInfo[] = [];
+  for (const r of raw) {
+    if (
+      isCondArray(r) && isString(r[0]) &&
+      isString(r[1]) && isNumber(r[2]) &&
+      isNumber(r[3])
+    ) {
+      infos.push(
+        {
+          xid: parseXId(r[0]),
+          consumer: r[1],
+          lastDeliveredMs: r[2],
+          timesDelivered: r[3],
+        },
+      );
+    }
+  }
+
+  return { kind: "count", infos };
+}
+
+// TODO use
+export function parseXInfoConsumers(raw: ConditionalArray): XInfoConsumer[] {
+  const out: XInfoConsumer[] = [];
+
+  for (const r of raw) {
+    // TODO
+  }
+
+  return out;
+}
+export function xidstr(xid: XIdAdd | XIdNeg | XIdPos | XIdCreateGroup) {
   if (typeof xid === "string") return xid;
   if (typeof xid === "bigint" || typeof xid === "number") return `${xid}-0`;
   if (xid instanceof Array && xid.length > 1) return `${xid[0]}-${xid[1]}`;
@@ -246,4 +292,17 @@ export function rawnum(raw: Raw): number {
 }
 export function rawstr(raw: Raw): string {
   return raw ? raw.toString() : "";
+}
+
+export function isString(x: any): x is string {
+  return typeof x === "string";
+}
+function isNumber(x: any): x is number {
+  return typeof x === "number";
+}
+
+export function isCondArray(x: Raw): x is ConditionalArray {
+  const l = (x as ConditionalArray).length;
+  if (l > 0 || l < 1) return true;
+  else return false;
 }
