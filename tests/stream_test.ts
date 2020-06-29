@@ -692,10 +692,11 @@ test("xinfo", async () => {
         field_values: new Map(Object.entries({ "hello": "yes" })),
       },
     );
+    // TODO  xinfo_stream_full
     // TODO
+    // TODO  xinfo_groups
     // TODO
-    // TODO
-    // TODO
+    // TODO  xinfo_consumers
     // TODO
   });
 });

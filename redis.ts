@@ -36,6 +36,7 @@ import {
   parseXMessage,
   parseXPendingConsumers,
   parseXPendingCounts,
+  parseXGroupDetail,
   xidstr,
   parseXId,
   rawnum,
@@ -43,7 +44,7 @@ import {
   isCondArray,
   isNumber,
   isString,
-  fromRedisArray,
+  convertMap,
 } from "./stream.ts";
 import { RedisConnection } from "./connection.ts";
 
@@ -1404,7 +1405,10 @@ class RedisImpl implements RedisCommands {
   xinfo_stream(key: string) {
     return this.execArrayReply<Raw>("XINFO", "STREAM", key).then(
       (raw) => {
-        let data = fromRedisArray(raw);
+        // Note that you should not rely on the fields
+        // exact position, nor on the number of fields,
+        // new fields may be added in the future.
+        const data: Map<string, Raw> = convertMap(raw);
 
         const firstEntry = parseXMessage(
           data.get("first-entry") as XReadIdData,
@@ -1428,7 +1432,21 @@ class RedisImpl implements RedisCommands {
 
   xinfo_stream_full(key: string) {
     return this.execArrayReply<Raw>("XINFO", "STREAM", key).then((raw) => {
-      throw "try";
+      // Note that you should not rely on the fields
+      // exact position, nor on the number of fields,
+      // new fields may be added in the future.
+      const data: Map<string, Raw> = convertMap(raw);
+
+      return {
+        length: rawnum(data.get("length")),
+        radixTreeKeys: rawnum(data.get("radix-tree-keys")),
+        radixTreeNodes: rawnum(data.get("radix-tree-nodes")),
+        lastGeneratedId: parseXId(rawstr(data.get("last-generated-id"))),
+        entries: (data.get("entries") as ConditionalArray).map((raw) =>
+          parseXMessage(raw as XReadIdData)
+        ),
+        groups: parseXGroupDetail(data.get("groups") as ConditionalArray),
+      };
     });
   }
 
@@ -1442,12 +1460,6 @@ class RedisImpl implements RedisCommands {
   ) {
     return this.execArrayReply<Raw>("XPENDING", key, group)
       .then((raw) => {
-        // When XPENDING is called with just a key name
-        // and a consumer group name, it just outputs a
-        // summary about the pending messages in a given
-        // consumer group.
-        // This will return XPendingData or XPendingEmpty
-        // depending on if there are any records!
         if (
           isNumber(raw[0]) && isString(raw[1]) &&
           isString(raw[2]) && isCondArray(raw[3])

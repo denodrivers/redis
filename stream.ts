@@ -147,11 +147,13 @@ export interface XInfoStreamFull {
   radixTreeNodes: number;
   lastGeneratedId: XId;
   entries: XMessage[];
-  groups: XInfoGroup[];
+  groups: XGroupDetail[];
 }
 
-// TODO
-export interface XInfoGroup {
+/**
+ * Child of the return type for xinfo_stream_full
+ */
+export interface XGroupDetail {
   name: string;
   lastDeliveredId: XId;
   pelCount: number;
@@ -163,7 +165,7 @@ export interface XConsumerDetail {
   name: string;
   seenTime: bigint;
   pelCount: number;
-  pending: { xid: XId; lastDeliveredMs: bigint; timesDelivered: number };
+  pending: { xid: XId; lastDeliveredMs: bigint; timesDelivered: number }[];
 }
 /**
  * A consumer parsed from xinfo command.
@@ -220,7 +222,7 @@ export function parseXMessage(
   return { xid: parseXId(raw[0]), field_values: field_values };
 }
 
-export function fromRedisArray(raw: ConditionalArray): Map<string, Raw> {
+export function convertMap(raw: ConditionalArray): Map<string, Raw> {
   let field_values: Map<string, Raw> = new Map();
   let f: string | undefined = undefined;
 
@@ -293,19 +295,56 @@ export function parseXPendingCounts(raw: ConditionalArray): XPendingCount[] {
   return infos;
 }
 
-// TODO use
-export function parseXInfoConsumers(raw: ConditionalArray): XInfoConsumer[] {
-  const out: XInfoConsumer[] = [];
+export function parseXGroupDetail(rawGroups: ConditionalArray): XGroupDetail[] {
+  const out = [];
 
-  for (const r of raw) {
-    // TODO
-    // TODO
-    // TODO
-    // TODO
+  for (const rawGroup of rawGroups) {
+    if (isCondArray(rawGroup)) {
+      const data = convertMap(rawGroup);
+
+      out.push(
+        {
+          name: rawstr(data.get("name")),
+          lastDeliveredId: parseXId(rawstr(data.get("last-delivered-id"))),
+          pelCount: rawnum(data.get("pel-count")),
+          pending: parseXPendingCounts(
+            (data.get("pending") as ConditionalArray),
+          ),
+          consumers: parseXConsumerDetail(
+            (data.get("consumers") as ConditionalArray),
+          ),
+        },
+      );
+    }
   }
 
   return out;
 }
+
+export function parseXConsumerDetail(
+  raws: ConditionalArray,
+): XConsumerDetail[] {
+  const out: XConsumerDetail[] = [];
+  for (const raw in raws) {
+    if (isCondArray(raw)) {
+      const data = convertMap(raw);
+      out.push({
+        name: rawstr(data.get("name")),
+        seenTime: rawbigint(data.get("seen-time")),
+        pelCount: rawnum(data.get("pel-count")),
+        pending: (data.get("pending") as string[][]).map((p) => {
+          return {
+            xid: parseXId(rawstr(p[0])),
+            lastDeliveredMs: rawbigint(p[1]),
+            timesDelivered: rawnum(p[2]),
+          };
+        }),
+      });
+    }
+  }
+  return out;
+}
+
 export function xidstr(xid: XIdAdd | XIdNeg | XIdPos | XIdCreateGroup) {
   if (typeof xid === "string") return xid;
   if (typeof xid === "bigint" || typeof xid === "number") return `${xid}-0`;
@@ -314,17 +353,12 @@ export function xidstr(xid: XIdAdd | XIdNeg | XIdPos | XIdCreateGroup) {
   throw "fail";
 }
 
-function isXId(xid: XIdAdd): xid is XId {
-  return (xid as XId).unixMs !== undefined;
-}
-
 export function rawnum(raw: Raw): number {
   return raw ? +raw.toString() : 0;
 }
 export function rawstr(raw: Raw): string {
   return raw ? raw.toString() : "";
 }
-
 // deno-lint-ignore no-explicit-any
 export function isString(x: any): x is string {
   return typeof x === "string";
@@ -339,4 +373,12 @@ export function isCondArray(x: Raw): x is ConditionalArray {
   const l = (x as ConditionalArray).length;
   if (l > 0 || l < 1) return true;
   else return false;
+}
+
+function rawbigint(raw: Raw): bigint {
+  return raw ? BigInt(raw) : 0n;
+}
+
+function isXId(xid: XIdAdd): xid is XId {
+  return (xid as XId).unixMs !== undefined;
 }
