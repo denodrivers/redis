@@ -14,6 +14,7 @@ const cleanupStream = async (client: Redis, ...keys: string[]) => {
 };
 
 const withConsumerGroup = async (
+  // deno-lint-ignore no-explicit-any
   fn: (stream: string, group: string) => any,
 ) => {
   const rn = Math.floor(Math.random() * 1000);
