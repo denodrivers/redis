@@ -1405,22 +1405,22 @@ class RedisImpl implements RedisCommands {
     return this.execArrayReply<Raw>("XINFO", "STREAM", key).then(
       (raw) => {
         let data = fromRedisArray(raw);
+
+        const firstEntry = parseXMessage(
+          data.get("first-entry") as XReadIdData,
+        );
+        const lastEntry = parseXMessage(
+          data.get("last-entry") as XReadIdData,
+        );
+
         return {
           length: rawnum(data.get("length")),
           radixTreeKeys: rawnum(data.get("radix-tree-keys")),
           radixTreeNodes: rawnum(data.get("radix-tree-nodes")),
           groups: rawnum(data.get("groups")),
           lastGeneratedId: parseXId(rawstr(data.get("last-generated-id"))),
-          // TODO BELOW IS STUBBED
-          // TODO BELOW IS STUBBED
-          // TODO BELOW IS STUBBED
-          // TODO BELOW IS STUBBED
-          firstEntry: { xid: parseXId("0-0"), field_values: new Map() },
-          lastEntry: { xid: parseXId("0-0"), field_values: new Map() },
-          // TODO ABOVE IS STUBBED
-          // TODO ABOVE IS STUBBED
-          // TODO ABOVE IS STUBBED
-          // TODO ABOVE IS STUBBED
+          firstEntry,
+          lastEntry,
         };
       },
     );
@@ -1431,8 +1431,6 @@ class RedisImpl implements RedisCommands {
   xinfo_groups(key: string) {}
 
   xinfo_consumers(key: string, group: string) {}
-
-  xinfo_help() {}
 
   xpending(
     key: string,

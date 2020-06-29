@@ -665,12 +665,39 @@ test("xclaim and xpending, all options", async () => {
 });
 
 test("xinfo", async () => {
-  // TODO
-  // TODO
-  // TODO
-  // TODO
-  // TODO
-  // TODO
+  await withConsumerGroup(async (key, group) => {
+    await client.xadd(key, 1, { "hello": "no" });
+    await client.xadd(key, 2, { "hello": "yes" });
+
+    const basicStreamInfo = await client.xinfo_stream(key);
+    assertEquals(basicStreamInfo.length, 2);
+    assertEquals(basicStreamInfo.groups, 1);
+    assert(basicStreamInfo.radixTreeKeys > 0);
+    assert(basicStreamInfo.radixTreeNodes > 0);
+    assertEquals(
+      basicStreamInfo.lastGeneratedId,
+      { epochMillis: BigInt(2), seqNo: BigInt(0) },
+    );
+    assertEquals(
+      basicStreamInfo.firstEntry,
+      {
+        xid: { epochMillis: BigInt(1), seqNo: BigInt(0) },
+        field_values: new Map(Object.entries({ "hello": "no" })),
+      },
+    );
+    assertEquals(
+      basicStreamInfo.lastEntry,
+      {
+        xid: { epochMillis: BigInt(2), seqNo: BigInt(0) },
+        field_values: new Map(Object.entries({ "hello": "yes" })),
+      },
+    );
+    // TODO
+    // TODO
+    // TODO
+    // TODO
+    // TODO
+  });
 });
 
 const sleepMillis = (ms: number) => {
