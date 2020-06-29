@@ -490,7 +490,6 @@ test("xclaim and xpending", async () => {
 
     switch (firstPending.kind) {
       case "data":
-        console.log(`hi ${JSON.stringify(firstPending.consumers)}`);
         assertEquals(firstPending.count, 2);
         assertNotEquals(firstPending.startId, firstPending.endId);
         assertEquals(firstPending.consumers.length, 1);
