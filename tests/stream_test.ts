@@ -22,12 +22,12 @@ const withConsumerGroup = async (
   const stream = randomStream();
   const group = `test-group-${rn}`;
 
-  let created = await client.xgroupcreate(stream, group, "$", true);
+  let created = await client.xgroup_create(stream, group, "$", true);
   assertEquals(created, "OK");
 
   await fn(stream, group);
 
-  assertEquals(await client.xgroupdestroy(stream, group), 1);
+  assertEquals(await client.xgroup_destroy(stream, group), 1);
 };
 
 test("xadd", async () => {
@@ -129,7 +129,7 @@ test("xread", async () => {
 });
 
 test("xgrouphelp", async () => {
-  const helpText = await client.xgrouphelp();
+  const helpText = await client.xgroup_help();
   assert(helpText.length > 4);
   assert(helpText[0].length > 10);
 });
@@ -139,10 +139,10 @@ test("xgroup create and destroy", async () => {
 
   const key = randomStream();
 
-  let created = await client.xgroupcreate(key, groupName, "$", true);
+  let created = await client.xgroup_create(key, groupName, "$", true);
   assertEquals(created, "OK");
   try {
-    await client.xgroupcreate(
+    await client.xgroup_create(
       key,
       groupName,
       0,
@@ -154,7 +154,7 @@ test("xgroup create and destroy", async () => {
     assert(true);
   }
 
-  assertEquals(await client.xgroupdestroy(key, groupName), 1);
+  assertEquals(await client.xgroup_destroy(key, groupName), 1);
 });
 
 test("xgroup setid and delconsumer", async () => {
@@ -162,7 +162,7 @@ test("xgroup setid and delconsumer", async () => {
   const group = "test-group";
   const consumer = "test-consumer";
 
-  let created = await client.xgroupcreate(key, group, "$", true);
+  let created = await client.xgroup_create(key, group, "$", true);
   assertEquals(created, "OK");
 
   let addedId = await client.xadd(key, "*", { "anyfield": "anyval" });
@@ -180,12 +180,12 @@ test("xgroup setid and delconsumer", async () => {
   assertEquals(data.length, 1);
 
   assertEquals(
-    await client.xgroupsetid(key, group, 0),
+    await client.xgroup_setid(key, group, 0),
     "OK",
   );
 
   assertEquals(
-    await client.xgroupdelconsumer(key, group, consumer),
+    await client.xgroup_delconsumer(key, group, consumer),
     1,
   );
 
@@ -196,7 +196,7 @@ test("xreadgroup but no ack", async () => {
   const key = randomStream();
   const group = "test-group";
 
-  let created = await client.xgroupcreate(key, group, "$", true);
+  let created = await client.xgroup_create(key, group, "$", true);
   assertEquals(created, "OK");
 
   let addedId = await client.xadd(key, "*", { "anyfield": "anyval" });
@@ -223,7 +223,7 @@ test("xreadgroup but no ack", async () => {
   const ackSize = await client.xack(key, group, addedId);
   assertEquals(ackSize, 1);
 
-  assertEquals(await client.xgroupdestroy(key, group), 1);
+  assertEquals(await client.xgroup_destroy(key, group), 1);
 
   await cleanupStream(client, key);
 });
@@ -232,7 +232,7 @@ test("xack", async () => {
   const key = randomStream();
   const group = "test-group";
 
-  let created = await client.xgroupcreate(key, group, "$", true);
+  let created = await client.xgroup_create(key, group, "$", true);
   assertEquals(created, "OK");
 
   let addedId = await client.xadd(key, "*", { "anyfield": "anyval" });
@@ -251,7 +251,7 @@ test("xack", async () => {
 
   assertEquals(acked, 1);
 
-  assertEquals(await client.xgroupdestroy(key, group), 1);
+  assertEquals(await client.xgroup_destroy(key, group), 1);
   await cleanupStream(client, key);
 });
 
@@ -402,7 +402,7 @@ test("broadcast pattern, all groups read their own version of the stream", async
   const groups = [group0, group1, group2];
 
   for (const g of groups) {
-    let created = await client.xgroupcreate(key, g, "$", true);
+    let created = await client.xgroup_create(key, g, "$", true);
     assertEquals(created, "OK");
   }
 
@@ -430,7 +430,7 @@ test("broadcast pattern, all groups read their own version of the stream", async
   }
 
   for (const g of groups) {
-    assertEquals(await client.xgroupdestroy(key, g), 1);
+    assertEquals(await client.xgroup_destroy(key, g), 1);
   }
 
   await cleanupStream(client, key);

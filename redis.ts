@@ -1344,7 +1344,7 @@ class RedisImpl implements RedisCommands {
     return this.execIntegerReply("XLEN", key);
   }
 
-  xgroupcreate(
+  xgroup_create(
     key: string,
     groupName: string,
     xid: XIdInput | "$",
@@ -1365,7 +1365,7 @@ class RedisImpl implements RedisCommands {
     );
   }
 
-  xgroupdelconsumer(
+  xgroup_delconsumer(
     key: string,
     groupName: string,
     consumerName: string,
@@ -1379,15 +1379,15 @@ class RedisImpl implements RedisCommands {
     );
   }
 
-  xgroupdestroy(key: string, groupName: string) {
+  xgroup_destroy(key: string, groupName: string) {
     return this.execIntegerReply("XGROUP", "DESTROY", key, groupName);
   }
 
-  xgrouphelp() {
+  xgroup_help() {
     return this.execBulkReply<BulkString>("XGROUP", "HELP");
   }
 
-  xgroupsetid(
+  xgroup_setid(
     key: string,
     groupName: string,
     xid: XId,
@@ -1401,7 +1401,7 @@ class RedisImpl implements RedisCommands {
     );
   }
 
-  xinfostream(key: string) {
+  xinfo_stream(key: string) {
     return this.execArrayReply<Raw>("XINFO", "STREAM", key).then(
       (raw) => {
         let data = fromRedisArray(raw);
@@ -1426,13 +1426,13 @@ class RedisImpl implements RedisCommands {
     );
   }
 
-  xinfostreamfull(key: string) {}
+  xinfo_stream_full(key: string) {}
 
-  xinfogroups(key: string) {}
+  xinfo_groups(key: string) {}
 
-  xinfoconsumers(key: string, group: string) {}
+  xinfo_consumers(key: string, group: string) {}
 
-  xinfohelp() {}
+  xinfo_help() {}
 
   xpending(
     key: string,

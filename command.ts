@@ -447,7 +447,7 @@ XCLAIM mystream mygroup Alice 3600000 1526569498055-0
    *            the consumer group
    * @param mkstream You can use the optional MKSTREAM subcommand as the last argument after the XId to automatically create the stream, if it doesn't exist. Note that if the stream is created in this way it will have a length of 0.
    */
-  xgroupcreate(
+  xgroup_create(
     key: string,
     groupName: string,
     xid: XIdInput | "$",
@@ -465,7 +465,7 @@ XGROUP DELCONSUMER test-man-000 hellogroup 4
    * @param groupName the name of the consumer group
    * @param consumerName the specific consumer to delete
    */
-  xgroupdelconsumer(
+  xgroup_delconsumer(
     key: string,
     groupName: string,
     consumerName: string,
@@ -483,10 +483,10 @@ XGROUP DESTROY test-man-000 test-group
    * @param key stream key
    * @param groupName the consumer group to destroy
    */
-  xgroupdestroy(key: string, groupName: string): Promise<Integer>;
+  xgroup_destroy(key: string, groupName: string): Promise<Integer>;
   /** A support command which displays text about the 
    * various subcommands in XGROUP. */
-  xgrouphelp(): Promise<BulkString>;
+  xgroup_help(): Promise<BulkString>;
   /**
      * Finally it possible to set the next message to deliver
      * using the SETID subcommand. Normally the next XId is set
@@ -505,24 +505,24 @@ XGROUP SETID mystream consumer-group-name 0
      * @param groupName   the consumer group
      * @param id the XId to use for the next message delivered
      */
-  xgroupsetid(
+  xgroup_setid(
     key: string,
     groupName: string,
     xid: XIdInput,
   ): Promise<Status>;
-  xinfostream(key: string): Promise<XInfoStream>;
+  xinfo_stream(key: string): Promise<XInfoStream>;
   /**
    *  returns the entire state of the stream, including entries, groups, consumers and PELs. This form is available since Redis 6.0.
    * @param key The stream key
    */
-  xinfostreamfull(key: string): void;
+  xinfo_stream_full(key: string): void;
   /**
    * Get as output all the consumer groups associated 
    * with the stream.
    * 
    * @param key the stream key
    */
-  xinfogroups(key: string): void;
+  xinfo_groups(key: string): void;
   /**
    * Get the list of every consumer in a specific 
    * consumer group.
@@ -530,11 +530,11 @@ XGROUP SETID mystream consumer-group-name 0
    * @param key the stream key
    * @param group list consumers for this group
    */
-  xinfoconsumers(key: string, group: string): void;
+  xinfo_consumers(key: string, group: string): void;
   /**
    * Print help text about the low level syntax.
    */
-  xinfohelp(): void;
+  xinfo_help(): void;
   /**
    * Returns the number of entries inside a stream. If the specified key does not exist the command returns zero, as if the stream was empty. However note that unlike other Redis types, zero-length streams are possible, so you should call TYPE or EXISTS in order to check if a key exists or not.
    * @param key  the stream key to inspect
