@@ -1455,6 +1455,7 @@ class RedisImpl implements RedisCommands {
     if (consumer) {
       args.push(consumer);
     }
+
     return this.execArrayReply<Raw>("XPENDING", key, group, ...args)
       .then((raw) => {
         // When XPENDING is called with just a key name
@@ -1465,8 +1466,6 @@ class RedisImpl implements RedisCommands {
         // depending on if there are any records!
         const isSimpleInvocation = startEndCount === undefined &&
           consumer === undefined;
-
-        const icc = [isString(raw[0]), isString(raw[1]), isString(raw[2])];
 
         if (isSimpleInvocation && raw.length === 0) {
           const empty: XPendingEmpty = { kind: "empty" };
@@ -1483,12 +1482,10 @@ class RedisImpl implements RedisCommands {
             consumers: parseXPendingConsumers(raw[3]),
           };
           return reply;
-        } else if (startEndCount !== undefined && consumer === undefined) {
+        } else if (startEndCount !== undefined) {
           return parseXPendingCounts(raw);
-        } else if (startEndCount !== undefined && consumer !== undefined) {
-          throw "write me"; // TODO
         } else {
-          throw `fail pending ${startEndCount} ${consumer}`;
+          throw "unknown format";
         }
       });
   }

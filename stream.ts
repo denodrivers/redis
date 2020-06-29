@@ -128,7 +128,7 @@ export interface XPendingCount {
  */
 export interface XPendingMsgInfo {
   xid: XId;
-  consumer: string;
+  owner: string;
   lastDeliveredMs: number;
   timesDelivered: number;
 }
@@ -269,7 +269,7 @@ export function parseXPendingCounts(raw: ConditionalArray): XPendingCount {
       infos.push(
         {
           xid: parseXId(r[0]),
-          consumer: r[1],
+          owner: r[1],
           lastDeliveredMs: r[2],
           timesDelivered: r[3],
         },

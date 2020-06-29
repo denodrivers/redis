@@ -462,7 +462,7 @@ test("xrange and xrevrange", async () => {
   await cleanupStream(client, key);
 });
 
-test("xclaim and xpending", async () => {
+test("xclaim and xpending, all options", async () => {
   await withConsumerGroup(async (key, group) => {
     // xclaim test basic idea:
     // 1. add messages to a group
@@ -479,14 +479,16 @@ test("xclaim and xpending", async () => {
       ],
     );
 
-    const consumer = "someone";
-    const xid = ">";
-    await client.xreadgroup(
-      [{ key, xid }],
-      { group, consumer },
+    const initialConsumer = "someone";
+
+    const firstReply = await client.xreadgroup(
+      [{ key, xid: ">" }],
+      { group, consumer: initialConsumer },
     );
 
     const firstPending = await client.xpending(key, group);
+
+    await sleepMillis(5);
 
     switch (firstPending.kind) {
       case "data":
@@ -500,14 +502,13 @@ test("xclaim and xpending", async () => {
         assert(false);
     }
 
-    await sleep(5); //millis
-
     const minIdleTime = 4;
 
     // minimum options
+    const claimingConsumer = "responsible-process";
     const firstClaimed = await client.xclaim(
       key,
-      { group, consumer, minIdleTime },
+      { group, consumer: claimingConsumer, minIdleTime },
       1000,
       2000,
     );
@@ -522,42 +523,162 @@ test("xclaim and xpending", async () => {
           firstClaimed.messages[1].field_values,
           new Map(Object.entries({ "field": "bar" })),
         );
+        break;
+      default:
+        assert(false);
     }
 
+    // ACK these messages so we can try XPENDING/XCLAIM
+    // on a new batch
+    await client.xack(key, group, ...firstReply[0].messages.map((m) => m.xid));
+
+    // Let's write some more messages and try
+    // other formats of XPENDING/XCLAIM
     await Promise.all(
       [
         client.xadd(key, 3000, { "field": "foo" }),
         client.xadd(key, [3000, 1], { "field": "bar" }),
+        client.xadd(key, [3000, 2], { "field": "baz" }),
       ],
     );
+
+    const secondReply = await client.xreadgroup(
+      [{ key, xid: ">" }],
+      { group, consumer: initialConsumer },
+    );
+
+    // take a short nap and increase the lastDeliveredMs
+    await sleepMillis(5);
+
+    // try another form of xpending: counts for all consumers (we have only one)
+    const secondPending = await client.xpending(
+      key,
+      group,
+      { start: "-", end: "+", count: 10 },
+    );
+    switch (secondPending.kind) {
+      case "count":
+        assertEquals(secondPending.infos.length, 3);
+        for (const info of secondPending.infos) {
+          assertEquals(info.owner, "someone");
+          assert(info.lastDeliveredMs > 4);
+          // We called XREADGROUP so it was delivered once
+          // (but not acknowledged yet!)
+          assertEquals(info.timesDelivered, 1);
+        }
+        break;
+      default:
+        assert(false);
+    }
 
     // the output for justIDs will have a different shape
-    await client.xclaim(
+    const secondClaimedXIds = await client.xclaim(
       key,
-      { group, consumer, minIdleTime, justXId: true },
+      { group, consumer: claimingConsumer, minIdleTime, justXId: true },
       [3000, 0],
       [3000, 1],
+      [3000, 2],
     );
 
+    switch (secondClaimedXIds.kind) {
+      case "justxid":
+        assertEquals(
+          secondClaimedXIds.xids,
+          [
+            { epochMillis: BigInt(3000), seqNo: BigInt(0) },
+            { epochMillis: BigInt(3000), seqNo: BigInt(1) },
+            { epochMillis: BigInt(3000), seqNo: BigInt(2) },
+          ],
+        );
+        break;
+
+      default:
+        assert(false);
+    }
+
+    // ACK these messages so we can try XPENDING/XCLAIM
+    // on a new batch
+    await client.xack(key, group, ...secondReply[0].messages.map((m) => m.xid));
+
+    // We'll try one other set of options
+    // for each of XPENDING and XCLAIM
     await Promise.all(
       [
-        client.xadd(key, 4000, { "field": "foo" }),
-        client.xadd(key, 5000, { "field": "bar" }),
+        client.xadd(key, 4000, { "field": "woof", "farm": "chicken" }),
+        client.xadd(key, 5000, { "field": "bop", "farm": "duck" }),
       ],
     );
+
+    await client.xreadgroup(
+      [{ key, xid: ">" }],
+      { group, consumer: initialConsumer },
+    );
+
+    // This record won't be included in the filtered
+    // form of XPENDING, below.
+    await client.xadd(key, "*", { "field": "no" });
+    await client.xreadgroup(
+      [{ key, xid: ">" }],
+      { group, consumer: "weird-interloper" },
+    );
+
+    await sleepMillis(5);
+
+    // try another form of xpending: counts
+    // efficiently filtered down to a single consumer.
+    // We expect to see two of the three outstanding
+    // messages here, since one was claimed by
+    // weird-interloper.
+    const thirdPending = await client.xpending(
+      key,
+      group,
+      { start: "-", end: "+", count: 10 },
+      "someone",
+    );
+    switch (thirdPending.kind) {
+      case "count":
+        assertEquals(thirdPending.infos.length, 2);
+        for (const info of secondPending.infos) {
+          assertEquals(info.owner, "someone");
+          assert(info.lastDeliveredMs > 4);
+          // We called XREADGROUP so it was delivered once
+          // (but not acknowledged yet!)
+          assertEquals(info.timesDelivered, 1);
+        }
+        break;
+      default:
+        assert(false);
+    }
 
     // make sure all the other options can be passed to redis
     // without some sort of disaster occurring.
-    await client.xclaim(
+    const thirdClaimed = await client.xclaim(
       key,
-      { group, consumer, minIdleTime, retryCount: 0, force: true },
+      {
+        group,
+        consumer: claimingConsumer,
+        minIdleTime,
+        retryCount: 6,
+        force: true,
+      },
       4000,
       5000,
     );
-
-    // TODO
-    // TODO
-    // TODO
+    switch (thirdClaimed.kind) {
+      case "messages":
+        assertEquals(thirdClaimed.messages.length, 2);
+        assertEquals(
+          thirdClaimed.messages[0].field_values,
+          new Map(Object.entries({ "field": "woof", "farm": "chicken" })),
+        );
+        assertEquals(
+          thirdClaimed.messages[1].field_values,
+          new Map(Object.entries({ "field": "bop", "farm": "duck" })),
+        );
+        break;
+      default:
+        assert(false);
+    }
   });
 });
 
@@ -579,6 +700,6 @@ test("xinfo", async () => {
   // TODO
 });
 
-const sleep = (ms: number) => {
+const sleepMillis = (ms: number) => {
   return new Promise((resolve) => setTimeout(resolve, ms));
 };
