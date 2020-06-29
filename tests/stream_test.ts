@@ -1,18 +1,11 @@
 import { Redis } from "../redis.ts";
 import { makeTest } from "./test_util.ts";
-import { XId, xidstr, parseXId } from "../stream.ts";
+import { parseXId } from "../stream.ts";
 import {
   assertEquals,
   assert,
 } from "../vendor/https/deno.land/std/testing/asserts.ts";
 const { test, client } = await makeTest("stream");
-
-/** Return the millisecond timestamp for a given
- * streams identifier.  
- * 
- * @param id for example "1526984818136-0"
- */
-const idMillis = (id: string) => parseInt(id.split("-")[0]);
 
 const randomStream = () => `test-deno-${Math.floor(Math.random() * 1000)}`;
 

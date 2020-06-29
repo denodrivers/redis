@@ -538,6 +538,19 @@ XGROUP SETID mystream consumer-group-name 0
    * @param key  the stream key to inspect
    */
   xlen(key: string): Promise<Integer>;
+  /** Complex command to obtain info on messages in the Pending Entries List.
+   * 
+   * When XPENDING is called with just a key name and a consumer group name, it just outputs a summary about the pending messages in a given consumer group.
+   * 
+   * When called with the startEndCount argument and no consumer,
+   * for each message four attributes are returned:
+   *    - The ID of the message.
+   *    - The name of the consumer that fetched the message and has still to acknowledge it. We call it the current owner of the message.
+   *    - The number of milliseconds that elapsed since the last time this message was delivered to this consumer.
+   *    - The number of times this message was delivered.
+   * 
+   * Finally it is possible to pass the consumer argument to the command, in order to see the messages having a specific owner.
+   */
   xpending(
     key: string,
     group: string,
@@ -594,6 +607,16 @@ XRANGE somestream - +
     end: XIdNeg,
     count?: number,
   ): Promise<XMessage[]>;
+  /**
+   * Read data from one or multiple streams, only returning 
+   * entries with an XId greater than the last received XId 
+   * reported by the caller.
+   * @param key_xids pairs containing the stream key, and 
+   *                    the XId from which to read
+   * @param opts optional max count of entries to return 
+   *                    for each stream, and number of 
+   *                    milliseconds for which to block
+   */
   xread(
     key_xids: XKeyId[],
     opts?: XReadOpts,
