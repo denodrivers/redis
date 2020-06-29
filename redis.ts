@@ -1900,16 +1900,6 @@ class RedisImpl implements RedisCommands {
   }
 }
 
-export type RedisConnectOptions = {
-  hostname: string;
-  port?: number | string;
-  tls?: boolean;
-  db?: number;
-  password?: string;
-  name?: string;
-  maxRetryCount?: number;
-};
-
 function parsePortLike(port: string | number | undefined): number {
   if (typeof port === "string") {
     return parseInt(port);
