@@ -1447,16 +1447,19 @@ class RedisImpl implements RedisCommands {
           // exact position, nor on the number of fields,
           // new fields may be added in the future.
           if (raw === undefined) throw "no data";
-          const data: Map<string, Raw> = convertMap(raw);
 
+          const data: Map<string, Raw> = convertMap(raw);
+          if (data === undefined) throw "no data converted";
+
+          const entries = (data.get("entries") as ConditionalArray).map((raw) =>
+            parseXMessage(raw as XReadIdData)
+          );
           return {
             length: rawnum(data.get("length")),
             radixTreeKeys: rawnum(data.get("radix-tree-keys")),
             radixTreeNodes: rawnum(data.get("radix-tree-nodes")),
             lastGeneratedId: parseXId(rawstr(data.get("last-generated-id"))),
-            entries: (data.get("entries") as ConditionalArray).map((raw) =>
-              parseXMessage(raw as XReadIdData)
-            ),
+            entries,
             groups: parseXGroupDetail(data.get("groups") as ConditionalArray),
           };
         },
@@ -1563,12 +1566,10 @@ class RedisImpl implements RedisCommands {
     for (const a of key_xids) {
       if (a instanceof Array) {
         // XKeyIdLike
-        console.log("stream ID " + a[1]);
         the_keys.push(a[0]);
         the_xids.push(xidstr(a[1]));
       } else {
         // XKeyId
-        console.log("or have ye " + JSON.stringify(xidstr(a.xid)));
         the_keys.push(a.key);
         the_xids.push(xidstr(a.xid));
       }
