@@ -11,7 +11,7 @@ import {
 // type Writer = Deno.Writer;
 type Closer = Deno.Closer;
 
-export type RedisConnectOptions = {
+export type RedisConnectionOptions = {
   hostname?: string;
   port?: number | string;
   tls?: boolean;
@@ -52,7 +52,7 @@ export class RedisConnection {
   private thunkifyConnect(
     hostname: string,
     port: string | number,
-    options: RedisConnectOptions,
+    options: RedisConnectionOptions,
   ): () => Promise<RedisConnection> {
     return async () => {
       const dialOpts: Deno.ConnectOptions = {
@@ -94,7 +94,7 @@ export class RedisConnection {
   constructor(
     hostname: string,
     port: number | string,
-    private options: RedisConnectOptions,
+    private options: RedisConnectionOptions,
   ) {
     this.connectThunkified = this.thunkifyConnect(hostname, port, options);
   }
