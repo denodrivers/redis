@@ -338,7 +338,7 @@ export type RedisCommands = {
    * 
    * @param key the stream key
    * @param group the group name
-   * @param ids the ids to acknowledge
+   * @param xids the ids to acknowledge
    */
   xack(key: string, group: string, ...xids: XIdInput[]): Promise<Integer>;
   /**
@@ -350,7 +350,7 @@ export type RedisCommands = {
    * as XId argument, otherwise the command just returns
    *  the same XId specified by the user during insertion.
    * @param key  write to this stream
-   * @param id the XId of the entity written to the stream
+   * @param xid the XId of the entity written to the stream
    * @param field_values  record object or map of field value pairs
    */
   xadd(
@@ -367,7 +367,7 @@ export type RedisCommands = {
    * as XId argument, otherwise the command just returns
    *  the same XId specified by the user during insertion.
    * @param key  write to this stream
-   * @param id the XId of the entity written to the stream
+   * @param xid the XId of the entity written to the stream
    * @param field_values  record object or map of field value pairs
    * @param maxlen  number of elements, and whether or not to use an approximate comparison
    */
@@ -409,7 +409,7 @@ XCLAIM mystream mygroup Alice 3600000 1526569498055-0
    *    RETRYCOUNT <count>: Set the retry counter to the specified value. This counter is incremented every time a message is delivered again. Normally XCLAIM does not alter this counter, which is just served to clients when the XPENDING command is called: this way clients can detect anomalies, like messages that are never processed for some reason after a big number of delivery attempts.
    *    FORCE: Creates the pending message entry in the PEL even if certain specified XIds are not already in the PEL assigned to a different client. However the message must be exist in the stream, otherwise the XIds of non existing messages are ignored.
    *    JUSTXID: Return just an array of XIds of messages successfully claimed, without returning the actual message. Using this option means the retry counter is not incremented.
-   * @param ids the message XIds to claim
+   * @param xids the message XIds to claim
    */
   xclaim(
     key: string,
@@ -424,7 +424,7 @@ XCLAIM mystream mygroup Alice 3600000 1526569498055-0
    * XIds do not exist.
    * 
    * @param key the stream key
-   * @param ids ids to delete
+   * @param xids ids to delete
    */
   xdel(key: string, ...xids: XIdInput[]): Promise<Integer>;
   /**
@@ -439,7 +439,7 @@ XCLAIM mystream mygroup Alice 3600000 1526569498055-0
    * See https://redis.io/commands/xgroup
    * @param key stream key
    * @param groupName the name of the consumer group
-   * @param id The last argument is the XId of the last
+   * @param xid The last argument is the XId of the last
    *            item in the stream to consider already
    *            delivered. In the above case we used the
    *            special XId '$' (that means: the XId of the
@@ -508,7 +508,7 @@ XGROUP SETID mystream consumer-group-name 0
      * 
      * @param key  stream key
      * @param groupName   the consumer group
-     * @param id the XId to use for the next message delivered
+     * @param xid the XId to use for the next message delivered
      */
   xgroup_setid(
     key: string,
