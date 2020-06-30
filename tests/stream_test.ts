@@ -766,12 +766,25 @@ test("xinfo", async () => {
     // The COUNT option limits this array to a single entry!
     assertEquals(limitWithCount.entries.length, 1);
 
-    // TODO
-    // TODO
-    // TODO  xinfo_groups
-    // TODO
+    // Let's make another group and see more stats
+    await client.xgroup_create(key, "newgroup", "$", true);
+
+    const groupInfos = await client.xinfo_groups(key);
+    assertEquals(groupInfos.length, 2);
+
+    console.log(JSON.stringify(groupInfos));
+    const newGroup = groupInfos.find((g) => g.name === "newgroup");
+    const oldGroup = groupInfos.find((g) => g.name === group);
+    assert(newGroup);
+    assert(oldGroup);
+
+    assertEquals(oldGroup.pending, 2);
+    assertEquals(newGroup.pending, 0);
+    
     // TODO  xinfo_consumers
     // TODO
+
+    assertEquals(await client.xgroup_destroy(key, "newgroup"), 1);
   });
 });
 
