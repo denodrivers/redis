@@ -62,11 +62,34 @@ test("xadd maxlen", async () => {
 });
 
 test("xreadgroup multiple streams", async () => {
-  //TODO
-  //TODO
-  //TODO
-  //TODO
-  //TODO
+  await withConsumerGroup(async (key, group) => {
+    const key2 = randomStream();
+
+    let created = await client.xgroup_create(key2, group, "$", true);
+    assertEquals(created, "OK");
+
+    await Promise.all(
+      [
+        client.xadd(key, "*", { a: 1, b: 2 }),
+        client.xadd(key, "*", { a: 6, b: 7 }),
+        client.xadd(key2, "*", { c: "three", d: "four" }),
+      ],
+    );
+
+    const reply = await client.xreadgroup(
+      [[key, ">"], [key2, ">"]],
+      { group, consumer: "any" },
+    );
+
+    assertEquals(reply.length, 2);
+    assertEquals(reply[0].key, key);
+    assertEquals(reply[0].messages.length, 2);
+    assertEquals(reply[1].key, key2);
+    assertEquals(reply[1].messages.length, 1);
+
+    // first stream cleaned up by withConsumerGroup
+    await cleanupStream(client, key2);
+  });
 });
 
 test("xread", async () => {
