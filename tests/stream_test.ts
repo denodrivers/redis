@@ -780,9 +780,26 @@ test("xinfo", async () => {
 
     assertEquals(oldGroup.pending, 2);
     assertEquals(newGroup.pending, 0);
-    
-    // TODO  xinfo_consumers
-    // TODO
+
+    // Add one more record and read it with a new consumer,
+    // so that we can check the parsing of deno-redis xinfo_consumers
+    await client.xadd(key, "*", { "hello": "maybe" });
+    await client.xreadgroup([[key, ">"]], { group, consumer: "newbie" });
+
+    // Increase the idle time by falling asleep
+    await sleepMillis(2);
+    const consumerInfos = await client.xinfo_consumers(key, group);
+    assertEquals(consumerInfos.length, 2);
+    const newConsumer = consumerInfos.find((c) => c.name === "newbie");
+    const oldConsumer = consumerInfos.find((c) => c.name === "someone");
+    assert(newConsumer);
+    assert(oldConsumer);
+    assert(newConsumer.idle > 1);
+    assert(oldConsumer.idle > 1);
+    // New consumer read one message with ">"
+    assertEquals(newConsumer.pending, 1);
+    // Old consumer read two messages with ">"
+    assertEquals(oldConsumer.pending, 2);
 
     assertEquals(await client.xgroup_destroy(key, "newgroup"), 1);
   });
