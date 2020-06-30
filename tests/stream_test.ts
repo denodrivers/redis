@@ -277,7 +277,7 @@ test("xadd with map then xread", async () => {
   assert(addedId !== null);
 
   // one millis before now
-  const xid = (addedId.unixMs - BigInt(1));
+  const xid = addedId.unixMs - 1;
   const v = await client.xread(
     [{ key, xid }],
     { block: 5000, count: 500 },
@@ -316,7 +316,7 @@ test("xadd with maxlen on map then xread", async () => {
   );
   assert(addedId !== null);
 
-  const justBefore = addedId.unixMs - BigInt(1);
+  const justBefore = addedId.unixMs - 1;
 
   const v = await client.xread(
     [{ key, xid: justBefore }],
@@ -581,9 +581,9 @@ test("xclaim and xpending, all options", async () => {
         assertEquals(
           secondClaimedXIds.xids,
           [
-            { unixMs: BigInt(3000), seqNo: BigInt(0) },
-            { unixMs: BigInt(3000), seqNo: BigInt(1) },
-            { unixMs: BigInt(3000), seqNo: BigInt(2) },
+            { unixMs: 3000, seqNo: 0 },
+            { unixMs: 3000, seqNo: 1 },
+            { unixMs: 3000, seqNo: 2 },
           ],
         );
         break;
@@ -684,19 +684,19 @@ test("xinfo", async () => {
     assert(basicStreamInfo.radixTreeNodes > 0);
     assertEquals(
       basicStreamInfo.lastGeneratedId,
-      { unixMs: BigInt(2), seqNo: BigInt(0) },
+      { unixMs: (2), seqNo: (0) },
     );
     assertEquals(
       basicStreamInfo.firstEntry,
       {
-        xid: { unixMs: BigInt(1), seqNo: BigInt(0) },
+        xid: { unixMs: (1), seqNo: (0) },
         field_values: new Map(Object.entries({ "hello": "no" })),
       },
     );
     assertEquals(
       basicStreamInfo.lastEntry,
       {
-        xid: { unixMs: BigInt(2), seqNo: BigInt(0) },
+        xid: { unixMs: (2), seqNo: (0) },
         field_values: new Map(Object.entries({ "hello": "yes" })),
       },
     );
@@ -719,6 +719,9 @@ test("xinfo", async () => {
     assert(c.seenTime > 0);
     assertEquals(c.pelCount, 2);
     assertEquals(c.pending.length, 2);
+    for (const msg of c.pending) {
+      assertEquals(msg.timesDelivered, 1);
+    }
     assertEquals(fullStreamInfo.entries.length, 2);
 
     const fullStreamInfoCount = await client.xinfo_stream_full(key, 1);

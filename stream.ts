@@ -1,13 +1,8 @@
 import { ConditionalArray, Raw } from "./command.ts";
 
-/** Redis manual recommends remembering this number
- * for some use cases.
- */
-export const MAX_SEQ_NO = BigInt("18446744073709551615");
-
 export interface XId {
-  unixMs: bigint;
-  seqNo: bigint;
+  unixMs: number;
+  seqNo: number;
 }
 
 export interface XMessage {
@@ -44,14 +39,13 @@ export type XReadReplyRaw = XReadStreamRaw[];
  * We also include an array format for ease of use, where
  * the first element is the epochMillis, second is seqNo.
  * 
- * We also allow passing a single BigInt or number,
+ * We also allow passing a single number,
  * which will represent the the epoch Millis with
  * seqNo of zero.  (Especially useful is to pass 0.)
  * */
 export type XIdInput =
   | XId
-  | [bigint | number, bigint | number]
-  | bigint
+  | [number, number]
   | number;
 /**
  * ID input type for XADD, which is allowed to include the
@@ -123,7 +117,7 @@ export interface XPendingConsumer {
 export interface XPendingCount {
   xid: XId;
   owner: string;
-  lastDeliveredMs: bigint;
+  lastDeliveredMs: number;
   timesDelivered: number;
 }
 /** Used in the XPENDING command, all three of these
@@ -167,9 +161,9 @@ export interface XGroupDetail {
 
 export interface XConsumerDetail {
   name: string;
-  seenTime: bigint;
+  seenTime: number;
   pelCount: number;
-  pending: { xid: XId; lastDeliveredMs: bigint; timesDelivered: number }[];
+  pending: { xid: XId; lastDeliveredMs: number; timesDelivered: number }[];
 }
 /**
  * A consumer parsed from xinfo command.
@@ -260,7 +254,7 @@ export function parseXReadReply(
 
 export function parseXId(raw: string): XId {
   const [ms, sn] = raw.split("-");
-  return { unixMs: BigInt(ms), seqNo: BigInt(sn) };
+  return { unixMs: parseInt(ms), seqNo: parseInt(sn) };
 }
 
 export function parseXPendingConsumers(
@@ -289,7 +283,7 @@ export function parseXPendingCounts(raw: ConditionalArray): XPendingCount[] {
         {
           xid: parseXId(r[0]),
           owner: r[1],
-          lastDeliveredMs: BigInt(r[2]),
+          lastDeliveredMs: r[2],
           timesDelivered: r[3],
         },
       );
@@ -328,10 +322,6 @@ export function parseXGroupDetail(rawGroups: ConditionalArray): XGroupDetail[] {
   return out;
 }
 
-// TODO bigint is worthless
-// TODO bigint is worthless
-// TODO bigint is worthless
-// TODO bigint is worthless
 export function parseXConsumerDetail(
   nestedRaws: Raw[][],
 ): XConsumerDetail[] {
@@ -344,7 +334,7 @@ export function parseXConsumerDetail(
       (p) => {
         return {
           xid: parseXId(rawstr(p[0])),
-          lastDeliveredMs: rawbigint(p[1]),
+          lastDeliveredMs: rawnum(p[1]),
           timesDelivered: rawnum(p[2]),
         };
       },
@@ -352,7 +342,7 @@ export function parseXConsumerDetail(
 
     const r = {
       name: rawstr(data.get("name")),
-      seenTime: rawbigint(data.get("seen-time")),
+      seenTime: rawnum(data.get("seen-time")),
       pelCount: rawnum(data.get("pel-count")),
       pending,
     };
@@ -367,7 +357,7 @@ export function xidstr(
   xid: XIdAdd | XIdNeg | XIdPos | XIdCreateGroup | XIdGroupRead,
 ) {
   if (typeof xid === "string") return xid;
-  if (typeof xid === "bigint" || typeof xid === "number") return `${xid}-0`;
+  if (typeof xid === "number") return `${xid}-0`;
   if (xid instanceof Array && xid.length > 1) return `${xid[0]}-${xid[1]}`;
   if (isXId(xid)) return `${xid.unixMs}-${xid.seqNo}`;
   throw "fail";
@@ -393,10 +383,6 @@ export function isCondArray(x: Raw): x is ConditionalArray {
   const l = (x as ConditionalArray).length;
   if (l > 0 || l < 1) return true;
   else return false;
-}
-
-function rawbigint(raw: Raw): bigint {
-  return raw ? BigInt(raw) : 0n;
 }
 
 function isXId(xid: XIdAdd): xid is XId {
