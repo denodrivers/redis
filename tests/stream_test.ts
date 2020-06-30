@@ -737,17 +737,34 @@ test("xinfo", async () => {
     assertEquals(fullStreamInfo.groups.length, 1);
     assertEquals(fullStreamInfo.groups[0].consumers.length, 1);
 
-    const c = fullStreamInfo.groups[0].consumers[0];
-    assertEquals(c.name, "someone");
-    assert(c.seenTime > 0);
-    assertEquals(c.pelCount, 2);
-    assertEquals(c.pending.length, 2);
-    for (const msg of c.pending) {
+    const cc = fullStreamInfo.groups[0].consumers[0];
+    assertEquals(cc.name, "someone");
+    assert(cc.seenTime > 0);
+    assertEquals(cc.pelCount, 2);
+    assertEquals(cc.pending.length, 2);
+    for (const msg of cc.pending) {
       assertEquals(msg.timesDelivered, 1);
     }
     assertEquals(fullStreamInfo.entries.length, 2);
 
-    const fullStreamInfoCount = await client.xinfo_stream_full(key, 1);
+    const limitWithCount = await client.xinfo_stream_full(key, 1);
+    assertEquals(limitWithCount.length, 2);
+    assert(limitWithCount.radixTreeKeys > 0);
+    assert(limitWithCount.radixTreeNodes > 0);
+    assertEquals(limitWithCount.groups.length, 1);
+    assertEquals(limitWithCount.groups[0].consumers.length, 1);
+
+    const c = limitWithCount.groups[0].consumers[0];
+    assertEquals(c.name, "someone");
+    assert(c.seenTime > 0);
+    assertEquals(c.pelCount, 2);
+    // The COUNT option limits this array to a single entry!
+    assertEquals(c.pending.length, 1);
+    for (const msg of c.pending) {
+      assertEquals(msg.timesDelivered, 1);
+    }
+    // The COUNT option limits this array to a single entry!
+    assertEquals(limitWithCount.entries.length, 1);
 
     // TODO
     // TODO
