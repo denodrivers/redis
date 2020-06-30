@@ -47,7 +47,7 @@ import {
   convertMap,
   XKeyIdGroup,
   XKeyIdGroupLike,
-  XIdGroupRead,
+  XInfoGroup,
   XKeyIdLike,
 } from "./stream.ts";
 import { RedisConnection } from "./connection.ts";
@@ -1466,9 +1466,39 @@ class RedisImpl implements RedisCommands {
       );
   }
 
-  xinfo_groups(key: string) {}
+  xinfo_groups(key: string) {
+    return this.execArrayReply<ConditionalArray>("XINFO", "GROUPS", key).then(
+      (raws) =>
+        raws.map((raw) => {
+          const data = convertMap(raw);
+          return {
+            name: rawstr(data.get("name")),
+            consumers: rawnum(data.get("consumers")),
+            pending: rawnum(data.get("pending")),
+            lastDeliveredId: parseXId(rawstr(data.get("last-delivered-id"))),
+          };
+        }),
+    );
+  }
 
-  xinfo_consumers(key: string, group: string) {}
+  xinfo_consumers(key: string, group: string) {
+    return this.execArrayReply<ConditionalArray>(
+      "XINFO",
+      "CONSUMERS",
+      key,
+      group,
+    ).then(
+      (raws) =>
+        raws.map((raw) => {
+          const data = convertMap(raw);
+          return {
+            name: rawstr(data.get("name")),
+            pending: rawnum(data.get("pending")),
+            idle: rawnum(data.get("idle")),
+          };
+        }),
+    );
+  }
 
   xpending(
     key: string,

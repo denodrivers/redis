@@ -69,6 +69,18 @@ export type XAddFieldValues =
   | Record<string | number, string | number>
   | Map<string | number, string | number>;
 
+export interface XReadOpts {
+  count?: number;
+  block?: number;
+}
+
+export interface XReadGroupOpts {
+  group: string;
+  consumer: string;
+  count?: number;
+  block?: number;
+}
+
 export interface XMaxlen {
   approx?: boolean;
   elements: number;
@@ -129,7 +141,7 @@ export interface StartEndCount {
   count: number;
 }
 
-export interface XInfoStream {
+export interface XInfoStreamReply {
   length: number;
   radixTreeKeys: number;
   radixTreeNodes: number;
@@ -139,7 +151,7 @@ export interface XInfoStream {
   lastEntry: XMessage;
 }
 
-export interface XInfoStreamFull {
+export interface XInfoStreamFullReply {
   length: number;
   radixTreeKeys: number;
   radixTreeNodes: number;
@@ -158,13 +170,15 @@ export interface XGroupDetail {
   pending: XPendingCount[];
   consumers: XConsumerDetail[];
 }
-
+/** Child of XINFO STREAMS FULL response */
 export interface XConsumerDetail {
   name: string;
   seenTime: number;
   pelCount: number;
   pending: { xid: XId; lastDeliveredMs: number; timesDelivered: number }[];
 }
+
+export type XInfoConsumersReply = XInfoConsumer[];
 /**
  * A consumer parsed from xinfo command.
  * 
@@ -178,16 +192,13 @@ export interface XInfoConsumer {
   idle: number;
 }
 
-export interface XReadOpts {
-  count?: number;
-  block?: number;
-}
-
-export interface XReadGroupOpts {
-  group: string;
-  consumer: string;
-  count?: number;
-  block?: number;
+/** Response to XINFO GROUPS <key> */
+export type XInfoGroupsReply = XInfoGroup[];
+export interface XInfoGroup {
+  name: string;
+  consumers: number;
+  pending: number;
+  lastDeliveredId: XId;
 }
 
 export interface XClaimOpts {

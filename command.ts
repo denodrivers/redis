@@ -17,13 +17,15 @@ import {
   XKeyId,
   XKeyIdGroup,
   XMessage,
-  XInfoStream,
-  XInfoStreamFull,
+  XInfoStreamReply,
+  XInfoStreamFullReply,
   XAddFieldValues,
   XClaimReply,
   XPendingCount,
   XKeyIdGroupLike,
   XKeyIdLike,
+  XInfoGroupsReply,
+  XInfoConsumersReply,
 } from "./stream.ts";
 
 export type Raw = Status | Integer | Bulk | ConditionalArray;
@@ -513,19 +515,19 @@ XGROUP SETID mystream consumer-group-name 0
     groupName: string,
     xid: XIdInput,
   ): Promise<Status>;
-  xinfo_stream(key: string): Promise<XInfoStream>;
+  xinfo_stream(key: string): Promise<XInfoStreamReply>;
   /**
    *  returns the entire state of the stream, including entries, groups, consumers and PELs. This form is available since Redis 6.0.
    * @param key The stream key
    */
-  xinfo_stream_full(key: string, count?: number): Promise<XInfoStreamFull>;
+  xinfo_stream_full(key: string, count?: number): Promise<XInfoStreamFullReply>;
   /**
    * Get as output all the consumer groups associated 
    * with the stream.
    * 
    * @param key the stream key
    */
-  xinfo_groups(key: string): void;
+  xinfo_groups(key: string): Promise<XInfoGroupsReply>;
   /**
    * Get the list of every consumer in a specific 
    * consumer group.
@@ -533,7 +535,7 @@ XGROUP SETID mystream consumer-group-name 0
    * @param key the stream key
    * @param group list consumers for this group
    */
-  xinfo_consumers(key: string, group: string): void;
+  xinfo_consumers(key: string, group: string): Promise<XInfoConsumersReply>;
   /**
    * Returns the number of entries inside a stream. If the specified key does not exist the command returns zero, as if the stream was empty. However note that unlike other Redis types, zero-length streams are possible, so you should call TYPE or EXISTS in order to check if a key exists or not.
    * @param key  the stream key to inspect
