@@ -33,6 +33,26 @@ const sub = await redis.subscribe("channel");
 })();
 ```
 
+**Streams**
+
+```ts
+await redis.xadd(
+  "somestream",
+  "*", // let redis assign message ID
+  { yes: "please", no: "thankyou" },
+  { elements: 10 },
+);
+
+const [stream] = await client.xread(
+  [{ key: "somestream", xid: 0 }], // read from beginning
+  { block: 5000 },
+);
+
+const msgFV = stream.messages[0].field_values;
+const plz = msgFV.get("yes");
+const thx = msgFV.get("no");
+```
+
 ## Advanced Usage
 
 ### Retriable connection

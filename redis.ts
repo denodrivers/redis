@@ -16,6 +16,40 @@ import {
   Raw,
   BulkNil,
 } from "./command.ts";
+import {
+  XMaxlen,
+  XReadStreamRaw,
+  XId,
+  XIdAdd,
+  XKeyId,
+  XReadIdData,
+  XClaimOpts,
+  XIdInput,
+  XIdNeg,
+  XIdPos,
+  XAddFieldValues,
+  XClaimJustXId,
+  XClaimMessages,
+  XReadGroupOpts,
+  StartEndCount,
+  parseXReadReply,
+  parseXMessage,
+  parseXPendingConsumers,
+  parseXPendingCounts,
+  parseXGroupDetail,
+  xidstr,
+  parseXId,
+  rawnum,
+  rawstr,
+  isCondArray,
+  isNumber,
+  isString,
+  convertMap,
+  XKeyIdGroup,
+  XKeyIdGroupLike,
+  XInfoGroup,
+  XKeyIdLike,
+} from "./stream.ts";
 import { RedisConnection } from "./connection.ts";
 
 export type Redis = RedisCommands & {
@@ -1200,6 +1234,434 @@ class RedisImpl implements RedisCommands {
 
   watch(key: string, ...keys: string[]) {
     return this.execStatusReply("WATCH", key, ...keys);
+  }
+
+  xack(key: string, group: string, ...xids: XIdInput[]) {
+    return this.execIntegerReply(
+      "XACK",
+      key,
+      group,
+      ...xids.map((xid) => xidstr(xid)),
+    );
+  }
+
+  xadd(
+    key: string,
+    xid: XIdAdd,
+    field_values: XAddFieldValues,
+    maxlen: XMaxlen | undefined = undefined,
+  ) {
+    const args: (string | number)[] = [key];
+
+    if (maxlen) {
+      args.push("MAXLEN");
+      if (maxlen.approx) {
+        args.push("~");
+      }
+      args.push(maxlen.elements.toString());
+    }
+
+    args.push(xidstr(xid));
+
+    if (field_values instanceof Map) {
+      for (const [f, v] of field_values) {
+        args.push(f);
+        args.push(v);
+      }
+    } else {
+      for (const [f, v] of Object.entries(field_values)) {
+        args.push(f);
+        args.push(v);
+      }
+    }
+
+    return this.execBulkReply<BulkString>(
+      "XADD",
+      ...args,
+    ).then((rawId) => parseXId(rawId));
+  }
+
+  xclaim(key: string, opts: XClaimOpts, ...xids: XIdInput[]) {
+    const args = [];
+    if (opts.idle) {
+      args.push("IDLE");
+      args.push(opts.idle);
+    }
+
+    if (opts.time) {
+      args.push("TIME");
+      args.push(opts.time);
+    }
+
+    if (opts.retryCount) {
+      args.push("RETRYCOUNT");
+      args.push(opts.retryCount);
+    }
+
+    if (opts.force) {
+      args.push("FORCE");
+    }
+
+    if (opts.justXId) {
+      args.push("JUSTID");
+    }
+
+    return this.execArrayReply<XReadIdData | BulkString>(
+      "XCLAIM",
+      key,
+      opts.group,
+      opts.consumer,
+      opts.minIdleTime,
+      ...xids.map((xid) => xidstr(xid)),
+      ...args,
+    ).then((raw) => {
+      if (opts.justXId) {
+        const xids = [];
+        for (const r of raw) {
+          if (typeof r === "string") {
+            xids.push(parseXId(r));
+          }
+        }
+        const payload: XClaimJustXId = { kind: "justxid", xids };
+        return payload;
+      }
+
+      const messages = [];
+      for (const r of raw) {
+        if (typeof r !== "string") {
+          messages.push(parseXMessage(r));
+        }
+      }
+      const payload: XClaimMessages = { kind: "messages", messages };
+      return payload;
+    });
+  }
+
+  xdel(key: string, ...xids: XIdInput[]) {
+    return this.execIntegerReply(
+      "XDEL",
+      key,
+      ...xids.map((rawId) => xidstr(rawId)),
+    );
+  }
+
+  xlen(key: string) {
+    return this.execIntegerReply("XLEN", key);
+  }
+
+  xgroup_create(
+    key: string,
+    groupName: string,
+    xid: XIdInput | "$",
+    mkstream?: boolean,
+  ) {
+    const args = [];
+    if (mkstream) {
+      args.push("MKSTREAM");
+    }
+
+    return this.execStatusReply(
+      "XGROUP",
+      "CREATE",
+      key,
+      groupName,
+      xidstr(xid),
+      ...args,
+    );
+  }
+
+  xgroup_delconsumer(
+    key: string,
+    groupName: string,
+    consumerName: string,
+  ) {
+    return this.execIntegerReply(
+      "XGROUP",
+      "DELCONSUMER",
+      key,
+      groupName,
+      consumerName,
+    );
+  }
+
+  xgroup_destroy(key: string, groupName: string) {
+    return this.execIntegerReply("XGROUP", "DESTROY", key, groupName);
+  }
+
+  xgroup_help() {
+    return this.execBulkReply<BulkString>("XGROUP", "HELP");
+  }
+
+  xgroup_setid(
+    key: string,
+    groupName: string,
+    xid: XId,
+  ) {
+    return this.execStatusReply(
+      "XGROUP",
+      "SETID",
+      key,
+      groupName,
+      xidstr(xid),
+    );
+  }
+
+  xinfo_stream(key: string) {
+    return this.execArrayReply<Raw>("XINFO", "STREAM", key).then(
+      (raw) => {
+        // Note that you should not rely on the fields
+        // exact position, nor on the number of fields,
+        // new fields may be added in the future.
+        const data: Map<string, Raw> = convertMap(raw);
+
+        const firstEntry = parseXMessage(
+          data.get("first-entry") as XReadIdData,
+        );
+        const lastEntry = parseXMessage(
+          data.get("last-entry") as XReadIdData,
+        );
+
+        return {
+          length: rawnum(data.get("length")),
+          radixTreeKeys: rawnum(data.get("radix-tree-keys")),
+          radixTreeNodes: rawnum(data.get("radix-tree-nodes")),
+          groups: rawnum(data.get("groups")),
+          lastGeneratedId: parseXId(rawstr(data.get("last-generated-id"))),
+          firstEntry,
+          lastEntry,
+        };
+      },
+    );
+  }
+
+  xinfo_stream_full(key: string, count?: number) {
+    const args = [];
+    if (count) {
+      args.push("COUNT");
+      args.push(count);
+    }
+    return this.execArrayReply<Raw>("XINFO", "STREAM", key, "FULL", ...args)
+      .then(
+        (raw) => {
+          // Note that you should not rely on the fields
+          // exact position, nor on the number of fields,
+          // new fields may be added in the future.
+          if (raw === undefined) throw "no data";
+
+          const data: Map<string, Raw> = convertMap(raw);
+          if (data === undefined) throw "no data converted";
+
+          const entries = (data.get("entries") as ConditionalArray).map((raw) =>
+            parseXMessage(raw as XReadIdData)
+          );
+          return {
+            length: rawnum(data.get("length")),
+            radixTreeKeys: rawnum(data.get("radix-tree-keys")),
+            radixTreeNodes: rawnum(data.get("radix-tree-nodes")),
+            lastGeneratedId: parseXId(rawstr(data.get("last-generated-id"))),
+            entries,
+            groups: parseXGroupDetail(data.get("groups") as ConditionalArray),
+          };
+        },
+      );
+  }
+
+  xinfo_groups(key: string) {
+    return this.execArrayReply<ConditionalArray>("XINFO", "GROUPS", key).then(
+      (raws) =>
+        raws.map((raw) => {
+          const data = convertMap(raw);
+          return {
+            name: rawstr(data.get("name")),
+            consumers: rawnum(data.get("consumers")),
+            pending: rawnum(data.get("pending")),
+            lastDeliveredId: parseXId(rawstr(data.get("last-delivered-id"))),
+          };
+        }),
+    );
+  }
+
+  xinfo_consumers(key: string, group: string) {
+    return this.execArrayReply<ConditionalArray>(
+      "XINFO",
+      "CONSUMERS",
+      key,
+      group,
+    ).then(
+      (raws) =>
+        raws.map((raw) => {
+          const data = convertMap(raw);
+          return {
+            name: rawstr(data.get("name")),
+            pending: rawnum(data.get("pending")),
+            idle: rawnum(data.get("idle")),
+          };
+        }),
+    );
+  }
+
+  xpending(
+    key: string,
+    group: string,
+  ) {
+    return this.execArrayReply<Raw>("XPENDING", key, group)
+      .then((raw) => {
+        if (
+          isNumber(raw[0]) && isString(raw[1]) &&
+          isString(raw[2]) && isCondArray(raw[3])
+        ) {
+          return {
+            count: raw[0],
+            startId: parseXId(raw[1]),
+            endId: parseXId(raw[2]),
+            consumers: parseXPendingConsumers(raw[3]),
+          };
+        } else {
+          throw "parse err";
+        }
+      });
+  }
+
+  xpending_count(
+    key: string,
+    group: string,
+    startEndCount: StartEndCount,
+    consumer?: string,
+  ) {
+    const args = [];
+    args.push(startEndCount.start);
+    args.push(startEndCount.end);
+    args.push(startEndCount.count);
+
+    if (consumer) {
+      args.push(consumer);
+    }
+
+    return this.execArrayReply<Raw>("XPENDING", key, group, ...args)
+      .then((raw) => parseXPendingCounts(raw));
+  }
+
+  xrange(
+    key: string,
+    start: XIdNeg,
+    end: XIdPos,
+    count?: number,
+  ) {
+    const args: (string | number)[] = [key, xidstr(start), xidstr(end)];
+    if (count) {
+      args.push("COUNT");
+      args.push(count);
+    }
+    return this.execArrayReply<XReadIdData>("XRANGE", ...args).then(
+      (raw) => raw.map((m) => parseXMessage(m)),
+    );
+  }
+
+  xrevrange(
+    key: string,
+    start: XIdPos,
+    end: XIdNeg,
+    count?: number,
+  ) {
+    const args: (string | number)[] = [key, xidstr(start), xidstr(end)];
+    if (count) {
+      args.push("COUNT");
+      args.push(count);
+    }
+    return this.execArrayReply<XReadIdData>("XREVRANGE", ...args).then(
+      (raw) => raw.map((m) => parseXMessage(m)),
+    );
+  }
+
+  xread(
+    key_xids: (XKeyId | XKeyIdLike)[],
+    opts?: { count?: number; block?: number },
+  ) {
+    const args = [];
+    if (opts) {
+      if (opts.count) {
+        args.push("COUNT");
+        args.push(opts.count);
+      }
+      if (opts.block) {
+        args.push("BLOCK");
+        args.push(opts.block);
+      }
+    }
+    args.push("STREAMS");
+
+    const the_keys = [];
+    const the_xids = [];
+
+    for (const a of key_xids) {
+      if (a instanceof Array) {
+        // XKeyIdLike
+        the_keys.push(a[0]);
+        the_xids.push(xidstr(a[1]));
+      } else {
+        // XKeyId
+        the_keys.push(a.key);
+        the_xids.push(xidstr(a.xid));
+      }
+    }
+
+    return this.execArrayReply<XReadStreamRaw>(
+      "XREAD",
+      ...args.concat(the_keys).concat(the_xids),
+    ).then((raw) => parseXReadReply(raw));
+  }
+
+  xreadgroup(
+    key_xids: (XKeyIdGroup | XKeyIdGroupLike)[],
+    { group, consumer, count, block }: XReadGroupOpts,
+  ) {
+    const args: (string | number)[] = [
+      "GROUP",
+      group,
+      consumer,
+    ];
+
+    if (count) {
+      args.push("COUNT");
+      args.push(count);
+    }
+    if (block) {
+      args.push("BLOCK");
+      args.push(block);
+    }
+
+    args.push("STREAMS");
+
+    const the_keys = [];
+    const the_xids = [];
+
+    for (const a of key_xids) {
+      if (a instanceof Array) {
+        // XKeyIdGroupLike
+        the_keys.push(a[0]);
+        the_xids.push(a[1] === ">" ? ">" : xidstr(a[1]));
+      } else {
+        // XKeyIdGroup
+        the_keys.push(a.key);
+        the_xids.push(a.xid === ">" ? ">" : xidstr(a.xid));
+      }
+    }
+
+    return this.execArrayReply<XReadStreamRaw>(
+      "XREADGROUP",
+      ...args.concat(the_keys).concat(the_xids),
+    ).then((raw) => parseXReadReply(raw));
+  }
+
+  xtrim(key: string, maxlen: XMaxlen) {
+    const args = [];
+    if (maxlen.approx) {
+      args.push("~");
+    }
+
+    args.push(maxlen.elements);
+
+    return this.execIntegerReply("XTRIM", key, "MAXLEN", ...args);
   }
 
   // deno-lint-ignore no-explicit-any

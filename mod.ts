@@ -6,3 +6,4 @@ export * from "./io.ts";
 export * from "./pipeline.ts";
 export * from "./pubsub.ts";
 export * from "./redis.ts";
+export * from "./stream.ts";
