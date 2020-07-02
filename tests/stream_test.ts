@@ -759,7 +759,6 @@ test("xinfo", async () => {
     const groupInfos = await client.xinfo_groups(key);
     assertEquals(groupInfos.length, 2);
 
-    console.log(JSON.stringify(groupInfos));
     const newGroup = groupInfos.find((g) => g.name === "newgroup");
     const oldGroup = groupInfos.find((g) => g.name === group);
     assert(newGroup);
