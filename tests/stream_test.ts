@@ -537,21 +537,16 @@ test("xclaim and xpending, all options", async () => {
       1000,
       2000,
     );
-    switch (firstClaimed.kind) {
-      case "messages":
-        assertEquals(firstClaimed.messages.length, 2);
-        assertEquals(
-          firstClaimed.messages[0].field_values,
-          new Map(Object.entries({ "field": "foo" })),
-        );
-        assertEquals(
-          firstClaimed.messages[1].field_values,
-          new Map(Object.entries({ "field": "bar" })),
-        );
-        break;
-      default:
-        assert(false);
-    }
+    assert(firstClaimed.kind === "messages");
+    assertEquals(firstClaimed.messages.length, 2);
+    assertEquals(
+      firstClaimed.messages[0].field_values,
+      new Map(Object.entries({ "field": "foo" })),
+    );
+    assertEquals(
+      firstClaimed.messages[1].field_values,
+      new Map(Object.entries({ "field": "bar" })),
+    );
 
     // ACK these messages so we can try XPENDING/XCLAIM
     // on a new batch
@@ -599,21 +594,15 @@ test("xclaim and xpending, all options", async () => {
       [3000, 2],
     );
 
-    switch (secondClaimedXIds.kind) {
-      case "justxid":
-        assertEquals(
-          secondClaimedXIds.xids,
-          [
-            { unixMs: 3000, seqNo: 0 },
-            { unixMs: 3000, seqNo: 1 },
-            { unixMs: 3000, seqNo: 2 },
-          ],
-        );
-        break;
-
-      default:
-        assert(false);
-    }
+    assert(secondClaimedXIds.kind === "justxid");
+    assertEquals(
+      secondClaimedXIds.xids,
+      [
+        { unixMs: 3000, seqNo: 0 },
+        { unixMs: 3000, seqNo: 1 },
+        { unixMs: 3000, seqNo: 2 },
+      ],
+    );
 
     // ACK these messages so we can try XPENDING/XCLAIM
     // on a new batch
@@ -677,21 +666,16 @@ test("xclaim and xpending, all options", async () => {
       4000,
       5000,
     );
-    switch (thirdClaimed.kind) {
-      case "messages":
-        assertEquals(thirdClaimed.messages.length, 2);
-        assertEquals(
-          thirdClaimed.messages[0].field_values,
-          new Map(Object.entries({ "field": "woof", "farm": "chicken" })),
-        );
-        assertEquals(
-          thirdClaimed.messages[1].field_values,
-          new Map(Object.entries({ "field": "bop", "farm": "duck" })),
-        );
-        break;
-      default:
-        assert(false);
-    }
+    assert(thirdClaimed.kind === "messages");
+    assertEquals(thirdClaimed.messages.length, 2);
+    assertEquals(
+      thirdClaimed.messages[0].field_values,
+      new Map(Object.entries({ "field": "woof", "farm": "chicken" })),
+    );
+    assertEquals(
+      thirdClaimed.messages[1].field_values,
+      new Map(Object.entries({ "field": "bop", "farm": "duck" })),
+    );
   });
 });
 
