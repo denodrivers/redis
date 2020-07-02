@@ -6,6 +6,8 @@ import {
   assert,
   assertNotEquals,
 } from "../vendor/https/deno.land/std/testing/asserts.ts";
+import { delay } from "../vendor/https/deno.land/std/async/mod.ts";
+
 const { test, client } = await makeTest("stream");
 
 const randomStream = () => `test-deno-${Math.floor(Math.random() * 1000)}`;
@@ -519,7 +521,7 @@ test("xclaim and xpending, all options", async () => {
 
     const firstPending = await client.xpending(key, group);
 
-    await sleepMillis(5);
+    await delay(5);
 
     assertEquals(firstPending.count, 2);
     assertNotEquals(firstPending.startId, firstPending.endId);
@@ -568,7 +570,7 @@ test("xclaim and xpending, all options", async () => {
     );
 
     // take a short nap and increase the lastDeliveredMs
-    await sleepMillis(5);
+    await delay(5);
 
     // try another form of xpending: counts for all consumers (we have only one)
     const secondPending = await client.xpending_count(
@@ -630,7 +632,7 @@ test("xclaim and xpending, all options", async () => {
       { group, consumer: "weird-interloper" },
     );
 
-    await sleepMillis(5);
+    await delay(5);
 
     // try another form of xpending: counts
     // efficiently filtered down to a single consumer.
@@ -771,7 +773,7 @@ test("xinfo", async () => {
     await client.xreadgroup([[key, ">"]], { group, consumer: "newbie" });
 
     // Increase the idle time by falling asleep
-    await sleepMillis(2);
+    await delay(2);
     const consumerInfos = await client.xinfo_consumers(key, group);
     assertEquals(consumerInfos.length, 2);
     const newConsumer = consumerInfos.find((c) => c.name === "newbie");
@@ -788,7 +790,3 @@ test("xinfo", async () => {
     assertEquals(await client.xgroup_destroy(key, "newgroup"), 1);
   });
 });
-
-const sleepMillis = (ms: number) => {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-};
