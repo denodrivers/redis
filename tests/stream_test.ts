@@ -185,7 +185,7 @@ test("xgroup create and destroy", async () => {
       );
     },
     undefined,
-    undefined,
+    "-BUSYGROUP Consumer Group name already exists",
   );
 
   assertEquals(await client.xgroup_destroy(key, groupName), 1);
