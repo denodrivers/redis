@@ -291,9 +291,6 @@ export type RedisCommands = {
   pubsub_channels(pattern: string): Promise<BulkString[]>;
   pubsub_numsubs(...channels: string[]): Promise<[BulkString, Integer][]>;
   pubsub_numpat(): Promise<Integer>;
-  // Cluster
-  readonly(): Promise<Status>;
-  readwrite(): Promise<Status>;
   // Set
   sadd(key: string, ...members: string[]): Promise<Integer>;
   scard(key: string): Promise<Integer>;
@@ -505,7 +502,7 @@ XGROUP DESTROY test-man-000 test-group
 <pre>
 XGROUP SETID mystream consumer-group-name 0
 </pre>
-     * 
+     *
      * @param key  stream key
      * @param groupName   the consumer group
      * @param xid the XId to use for the next message delivered
@@ -768,7 +765,34 @@ XRANGE somestream - +
     },
   ): Promise<Integer>;
   // Cluster
-  // cluster //
+  cluster_addslots(...slots: number[]): Promise<Status>;
+  cluster_bumpepoch(): Promise<Status>;
+  cluster_countfailurereports(node_id: string): Promise<Integer>;
+  cluster_countkeysinslot(slot: number): Promise<Integer>;
+  cluster_delslots(...slots: number[]): Promise<Status>;
+  cluster_failover(opt?: "FORCE" | "TAKEOVER"): Promise<Status>;
+  cluster_flushslots(): Promise<Status>;
+  cluster_forget(node_id: string): Promise<Status>;
+  cluster_getkeysinslot(slot: number, count: number): Promise<ConditionalArray>;
+  cluster_info(): Promise<BulkString>;
+  cluster_keyslot(key: string): Promise<Integer>;
+  cluster_meet(ip: string, port: number): Promise<Status>;
+  cluster_myid(): Promise<BulkString>;
+  cluster_nodes(): Promise<ConditionalArray>;
+  cluster_replicate(node_id: string): Promise<Status>;
+  cluster_reset(type?: "HARD" | "SOFT"): Promise<Status>;
+  cluster_saveconfig(): Promise<Status>;
+  cluster_setconfigepoch(config_epoch: string): Promise<Status>;
+  cluster_setslot(
+    slot: number,
+    subcommand: "IMPORTING" | "MIGRATING" | "STABLE" | "NODE",
+    node_id?: string,
+  ): Promise<Status>;
+  cluster_slaves(node_id: string): Promise<ConditionalArray>;
+  cluster_replicas(node_id: string): Promise<ConditionalArray>;
+  cluster_slots(): Promise<ConditionalArray>;
+  readonly(): Promise<Status>;
+  readwrite(): Promise<Status>;
   // Server
   acl_cat(parameter?: string): Promise<BulkString[]>;
   acl_deluser(parameter: string): Promise<Integer>;
