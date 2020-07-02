@@ -1,3 +1,4 @@
+import { ErrorReplyError } from "../errors.ts";
 import { Redis } from "../redis.ts";
 import { makeTest } from "./test_util.ts";
 import { parseXId } from "../stream.ts";
@@ -184,7 +185,7 @@ test("xgroup create and destroy", async () => {
         true,
       );
     },
-    undefined,
+    ErrorReplyError,
     "-BUSYGROUP Consumer Group name already exists",
   );
 
