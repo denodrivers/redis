@@ -374,7 +374,7 @@ export type RedisCommands = {
   xadd(
     key: string,
     xid: XIdAdd,
-    field_values: Record<string, string> | Map<string, string>,
+    field_values: XAddFieldValues,
     maxlen: XMaxlen,
   ): Promise<XId>;
   /**
