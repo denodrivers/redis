@@ -5,6 +5,7 @@ import {
   assertEquals,
   assert,
   assertNotEquals,
+  assertThrowsAsync,
 } from "../vendor/https/deno.land/std/testing/asserts.ts";
 import { delay } from "../vendor/https/deno.land/std/async/mod.ts";
 
@@ -174,18 +175,18 @@ test("xgroup create and destroy", async () => {
 
   let created = await client.xgroup_create(key, groupName, "$", true);
   assertEquals(created, "OK");
-  try {
-    await client.xgroup_create(
-      key,
-      groupName,
-      0,
-      true,
-    );
-    // it should throw -BUSYERR on duplicate
-    assert(false);
-  } catch {
-    assert(true);
-  }
+  await assertThrowsAsync(
+    async () => {
+      await client.xgroup_create(
+        key,
+        groupName,
+        0,
+        true,
+      );
+    },
+    undefined,
+    undefined,
+  );
 
   assertEquals(await client.xgroup_destroy(key, groupName), 1);
 });
