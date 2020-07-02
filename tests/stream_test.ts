@@ -419,9 +419,9 @@ test("unique message per consumer", async () => {
       assertEquals(data[0].messages.length, 1);
 
       assertEquals(data[0].messages[0].field_values.get("target"), payload);
-
-      await cleanupStream(client, key);
     }
+
+    await cleanupStream(client, key);
   });
 });
 
