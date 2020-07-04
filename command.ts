@@ -779,17 +779,18 @@ XRANGE somestream - +
   cluster_meet(ip: string, port: number): Promise<Status>;
   cluster_myid(): Promise<BulkString>;
   cluster_nodes(): Promise<ConditionalArray>;
+  cluster_replicas(node_id: string): Promise<ConditionalArray>;
   cluster_replicate(node_id: string): Promise<Status>;
-  cluster_reset(type?: "HARD" | "SOFT"): Promise<Status>;
+  cluster_reset(opt?: "HARD" | "SOFT"): Promise<Status>;
   cluster_saveconfig(): Promise<Status>;
-  cluster_setconfigepoch(config_epoch: string): Promise<Status>;
+  cluster_setconfigepoch(config_epoch: number): Promise<Status>;
   cluster_setslot(
     slot: number,
-    subcommand: "IMPORTING" | "MIGRATING" | "STABLE" | "NODE",
-    node_id?: string,
+    subcommand: "IMPORTING" | "MIGRATING" | "NODE",
+    node_id: string,
   ): Promise<Status>;
+  cluster_setslotstable(slot: number): Promise<Status>;
   cluster_slaves(node_id: string): Promise<ConditionalArray>;
-  cluster_replicas(node_id: string): Promise<ConditionalArray>;
   cluster_slots(): Promise<ConditionalArray>;
   readonly(): Promise<Status>;
   readwrite(): Promise<Status>;
