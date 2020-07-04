@@ -177,7 +177,7 @@ function tryParseErrorReply(line: string): never {
 
 export function muxExecutor(
   connection: RedisConnection,
-  attemptReconnect: boolean = false,
+  attemptReconnect = false,
 ): CommandExecutor {
   let queue: {
     command: string;
