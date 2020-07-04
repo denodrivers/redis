@@ -33,13 +33,13 @@ export class RedisConnection {
     return this.executor!.exec;
   }
 
-  private _isConnected: boolean = false;
+  private _isConnected = false;
 
   get isConnected(): boolean {
     return this._isConnected;
   }
 
-  private _isClosed: boolean = false;
+  private _isClosed = false;
 
   get isClosed(): boolean {
     return this._isClosed;
