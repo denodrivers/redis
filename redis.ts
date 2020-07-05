@@ -297,8 +297,12 @@ class RedisImpl implements RedisCommands {
     return this.execStatusReply("CLUSTER", "ADDSLOTS", ...slots);
   }
 
-  cluster_bumpepoch(): Promise<Status> {
-    return this.execStatusReply("CLUSTER", "BUMPEPOCH");
+  cluster_addslots_range(min: number, max: number): Promise<Status> {
+    const slots = [];
+    for (let i = min; i <= max; i++) {
+      slots.push(i);
+    }
+    return this.execStatusReply("CLUSTER", "ADDSLOTS", ...slots);
   }
 
   cluster_countfailurereports(node_id: string): Promise<Integer> {
@@ -313,11 +317,19 @@ class RedisImpl implements RedisCommands {
     return this.execStatusReply("CLUSTER", "DELSLOTS", ...slots);
   }
 
+  cluster_delslots_range(min: number, max: number): Promise<Status> {
+    const slots = [];
+    for (let i = min; i <= max; i++) {
+      slots.push(i);
+    }
+    return this.execStatusReply("CLUSTER", "DELSLOTS", ...slots);
+  }
+
   cluster_failover(opt?: "FORCE" | "TAKEOVER"): Promise<Status> {
     if (opt) {
       return this.execStatusReply("CLUSTER", "FAILOVER", opt);
     }
-    return this.execStatusReply("CLUSTER", "FAILOVER")
+    return this.execStatusReply("CLUSTER", "FAILOVER");
   }
 
   cluster_flushslots(): Promise<Status> {
@@ -328,8 +340,13 @@ class RedisImpl implements RedisCommands {
     return this.execStatusReply("CLUSTER", "FORGET", node_id);
   }
 
-  cluster_getkeysinslot(slot: number, count: number): Promise<ConditionalArray> {
-    return this.execArrayReply("CLUSTER", "GETKEYSINSLOT", slot, count);
+  cluster_getkeysinslot(slot: number, count: number): Promise<BulkString[]> {
+    return this.execArrayReply<BulkString>(
+      "CLUSTER",
+      "GETKEYSINSLOT",
+      slot,
+      count,
+    );
   }
 
   cluster_info(): Promise<BulkString> {
@@ -348,16 +365,16 @@ class RedisImpl implements RedisCommands {
     return this.execStatusReply("CLUSTER", "MYID");
   }
 
-  cluster_nodes(): Promise<ConditionalArray> {
-    return this.execArrayReply("CLUSTER", "NODES");
+  cluster_nodes(): Promise<BulkString> {
+    return this.execBulkReply("CLUSTER", "NODES");
   }
 
-  cluster_replicas(node_id: string): Promise<ConditionalArray> {
-    return this.execArrayReply("CLUSTER", "REPLICAS", node_id);
+  cluster_replicas(node_id: string): Promise<BulkString[]> {
+    return this.execArrayReply<BulkString>("CLUSTER", "REPLICAS", node_id);
   }
 
   cluster_replicate(node_id: string): Promise<Status> {
-    return this.execStatusReply("CLUSTER", "NODES", node_id);
+    return this.execStatusReply("CLUSTER", "REPLICATE", node_id);
   }
 
   cluster_reset(opt?: "HARD" | "SOFT"): Promise<Status> {
@@ -371,24 +388,26 @@ class RedisImpl implements RedisCommands {
     return this.execStatusReply("CLUSTER", "SAVECONFIG");
   }
 
-  cluster_setconfigepoch(config_epoch: number): Promise<Status> {
-    return this.execStatusReply("CLUSTER", "SET-CONFIG-EPOCH", config_epoch)
-  }
-
   cluster_setslot(
     slot: number,
     subcommand: "IMPORTING" | "MIGRATING" | "NODE",
     node_id: string,
   ): Promise<Status> {
-    return this.execStatusReply("CLUSTER", "SETSLOT", slot, subcommand, node_id);
+    return this.execStatusReply(
+      "CLUSTER",
+      "SETSLOT",
+      slot,
+      subcommand,
+      node_id,
+    );
   }
 
-  cluster_setslotstable(slot: number): Promise<Status> {
+  cluster_setslot_stable(slot: number): Promise<Status> {
     return this.execStatusReply("CLUSTER", "SETSLOT", slot, "STABLE");
   }
 
-  cluster_slaves(node_id: string): Promise<ConditionalArray> {
-    return this.execArrayReply("CLUSTER", "SLAVES", node_id);
+  cluster_slaves(node_id: string): Promise<BulkString[]> {
+    return this.execArrayReply<BulkString>("CLUSTER", "SLAVES", node_id);
   }
 
   cluster_slots(): Promise<ConditionalArray> {
@@ -2138,7 +2157,6 @@ export async function connect({
   );
 
   await connection.connect();
-
   return new RedisImpl(connection);
 }
 
