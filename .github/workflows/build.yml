@@ -16,6 +16,7 @@ jobs:
         - 6379:6379
     env:
       USE_DOCKER: "1"
+      DOCKER_BIN: "/usr/bin/docker"
     steps:
       - uses: actions/checkout@v1
       - name: Install Deno

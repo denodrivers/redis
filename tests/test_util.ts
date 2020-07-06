@@ -45,12 +45,13 @@ interface RedisServer {
 
 const USE_DOCKER = Deno.env.get("USE_DOCKER");
 const useDocker = USE_DOCKER === "1" || USE_DOCKER === "true";
+const dockerBin = Deno.env.get("DOCKER_BIN") ?? "docker";
 export async function startRedisServer(port: number): Promise<RedisServer> {
   if (useDocker) {
     const containerName = `redis-${port}`;
     const process = Deno.run({
       cmd: [
-        "docker",
+        dockerBin,
         "run",
         "--name",
         containerName,
@@ -70,7 +71,7 @@ export async function startRedisServer(port: number): Promise<RedisServer> {
     return {
       async dispose() {
         const process = Deno.run({
-          cmd: ["docker", "stop", containerName],
+          cmd: [dockerBin, "stop", containerName],
         });
         await process.status();
         process.close();
