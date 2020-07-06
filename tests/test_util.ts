@@ -65,6 +65,7 @@ export async function startRedisServer(port: number): Promise<RedisServer> {
     });
     await process.status();
     process.close();
+    await delay(500);
     return {
       async dispose() {
         const process = Deno.run({
