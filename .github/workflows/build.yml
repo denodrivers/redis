@@ -24,6 +24,9 @@ jobs:
       - uses: denolib/setup-deno@master
         with:
           deno-version: ${{ env.DENO_VERSION }}
+      - name: Echo docker path
+        run: |
+          echo "$(which docker)"
       - name: Check mod.ts
         run: |
           deno run --allow-read --allow-write tools/make_mod.ts
