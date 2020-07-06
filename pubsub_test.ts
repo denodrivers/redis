@@ -4,6 +4,7 @@ import {
   assertThrowsAsync,
 } from "./vendor/https/deno.land/std/testing/asserts.ts";
 import { delay } from "./vendor/https/deno.land/std/async/mod.ts";
+import { startRedisServer } from "./tests/test_util.ts";
 
 import { connect } from "./redis.ts";
 const { test } = Deno;
@@ -96,11 +97,9 @@ test({
 
     const throwawayRedisServerPort = 6464;
     let promiseList;
-    let throwawayRedisServerChildProcess = createThrowawayRedisServer(
-      throwawayRedisServerPort,
-    );
-
-    await delay(500);
+    let throwawayRedisServerChildProcess = await startRedisServer({
+      port: throwawayRedisServerPort,
+    });
 
     const redisClient = await connect(
       { ...addr, name: "Main", port: throwawayRedisServerPort },
@@ -149,11 +148,10 @@ test({
         "Too many messages were published.",
       );
 
-      throwawayRedisServerChildProcess = createThrowawayRedisServer(
-        throwawayRedisServerPort,
-      );
+      throwawayRedisServerChildProcess = await startRedisServer({
+        port: throwawayRedisServerPort,
+      });
 
-      await delay(500);
       const temporaryRedisClient = await connect(
         { ...addr, port: throwawayRedisServerPort },
       );
@@ -186,13 +184,3 @@ test({
     redisClient.close();
   },
 });
-
-function createThrowawayRedisServer(port: number) {
-  return Deno.run(
-    {
-      cmd: ["redis-server", "--port", port.toString()],
-      stdin: "null",
-      stdout: "null",
-    },
-  );
-}
