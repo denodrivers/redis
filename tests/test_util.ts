@@ -1,5 +1,7 @@
 import { Redis, connect, RedisConnectOptions } from "../redis.ts";
 import { assert } from "../vendor/https/deno.land/std/testing/asserts.ts";
+import { delay } from "../vendor/https/deno.land/std/async/mod.ts";
+import { RedisConnection } from "../connection.ts";
 
 function* dbIndex() {
   let i = 0;
@@ -35,4 +37,54 @@ export async function makeTest(
     });
   };
   return { test, client, opts };
+}
+
+interface RedisServer {
+  dispose(): Promise<void>;
+}
+
+const USE_DOCKER = Deno.env.get("USE_DOCKER");
+const useDocker = USE_DOCKER === "1" || USE_DOCKER === "true";
+export async function startRedisServer(port: number): Promise<RedisServer> {
+  if (useDocker) {
+    const containerName = `redis-${port}`;
+    const process = Deno.run({
+      cmd: [
+        "docker",
+        "run",
+        "--name",
+        containerName,
+        "-d",
+        "redis",
+        "redis-server",
+        "--port",
+        String(port),
+      ],
+    });
+    await process.status();
+    process.close();
+    return {
+      async dispose() {
+        const process = Deno.run({
+          cmd: ["docker", "stop", containerName],
+        });
+        await process.status();
+        process.close();
+      },
+    };
+  } else {
+    const process = Deno.run(
+      {
+        cmd: ["redis-server", "--port", port.toString()],
+        stdin: "null",
+        stdout: "null",
+      },
+    );
+    await delay(500);
+    return {
+      async dispose() {
+        process.close();
+      },
+    };
+  }
 }

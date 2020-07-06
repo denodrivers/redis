@@ -4,6 +4,7 @@ import {
   assertThrowsAsync,
 } from "./vendor/https/deno.land/std/testing/asserts.ts";
 import { delay } from "./vendor/https/deno.land/std/async/mod.ts";
+import { startRedisServer } from "./tests/test_util.ts";
 
 import { connect } from "./redis.ts";
 const { test } = Deno;
@@ -87,7 +88,6 @@ test({
 
 test({
   name: "testSubscribe4 (#83)",
-  ignore: true,
 
   // sanitizeResources: false,
   // sanitizeOps: false,
@@ -96,11 +96,9 @@ test({
 
     const throwawayRedisServerPort = 6464;
     let promiseList;
-    let throwawayRedisServerChildProcess = createThrowawayRedisServer(
+    let throwawayRedisServerChildProcess = await startRedisServer(
       throwawayRedisServerPort,
     );
-
-    await delay(500);
 
     const redisClient = await connect(
       { ...addr, name: "Main", port: throwawayRedisServerPort },
@@ -128,7 +126,7 @@ test({
 
     setTimeout(
       async () => {
-        throwawayRedisServerChildProcess.close();
+        await throwawayRedisServerChildProcess.dispose();
       },
       1000,
     );
@@ -149,11 +147,10 @@ test({
         "Too many messages were published.",
       );
 
-      throwawayRedisServerChildProcess = createThrowawayRedisServer(
+      throwawayRedisServerChildProcess = await startRedisServer(
         throwawayRedisServerPort,
       );
 
-      await delay(500);
       const temporaryRedisClient = await connect(
         { ...addr, port: throwawayRedisServerPort },
       );
@@ -181,18 +178,8 @@ test({
 
     clearInterval(interval);
 
-    throwawayRedisServerChildProcess.close();
+    await throwawayRedisServerChildProcess.dispose();
     publisherRedisClient.close();
     redisClient.close();
   },
 });
-
-function createThrowawayRedisServer(port: number) {
-  return Deno.run(
-    {
-      cmd: ["redis-server", "--port", port.toString()],
-      stdin: "null",
-      stdout: "null",
-    },
-  );
-}
