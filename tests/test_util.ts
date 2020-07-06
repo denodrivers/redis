@@ -63,7 +63,8 @@ export async function startRedisServer(port: number): Promise<RedisServer> {
         String(port),
       ],
     });
-    await process.status();
+    const status = await process.status();
+    assert(status.success);
     process.close();
     await delay(500);
     return {
