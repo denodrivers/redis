@@ -54,6 +54,8 @@ export async function startRedisServer(port: number): Promise<RedisServer> {
         "run",
         "--name",
         containerName,
+        "--port",
+        `${port}:${port}`,
         "-d",
         "redis",
         "redis-server",
