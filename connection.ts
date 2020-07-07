@@ -172,6 +172,7 @@ export class RedisConnection {
                 this.retryCount = 0;
                 clearInterval(interval);
                 resolve(this);
+              } catch(err) {
               } finally {
                 this.retryCount++;
               }
