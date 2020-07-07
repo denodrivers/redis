@@ -109,4 +109,4 @@ test("[cluster] slots", async () => {
 setTimeout(() => {
   cleanupCluster();
   client.close();
-}, 5000);
+}, 20000);
