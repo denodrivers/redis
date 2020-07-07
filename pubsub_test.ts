@@ -114,12 +114,12 @@ test({
       assertEquals(
         redis.isConnected,
         false,
-        "The main client still thinks it is connected."
+        "The main client still thinks it is connected.",
       );
       assertEquals(
         pub.isConnected,
         false,
-        "The publisher client still thinks it is connected."
+        "The publisher client still thinks it is connected.",
       );
       assert(messages.length < 5, "Too many messages were published.");
 
