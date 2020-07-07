@@ -1,5 +1,6 @@
 import { Redis, connect, RedisConnectOptions } from "../redis.ts";
 import { assert } from "../vendor/https/deno.land/std/testing/asserts.ts";
+import { delay } from "../vendor/https/deno.land/std/async/mod.ts";
 
 function* dbIndex() {
   let i = 0;
@@ -35,4 +36,27 @@ export async function makeTest(
     });
   };
   return { test, client, opts };
+}
+
+interface StartRedisServerOptions {
+  port: number;
+}
+export async function startRedisServer(
+  options: StartRedisServerOptions,
+): Promise<Deno.Process> {
+  const { port } = options;
+  const process = Deno.run(
+    {
+      cmd: ["redis-server", "--port", port.toString()],
+      stdin: "null",
+      stdout: "null",
+    },
+  );
+  await waitForPort(port);
+  return process;
+}
+
+// FIXME!
+function waitForPort(_port: number): Promise<void> {
+  return delay(500);
 }

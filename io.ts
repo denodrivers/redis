@@ -2,7 +2,7 @@ import {
   BufReader,
   BufWriter,
 } from "./vendor/https/deno.land/std/io/bufio.ts";
-import { ErrorReplyError } from "./errors.ts";
+import { ErrorReplyError, EOFError } from "./errors.ts";
 import {
   deferred,
   Deferred,
@@ -67,7 +67,7 @@ export async function sendCommand(
 export async function readReply(reader: BufReader): Promise<RedisRawReply> {
   const res = await reader.peek(1);
   if (res === null) {
-    throw new Error("EOF");
+    throw new EOFError();
   }
   switch (res[0]) {
     case IntegerReplyCode:
@@ -147,7 +147,7 @@ export async function readArrayReply(
   for (let i = 0; i < argCount; i++) {
     const res = await reader.peek(1);
     if (res === null) {
-      throw new Error("EOF");
+      throw new EOFError();
     }
     switch (res[0]) {
       case SimpleStringCode:
@@ -177,7 +177,7 @@ function tryParseErrorReply(line: string): never {
 
 export function muxExecutor(
   connection: RedisConnection,
-  attemptReconnect: boolean = false,
+  attemptReconnect = false,
 ): CommandExecutor {
   let queue: {
     command: string;
@@ -206,7 +206,8 @@ export function muxExecutor(
             err instanceof Deno.errors.BrokenPipe ||
             err instanceof Deno.errors.ConnectionAborted ||
             err instanceof Deno.errors.ConnectionRefused ||
-            err instanceof Deno.errors.ConnectionReset
+            err instanceof Deno.errors.ConnectionReset ||
+            err instanceof EOFError
           ) &&
           attemptReconnect
         ) {
