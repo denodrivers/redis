@@ -18,8 +18,7 @@ test({
   async fn() {
     const redis = await connect(addr);
     const sub = await redis.subscribe("subsc");
-    // const hoge = await redis.get("hoge");
-    const unsub = await sub.unsubscribe("subsc");
+    await sub.unsubscribe("subsc");
     await sub.close();
     assertEquals(sub.isClosed, true);
     redis.close();
@@ -43,11 +42,9 @@ test({
       message: "wayway",
     });
     await sub.close();
-
     assertEquals(sub.isClosed, true);
     assertEquals(redis.isClosed, true);
-
-    await pub.close();
+    pub.close();
     await assertThrowsAsync(async () => {
       await redis.get("aaa");
     }, Deno.errors.BadResource);
@@ -87,100 +84,64 @@ test({
 });
 
 test({
-  name: "testSubscribe4 (#83)",
-  ignore: true,
-
-  // sanitizeResources: false,
-  // sanitizeOps: false,
+  name: "testSubscribe4",
   async fn(): Promise<void> {
-    let parallelPromiseList: Promise<number>[] = [];
-
-    const throwawayRedisServerPort = 6464;
-    let promiseList;
-    let throwawayRedisServerChildProcess = await startRedisServer({
-      port: throwawayRedisServerPort,
+    const port = 6464;
+    let server = await startRedisServer({ port });
+    const redis = await connect({
+      ...addr,
+      name: "Main",
+      port,
     });
+    const pub = await connect({
+      ...addr,
+      maxRetryCount: 10,
+      name: "Publisher",
+      port,
+    });
+    const sub = await redis.psubscribe("ps*");
+    const it = sub.receive();
 
-    const redisClient = await connect(
-      { ...addr, name: "Main", port: throwawayRedisServerPort },
-    );
-    const publisherRedisClient = await connect(
-      {
-        ...addr,
-        maxRetryCount: 10,
-        name: "Publisher",
-        port: throwawayRedisServerPort,
-      },
-    );
-    const subscriberRedisClient = await redisClient.psubscribe("ps*");
+    const messages: Promise<number>[] = [];
 
-    const messageIterator = subscriberRedisClient.receive();
+    const interval = setInterval(() => {
+      messages.push(pub.publish("psub", "wayway"));
+    }, 900);
 
-    const interval = setInterval(
-      () => {
-        parallelPromiseList.push(
-          publisherRedisClient.publish("psub", "wayway"),
-        );
-      },
-      900,
-    );
-
-    setTimeout(
-      async () => {
-        throwawayRedisServerChildProcess.close();
-      },
-      1000,
-    );
+    setTimeout(() => server.close(), 1000);
 
     setTimeout(async () => {
       assertEquals(
-        redisClient.isConnected,
+        redis.isConnected,
         false,
         "The main client still thinks it is connected.",
       );
       assertEquals(
-        publisherRedisClient.isConnected,
+        pub.isConnected,
         false,
         "The publisher client still thinks it is connected.",
       );
-      assert(
-        parallelPromiseList.length < 5,
-        "Too many messages were published.",
-      );
+      assert(messages.length < 5, "Too many messages were published.");
 
-      throwawayRedisServerChildProcess = await startRedisServer({
-        port: throwawayRedisServerPort,
-      });
+      server = await startRedisServer({ port });
 
-      const temporaryRedisClient = await connect(
-        { ...addr, port: throwawayRedisServerPort },
-      );
-      await temporaryRedisClient.ping();
-      temporaryRedisClient.close();
+      const tempRedis = await connect({ ...addr, port });
+      await tempRedis.ping();
+      tempRedis.close();
 
       await delay(1000);
 
-      assert(redisClient.isConnected, "The main client is not connected.");
-      assert(
-        publisherRedisClient.isConnected,
-        "The publisher client is not connected.",
-      );
+      assert(redis.isConnected, "The main client is not connected.");
+      assert(pub.isConnected, "The publisher client is not connected.");
     }, 2000);
 
-    promiseList = Promise.all([
-      messageIterator.next(),
-      messageIterator.next(),
-      messageIterator.next(),
-      messageIterator.next(),
-      messageIterator.next(),
-    ]);
+    // Block until all resolve
+    await Promise.all([it.next(), it.next(), it.next(), it.next(), it.next()]);
 
-    await promiseList;
-
+    // Cleanup
     clearInterval(interval);
-
-    throwawayRedisServerChildProcess.close();
-    publisherRedisClient.close();
-    redisClient.close();
+    server.close();
+    pub.close();
+    redis.close();
   },
 });
