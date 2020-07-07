@@ -1,74 +1,78 @@
+import { connect } from "../redis.ts";
 import {
   assert,
   assertEquals,
   assertStringContains,
 } from "../vendor/https/deno.land/std/testing/asserts.ts";
-import { makeTest } from "./test_util.ts";
+import { startRedisCluster } from "./test_util.ts";
 
-const { test, client } = await makeTest("cluster");
+const test = Deno.test;
 
-test("addslots", async () => {
-  await client.cluster_flushslots();
+const ports = [7000, 7001, 7002];
+const cleanupCluster = await startRedisCluster(...ports);
+const client = await connect({ hostname: "127.0.0.1", port: 7000 });
+
+test("[cluster] flushslots", async () => {
   assertEquals(await client.cluster_addslots(1, 2, 3), "OK");
   assertEquals(await client.cluster_addslots_range(4, 10), "OK");
 });
 
-test("myid", async () => {
+test("[cluster] myid", async () => {
   assert(!!(await client.cluster_myid()));
 });
 
-test("countfailurereports", async () => {
+test("[cluster] countfailurereports", async () => {
   const node_id = await client.cluster_myid();
   assertEquals(await client.cluster_countfailurereports(node_id), 0);
 });
 
-test("countkeysinslot", async () => {
+test("[cluster] countkeysinslot", async () => {
   assertEquals(await client.cluster_countkeysinslot(1), 0);
 });
 
-test("delslots", async () => {
+test("[cluster] delslots", async () => {
   assertEquals(await client.cluster_delslots(1, 2, 3), "OK");
   assertEquals(await client.cluster_delslots_range(4, 10), "OK");
 });
 
-test("getkeysinslot", async () => {
+test("[cluster] getkeysinslot", async () => {
   assertEquals(await client.cluster_getkeysinslot(1, 1), []);
 });
 
-test("flushslots", async () => {
+test("[cluster] flushslots", async () => {
   assertEquals(await client.cluster_flushslots(), "OK");
 });
 
-test("info", async () => {
+test("[cluster] info", async () => {
   assertStringContains(await client.cluster_info(), "cluster_state");
 });
 
-test("keyslot", async () => {
+test("[cluster] keyslot", async () => {
   assertEquals(await client.cluster_keyslot("somekey"), 11058);
 });
 
-// Need another redis-server with cluster enabled on 6380
-test("meet", async () => {
-  assertEquals(await client.cluster_meet("127.0.0.1", 6380), "OK");
+test("[cluster] meet", async () => {
+  assertEquals(await client.cluster_meet("127.0.0.1", 7001), "OK");
+  assertEquals(await client.cluster_meet("127.0.0.1", 7002), "OK");
 });
 
-test("nodes", async () => {
+test("[cluster] nodes", async () => {
   const node_id = await client.cluster_myid();
   const nodes = await client.cluster_nodes();
   assertStringContains(nodes, node_id);
 });
 
-test("replicas", async () => {
+test("[cluster] replicas", async () => {
   const node_id = await client.cluster_myid();
   assertEquals(await client.cluster_replicas(node_id), []);
 });
 
-test("slaves", async () => {
+test("[cluster] slaves", async () => {
   const node_id = await client.cluster_myid();
   assertEquals(await client.cluster_slaves(node_id), []);
 });
 
-test("forget", async () => {
+test("[cluster] forget", async () => {
   const node_id = await client.cluster_myid();
   const other_node = (await client.cluster_nodes())
     .split("\n")
@@ -79,24 +83,30 @@ test("forget", async () => {
   }
 });
 
-test("reset", async () => {
+test("[cluster] reset", async () => {
   assertEquals(await client.cluster_reset(), "OK");
 });
 
-test("saveconfig", async () => {
+test("[cluster] saveconfig", async () => {
   assertEquals(await client.cluster_saveconfig(), "OK");
 });
 
-test("setslot", async () => {
+test("[cluster] setslot", async () => {
   const node_id = await client.cluster_myid();
   assertEquals(await client.cluster_setslot(1, "NODE", node_id), "OK");
   assertEquals(await client.cluster_setslot(1, "MIGRATING", node_id), "OK");
 });
 
-test("setslotstable", async () => {
+test("[cluster] setslotstable", async () => {
   assertEquals(await client.cluster_setslot_stable(1), "OK");
 });
 
-test("slots", async () => {
+test("[cluster] slots", async () => {
   assert(Array.isArray(await client.cluster_slots()));
 });
+
+// FIXME: no way to run these cleanup after the tests, use a timeout for now
+setTimeout(() => {
+  cleanupCluster();
+  client.close();
+}, 5000);
