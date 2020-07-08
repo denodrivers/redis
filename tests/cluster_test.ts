@@ -20,6 +20,7 @@ suite.afterAll(() => {
   suite.teardown(s7002);
   suite.teardown(s7003);
   client.close();
+  client1.close();
 });
 
 suite.test("addslots", async () => {
