@@ -3,7 +3,6 @@ import {
   createRequest,
   readReply,
   RedisRawReply,
-  CommandExecutor,
   ErrorReply,
 } from "./io.ts";
 import { ErrorReplyError } from "./errors.ts";
@@ -13,7 +12,7 @@ import {
   Deferred,
 } from "./vendor/https/deno.land/std/async/mod.ts";
 import { RedisCommands } from "./command.ts";
-import { RedisConnection } from "./connection.ts";
+import { Connection, CommandExecutor } from "./connection.ts";
 
 const encoder = new TextEncoder();
 export type RawReplyOrError = RedisRawReply | ErrorReply;
@@ -23,7 +22,7 @@ export type RedisPipeline = {
 } & RedisCommands;
 
 export function createRedisPipeline(
-  connection: RedisConnection,
+  connection: Connection<RedisRawReply>,
   opts?: { tx: true },
 ): RedisPipeline {
   let commands: string[] = [];
@@ -91,7 +90,7 @@ export function createRedisPipeline(
     return ["status", "OK"];
   }
   const d = dummyReadWriteCloser();
-  const executor: CommandExecutor = { exec };
+  const executor: CommandExecutor<RedisRawReply> = { exec };
   const fakeRedis = create(d, d, d, executor);
   return Object.assign(fakeRedis, executor, { enqueue, flush });
 }
