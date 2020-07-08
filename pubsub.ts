@@ -1,6 +1,6 @@
 import { BufReader, BufWriter } from "./vendor/https/deno.land/std/io/bufio.ts";
-import { RedisConnection } from "./connection.ts";
-import { readArrayReply, sendCommand } from "./io.ts";
+import { Connection } from "./connection.ts";
+import { readArrayReply, sendCommand, RedisRawReply } from "./io.ts";
 
 export type RedisSubscription = {
   readonly isClosed: boolean;
@@ -30,7 +30,7 @@ class RedisSubscriptionImpl implements RedisSubscription {
   private channels = Object.create(null);
   private patterns = Object.create(null);
 
-  constructor(private connection: RedisConnection) {
+  constructor(private connection: Connection<RedisRawReply>) {
     // Force retriable connection for connection shared for pub/sub.
     if (connection.maxRetryCount === 0) connection.maxRetryCount = 10;
   }
@@ -136,7 +136,7 @@ class RedisSubscriptionImpl implements RedisSubscription {
 }
 
 export async function subscribe(
-  connection: RedisConnection,
+  connection: Connection<RedisRawReply>,
   ...channels: string[]
 ): Promise<RedisSubscription> {
   const sub = new RedisSubscriptionImpl(connection);
@@ -145,7 +145,7 @@ export async function subscribe(
 }
 
 export async function psubscribe(
-  connection: RedisConnection,
+  connection: Connection<RedisRawReply>,
   ...patterns: string[]
 ): Promise<RedisSubscription> {
   const sub = new RedisSubscriptionImpl(connection);

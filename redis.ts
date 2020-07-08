@@ -4,7 +4,7 @@ type Closer = Deno.Closer;
 
 import { BufReader, BufWriter } from "./vendor/https/deno.land/std/io/bufio.ts";
 import { psubscribe, subscribe } from "./pubsub.ts";
-import { CommandExecutor, CommandFunc, RedisRawReply } from "./io.ts";
+import { CommandFunc, RedisRawReply, sendCommand, muxExecutor } from "./io.ts";
 import { createRedisPipeline } from "./pipeline.ts";
 import {
   RedisCommands,
@@ -50,10 +50,10 @@ import {
   XInfoGroup,
   XKeyIdLike,
 } from "./stream.ts";
-import { RedisConnection } from "./connection.ts";
+import type { Connection, CommandExecutor } from "./connection.ts";
 
 export type Redis = RedisCommands & {
-  executor: CommandExecutor;
+  executor: CommandExecutor<RedisRawReply>;
 };
 
 class RedisImpl implements RedisCommands {
@@ -66,11 +66,11 @@ class RedisImpl implements RedisCommands {
   }
 
   get executor() {
-    return this.connection?.executor!;
+    return this.connection.executor!;
   }
 
   constructor(
-    private connection: RedisConnection,
+    private connection: Connection<RedisRawReply>,
   ) {
   }
 
@@ -2105,6 +2105,179 @@ export type RedisConnectOptions = {
   maxRetryCount?: number;
 };
 
+type RedisConnectionOptions = {
+  hostname?: string;
+  port?: number | string;
+  tls?: boolean;
+  db?: number;
+  password?: string;
+  name?: string;
+  maxRetryCount?: number;
+};
+
+class RedisConnection implements Connection<RedisRawReply> {
+  name: string | null = null;
+  closer!: Closer;
+  reader!: BufReader;
+  writer!: BufWriter;
+
+  executor!: CommandExecutor<RedisRawReply>;
+
+  get exec(): CommandFunc<RedisRawReply> {
+    return this.executor!.exec;
+  }
+
+  private _isConnected = false;
+
+  get isConnected(): boolean {
+    return this._isConnected;
+  }
+
+  private _isClosed = false;
+
+  get isClosed(): boolean {
+    return this._isClosed;
+  }
+
+  maxRetryCount = 0;
+  private retryCount = 0;
+
+  private connectThunkified: () => Promise<RedisConnection>;
+  private thunkifyConnect(
+    hostname: string,
+    port: string | number,
+    options: RedisConnectionOptions,
+  ): () => Promise<RedisConnection> {
+    return async () => {
+      const dialOpts: Deno.ConnectOptions = {
+        hostname,
+        port: parsePortLike(port),
+      };
+      if (!Number.isSafeInteger(dialOpts.port)) {
+        throw new Error("deno-redis: opts.port is invalid");
+      }
+      const conn: Deno.Conn = options?.tls
+        ? await Deno.connectTls(dialOpts)
+        : await Deno.connect(dialOpts);
+
+      if (options.name) this.name = options.name;
+      if (options.maxRetryCount) this.maxRetryCount = options.maxRetryCount;
+
+      this.closer = conn;
+      this.reader = new BufReader(conn);
+      this.writer = new BufWriter(conn);
+      this.executor = muxExecutor(this, this.maxRetryCount > 0);
+
+      this._isClosed = false;
+      this._isConnected = true;
+
+      try {
+        if (options?.password != null) {
+          await this.authenticate(options.password);
+        }
+        if (options?.db) await this.selectDb(options.db);
+      } catch (error) {
+        this.close();
+        throw error;
+      }
+
+      return this as RedisConnection;
+    };
+  }
+
+  constructor(
+    hostname: string,
+    port: number | string,
+    private options: RedisConnectionOptions,
+  ) {
+    this.connectThunkified = this.thunkifyConnect(hostname, port, options);
+  }
+
+  private authenticate(
+    password: string,
+  ): Promise<RedisRawReply> {
+    const readerAsBuffer = this.reader as BufReader;
+    const writerAsBuffer = this.writer as BufWriter;
+
+    return sendCommand(writerAsBuffer, readerAsBuffer, "AUTH", password);
+  }
+
+  private selectDb(
+    databaseIndex: number | undefined = this.options.db,
+  ): Promise<RedisRawReply> {
+    if (!databaseIndex) throw new Error("The database index is undefined.");
+
+    const readerAsBuffer = this.reader as BufReader;
+    const writerAsBuffer = this.writer as BufWriter;
+
+    return sendCommand(writerAsBuffer, readerAsBuffer, "SELECT", databaseIndex);
+  }
+
+  close() {
+    this._isClosed = true;
+    this._isConnected = false;
+    try {
+      this.closer!.close();
+    } catch (error) {
+      if (!(error instanceof Deno.errors.BadResource)) throw error;
+    }
+  }
+
+  /**
+   * Connect to Redis server
+   */
+  async connect(): Promise<void> {
+    await this.connectThunkified();
+  }
+
+  async reconnect(): Promise<void> {
+    const readerAsBuffer = this.reader as BufReader;
+    const writerAsBuffer = this.writer as BufWriter;
+    if (!readerAsBuffer.peek(1)) throw new Error("Client is closed.");
+
+    try {
+      await sendCommand(writerAsBuffer, readerAsBuffer, "PING");
+      this._isConnected = true;
+    } catch (error) {
+      this._isConnected = false;
+      return new Promise(
+        (resolve, reject) => {
+          const interval = setInterval(
+            async () => {
+              if (this.retryCount > this.maxRetryCount) {
+                await this.close();
+                clearInterval(interval);
+                reject(new Error("Could not reconnect"));
+              }
+
+              try {
+                await this.close();
+                await this.connect();
+
+                await sendCommand(
+                  this.writer as BufWriter,
+                  this.reader as BufReader,
+                  "PING",
+                );
+
+                this._isConnected = true;
+                this.retryCount = 0;
+                clearInterval(interval);
+                resolve();
+              } catch (err) {
+                // retrying
+              } finally {
+                this.retryCount++;
+              }
+            },
+            1200, // TODO parameterize this.
+          );
+        },
+      );
+    }
+  }
+}
+
 function parsePortLike(port: string | number | undefined): number {
   if (typeof port === "string") {
     return parseInt(port);
@@ -2147,13 +2320,14 @@ export function create(
   closer: Closer,
   writer: Writer,
   reader: Reader,
-  executor: CommandExecutor,
+  executor: CommandExecutor<RedisRawReply>,
 ): Redis {
   return new RedisImpl({
+    maxRetryCount: 0,
     closer,
     executor,
-    reader,
-    writer,
+    reader: BufReader.create(reader),
+    writer: BufWriter.create(writer),
     get exec(): CommandFunc<RedisRawReply> {
       return executor.exec;
     },
@@ -2163,5 +2337,14 @@ export function create(
     get isClosed(): boolean {
       return false;
     },
-  } as RedisConnection);
+    close() {
+      closer.close();
+    },
+    async connect() {
+      throw new Error("not implemented");
+    },
+    async reconnect() {
+      throw new Error("not implemented");
+    },
+  });
 }
