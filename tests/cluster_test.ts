@@ -3,30 +3,23 @@ import {
   assertEquals,
   assertStringContains,
 } from "../vendor/https/deno.land/std/testing/asserts.ts";
-import { TestSuite } from "./test_util.ts";
+import { newClient, startRedis, stopRedis, TestSuite } from "./test_util.ts";
 
 const suite = new TestSuite("cluster");
 
-const s7000 = await suite.startRedis({ port: 7000, clusterEnabled: true });
-const s7001 = await suite.startRedis({ port: 7001, clusterEnabled: true });
-const s7002 = await suite.startRedis({ port: 7002, clusterEnabled: true });
-const s7003 = await suite.startRedis({ port: 7003, clusterEnabled: true });
-const client = await suite.connect(7000);
-const client1 = await suite.connect(7001);
+const s7000 = await startRedis({ port: 7000, clusterEnabled: true });
+const s7001 = await startRedis({ port: 7001, clusterEnabled: true });
+const client = await newClient(7000);
 
 suite.afterAll(() => {
-  suite.teardown(s7000);
-  suite.teardown(s7001);
-  suite.teardown(s7002);
-  suite.teardown(s7003);
+  stopRedis(s7000);
+  stopRedis(s7001);
   client.close();
-  client1.close();
 });
 
 suite.test("addslots", async () => {
   await client.cluster_flushslots();
   assertEquals(await client.cluster_addslots(1, 2, 3), "OK");
-  assertEquals(await client.cluster_addslots_range(4, 10), "OK");
 });
 
 suite.test("myid", async () => {
@@ -43,9 +36,8 @@ suite.test("countkeysinslot", async () => {
 });
 
 suite.test("delslots", async () => {
-  await client1.cluster_flushslots();
-  assertEquals(await client1.cluster_addslots(1, 2, 3), "OK");
-  assertEquals(await client1.cluster_delslots(1, 2, 3), "OK");
+  await client.cluster_flushslots();
+  assertEquals(await client.cluster_delslots(1, 2, 3), "OK");
 });
 
 suite.test("getkeysinslot", async () => {
@@ -66,8 +58,6 @@ suite.test("keyslot", async () => {
 
 suite.test("meet", async () => {
   assertEquals(await client.cluster_meet("127.0.0.1", 7001), "OK");
-  assertEquals(await client.cluster_meet("127.0.0.1", 7002), "OK");
-  assertEquals(await client.cluster_meet("127.0.0.1", 7003), "OK");
 });
 
 suite.test("nodes", async () => {
@@ -97,10 +87,6 @@ suite.test("forget", async () => {
   }
 });
 
-suite.test("reset", async () => {
-  assertEquals(await client.cluster_reset(), "OK");
-});
-
 suite.test("saveconfig", async () => {
   assertEquals(await client.cluster_saveconfig(), "OK");
 });
@@ -109,14 +95,37 @@ suite.test("setslot", async () => {
   const node_id = await client.cluster_myid();
   assertEquals(await client.cluster_setslot(1, "NODE", node_id), "OK");
   assertEquals(await client.cluster_setslot(1, "MIGRATING", node_id), "OK");
-});
-
-suite.test("setslotstable", async () => {
-  assertEquals(await client.cluster_setslot_stable(1), "OK");
+  assertEquals(await client.cluster_setslot(1, "STABLE"), "OK");
 });
 
 suite.test("slots", async () => {
   assert(Array.isArray(await client.cluster_slots()));
+});
+
+suite.test("replicate", async () => {
+  const node_id = await client.cluster_myid();
+  const other_node = (await client.cluster_nodes())
+    .split("\n")
+    .find((n) => !n.startsWith(node_id))
+    ?.split(" ")[0];
+  if (other_node) {
+    assertEquals(await client.cluster_replicate(other_node), "OK");
+  }
+});
+
+suite.test("failover", async () => {
+  const node_id = await client.cluster_myid();
+  const other_node = (await client.cluster_nodes())
+    .split("\n")
+    .find((n) => !n.startsWith(node_id))
+    ?.split(" ")[0];
+  if (other_node) {
+    assertEquals(await client.cluster_failover(), "OK");
+  }
+});
+
+suite.test("reset", async () => {
+  assertEquals(await client.cluster_reset(), "OK");
 });
 
 await suite.runTests();

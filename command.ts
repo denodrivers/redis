@@ -766,11 +766,9 @@ XRANGE somestream - +
   ): Promise<Integer>;
   // Cluster
   cluster_addslots(...slots: number[]): Promise<Status>;
-  cluster_addslots_range(min: number, max: number): Promise<Status>;
   cluster_countfailurereports(node_id: string): Promise<Integer>;
   cluster_countkeysinslot(slot: number): Promise<Integer>;
   cluster_delslots(...slots: number[]): Promise<Status>;
-  cluster_delslots_range(min: number, max: number): Promise<Status>;
   cluster_failover(opt?: "FORCE" | "TAKEOVER"): Promise<Status>;
   cluster_flushslots(): Promise<Status>;
   cluster_forget(node_id: string): Promise<Status>;
@@ -786,10 +784,9 @@ XRANGE somestream - +
   cluster_saveconfig(): Promise<Status>;
   cluster_setslot(
     slot: number,
-    subcommand: "IMPORTING" | "MIGRATING" | "NODE",
-    node_id: string,
+    subcommand: "IMPORTING" | "MIGRATING" | "NODE" | "STABLE",
+    node_id?: string,
   ): Promise<Status>;
-  cluster_setslot_stable(slot: number): Promise<Status>;
   cluster_slaves(node_id: string): Promise<BulkString[]>;
   cluster_slots(): Promise<ConditionalArray>;
   readonly(): Promise<Status>;

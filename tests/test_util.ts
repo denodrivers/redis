@@ -9,46 +9,11 @@ type TestServer = {
 };
 
 export class TestSuite {
-  private encoder = new TextEncoder();
-
   private tests: { name: string; func: TestFunc }[] = [];
   private beforeEachs: TestFunc[] = [];
   private afterAlls: TestFunc[] = [];
 
   constructor(private prefix: string) {}
-
-  startRedis = async ({
-    port = 6379,
-    clusterEnabled = false,
-  }): Promise<TestServer> => {
-    const path = `testdata/${port}`;
-
-    if (!(await exists(path))) {
-      Deno.mkdirSync(path);
-      Deno.copyFileSync(`testdata/redis.conf`, `${path}/redis.conf`);
-
-      let config = `dir ${path}\nport ${port}\n`;
-      config += clusterEnabled ? "cluster-enabled yes" : "";
-
-      Deno.writeFileSync(`${path}/redis.conf`, this.encoder.encode(config), {
-        append: true,
-      });
-    }
-
-    const process = Deno.run({
-      cmd: ["redis-server", `testdata/${port}/redis.conf`],
-      stdin: "null",
-      stdout: "null",
-    });
-
-    // Ample time for server to finish startup
-    await delay(500);
-    return { path, process };
-  };
-
-  connect(port: number): Promise<Redis> {
-    return connect({ hostname: "127.0.0.1", port });
-  }
 
   beforeEach(func: TestFunc): void {
     this.beforeEachs.push(func);
@@ -81,23 +46,57 @@ export class TestSuite {
       this.afterAlls.forEach(async (f) => await f());
     }
   };
-
-  teardown(server: TestServer): void {
-    Deno.removeSync(server.path, { recursive: true });
-    server.process.close();
-  }
 }
 
-async function exists(filename: string): Promise<boolean> {
+const encoder = new TextEncoder();
+
+export async function startRedis({
+  port = 6379,
+  clusterEnabled = false,
+}): Promise<TestServer> {
+  const path = `testdata/${port}`;
+
+  if (!(await exists(path))) {
+    Deno.mkdirSync(path);
+    Deno.copyFileSync(`testdata/redis.conf`, `${path}/redis.conf`);
+
+    let config = `dir ${path}\nport ${port}\n`;
+    config += clusterEnabled ? "cluster-enabled yes" : "";
+
+    Deno.writeFileSync(`${path}/redis.conf`, encoder.encode(config), {
+      append: true,
+    });
+  }
+
+  const process = Deno.run({
+    cmd: ["redis-server", `testdata/${port}/redis.conf`],
+    stdin: "null",
+    stdout: "null",
+  });
+
+  // Ample time for server to finish startup
+  await delay(500);
+  return { path, process };
+}
+
+export function stopRedis(server: TestServer): void {
+  Deno.removeSync(server.path, { recursive: true });
+  server.process.close();
+}
+
+export function newClient(port: number): Promise<Redis> {
+  return connect({ hostname: "127.0.0.1", port });
+}
+
+async function exists(path: string): Promise<boolean> {
   try {
-    await Deno.stat(filename);
+    await Deno.stat(path);
     return true;
   } catch (err) {
     if (err instanceof Deno.errors.NotFound) {
       return false;
-    } else {
-      throw err;
     }
+    throw err;
   }
 }
 

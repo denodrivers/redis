@@ -297,14 +297,6 @@ class RedisImpl implements RedisCommands {
     return this.execStatusReply("CLUSTER", "ADDSLOTS", ...slots);
   }
 
-  cluster_addslots_range(min: number, max: number): Promise<Status> {
-    const slots = [];
-    for (let i = min; i <= max; i++) {
-      slots.push(i);
-    }
-    return this.execStatusReply("CLUSTER", "ADDSLOTS", ...slots);
-  }
-
   cluster_countfailurereports(node_id: string): Promise<Integer> {
     return this.execIntegerReply("CLUSTER", "COUNT-FAILURE-REPORTS", node_id);
   }
@@ -314,14 +306,6 @@ class RedisImpl implements RedisCommands {
   }
 
   cluster_delslots(...slots: number[]): Promise<Status> {
-    return this.execStatusReply("CLUSTER", "DELSLOTS", ...slots);
-  }
-
-  cluster_delslots_range(min: number, max: number): Promise<Status> {
-    const slots = [];
-    for (let i = min; i <= max; i++) {
-      slots.push(i);
-    }
     return this.execStatusReply("CLUSTER", "DELSLOTS", ...slots);
   }
 
@@ -390,20 +374,19 @@ class RedisImpl implements RedisCommands {
 
   cluster_setslot(
     slot: number,
-    subcommand: "IMPORTING" | "MIGRATING" | "NODE",
-    node_id: string,
+    subcommand: "IMPORTING" | "MIGRATING" | "NODE" | "STABLE",
+    node_id?: string,
   ): Promise<Status> {
-    return this.execStatusReply(
-      "CLUSTER",
-      "SETSLOT",
-      slot,
-      subcommand,
-      node_id,
-    );
-  }
-
-  cluster_setslot_stable(slot: number): Promise<Status> {
-    return this.execStatusReply("CLUSTER", "SETSLOT", slot, "STABLE");
+    if (node_id) {
+      return this.execStatusReply(
+        "CLUSTER",
+        "SETSLOT",
+        slot,
+        subcommand,
+        node_id,
+      );
+    }
+    return this.execStatusReply("CLUSTER", "SETSLOT", slot, subcommand);
   }
 
   cluster_slaves(node_id: string): Promise<BulkString[]> {
