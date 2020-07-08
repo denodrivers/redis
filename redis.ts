@@ -293,6 +293,110 @@ class RedisImpl implements RedisCommands {
     }
   }
 
+  cluster_addslots(...slots: number[]): Promise<Status> {
+    return this.execStatusReply("CLUSTER", "ADDSLOTS", ...slots);
+  }
+
+  cluster_countfailurereports(node_id: string): Promise<Integer> {
+    return this.execIntegerReply("CLUSTER", "COUNT-FAILURE-REPORTS", node_id);
+  }
+
+  cluster_countkeysinslot(slot: number): Promise<Integer> {
+    return this.execIntegerReply("CLUSTER", "COUNTKEYSINSLOT", slot);
+  }
+
+  cluster_delslots(...slots: number[]): Promise<Status> {
+    return this.execStatusReply("CLUSTER", "DELSLOTS", ...slots);
+  }
+
+  cluster_failover(opt?: "FORCE" | "TAKEOVER"): Promise<Status> {
+    if (opt) {
+      return this.execStatusReply("CLUSTER", "FAILOVER", opt);
+    }
+    return this.execStatusReply("CLUSTER", "FAILOVER");
+  }
+
+  cluster_flushslots(): Promise<Status> {
+    return this.execStatusReply("CLUSTER", "FLUSHSLOTS");
+  }
+
+  cluster_forget(node_id: string): Promise<Status> {
+    return this.execStatusReply("CLUSTER", "FORGET", node_id);
+  }
+
+  cluster_getkeysinslot(slot: number, count: number): Promise<BulkString[]> {
+    return this.execArrayReply<BulkString>(
+      "CLUSTER",
+      "GETKEYSINSLOT",
+      slot,
+      count,
+    );
+  }
+
+  cluster_info(): Promise<BulkString> {
+    return this.execStatusReply("CLUSTER", "INFO");
+  }
+
+  cluster_keyslot(key: string): Promise<Integer> {
+    return this.execIntegerReply("CLUSTER", "KEYSLOT", key);
+  }
+
+  cluster_meet(ip: string, port: number): Promise<Status> {
+    return this.execStatusReply("CLUSTER", "MEET", ip, port);
+  }
+
+  cluster_myid(): Promise<BulkString> {
+    return this.execStatusReply("CLUSTER", "MYID");
+  }
+
+  cluster_nodes(): Promise<BulkString> {
+    return this.execBulkReply("CLUSTER", "NODES");
+  }
+
+  cluster_replicas(node_id: string): Promise<BulkString[]> {
+    return this.execArrayReply<BulkString>("CLUSTER", "REPLICAS", node_id);
+  }
+
+  cluster_replicate(node_id: string): Promise<Status> {
+    return this.execStatusReply("CLUSTER", "REPLICATE", node_id);
+  }
+
+  cluster_reset(opt?: "HARD" | "SOFT"): Promise<Status> {
+    if (opt) {
+      return this.execStatusReply("CLUSTER", "RESET", opt);
+    }
+    return this.execStatusReply("CLUSTER", "RESET");
+  }
+
+  cluster_saveconfig(): Promise<Status> {
+    return this.execStatusReply("CLUSTER", "SAVECONFIG");
+  }
+
+  cluster_setslot(
+    slot: number,
+    subcommand: "IMPORTING" | "MIGRATING" | "NODE" | "STABLE",
+    node_id?: string,
+  ): Promise<Status> {
+    if (node_id) {
+      return this.execStatusReply(
+        "CLUSTER",
+        "SETSLOT",
+        slot,
+        subcommand,
+        node_id,
+      );
+    }
+    return this.execStatusReply("CLUSTER", "SETSLOT", slot, subcommand);
+  }
+
+  cluster_slaves(node_id: string): Promise<BulkString[]> {
+    return this.execArrayReply<BulkString>("CLUSTER", "SLAVES", node_id);
+  }
+
+  cluster_slots(): Promise<ConditionalArray> {
+    return this.execArrayReply("CLUSTER", "SLOTS");
+  }
+
   command() {
     return this.execArrayReply("COMMAND") as Promise<
       [BulkString, Integer, BulkString[], Integer, Integer, Integer]
@@ -2036,7 +2140,6 @@ export async function connect({
   );
 
   await connection.connect();
-
   return new RedisImpl(connection);
 }
 

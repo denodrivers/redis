@@ -53,6 +53,15 @@ const plz = msgFV.get("yes");
 const thx = msgFV.get("no");
 ```
 
+**Cluster**
+
+```ts
+await redis.meet("127.0.0.1", 6380);
+await redis.nodes();
+// ... 127.0.0.1:6379@16379 myself,master - 0 1593978765000 0 connected
+// ... 127.0.0.1:6380@16380 master - 0 1593978766503 1 connected
+```
+
 ## Advanced Usage
 
 ### Retriable connection
