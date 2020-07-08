@@ -70,6 +70,7 @@ export class TestSuite {
       promises.push(Promise.resolve(promise));
 
       Deno.test(`[${this.prefix}] ${test.name}`, () => {
+        this.beforeEachs.forEach(async (f) => await f());
         return promise;
       });
     });
