@@ -2,7 +2,6 @@ import { connect, Redis, RedisConnectOptions } from "../redis.ts";
 import { delay } from "../vendor/https/deno.land/std/async/mod.ts";
 import { assert } from "../vendor/https/deno.land/std/testing/asserts.ts";
 
-type VoidFunc = () => void | Promise<void>;
 type TestFunc = () => void | Promise<void>;
 type TestServer = {
   path: string;
@@ -13,8 +12,8 @@ export class TestSuite {
   private encoder = new TextEncoder();
 
   private tests: { name: string; func: TestFunc }[] = [];
-  private beforeEachs: VoidFunc[] = [];
-  private afterAlls: VoidFunc[] = [];
+  private beforeEachs: TestFunc[] = [];
+  private afterAlls: TestFunc[] = [];
 
   constructor(private prefix: string) {}
 
@@ -23,20 +22,25 @@ export class TestSuite {
     clusterEnabled = false,
   }): Promise<TestServer> => {
     const path = `testdata/${port}`;
+
     if (!(await exists(path))) {
       Deno.mkdirSync(path);
       Deno.copyFileSync(`testdata/redis.conf`, `${path}/redis.conf`);
+
       let config = `dir ${path}\nport ${port}\n`;
       config += clusterEnabled ? "cluster-enabled yes" : "";
+
       Deno.writeFileSync(`${path}/redis.conf`, this.encoder.encode(config), {
         append: true,
       });
     }
+
     const process = Deno.run({
       cmd: ["redis-server", `testdata/${port}/redis.conf`],
       stdin: "null",
       stdout: "null",
     });
+
     // Ample time for server to finish startup
     await delay(500);
     return { path, process };
@@ -46,11 +50,11 @@ export class TestSuite {
     return connect({ hostname: "127.0.0.1", port });
   }
 
-  beforeEach(func: VoidFunc): void {
+  beforeEach(func: TestFunc): void {
     this.beforeEachs.push(func);
   }
 
-  afterAll(func: VoidFunc): void {
+  afterAll(func: TestFunc): void {
     this.afterAlls.push(func);
   }
 
@@ -58,15 +62,18 @@ export class TestSuite {
     this.tests.push({ name, func });
   }
 
-  runTests = async (): Promise<any> => {
+  runTests = async (): Promise<void> => {
     const promises: Promise<void>[] = [];
+
     this.tests.forEach((test) => {
       const promise = test.func();
       promises.push(Promise.resolve(promise));
+
       Deno.test(`[${this.prefix}] ${test.name}`, () => {
         return promise;
       });
     });
+
     try {
       await Promise.allSettled(promises);
     } finally {
