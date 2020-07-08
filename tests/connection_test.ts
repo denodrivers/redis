@@ -25,3 +25,8 @@ test("select", async () => {
 test("swapdb", async () => {
   assertEquals(await client.swapdb(0, 1), "OK");
 });
+
+test("executor", async () => {
+  const r = await client.executor.exec("EXISTS", "non-existing-key");
+  assertEquals(r, ["integer", 0]);
+});
