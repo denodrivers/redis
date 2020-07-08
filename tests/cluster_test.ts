@@ -1,78 +1,91 @@
-import { connect } from "../redis.ts";
 import {
   assert,
   assertEquals,
   assertStringContains,
 } from "../vendor/https/deno.land/std/testing/asserts.ts";
-import { startRedisCluster } from "./test_util.ts";
+import { TestSuite } from "./test_util.ts";
 
-const test = Deno.test;
+const suite = new TestSuite("cluster");
 
-const ports = [7000, 7001, 7002];
-const cleanupCluster = await startRedisCluster(...ports);
-const client = await connect({ hostname: "127.0.0.1", port: 7000 });
+const s7000 = await suite.startRedis({ port: 7000, clusterEnabled: true });
+const s7001 = await suite.startRedis({ port: 7001, clusterEnabled: true });
+const s7002 = await suite.startRedis({ port: 7002, clusterEnabled: true });
+const s7003 = await suite.startRedis({ port: 7003, clusterEnabled: true });
+const client = await suite.connect(7000);
+const client1 = await suite.connect(7001);
 
-test("[cluster] flushslots", async () => {
+suite.afterAll(() => {
+  suite.teardown(s7000);
+  suite.teardown(s7001);
+  suite.teardown(s7002);
+  suite.teardown(s7003);
+  client.close();
+});
+
+suite.test("addslots", async () => {
+  await client.cluster_flushslots();
   assertEquals(await client.cluster_addslots(1, 2, 3), "OK");
   assertEquals(await client.cluster_addslots_range(4, 10), "OK");
 });
 
-test("[cluster] myid", async () => {
+suite.test("myid", async () => {
   assert(!!(await client.cluster_myid()));
 });
 
-test("[cluster] countfailurereports", async () => {
+suite.test("countfailurereports", async () => {
   const node_id = await client.cluster_myid();
   assertEquals(await client.cluster_countfailurereports(node_id), 0);
 });
 
-test("[cluster] countkeysinslot", async () => {
+suite.test("countkeysinslot", async () => {
   assertEquals(await client.cluster_countkeysinslot(1), 0);
 });
 
-test("[cluster] delslots", async () => {
-  assertEquals(await client.cluster_delslots(1, 2, 3), "OK");
-  assertEquals(await client.cluster_delslots_range(4, 10), "OK");
+suite.test("delslots", async () => {
+  await client1.cluster_flushslots();
+  assertEquals(await client1.cluster_addslots(1, 2, 3), "OK");
+  assertEquals(await client1.cluster_delslots(1, 2, 3), "OK");
 });
 
-test("[cluster] getkeysinslot", async () => {
+suite.test("getkeysinslot", async () => {
   assertEquals(await client.cluster_getkeysinslot(1, 1), []);
 });
 
-test("[cluster] flushslots", async () => {
+suite.test("flushslots", async () => {
   assertEquals(await client.cluster_flushslots(), "OK");
 });
 
-test("[cluster] info", async () => {
+suite.test("info", async () => {
   assertStringContains(await client.cluster_info(), "cluster_state");
 });
 
-test("[cluster] keyslot", async () => {
+suite.test("keyslot", async () => {
   assertEquals(await client.cluster_keyslot("somekey"), 11058);
 });
 
-test("[cluster] meet", async () => {
+suite.test("meet", async () => {
   assertEquals(await client.cluster_meet("127.0.0.1", 7001), "OK");
   assertEquals(await client.cluster_meet("127.0.0.1", 7002), "OK");
+  assertEquals(await client.cluster_meet("127.0.0.1", 7003), "OK");
 });
 
-test("[cluster] nodes", async () => {
+suite.test("nodes", async () => {
   const node_id = await client.cluster_myid();
   const nodes = await client.cluster_nodes();
   assertStringContains(nodes, node_id);
 });
 
-test("[cluster] replicas", async () => {
+suite.test("replicas", async () => {
   const node_id = await client.cluster_myid();
   assertEquals(await client.cluster_replicas(node_id), []);
 });
 
-test("[cluster] slaves", async () => {
+suite.test("slaves", async () => {
   const node_id = await client.cluster_myid();
   assertEquals(await client.cluster_slaves(node_id), []);
 });
 
-test("[cluster] forget", async () => {
+suite.test("forget", async () => {
   const node_id = await client.cluster_myid();
   const other_node = (await client.cluster_nodes())
     .split("\n")
@@ -83,30 +96,26 @@ test("[cluster] forget", async () => {
   }
 });
 
-test("[cluster] reset", async () => {
+suite.test("reset", async () => {
   assertEquals(await client.cluster_reset(), "OK");
 });
 
-test("[cluster] saveconfig", async () => {
+suite.test("saveconfig", async () => {
   assertEquals(await client.cluster_saveconfig(), "OK");
 });
 
-test("[cluster] setslot", async () => {
+suite.test("setslot", async () => {
   const node_id = await client.cluster_myid();
   assertEquals(await client.cluster_setslot(1, "NODE", node_id), "OK");
   assertEquals(await client.cluster_setslot(1, "MIGRATING", node_id), "OK");
 });
 
-test("[cluster] setslotstable", async () => {
+suite.test("setslotstable", async () => {
   assertEquals(await client.cluster_setslot_stable(1), "OK");
 });
 
-test("[cluster] slots", async () => {
+suite.test("slots", async () => {
   assert(Array.isArray(await client.cluster_slots()));
 });
 
-// FIXME: no way to run these cleanup after the tests, use a timeout for now
-setTimeout(() => {
-  cleanupCluster();
-  client.close();
-}, 20000);
+await suite.runTests();
