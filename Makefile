@@ -1,17 +1,14 @@
-TESTDATA_DIR=testdata
-
-redis:
-	docker run -p 6379:6379 -d -t redis:5
-test:
-	deno test -A *_test.ts	
 lint:
 	deno fmt --check
 	deno lint --unstable
 
-# The following targets are adopted from go-redis (https://github.com/go-redis/redis/blob/dc52593c8c63bc2a05796ec44efd317fd3e14b64/Makefile):
+test:
+	deno test -A *_test.ts
+
+# The following targets are adopted from go-redis (https://github.com/go-redis/redis/blob/master/Makefile):
 # * `testdeps`
-# * `${TESTDATA_DIR}/redis`
-# * `${TESTDATA_DIR}/redis/src/redis-server`
+# * `testdata/redis`
+# * `testdata/redis/src/redis-server`
 #
 # Copyright (c) 2013 The github.com/go-redis/redis Authors.
 # All rights reserved.
@@ -38,19 +35,13 @@ lint:
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-testdeps: ${TESTDATA_DIR}/redis/src/redis-server
+testdeps: testdata/redis/src/redis-server
 
 .PHONY: testdeps
 
-${TESTDATA_DIR}/redis:
+testdata/redis:
 	mkdir -p $@
-	wget -qO- http://download.redis.io/releases/redis-6.0.5.tar.gz | tar xvz --strip-components=1 -C $@
+	wget -qO- http://download.redis.io/redis-stable.tar.gz | tar xvz --strip-components=1 -C $@
 
-${TESTDATA_DIR}/redis/src/redis-server: ${TESTDATA_DIR}/redis
+testdata/redis/src/redis-server: testdata/redis
 	cd $< && make all
-
-start-redis:
-	${TESTDATA_DIR}/redis/src/redis-server --port 6379 --daemonize yes
-
-kill-redis:
-	${TESTDATA_DIR}/redis/src/redis-cli -p 6379 shutdown
