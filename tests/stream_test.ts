@@ -1,16 +1,23 @@
 import { ErrorReplyError } from "../errors.ts";
 import { Redis } from "../redis.ts";
-import { makeTest } from "./test_util.ts";
 import { parseXId } from "../stream.ts";
+import { delay } from "../vendor/https/deno.land/std/async/mod.ts";
 import {
-  assertEquals,
   assert,
+  assertEquals,
   assertNotEquals,
   assertThrowsAsync,
 } from "../vendor/https/deno.land/std/testing/asserts.ts";
-import { delay } from "../vendor/https/deno.land/std/async/mod.ts";
+import { newClient, startRedis, stopRedis, TestSuite } from "./test_util.ts";
 
-const { test, client } = await makeTest("stream");
+const suite = new TestSuite("stream");
+const server = await startRedis({ port: 7012 });
+const client = await newClient({ hostname: "127.0.0.1", port: 7012 });
+
+suite.afterAll(() => {
+  stopRedis(server);
+  client.close();
+});
 
 const randomStream = () => `test-deno-${Math.floor(Math.random() * 1000)}`;
 
@@ -34,54 +41,55 @@ const withConsumerGroup = async (
   assertEquals(await client.xgroup_destroy(stream, group), 1);
 };
 
-test("xadd", async () => {
+suite.test("xadd", async () => {
   const key = randomStream();
-  const v = await client.xadd(
-    key,
-    "*",
-    { "cat": "what", "dog": "who", "duck": "when" },
-  );
+  const v = await client.xadd(key, "*", {
+    cat: "what",
+    dog: "who",
+    duck: "when",
+  });
   assert(v != null);
 
   await cleanupStream(client, key);
 });
 
-test("xadd maxlen", async () => {
+suite.test("xadd maxlen", async () => {
   const key = randomStream();
   const v = await client.xadd(
     key,
     "*",
-    { "cat": "meow", "dog": "woof", "duck": "quack" },
+    { cat: "meow", dog: "woof", duck: "quack" },
     { elements: 10 },
   );
   assert(v != null);
   const x = await client.xadd(
     key,
     "*",
-    { "cat": "oo", "dog": "uu", "duck": "pp" },
+    { cat: "oo", dog: "uu", duck: "pp" },
     { approx: false, elements: 10 },
   );
   assert(x != null);
   await cleanupStream(client, key);
 });
 
-test("xreadgroup multiple streams", async () => {
+suite.test("xreadgroup multiple streams", async () => {
   await withConsumerGroup(async (key, group) => {
     const key2 = randomStream();
 
     let created = await client.xgroup_create(key2, group, "$", true);
     assertEquals(created, "OK");
 
-    await Promise.all(
-      [
-        client.xadd(key, "*", { a: 1, b: 2 }),
-        client.xadd(key, "*", { a: 6, b: 7 }),
-        client.xadd(key2, "*", { c: "three", d: "four" }),
-      ],
-    );
+    await Promise.all([
+      client.xadd(key, "*", { a: 1, b: 2 }),
+      client.xadd(key, "*", { a: 6, b: 7 }),
+      client.xadd(key2, "*", { c: "three", d: "four" }),
+    ]);
 
     const reply = await client.xreadgroup(
-      [[key, ">"], [key2, ">"]],
+      [
+        [key, ">"],
+        [key2, ">"],
+      ],
       { group, consumer: "any" },
     );
 
@@ -96,7 +104,7 @@ test("xreadgroup multiple streams", async () => {
   });
 });
 
-test("xread", async () => {
+suite.test("xread", async () => {
   const key = randomStream();
   const a = await client.xadd(
     key,
@@ -116,17 +124,15 @@ test("xread", async () => {
   const exampleMap = new Map<string, string>();
   exampleMap.set("air", "horn");
   exampleMap.set("friend", "fiend");
-  const c = await client.xadd(
-    key2,
-    [1001, 1],
-    exampleMap,
-    { elements: 10 },
-  );
+  const c = await client.xadd(key2, [1001, 1], exampleMap, { elements: 10 });
   assert(c != null);
 
   const xid = 0;
   const v = await client.xread(
-    [{ key, xid }, { key: key2, xid }],
+    [
+      { key, xid },
+      { key: key2, xid },
+    ],
     { block: 5000, count: 500 },
   );
 
@@ -146,10 +152,12 @@ test("xread", async () => {
   assertEquals(v, [
     {
       key,
-      messages: [{
-        xid: parseXId("1000-0"),
-        field_values: expectedAnimals,
-      }],
+      messages: [
+        {
+          xid: parseXId("1000-0"),
+          field_values: expectedAnimals,
+        },
+      ],
     },
     {
       key: key2,
@@ -163,13 +171,13 @@ test("xread", async () => {
   await cleanupStream(client, key, key2);
 });
 
-test("xgrouphelp", async () => {
+suite.test("xgrouphelp", async () => {
   const helpText = await client.xgroup_help();
   assert(helpText.length > 4);
   assert(helpText[0].length > 10);
 });
 
-test("xgroup create and destroy", async () => {
+suite.test("xgroup create and destroy", async () => {
   const groupName = "test-group";
 
   const key = randomStream();
@@ -178,12 +186,7 @@ test("xgroup create and destroy", async () => {
   assertEquals(created, "OK");
   await assertThrowsAsync(
     async () => {
-      await client.xgroup_create(
-        key,
-        groupName,
-        0,
-        true,
-      );
+      await client.xgroup_create(key, groupName, 0, true);
     },
     ErrorReplyError,
     "-BUSYGROUP Consumer Group name already exists",
@@ -192,7 +195,7 @@ test("xgroup create and destroy", async () => {
   assertEquals(await client.xgroup_destroy(key, groupName), 1);
 });
 
-test("xgroup setid and delconsumer", async () => {
+suite.test("xgroup setid and delconsumer", async () => {
   const key = randomStream();
   const group = "test-group";
   const consumer = "test-consumer";
@@ -200,49 +203,40 @@ test("xgroup setid and delconsumer", async () => {
   let created = await client.xgroup_create(key, group, "$", true);
   assertEquals(created, "OK");
 
-  let addedId = await client.xadd(key, "*", { "anyfield": "anyval" });
+  let addedId = await client.xadd(key, "*", { anyfield: "anyval" });
 
   assert(addedId);
 
   //  must read from a given stream to create the
   //  consumer
   const xid = ">";
-  let data = await client.xreadgroup(
-    [{ key, xid }],
-    { group, consumer },
-  );
+  let data = await client.xreadgroup([{ key, xid }], { group, consumer });
 
   assertEquals(data.length, 1);
 
-  assertEquals(
-    await client.xgroup_setid(key, group, 0),
-    "OK",
-  );
+  assertEquals(await client.xgroup_setid(key, group, 0), "OK");
 
-  assertEquals(
-    await client.xgroup_delconsumer(key, group, consumer),
-    1,
-  );
+  assertEquals(await client.xgroup_delconsumer(key, group, consumer), 1);
 
   await cleanupStream(client, key);
 });
 
-test("xreadgroup but no ack", async () => {
+suite.test("xreadgroup but no ack", async () => {
   const key = randomStream();
   const group = "test-group";
 
   let created = await client.xgroup_create(key, group, "$", true);
   assertEquals(created, "OK");
 
-  let addedId = await client.xadd(key, "*", { "anyfield": "anyval" });
+  let addedId = await client.xadd(key, "*", { anyfield: "anyval" });
 
   assert(addedId);
 
   const xid = ">";
-  let dataOut = await client.xreadgroup(
-    [{ key, xid }],
-    { group, consumer: "test-consumer" },
-  );
+  let dataOut = await client.xreadgroup([{ key, xid }], {
+    group,
+    consumer: "test-consumer",
+  });
 
   assertEquals(dataOut.length, 1);
   const actualFirstStream = dataOut[0];
@@ -263,24 +257,21 @@ test("xreadgroup but no ack", async () => {
   await cleanupStream(client, key);
 });
 
-test("xack", async () => {
+suite.test("xack", async () => {
   const key = randomStream();
   const group = "test-group";
 
   let created = await client.xgroup_create(key, group, "$", true);
   assertEquals(created, "OK");
 
-  let addedId = await client.xadd(key, "*", { "anyfield": "anyval" });
+  let addedId = await client.xadd(key, "*", { anyfield: "anyval" });
 
   assert(addedId);
 
   const xid = ">";
   // read but DO NOT auto-ack, which places
   // the message on the PEL
-  await client.xreadgroup(
-    [{ key, xid }],
-    { group, consumer: "test-consumer" },
-  );
+  await client.xreadgroup([{ key, xid }], { group, consumer: "test-consumer" });
 
   const acked = await client.xack(key, group, addedId);
 
@@ -290,25 +281,18 @@ test("xack", async () => {
   await cleanupStream(client, key);
 });
 
-test("xadd with map then xread", async () => {
+suite.test("xadd with map then xread", async () => {
   const m = new Map<string, string>();
   m.set("zoo", "theorize");
   m.set("gable", "train");
 
   const key = randomStream();
-  const addedId = await client.xadd(
-    key,
-    "*",
-    m,
-  );
+  const addedId = await client.xadd(key, "*", m);
   assert(addedId !== null);
 
   // one millis before now
   const xid = addedId.unixMs - 1;
-  const v = await client.xread(
-    [{ key, xid }],
-    { block: 5000, count: 500 },
-  );
+  const v = await client.xread([{ key, xid }], { block: 5000, count: 500 });
 
   assert(v != null);
 
@@ -319,36 +303,33 @@ test("xadd with map then xread", async () => {
   assertEquals(v, [
     {
       key,
-      messages: [{
-        xid: addedId,
-        field_values: expectedMap,
-      }],
+      messages: [
+        {
+          xid: addedId,
+          field_values: expectedMap,
+        },
+      ],
     },
   ]);
 
   await cleanupStream(client, key);
 });
 
-test("xadd with maxlen on map then xread", async () => {
+suite.test("xadd with maxlen on map then xread", async () => {
   const mmm = new Map<string, string>();
   mmm.set("hop", "4");
   mmm.set("blip", "5");
 
   const key = randomStream();
-  const addedId = await client.xadd(
-    key,
-    "*",
-    mmm,
-    { elements: 8 },
-  );
+  const addedId = await client.xadd(key, "*", mmm, { elements: 8 });
   assert(addedId !== null);
 
   const justBefore = addedId.unixMs - 1;
 
-  const v = await client.xread(
-    [{ key, xid: justBefore }],
-    { block: 5000, count: 500 },
-  );
+  const v = await client.xread([{ key, xid: justBefore }], {
+    block: 5000,
+    count: 500,
+  });
 
   assert(v != null);
 
@@ -363,43 +344,28 @@ test("xadd with maxlen on map then xread", async () => {
   await cleanupStream(client, key);
 });
 
-test("xdel", async () => {
+suite.test("xdel", async () => {
   const key = randomStream();
-  const id0 = await client.xadd(
-    key,
-    "*",
-    { foo: "bar" },
-    { elements: 10 },
-  );
-  const id1 = await client.xadd(
-    key,
-    "*",
-    { "foo": "baz" },
-    { elements: 10 },
-  );
-  const id2 = await client.xadd(
-    key,
-    "*",
-    { "foo": "qux" },
-    { elements: 10 },
-  );
+  const id0 = await client.xadd(key, "*", { foo: "bar" }, { elements: 10 });
+  const id1 = await client.xadd(key, "*", { foo: "baz" }, { elements: 10 });
+  const id2 = await client.xadd(key, "*", { foo: "qux" }, { elements: 10 });
 
   const v = await client.xdel(key, id0, id1, id2);
   assert(v === 3);
   await cleanupStream(client, key);
 });
 
-test("xlen", async () => {
+suite.test("xlen", async () => {
   const key = randomStream();
-  await client.xadd(key, "*", { "foo": "qux" }, { elements: 5 });
-  await client.xadd(key, "*", { "foo": "bux" }, { elements: 5 });
+  await client.xadd(key, "*", { foo: "qux" }, { elements: 5 });
+  await client.xadd(key, "*", { foo: "bux" }, { elements: 5 });
 
   const v = await client.xlen(key);
   assert(v === 2);
   await cleanupStream(client, key);
 });
 
-test("unique message per consumer", async () => {
+suite.test("unique message per consumer", async () => {
   await withConsumerGroup(async (key, group) => {
     const addedIds = [];
     const c0 = "consumer-0";
@@ -415,10 +381,7 @@ test("unique message per consumer", async () => {
       // This special  ID means that you want all
       // "new" messages in the stream.
       const xid = ">";
-      const data = await client.xreadgroup(
-        [{ key, xid }],
-        { group, consumer },
-      );
+      const data = await client.xreadgroup([{ key, xid }], { group, consumer });
 
       assertEquals(data[0].messages.length, 1);
 
@@ -429,57 +392,57 @@ test("unique message per consumer", async () => {
   });
 });
 
-test("broadcast pattern, all groups read their own version of the stream", async () => {
+suite.test(
+  "broadcast pattern, all groups read their own version of the stream",
+  async () => {
+    const key = randomStream();
+    const group0 = "tg0";
+    const group1 = "tg1";
+    const group2 = "tg2";
+    const groups = [group0, group1, group2];
+
+    for (const g of groups) {
+      let created = await client.xgroup_create(key, g, "$", true);
+      assertEquals(created, "OK");
+    }
+
+    const addedIds = [];
+
+    let msgCount = 0;
+    for (const group of groups) {
+      const payload = `data-${msgCount}`;
+      const a = await client.xadd(key, "*", { target: payload });
+      assert(a);
+      addedIds.push(a);
+      msgCount++;
+
+      const consumer = "someconsumer";
+      const xid = ">";
+      const data = await client.xreadgroup([{ key, xid }], { group, consumer });
+
+      // each group should see ALL the messages
+      // that have been emitted
+      const toCheck = data[0].messages;
+      assertEquals(toCheck.length, msgCount);
+    }
+
+    for (const g of groups) {
+      assertEquals(await client.xgroup_destroy(key, g), 1);
+    }
+
+    await cleanupStream(client, key);
+  },
+);
+
+suite.test("xrange and xrevrange", async () => {
   const key = randomStream();
-  const group0 = "tg0";
-  const group1 = "tg1";
-  const group2 = "tg2";
-  const groups = [group0, group1, group2];
-
-  for (const g of groups) {
-    let created = await client.xgroup_create(key, g, "$", true);
-    assertEquals(created, "OK");
-  }
-
-  const addedIds = [];
-
-  let msgCount = 0;
-  for (const group of groups) {
-    const payload = `data-${msgCount}`;
-    const a = await client.xadd(key, "*", { target: payload });
-    assert(a);
-    addedIds.push(a);
-    msgCount++;
-
-    const consumer = "someconsumer";
-    const xid = ">";
-    const data = await client.xreadgroup(
-      [{ key, xid }],
-      { group, consumer },
-    );
-
-    // each group should see ALL the messages
-    // that have been emitted
-    const toCheck = data[0].messages;
-    assertEquals(toCheck.length, msgCount);
-  }
-
-  for (const g of groups) {
-    assertEquals(await client.xgroup_destroy(key, g), 1);
-  }
-
-  await cleanupStream(client, key);
-});
-
-test("xrange and xrevrange", async () => {
-  const key = randomStream();
-  const firstId = await client.xadd(key, "*", { "f": "v0" });
+  const firstId = await client.xadd(key, "*", { f: "v0" });
   const basicResult = await client.xrange(key, "-", "+");
   assertEquals(basicResult.length, 1);
   assertEquals(basicResult[0].xid, firstId);
   assertEquals(basicResult[0].field_values.get("f"), "v0");
 
-  const secondId = await client.xadd(key, "*", { "f": "v1" });
+  const secondId = await client.xadd(key, "*", { f: "v1" });
   const revResult = await client.xrevrange(key, "+", "-");
 
   assertEquals(revResult.length, 2);
@@ -497,7 +460,7 @@ test("xrange and xrevrange", async () => {
   await cleanupStream(client, key);
 });
 
-test("xclaim and xpending, all options", async () => {
+suite.test("xclaim and xpending, all options", async () => {
   await withConsumerGroup(async (key, group) => {
     // xclaim test basic idea:
     // 1. add messages to a group
@@ -507,19 +470,17 @@ test("xclaim and xpending, all options", async () => {
     // 4. from here we should be able to claim message
     //    past the idle time and read them from a different consumer
 
-    await Promise.all(
-      [
-        client.xadd(key, 1000, { "field": "foo" }),
-        client.xadd(key, 2000, { "field": "bar" }),
-      ],
-    );
+    await Promise.all([
+      client.xadd(key, 1000, { field: "foo" }),
+      client.xadd(key, 2000, { field: "bar" }),
+    ]);
 
     const initialConsumer = "someone";
 
-    const firstReply = await client.xreadgroup(
-      [{ key, xid: ">" }],
-      { group, consumer: initialConsumer },
-    );
+    const firstReply = await client.xreadgroup([{ key, xid: ">" }], {
+      group,
+      consumer: initialConsumer,
+    });
 
     const firstPending = await client.xpending(key, group);
 
@@ -545,11 +506,11 @@ test("xclaim and xpending, all options", async () => {
     assertEquals(firstClaimed.messages.length, 2);
     assertEquals(
       firstClaimed.messages[0].field_values,
-      new Map(Object.entries({ "field": "foo" })),
+      new Map(Object.entries({ field: "foo" })),
     );
     assertEquals(
       firstClaimed.messages[1].field_values,
-      new Map(Object.entries({ "field": "bar" })),
+      new Map(Object.entries({ field: "bar" })),
     );
 
     // ACK these messages so we can try XPENDING/XCLAIM
@@ -558,28 +519,26 @@ test("xclaim and xpending, all options", async () => {
 
     // Let's write some more messages and try
     // other formats of XPENDING/XCLAIM
-    await Promise.all(
-      [
-        client.xadd(key, 3000, { "field": "foo" }),
-        client.xadd(key, [3000, 1], { "field": "bar" }),
-        client.xadd(key, [3000, 2], { "field": "baz" }),
-      ],
-    );
+    await Promise.all([
+      client.xadd(key, 3000, { field: "foo" }),
+      client.xadd(key, [3000, 1], { field: "bar" }),
+      client.xadd(key, [3000, 2], { field: "baz" }),
+    ]);
 
-    const secondReply = await client.xreadgroup(
-      [{ key, xid: ">" }],
-      { group, consumer: initialConsumer },
-    );
+    const secondReply = await client.xreadgroup([{ key, xid: ">" }], {
+      group,
+      consumer: initialConsumer,
+    });
 
     // take a short nap and increase the lastDeliveredMs
     await delay(5);
 
     // try another form of xpending: counts for all consumers (we have only one)
-    const secondPending = await client.xpending_count(
-      key,
-      group,
-      { start: "-", end: "+", count: 10 },
-    );
+    const secondPending = await client.xpending_count(key, group, {
+      start: "-",
+      end: "+",
+      count: 10,
+    });
     assertEquals(secondPending.length, 3);
     for (const info of secondPending) {
       assertEquals(info.owner, "someone");
@@ -599,14 +558,11 @@ test("xclaim and xpending, all options", async () => {
     );
 
     assert(secondClaimedXIds.kind === "justxid");
-    assertEquals(
-      secondClaimedXIds.xids,
-      [
-        { unixMs: 3000, seqNo: 0 },
-        { unixMs: 3000, seqNo: 1 },
-        { unixMs: 3000, seqNo: 2 },
-      ],
-    );
+    assertEquals(secondClaimedXIds.xids, [
+      { unixMs: 3000, seqNo: 0 },
+      { unixMs: 3000, seqNo: 1 },
+      { unixMs: 3000, seqNo: 2 },
+    ]);
 
     // ACK these messages so we can try XPENDING/XCLAIM
     // on a new batch
@@ -614,25 +570,23 @@ test("xclaim and xpending, all options", async () => {
 
     // We'll try one other set of options
     // for each of XPENDING and XCLAIM
-    await Promise.all(
-      [
-        client.xadd(key, 4000, { "field": "woof", "farm": "chicken" }),
-        client.xadd(key, 5000, { "field": "bop", "farm": "duck" }),
-      ],
-    );
+    await Promise.all([
+      client.xadd(key, 4000, { field: "woof", farm: "chicken" }),
+      client.xadd(key, 5000, { field: "bop", farm: "duck" }),
+    ]);
 
-    await client.xreadgroup(
-      [{ key, xid: ">" }],
-      { group, consumer: initialConsumer },
-    );
+    await client.xreadgroup([{ key, xid: ">" }], {
+      group,
+      consumer: initialConsumer,
+    });
 
     // This record won't be included in the filtered
     // form of XPENDING, below.
-    await client.xadd(key, "*", { "field": "no" });
-    await client.xreadgroup(
-      [{ key, xid: ">" }],
-      { group, consumer: "weird-interloper" },
-    );
+    await client.xadd(key, "*", { field: "no" });
+    await client.xreadgroup([{ key, xid: ">" }], {
+      group,
+      consumer: "weird-interloper",
+    });
 
     await delay(5);
 
@@ -674,49 +628,37 @@ test("xclaim and xpending, all options", async () => {
     assertEquals(thirdClaimed.messages.length, 2);
     assertEquals(
       thirdClaimed.messages[0].field_values,
-      new Map(Object.entries({ "field": "woof", "farm": "chicken" })),
+      new Map(Object.entries({ field: "woof", farm: "chicken" })),
     );
     assertEquals(
       thirdClaimed.messages[1].field_values,
-      new Map(Object.entries({ "field": "bop", "farm": "duck" })),
+      new Map(Object.entries({ field: "bop", farm: "duck" })),
     );
   });
 });
 
-test("xinfo", async () => {
+suite.test("xinfo", async () => {
   await withConsumerGroup(async (key, group) => {
-    await client.xadd(key, 1, { "hello": "no" });
-    await client.xadd(key, 2, { "hello": "yes" });
+    await client.xadd(key, 1, { hello: "no" });
+    await client.xadd(key, 2, { hello: "yes" });
 
     const basicStreamInfo = await client.xinfo_stream(key);
     assertEquals(basicStreamInfo.length, 2);
     assertEquals(basicStreamInfo.groups, 1);
     assert(basicStreamInfo.radixTreeKeys > 0);
     assert(basicStreamInfo.radixTreeNodes > 0);
-    assertEquals(
-      basicStreamInfo.lastGeneratedId,
-      { unixMs: (2), seqNo: (0) },
-    );
-    assertEquals(
-      basicStreamInfo.firstEntry,
-      {
-        xid: { unixMs: (1), seqNo: (0) },
-        field_values: new Map(Object.entries({ "hello": "no" })),
-      },
-    );
-    assertEquals(
-      basicStreamInfo.lastEntry,
-      {
-        xid: { unixMs: (2), seqNo: (0) },
-        field_values: new Map(Object.entries({ "hello": "yes" })),
-      },
-    );
+    assertEquals(basicStreamInfo.lastGeneratedId, { unixMs: 2, seqNo: 0 });
+    assertEquals(basicStreamInfo.firstEntry, {
+      xid: { unixMs: 1, seqNo: 0 },
+      field_values: new Map(Object.entries({ hello: "no" })),
+    });
+    assertEquals(basicStreamInfo.lastEntry, {
+      xid: { unixMs: 2, seqNo: 0 },
+      field_values: new Map(Object.entries({ hello: "yes" })),
+    });
 
     // Let's do an XREADGROUP so that we see some entries in the PEL
-    const _ = client.xreadgroup(
-      [[key, ">"]],
-      { group, consumer: "someone" },
-    );
+    const _ = client.xreadgroup([[key, ">"]], { group, consumer: "someone" });
 
     const fullStreamInfo = await client.xinfo_stream_full(key);
     assertEquals(fullStreamInfo.length, 2);
@@ -770,7 +712,7 @@ test("xinfo", async () => {
 
     // Add one more record and read it with a new consumer,
     // so that we can check the parsing of deno-redis xinfo_consumers
-    await client.xadd(key, "*", { "hello": "maybe" });
+    await client.xadd(key, "*", { hello: "maybe" });
     await client.xreadgroup([[key, ">"]], { group, consumer: "newbie" });
 
     // Increase the idle time by falling asleep
@@ -791,3 +733,5 @@ test("xinfo", async () => {
     assertEquals(await client.xgroup_destroy(key, "newgroup"), 1);
   });
 });
+
+await suite.runTests();

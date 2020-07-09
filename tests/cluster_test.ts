@@ -6,14 +6,13 @@ import {
 import { newClient, startRedis, stopRedis, TestSuite } from "./test_util.ts";
 
 const suite = new TestSuite("cluster");
-
-const s7000 = await startRedis({ port: 7000, clusterEnabled: true });
 const s7001 = await startRedis({ port: 7001, clusterEnabled: true });
-const client = await newClient(7000);
+const s7002 = await startRedis({ port: 7002, clusterEnabled: true });
+const client = await newClient({ hostname: "127.0.0.1", port: 7001 });
 
 suite.afterAll(() => {
-  stopRedis(s7000);
   stopRedis(s7001);
+  stopRedis(s7002);
   client.close();
 });
 
@@ -36,7 +35,6 @@ suite.test("countkeysinslot", async () => {
 });
 
 suite.test("delslots", async () => {
-  await client.cluster_flushslots();
   assertEquals(await client.cluster_delslots(1, 2, 3), "OK");
 });
 
@@ -57,7 +55,7 @@ suite.test("keyslot", async () => {
 });
 
 suite.test("meet", async () => {
-  assertEquals(await client.cluster_meet("127.0.0.1", 7001), "OK");
+  assertEquals(await client.cluster_meet("127.0.0.1", 7002), "OK");
 });
 
 suite.test("nodes", async () => {

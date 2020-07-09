@@ -28,20 +28,22 @@ export class TestSuite {
   }
 
   runTests = async (): Promise<void> => {
-    const promises: Promise<void>[] = [];
-
-    this.tests.forEach((test) => {
-      const promise = test.func();
-      promises.push(Promise.resolve(promise));
-
-      Deno.test(`[${this.prefix}] ${test.name}`, () => {
-        this.beforeEachs.forEach(async (f) => await f());
-        return promise;
-      });
-    });
-
     try {
-      await Promise.allSettled(promises);
+      for (const test of this.tests) {
+        let res: void | Error;
+        try {
+          res = await this.beforeEachs
+            .reduce((p, f) => p.then(f), Promise.resolve())
+            .then(test.func);
+        } catch (err) {
+          res = err;
+        }
+        Deno.test(`[${this.prefix}] ${test.name}`, () => {
+          if (res instanceof Error) {
+            throw res;
+          }
+        });
+      }
     } finally {
       this.afterAlls.forEach(async (f) => await f());
     }
@@ -84,8 +86,8 @@ export function stopRedis(server: TestServer): void {
   server.process.close();
 }
 
-export function newClient(port: number): Promise<Redis> {
-  return connect({ hostname: "127.0.0.1", port });
+export function newClient(opt: RedisConnectOptions): Promise<Redis> {
+  return connect(opt);
 }
 
 async function exists(path: string): Promise<boolean> {

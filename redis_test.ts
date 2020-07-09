@@ -11,3 +11,5 @@ import "./tests/key_test.ts";
 import "./tests/stream_test.ts";
 import "./tests/acl_cmd_test.ts";
 import "./tests/cluster_test.ts";
+import "./tests/pipeline_test.ts";
+import "./tests/pubsub_test.ts";
