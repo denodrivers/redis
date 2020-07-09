@@ -83,10 +83,11 @@ suite.test("testSubscribe4", async () => {
   const sub = await client.psubscribe("ps*");
   const it = sub.receive();
 
-  const messages: Promise<number>[] = [];
+  let messages = 0;
 
-  const interval = setInterval(() => {
-    messages.push(pub.publish("psub", "wayway"));
+  const interval = setInterval(async () => {
+    await pub.publish("psub", "wayway");
+    messages++;
   }, 900);
 
   setTimeout(() => stopRedis(tempServer), 1000);
@@ -102,7 +103,7 @@ suite.test("testSubscribe4", async () => {
       false,
       "The publisher client still thinks it is connected.",
     );
-    assert(messages.length < 5, "Too many messages were published.");
+    assert(messages < 5, "Too many messages were published.");
 
     tempServer = await startRedis({ port });
 
@@ -121,9 +122,10 @@ suite.test("testSubscribe4", async () => {
 
   // Cleanup
   clearInterval(interval);
-  stopRedis(tempServer);
+  await sub.close();
   pub.close();
   client.close();
+  stopRedis(tempServer);
 });
 
 await suite.runTests();
