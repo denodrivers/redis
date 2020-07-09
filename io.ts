@@ -8,7 +8,7 @@ import {
   Deferred,
 } from "./vendor/https/deno.land/std/async/mod.ts";
 import { ConditionalArray, Bulk, Integer, Status, Raw } from "./command.ts";
-import { RedisConnection } from "./connection.ts";
+import type { Connection, CommandExecutor } from "./connection.ts";
 
 export type StatusReply = ["status", Status];
 export type IntegerReply = ["integer", Integer];
@@ -21,10 +21,6 @@ export type CommandFunc<T> = (
   comand: string,
   ...args: (string | number)[]
 ) => Promise<T>;
-
-export interface CommandExecutor {
-  exec: CommandFunc<RedisRawReply>;
-}
 
 const IntegerReplyCode = ":".charCodeAt(0);
 const BulkReplyCode = "$".charCodeAt(0);
@@ -176,9 +172,9 @@ function tryParseErrorReply(line: string): never {
 }
 
 export function muxExecutor(
-  connection: RedisConnection,
+  connection: Connection<RedisRawReply>,
   attemptReconnect = false,
-): CommandExecutor {
+): CommandExecutor<RedisRawReply> {
   let queue: {
     command: string;
     args: (string | number)[];
