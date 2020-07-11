@@ -113,4 +113,4 @@ suite.test("rpoplpush", async () => {
   assertEquals(await client.rpushx("list", "3"), 3);
 });
 
-await suite.runTests();
+suite.runTests();

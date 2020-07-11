@@ -734,4 +734,4 @@ suite.test("xinfo", async () => {
   });
 });
 
-await suite.runTests();
+suite.runTests();

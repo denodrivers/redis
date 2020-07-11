@@ -187,4 +187,4 @@ suite.test("scan", async () => {
   assert(Array.isArray(await client.scan(0)));
 });
 
-await suite.runTests();
+suite.runTests();

@@ -39,4 +39,4 @@ suite.test("executor", async () => {
   assertEquals(r, ["integer", 0]);
 });
 
-await suite.runTests();
+suite.runTests();

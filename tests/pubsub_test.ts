@@ -128,4 +128,4 @@ suite.test("testSubscribe4", async () => {
   stopRedis(tempServer);
 });
 
-await suite.runTests();
+suite.runTests();

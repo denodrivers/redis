@@ -300,4 +300,4 @@ suite.test("testZrevrangebyscore", async function testZrevrangebyscore() {
   assertEquals(v, ["m3", "8", "m2", "5"]);
 });
 
-await suite.runTests();
+suite.runTests();

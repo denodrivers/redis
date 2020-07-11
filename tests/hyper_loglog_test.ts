@@ -25,4 +25,4 @@ suite.test("pfmerge", async () => {
   assertEquals(await client.pfmerge("hll", "hll2"), "OK");
 });
 
-await suite.runTests();
+suite.runTests();

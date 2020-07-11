@@ -115,4 +115,4 @@ suite.test("sscan", async () => {
   assert(Array.isArray(v));
 });
 
-await suite.runTests();
+suite.runTests();

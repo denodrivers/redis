@@ -200,4 +200,4 @@ suite.test("strlen", async () => {
   assertEquals(v, 6);
 });
 
-await suite.runTests();
+suite.runTests();

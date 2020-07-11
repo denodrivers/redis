@@ -107,4 +107,4 @@ suite.test("eval", async () => {
   assertEquals(raw, ["1", "2", "3", "4"]);
 });
 
-await suite.runTests();
+suite.runTests();

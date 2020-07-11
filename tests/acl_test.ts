@@ -134,4 +134,4 @@ suite.test("module_list", async () => {
   assertEquals(await client.module_list(), []);
 });
 
-await suite.runTests();
+suite.runTests();

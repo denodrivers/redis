@@ -101,4 +101,4 @@ suite.test("hscan", async () => {
   assertEquals(Array.isArray(await client.hscan("key", 0)), true);
 });
 
-await suite.runTests();
+suite.runTests();

@@ -73,4 +73,4 @@ suite.test("georadiusbymember", async () => {
   await client.georadiusbymember("Sicily", "Palermo", 10, "km");
 });
 
-await suite.runTests();
+suite.runTests();

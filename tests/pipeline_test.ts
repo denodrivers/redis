@@ -133,4 +133,4 @@ suite.test("error while pipeline", async () => {
   client.close();
 });
 
-await suite.runTests();
+suite.runTests();

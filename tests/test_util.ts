@@ -26,26 +26,25 @@ export class TestSuite {
     this.tests.push({ name, func });
   }
 
-  runTests = async (): Promise<void> => {
-    try {
-      for (const test of this.tests) {
-        let res: void | Error;
-        try {
-          res = await this.beforeEachs
-            .reduce((p, f) => p.then(f), Promise.resolve())
-            .then(test.func);
-        } catch (err) {
-          res = err;
+  runTests = (): void => {
+    for (const test of this.tests) {
+      Deno.test(`[${this.prefix}] ${test.name}`, async () => {
+        for (const f of this.beforeEachs) {
+          await f();
         }
-        Deno.test(`[${this.prefix}] ${test.name}`, () => {
-          if (res instanceof Error) {
-            throw res;
-          }
-        });
-      }
-    } finally {
-      this.afterAlls.forEach(async (f) => await f());
+        await test.func();
+      });
     }
+    Deno.test({
+      name: `[${this.prefix}] afterAll`,
+      fn: async () => {
+        for (const f of this.afterAlls) {
+          await f();
+        }
+      },
+      sanitizeOps: false,
+      sanitizeResources: false,
+    });
   };
 }
 

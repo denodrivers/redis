@@ -126,4 +126,4 @@ suite.test("reset", async () => {
   assertEquals(await client.cluster_reset(), "OK");
 });
 
-await suite.runTests();
+suite.runTests();
