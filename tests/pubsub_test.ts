@@ -128,4 +128,19 @@ suite.test("testSubscribe4", async () => {
   stopRedis(tempServer);
 });
 
+suite.test(
+  "SubscriptionShouldNotThrowBadResourceErrorWhenConnectionIsClosed (#89)",
+  async () => {
+    const redis = await newClient(opts);
+    const sub = await redis.subscribe("test");
+    const subscriptionPromise = (async () => {
+      // deno-lint-ignore no-empty
+      for await (const _ of sub.receive()) {}
+    })();
+    redis.close();
+    await subscriptionPromise;
+    assert(sub.isClosed);
+  },
+);
+
 suite.runTests();

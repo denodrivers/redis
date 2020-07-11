@@ -87,7 +87,16 @@ class RedisSubscriptionImpl implements RedisSubscription {
     let forceReconnect = false;
     while (this.isConnected) {
       try {
-        const rep = (await readArrayReply(this.connection.reader!)) as string[];
+        let rep: string[];
+        try {
+          rep = (await readArrayReply(this.connection.reader)) as string[];
+        } catch (err) {
+          if (err instanceof Deno.errors.BadResource) { // Connection already closed.
+            this.connection.close();
+            break;
+          }
+          throw err;
+        }
         const ev = rep[0];
 
         if (ev === "message" && rep.length === 3) {
