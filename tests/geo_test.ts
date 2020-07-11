@@ -1,11 +1,16 @@
-import {
-  assertEquals,
-} from "../vendor/https/deno.land/std/testing/asserts.ts";
-import { makeTest } from "./test_util.ts";
+import { assertEquals } from "../vendor/https/deno.land/std/testing/asserts.ts";
+import { newClient, startRedis, stopRedis, TestSuite } from "./test_util.ts";
 
-const { test, client } = await makeTest("geo");
+const suite = new TestSuite("geo");
+const server = await startRedis({ port: 7005 });
+const client = await newClient({ hostname: "127.0.0.1", port: 7005 });
 
-test("geoadd", async () => {
+suite.afterAll(() => {
+  stopRedis(server);
+  client.close();
+});
+
+suite.test("geoadd", async () => {
   assertEquals(
     await client.geoadd("Sicily", 13.361389, 38.115556, "Palermo"),
     1,
@@ -24,7 +29,7 @@ test("geoadd", async () => {
   );
 });
 
-test("geohash", async () => {
+suite.test("geohash", async () => {
   await client.geoadd(
     "Sicily",
     [13.361389, 38.115556, "Palermo"],
@@ -34,7 +39,7 @@ test("geohash", async () => {
   assertEquals(resp, ["sqc8b49rny0", "sqdtr74hyu0", undefined]);
 });
 
-test("geopos", async () => {
+suite.test("geopos", async () => {
   await client.geoadd(
     "Sicily",
     [13.361389, 38.115556, "Palermo"],
@@ -48,7 +53,7 @@ test("geopos", async () => {
   ]);
 });
 
-test("geodist", async () => {
+suite.test("geodist", async () => {
   await client.geoadd(
     "Sicily",
     [13.361389, 38.115556, "Palermo"],
@@ -60,10 +65,12 @@ test("geodist", async () => {
   assertEquals(resp, undefined);
 });
 
-test("georadius", async () => {
+suite.test("georadius", async () => {
   await client.georadius("Test", 0, 1, 10, "km");
 });
 
-test("georadiusbymember", async () => {
+suite.test("georadiusbymember", async () => {
   await client.georadiusbymember("Sicily", "Palermo", 10, "km");
 });
+
+suite.runTests();

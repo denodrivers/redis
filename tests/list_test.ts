@@ -1,86 +1,116 @@
-import { makeTest } from "./test_util.ts";
-import {
-  assertEquals,
-} from "../vendor/https/deno.land/std/testing/asserts.ts";
+import { assertEquals } from "../vendor/https/deno.land/std/testing/asserts.ts";
+import { newClient, startRedis, stopRedis, TestSuite } from "./test_util.ts";
 
-const { test, client } = await makeTest("list");
+const suite = new TestSuite("list");
+const server = await startRedis({ port: 7009 });
+const client = await newClient({ hostname: "127.0.0.1", port: 7009 });
 
-test("blpoop", async () => {
+suite.beforeEach(async () => {
+  await client.flushdb();
+});
+
+suite.afterAll(() => {
+  stopRedis(server);
+  client.close();
+});
+
+suite.test("blpoop", async () => {
   await client.rpush("list", "1", "2");
   assertEquals(await client.blpop("list", 2), ["list", "1"]);
 });
-test("blpoop timeout", async () => {
+
+suite.test("blpoop timeout", async () => {
   assertEquals(await client.blpop("list", 1), []);
 });
-test("brpoop", async () => {
+
+suite.test("brpoop", async () => {
   await client.rpush("list", "1", "2");
   assertEquals(await client.brpop("list", 2), ["list", "2"]);
 });
-test("brpoop timeout", async () => {
+
+suite.test("brpoop timeout", async () => {
   assertEquals(await client.brpop("list", 1), []);
 });
-test("brpoplpush", async () => {
+
+suite.test("brpoplpush", async () => {
   await client.rpush("list", "1", "2");
   assertEquals(await client.brpoplpush("list", "list", 2), "2");
 });
-test("brpoplpush timeout", async () => {
+
+suite.test("brpoplpush timeout", async () => {
   assertEquals(await client.brpoplpush("list", "list", 1), []);
 });
-test("lindex", async () => {
+
+suite.test("lindex", async () => {
   await client.rpush("list", "1", "2");
   assertEquals(await client.lindex("list", 0), "1");
   assertEquals(await client.lindex("list", 3), undefined);
 });
-test("linsert", async () => {
+
+suite.test("linsert", async () => {
   await client.rpush("list", "1", "2");
   assertEquals(await client.linsert("list", "BEFORE", "2", "1.5"), 3);
 });
-test("llen", async () => {
+
+suite.test("llen", async () => {
   await client.rpush("list", "1", "2");
   assertEquals(await client.llen("list"), 2);
 });
-test("lpop", async () => {
+
+suite.test("lpop", async () => {
   await client.rpush("list", "1", "2");
   assertEquals(await client.lpop("list"), "1");
 });
-test("lpush", async () => {
+
+suite.test("lpush", async () => {
   await client.rpush("list", "1", "2");
   assertEquals(await client.lpush("list", "3", "4"), 4);
 });
-test("lpushx", async () => {
+
+suite.test("lpushx", async () => {
   await client.rpush("list", "1", "2");
   assertEquals(await client.lpushx("list", "3"), 3);
 });
-test("lrange", async () => {
+
+suite.test("lrange", async () => {
   await client.rpush("list", "1", "2");
   assertEquals(await client.lrange("list", 0, -1), ["1", "2"]);
 });
 //
-test("lrem", async () => {
+
+suite.test("lrem", async () => {
   await client.rpush("list", "1", "2");
   assertEquals(await client.lrem("list", 0, "1"), 1);
 });
-test("lset", async () => {
+
+suite.test("lset", async () => {
   await client.rpush("list", "1", "2");
   assertEquals(await client.lset("list", 0, "0"), "OK");
 });
-test("ltrim", async () => {
+
+suite.test("ltrim", async () => {
   await client.rpush("list", "1", "2");
   assertEquals(await client.ltrim("list", 0, 1), "OK");
 });
-test("rpop", async () => {
+
+suite.test("rpop", async () => {
   await client.rpush("list", "1", "2");
   assertEquals(await client.rpop("list"), "2");
 });
-test("rpoplpush", async () => {
+
+suite.test("rpoplpush", async () => {
   await client.rpush("list", "1", "2");
   assertEquals(await client.rpoplpush("list", "list"), "2");
 });
-test("rpush", async () => {
+
+suite.test("rpush", async () => {
   await client.rpush("list", "1", "2");
   assertEquals(await client.rpush("list", "3"), 3);
 });
-test("rpoplpush", async () => {
+
+suite.test("rpoplpush", async () => {
   await client.rpush("list", "1", "2");
   assertEquals(await client.rpushx("list", "3"), 3);
 });
+
+suite.runTests();

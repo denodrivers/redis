@@ -2,7 +2,7 @@ name: CI
 on:
   push:
     branches:
-      - "**"      
+      - "**"
   pull_request:
     branches:
       - "**"
@@ -24,15 +24,10 @@ jobs:
       - name: Run lint
         run: |
           make lint
-      - name: Install and start Redis
+      - name: Install Redis
         run: |
           make testdeps
-          make start-redis
-          sleep 1
           echo "::add-path::./testdata/redis/src"
-      - name: Run Tests
+      - name: Run tests
         run: |
-          make test      
-      - name: Kill Redis
-        run: |
-          make kill-redis
+          make test

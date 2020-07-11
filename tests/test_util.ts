@@ -1,6 +1,5 @@
 import { connect, Redis, RedisConnectOptions } from "../redis.ts";
 import { delay } from "../vendor/https/deno.land/std/async/mod.ts";
-import { assert } from "../vendor/https/deno.land/std/testing/asserts.ts";
 
 type TestFunc = () => void | Promise<void>;
 type TestServer = {
@@ -27,25 +26,26 @@ export class TestSuite {
     this.tests.push({ name, func });
   }
 
-  runTests = async (): Promise<void> => {
-    const promises: Promise<void>[] = [];
-
-    this.tests.forEach((test) => {
-      const promise = test.func();
-      promises.push(Promise.resolve(promise));
-
-      Deno.test(`[${this.prefix}] ${test.name}`, () => {
-        this.beforeEachs.forEach(async (f) => await f());
-        return promise;
+  runTests(): void {
+    for (const test of this.tests) {
+      Deno.test(`[${this.prefix}] ${test.name}`, async () => {
+        for (const f of this.beforeEachs) {
+          await f();
+        }
+        await test.func();
       });
-    });
-
-    try {
-      await Promise.allSettled(promises);
-    } finally {
-      this.afterAlls.forEach(async (f) => await f());
     }
-  };
+    Deno.test({
+      name: `[${this.prefix}] afterAll`,
+      fn: async () => {
+        for (const f of this.afterAlls) {
+          await f();
+        }
+      },
+      sanitizeOps: false,
+      sanitizeResources: false,
+    });
+  }
 }
 
 const encoder = new TextEncoder();
@@ -84,8 +84,8 @@ export function stopRedis(server: TestServer): void {
   server.process.close();
 }
 
-export function newClient(port: number): Promise<Redis> {
-  return connect({ hostname: "127.0.0.1", port });
+export function newClient(opt: RedisConnectOptions): Promise<Redis> {
+  return connect(opt);
 }
 
 async function exists(path: string): Promise<boolean> {
@@ -98,64 +98,4 @@ async function exists(path: string): Promise<boolean> {
     }
     throw err;
   }
-}
-
-function* dbIndex() {
-  let i = 0;
-  while (true) {
-    yield i;
-    i++;
-    if (i > 15) i = 0;
-  }
-}
-
-const it = dbIndex();
-
-function db(): number {
-  const { value } = it.next();
-  assert(value !== undefined);
-  return value;
-}
-
-export async function makeTest(
-  prefix: string,
-): Promise<{
-  client: Redis;
-  opts: RedisConnectOptions;
-  test: (name: string, func: () => void | Promise<void>) => void;
-}> {
-  const opts = { hostname: "127.0.0.1", port: 6379, db: db() };
-  const client = await connect(opts);
-  async function beforeEach() {
-    await client.flushdb(false);
-  }
-  const test = (desc: string, func: () => void | Promise<void>) => {
-    Deno.test(`[${prefix}] ${desc}`, async () => {
-      await beforeEach();
-      await func();
-    });
-  };
-  return { test, client, opts };
-}
-
-interface StartRedisServerOptions {
-  port: number;
-}
-
-export async function startRedisServer(
-  options: StartRedisServerOptions,
-): Promise<Deno.Process> {
-  const { port } = options;
-  const process = Deno.run({
-    cmd: ["redis-server", "--port", port.toString()],
-    stdin: "null",
-    stdout: "null",
-  });
-  await waitForPort(port);
-  return process;
-}
-
-// FIXME!
-function waitForPort(_port: number): Promise<void> {
-  return delay(500);
 }
