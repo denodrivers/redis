@@ -26,7 +26,7 @@ export class TestSuite {
     this.tests.push({ name, func });
   }
 
-  runTests = (): void => {
+  runTests(): void {
     for (const test of this.tests) {
       Deno.test(`[${this.prefix}] ${test.name}`, async () => {
         for (const f of this.beforeEachs) {
@@ -45,7 +45,7 @@ export class TestSuite {
       sanitizeOps: false,
       sanitizeResources: false,
     });
-  };
+  }
 }
 
 const encoder = new TextEncoder();
