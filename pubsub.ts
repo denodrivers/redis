@@ -1,6 +1,7 @@
 import { BufReader, BufWriter } from "./vendor/https/deno.land/std/io/bufio.ts";
 import { Connection } from "./connection.ts";
 import { readArrayReply, sendCommand, RedisRawReply } from "./io.ts";
+import { InvalidStateError } from "./errors.ts";
 
 export type RedisSubscription = {
   readonly isClosed: boolean;
@@ -113,7 +114,7 @@ class RedisSubscriptionImpl implements RedisSubscription {
         }
       } catch (error) {
         if (
-          error.message === "Invalid state" ||
+          error instanceof InvalidStateError ||
           error instanceof Deno.errors.BadResource
         ) {
           forceReconnect = true;
