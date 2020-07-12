@@ -34,9 +34,4 @@ suite.test("swapdb", async () => {
   assertEquals(await client.swapdb(0, 1), "OK");
 });
 
-suite.test("executor", async () => {
-  const r = await client.executor.exec("EXISTS", "non-existing-key");
-  assertEquals(r, ["integer", 0]);
-});
-
 suite.runTests();
