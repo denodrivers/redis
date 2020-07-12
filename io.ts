@@ -2,7 +2,7 @@ import {
   BufReader,
   BufWriter,
 } from "./vendor/https/deno.land/std/io/bufio.ts";
-import { ErrorReplyError, EOFError } from "./errors.ts";
+import { ErrorReplyError, EOFError, InvalidStateError } from "./errors.ts";
 import {
   deferred,
   Deferred,
@@ -77,7 +77,7 @@ export async function readReply(reader: BufReader): Promise<RedisRawReply> {
     case ErrorReplyCode:
       tryParseErrorReply(await readLine(reader));
   }
-  throw new Error("Invalid state");
+  throw new InvalidStateError();
 }
 
 const decoder = new TextDecoder();
@@ -96,7 +96,7 @@ export async function readLine(reader: BufReader): Promise<string> {
     }
     buf[loc++] = d;
   }
-  throw new Error("Invalid state");
+  throw new InvalidStateError();
 }
 
 export async function readStatusReply(reader: BufReader): Promise<string> {
