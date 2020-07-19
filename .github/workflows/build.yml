@@ -13,16 +13,19 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        deno-version: [1.x]
         redis: [6.x]
 
     steps:
       - uses: actions/checkout@v2
 
-      - name: Set up Deno ${{ matrix.deno-version }}
+      - name: Get Deno version
+        run: |
+          echo "::set-env name=DENO_VERSION::$(cat .denov)"
+
+      - name: Set up Deno ${{ env.DENO_VERSION }}
         uses: denolib/setup-deno@master
         with:
-          deno-version: ${{ matrix.deno-version }}
+          deno-version: ${{ env.DENO_VERSION }}
 
       - name: Check mod.ts
         run: |
