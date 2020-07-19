@@ -1,18 +1,5 @@
+import { EOFError, ErrorReplyError, InvalidStateError } from "./error.ts";
 import { BufReader, BufWriter } from "./vendor/https/deno.land/std/io/bufio.ts";
-
-export class EOFError extends Error {}
-
-export class ConnectionClosedError extends Error {}
-
-export class SubscriptionClosedError extends Error {}
-
-export class ErrorReplyError extends Error {}
-
-export class InvalidStateError extends Error {
-  constructor() {
-    super("Invalid state");
-  }
-}
 
 export type Status = string;
 export type Integer = number;

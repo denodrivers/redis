@@ -1,5 +1,6 @@
 import { Connection } from "./connection.ts";
-import { InvalidStateError, readArrayReply, sendCommand } from "./io.ts";
+import { InvalidStateError } from "./error.ts";
+import { readArrayReply, sendCommand } from "./io.ts";
 
 export type RedisSubscription = {
   readonly isClosed: boolean;
