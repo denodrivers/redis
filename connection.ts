@@ -7,6 +7,7 @@ export interface Connection {
   reader: BufReader;
   writer: BufWriter;
   maxRetryCount: number;
+  retryInterval: number;
   isClosed: boolean;
   isConnected: boolean;
   close(): void;

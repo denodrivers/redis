@@ -10,7 +10,7 @@ import {
   Raw,
   Status,
 } from "./io.ts";
-import { createRedisPipeline, PipelineExecutor } from "./pipeline.ts";
+import { createRedisPipeline } from "./pipeline.ts";
 import { psubscribe, subscribe } from "./pubsub.ts";
 import {
   convertMap,
@@ -66,9 +66,9 @@ export class RedisImpl implements Redis {
     return this.connection.isConnected;
   }
 
-  constructor(conn: Connection, exec: CommandExecutor) {
-    this.connection = conn;
-    this.executor = exec;
+  constructor(connection: Connection, executor: CommandExecutor) {
+    this.connection = connection;
+    this.executor = executor;
   }
 
   close(): void {
