@@ -1,4 +1,5 @@
 name: CI
+
 on:
   push:
     branches:
@@ -6,28 +7,39 @@ on:
   pull_request:
     branches:
       - "**"
+
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        deno-version: [1.x]
+        redis-version: [6.x]
+
     steps:
-      - uses: actions/checkout@v1
-      - name: Install Deno
-        run: |
-          echo "::set-env name=DENO_VERSION::$(cat .denov)"
-      - uses: denolib/setup-deno@master
+      - uses: actions/checkout@v2
+
+      - name: Setup Deno ${{ matrix.deno-version }}
+        uses: denolib/setup-deno@master
         with:
-          deno-version: ${{ env.DENO_VERSION }}
+          deno-version: ${{ matrix.deno-version }}
+
       - name: Check mod.ts
         run: |
           deno run --allow-read --allow-write tools/make_mod.ts
           git diff --exit-code
+
       - name: Run lint
         run: |
-          make lint
-      - name: Install Redis
-        run: |
-          make testdeps
-          echo "::add-path::./testdata/redis/src"
+          deno fmt --check
+	        deno lint --unstable
+
+      - name: Setup Redis ${{ matrix.redis-version }}
+        uses: shogo82148/actions-setup-redis@v1.0.1
+        with:
+          redis-version: ${{ matrix.redis-version }}
+          auto-start: "false"
+
       - name: Run tests
         run: |
-          make test
+          deno test -A redis_test.ts
