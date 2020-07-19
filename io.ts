@@ -1,4 +1,4 @@
-import { EOFError, ErrorReplyError, InvalidStateError } from "./error.ts";
+import { EOFError, ErrorReplyError, InvalidStateError } from "./errors.ts";
 import { BufReader, BufWriter } from "./vendor/https/deno.land/std/io/bufio.ts";
 
 export type Status = string;

@@ -1,5 +1,5 @@
 import { Connection } from "./connection.ts";
-import { InvalidStateError } from "./error.ts";
+import { InvalidStateError } from "./errors.ts";
 import { readArrayReply, sendCommand } from "./io.ts";
 
 export type RedisSubscription = {

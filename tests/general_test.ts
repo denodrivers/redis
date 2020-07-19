@@ -1,4 +1,4 @@
-import { ErrorReplyError } from "../error.ts";
+import { ErrorReplyError } from "../errors.ts";
 import {
   assert,
   assertEquals,

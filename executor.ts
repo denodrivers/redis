@@ -1,5 +1,5 @@
 import { Connection } from "./connection.ts";
-import { EOFError } from "./error.ts";
+import { EOFError } from "./errors.ts";
 import { RedisRawReply, sendCommand } from "./io.ts";
 import { Deferred, deferred } from "./vendor/https/deno.land/std/async/mod.ts";
 
