@@ -66,9 +66,9 @@ export class RedisImpl implements Redis {
     return this.connection.isConnected;
   }
 
-  constructor(conn: Connection, exec: CommandExecutor) {
-    this.connection = conn;
-    this.executor = exec;
+  constructor(connection: Connection, executor: CommandExecutor) {
+    this.connection = connection;
+    this.executor = executor;
   }
 
   close(): void {

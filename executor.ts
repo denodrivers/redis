@@ -2,18 +2,25 @@ import { Connection } from "./connection.ts";
 import { EOFError, RedisRawReply, sendCommand } from "./io.ts";
 import { Deferred, deferred } from "./vendor/https/deno.land/std/async/mod.ts";
 
-export interface CommandExecutor {
-  exec(command: string, ...args: (string | number)[]): Promise<RedisRawReply>;
+export abstract class CommandExecutor {
+  connection: Connection;
+
+  constructor(connection: Connection) {
+    this.connection = connection;
+  }
+
+  abstract exec(
+    command: string,
+    ...args: (string | number)[]
+  ): Promise<RedisRawReply>;
 }
 
-export class MuxExecutor implements CommandExecutor {
+export class MuxExecutor extends CommandExecutor {
   private queue: {
     command: string;
     args: (string | number)[];
     d: Deferred<RedisRawReply>;
   }[] = [];
-
-  constructor(private connection: Connection) {}
 
   async exec(
     command: string,
