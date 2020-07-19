@@ -14,12 +14,12 @@ jobs:
     strategy:
       matrix:
         deno-version: [1.x]
-        redis-version: [6.x]
+        redis: [6.x]
 
     steps:
       - uses: actions/checkout@v2
 
-      - name: Setup Deno ${{ matrix.deno-version }}
+      - name: Set up Deno ${{ matrix.deno-version }}
         uses: denolib/setup-deno@master
         with:
           deno-version: ${{ matrix.deno-version }}
@@ -34,10 +34,10 @@ jobs:
           deno fmt --check
           deno lint --unstable
 
-      - name: Setup Redis ${{ matrix.redis-version }}
-        uses: shogo82148/actions-setup-redis@v1.0.1
+      - name: Set up Redis ${{ matrix.redis }}
+        uses: shogo82148/actions-setup-redis@v1
         with:
-          redis-version: ${{ matrix.redis-version }}
+          redis-version: ${{ matrix.redis }}
           auto-start: "false"
 
       - name: Run tests
