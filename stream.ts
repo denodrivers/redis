@@ -1,4 +1,4 @@
-import { ConditionalArray, Raw } from "./command.ts";
+import { ConditionalArray, Raw } from "./io.ts";
 
 export interface XId {
   unixMs: number;

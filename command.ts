@@ -1,40 +1,41 @@
-import { RedisSubscription } from "./pubsub.ts";
-import { RedisPipeline } from "./pipeline.ts";
 import {
-  XReadReply,
-  XReadOpts,
-  XReadGroupOpts,
-  XMaxlen,
-  XClaimOpts,
+  Bulk,
+  BulkNil,
+  BulkString,
+  ConditionalArray,
+  Integer,
+  Raw,
+  Status,
+} from "./io.ts";
+import { RedisPipeline } from "./pipeline.ts";
+import { RedisSubscription } from "./pubsub.ts";
+import {
   StartEndCount,
-  XPendingReply,
+  XAddFieldValues,
+  XClaimOpts,
+  XClaimReply,
   XId,
   XIdAdd,
-  XIdGroupRead,
   XIdInput,
-  XIdPos,
   XIdNeg,
+  XIdPos,
+  XInfoConsumersReply,
+  XInfoGroupsReply,
+  XInfoStreamFullReply,
+  XInfoStreamReply,
   XKeyId,
   XKeyIdGroup,
-  XMessage,
-  XInfoStreamReply,
-  XInfoStreamFullReply,
-  XAddFieldValues,
-  XClaimReply,
-  XPendingCount,
   XKeyIdGroupLike,
   XKeyIdLike,
-  XInfoGroupsReply,
-  XInfoConsumersReply,
+  XMaxlen,
+  XMessage,
+  XPendingCount,
+  XPendingReply,
+  XReadGroupOpts,
+  XReadOpts,
+  XReadReply,
 } from "./stream.ts";
 
-export type Raw = Status | Integer | Bulk | ConditionalArray;
-export type Status = string;
-export type Integer = number;
-export type Bulk = string | undefined;
-export type BulkString = string;
-export type BulkNil = undefined;
-export type ConditionalArray = Raw[];
 export type RedisCommands = {
   // Connection
   auth(password: string): Promise<Status>;
