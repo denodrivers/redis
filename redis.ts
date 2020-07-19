@@ -10,7 +10,7 @@ import {
   Raw,
   Status,
 } from "./io.ts";
-import { createRedisPipeline, PipelineExecutor } from "./pipeline.ts";
+import { createRedisPipeline } from "./pipeline.ts";
 import { psubscribe, subscribe } from "./pubsub.ts";
 import {
   convertMap,
