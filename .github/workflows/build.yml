@@ -32,7 +32,7 @@ jobs:
       - name: Run lint
         run: |
           deno fmt --check
-	        deno lint --unstable
+          deno lint --unstable
 
       - name: Setup Redis ${{ matrix.redis-version }}
         uses: shogo82148/actions-setup-redis@v1.0.1
