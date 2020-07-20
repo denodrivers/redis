@@ -1,14 +1,13 @@
-import {
-  BufReader,
-  BufWriter,
-} from "./vendor/https/deno.land/std/io/bufio.ts";
-import { ErrorReplyError, EOFError, InvalidStateError } from "./errors.ts";
-import {
-  deferred,
-  Deferred,
-} from "./vendor/https/deno.land/std/async/mod.ts";
-import { ConditionalArray, Bulk, Integer, Status, Raw } from "./command.ts";
-import type { Connection, CommandExecutor } from "./connection.ts";
+import { EOFError, ErrorReplyError, InvalidStateError } from "./errors.ts";
+import { BufReader, BufWriter } from "./vendor/https/deno.land/std/io/bufio.ts";
+
+export type Status = string;
+export type Integer = number;
+export type Bulk = string | undefined;
+export type BulkString = string;
+export type BulkNil = undefined;
+export type Raw = Status | Integer | Bulk | ConditionalArray;
+export type ConditionalArray = Raw[];
 
 export type StatusReply = ["status", Status];
 export type IntegerReply = ["integer", Integer];
@@ -16,11 +15,7 @@ export type BulkReply = ["bulk", Bulk];
 export type ArrayReply = ["array", ConditionalArray];
 export type ErrorReply = ["error", ErrorReplyError];
 export type RedisRawReply = StatusReply | IntegerReply | BulkReply | ArrayReply;
-
-export type CommandFunc<T> = (
-  comand: string,
-  ...args: (string | number)[]
-) => Promise<T>;
+export type RawReplyOrError = RedisRawReply | ErrorReply;
 
 const IntegerReplyCode = ":".charCodeAt(0);
 const BulkReplyCode = "$".charCodeAt(0);
@@ -29,10 +24,11 @@ const ArrayReplyCode = "*".charCodeAt(0);
 const ErrorReplyCode = "-".charCodeAt(0);
 
 const encoder = new TextEncoder();
+const decoder = new TextDecoder();
 
 export function createRequest(
   command: string,
-  ...args: (string | number)[]
+  args: (string | number)[],
 ): string {
   const _args = args.filter((v) => v !== void 0 && v !== null);
   let msg = "";
@@ -54,10 +50,37 @@ export async function sendCommand(
   command: string,
   ...args: (number | string)[]
 ): Promise<RedisRawReply> {
-  const msg = createRequest(command, ...args);
+  const msg = createRequest(command, args);
   await writer.write(encoder.encode(msg));
   await writer.flush();
   return readReply(reader);
+}
+
+export async function sendCommands(
+  writer: BufWriter,
+  reader: BufReader,
+  commands: {
+    command: string;
+    args: (number | string)[];
+  }[],
+): Promise<RawReplyOrError[]> {
+  const msg = commands.map((c) => createRequest(c.command, c.args)).join("");
+  await writer.write(encoder.encode(msg));
+  await writer.flush();
+  const ret: RawReplyOrError[] = [];
+  for (let i = 0; i < commands.length; i++) {
+    try {
+      const rep = await readReply(reader);
+      ret.push(rep);
+    } catch (e) {
+      if (e instanceof ErrorReplyError) {
+        ret.push(["error", e]);
+      } else {
+        throw e;
+      }
+    }
+  }
+  return ret;
 }
 
 export async function readReply(reader: BufReader): Promise<RedisRawReply> {
@@ -80,7 +103,6 @@ export async function readReply(reader: BufReader): Promise<RedisRawReply> {
   throw new InvalidStateError();
 }
 
-const decoder = new TextDecoder();
 export async function readLine(reader: BufReader): Promise<string> {
   let buf = new Uint8Array(1024);
   let loc = 0;
@@ -169,63 +191,4 @@ function tryParseErrorReply(line: string): never {
     throw new ErrorReplyError(line);
   }
   throw new Error(`invalid line: ${line}`);
-}
-
-export function muxExecutor(
-  connection: Connection<RedisRawReply>,
-  attemptReconnect = false,
-): CommandExecutor<RedisRawReply> {
-  let queue: {
-    command: string;
-    args: (string | number)[];
-    d: Deferred<RedisRawReply>;
-  }[] = [];
-
-  function dequeue(): void {
-    const [e] = queue;
-    if (!e) return;
-    sendCommand(
-      connection.writer as BufWriter,
-      connection.reader as BufReader,
-      e.command,
-      ...e.args,
-    )
-      .then((v) => {
-        e.d.resolve(v);
-      })
-      .catch(async (err) => {
-        if (
-          (
-            // Error `BadResource` is thrown when an attempt is made to write to a closed connection,
-            //  Make sure that the connection wasn't explicitly closed by the user before trying to reconnect.
-            (err instanceof Deno.errors.BadResource && !connection.isClosed) ||
-            err instanceof Deno.errors.BrokenPipe ||
-            err instanceof Deno.errors.ConnectionAborted ||
-            err instanceof Deno.errors.ConnectionRefused ||
-            err instanceof Deno.errors.ConnectionReset ||
-            err instanceof EOFError
-          ) &&
-          attemptReconnect
-        ) {
-          await connection.reconnect();
-        } else e.d.reject(err);
-      })
-      .finally(() => {
-        queue.shift();
-        dequeue();
-      });
-  }
-
-  async function exec(
-    command: string,
-    ...args: (string | number)[]
-  ): Promise<RedisRawReply> {
-    const d = deferred<RedisRawReply>();
-    queue.push({ command, args, d });
-    if (queue.length === 1) {
-      dequeue();
-    }
-    return d;
-  }
-  return { exec };
 }

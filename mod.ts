@@ -2,6 +2,7 @@
 export * from "./command.ts";
 export * from "./connection.ts";
 export * from "./errors.ts";
+export * from "./executor.ts";
 export * from "./io.ts";
 export * from "./pipeline.ts";
 export * from "./pubsub.ts";
