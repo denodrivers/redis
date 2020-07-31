@@ -173,9 +173,9 @@ export type RedisCommands = {
   incrbyfloat(key: string, increment: number): Promise<BulkString>;
   mget(key: string, ...keys: string[]): Promise<Bulk[]>;
   mset(key: string, value: string): Promise<Status>;
-  mset(...key_values: string[]): Promise<Status>;
+  mset(key_values: Record<string, string>): Promise<Status>;
   msetnx(key: string, value: string): Promise<Integer>;
-  msetnx(...key_values: string[]): Promise<Integer>;
+  msetnx(key_values: Record<string, string>): Promise<Integer>;
   psetex(key: string, milliseconds: number, value: string): Promise<Status>;
   set(
     key: string,
@@ -210,7 +210,7 @@ export type RedisCommands = {
   ): Promise<Integer>;
   geoadd(
     key: string,
-    ...longitude_latitude_member: [number, number, string][]
+    member_lng_lats: Record<string, [number, number]>,
   ): Promise<Integer>;
   geohash(key: string, member: string, ...members: string[]): Promise<Bulk[]>;
   geopos(
@@ -274,7 +274,7 @@ export type RedisCommands = {
   /** @deprecated >= 4.0.0 use hset */
   hmset(key: string, field: string, value: string): Promise<Status>;
   /** @deprecated >= 4.0.0 use hset */
-  hmset(key: string, ...field_values: string[]): Promise<Status>;
+  hmset(key: string, field_values: Record<string, string>): Promise<Status>;
   hscan(
     key: string,
     cursor: number,
@@ -284,7 +284,7 @@ export type RedisCommands = {
     },
   ): Promise<[BulkString, BulkString[]]>;
   hset(key: string, field: string, value: string): Promise<Integer>;
-  hset(key: string, ...field_values: string[]): Promise<Integer>;
+  hset(key: string, field_values: Record<string, string>): Promise<Integer>;
   hsetnx(key: string, field: string, value: string): Promise<Integer>;
   hstrlen(key: string, field: string): Promise<Integer>;
   hvals(key: string): Promise<BulkString[]>;
@@ -328,11 +328,11 @@ export type RedisCommands = {
     pattern: string,
     ...patterns: string[]
   ): Promise<RedisSubscription>;
-  pubsub_channels(pattern: string): Promise<BulkString[]>;
+  pubsub_channels(pattern?: string): Promise<BulkString[]>;
   pubsub_numsub(...channels: string[]): Promise<[BulkString, Integer][]>;
   pubsub_numpat(): Promise<Integer>;
   publish(channel: string, message: string): Promise<Integer>;
-  subscribe(...channels: string[]): Promise<RedisSubscription>;
+  subscribe(channel: string, ...channels: string[]): Promise<RedisSubscription>;
   // Set
   sadd(key: string, member: string, ...members: string[]): Promise<Integer>;
   scard(key: string): Promise<Integer>;
@@ -739,7 +739,7 @@ XRANGE somestream - +
   ): Promise<Integer>;
   zadd(
     key: string,
-    score_members: [number, string][],
+    member_scores: Record<string, number>,
     opts?: {
       mode?: "NX" | "XX";
       ch?: boolean;
@@ -758,7 +758,7 @@ XRANGE somestream - +
   ): Promise<Integer>;
   zinterstore(
     destination: string,
-    key_weights: [string, number][],
+    key_weights: Record<string, number>,
     opts?: {
       aggregate?: "SUM" | "MIN" | "MAX";
     },
@@ -852,7 +852,7 @@ XRANGE somestream - +
   ): Promise<Integer>;
   zunionstore(
     destination: string,
-    key_weights: [string, number][],
+    key_weights: Record<string, number>,
     opts?: {
       aggregate?: "SUM" | "MIN" | "MAX";
     },
