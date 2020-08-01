@@ -82,7 +82,7 @@ export type RedisCommands = {
     key: string,
     ttl: number,
     serialized_value: string,
-    opt?: {
+    opts?: {
       replace?: boolean;
       absttl?: boolean;
       idletime?: number;
@@ -721,12 +721,12 @@ XRANGE somestream - +
     timeout: number,
     key: string,
     ...keys: string[]
-  ): Promise<[BulkString, BulkString, BulkString] | []>;
+  ): Promise<[BulkString, BulkString, BulkString]>;
   bzpopmax(
     timeout: number,
     key: string,
     ...keys: string[]
-  ): Promise<[BulkString, BulkString, BulkString] | []>;
+  ): Promise<[BulkString, BulkString, BulkString]>;
   zadd(
     key: string,
     score: number,
@@ -901,7 +901,7 @@ XRANGE somestream - +
   bgrewriteaof(): Promise<Status>;
   bgsave(): Promise<Status>;
   command(): Promise<
-    [BulkString, Integer, BulkString[], Integer, Integer, Integer]
+    [BulkString, Integer, BulkString[], Integer, Integer, Integer][]
   >;
   command_count(): Promise<Integer>;
   command_getkeys(): Promise<BulkString[]>;
@@ -956,7 +956,7 @@ XRANGE somestream - +
     | ["sentinel", BulkString[]]
   >;
   save(): Promise<Status>;
-  shutdown(mode: "NOSAVE" | "SAVE"): Promise<Status>;
+  shutdown(mode?: "NOSAVE" | "SAVE"): Promise<Status>;
   slaveof(host: string, port: number): Promise<Status>;
   slaveof_noone(): Promise<Status>;
   slowlog(subcommand: string, ...args: string[]): Promise<ConditionalArray>;
