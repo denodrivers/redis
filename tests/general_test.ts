@@ -99,7 +99,6 @@ suite.test("execRawReply", async () => {
 suite.test("eval", async () => {
   const raw = await client.eval(
     "return {KEYS[1],KEYS[2],ARGV[1],ARGV[2]}",
-    2,
     ["1", "2"],
     ["3", "4"],
   );

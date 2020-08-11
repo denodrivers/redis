@@ -20,31 +20,28 @@ suite.test("geoadd", async () => {
     1,
   );
   assertEquals(
-    await client.geoadd(
-      "Sicily",
-      [13.361389, 38.115556, "Palermo"],
-      [15.087269, 37.502669, "Catania"],
-    ),
+    await client.geoadd("Sicily", {
+      Palermo: [13.361389, 38.115556],
+      Catania: [15.087269, 37.502669],
+    }),
     0,
   );
 });
 
 suite.test("geohash", async () => {
-  await client.geoadd(
-    "Sicily",
-    [13.361389, 38.115556, "Palermo"],
-    [15.087269, 37.502669, "Catania"],
-  );
+  await client.geoadd("Sicily", {
+    Palermo: [13.361389, 38.115556],
+    Catania: [15.087269, 37.502669],
+  });
   const resp = await client.geohash("Sicily", "Palermo", "Catania", "Enna");
   assertEquals(resp, ["sqc8b49rny0", "sqdtr74hyu0", undefined]);
 });
 
 suite.test("geopos", async () => {
-  await client.geoadd(
-    "Sicily",
-    [13.361389, 38.115556, "Palermo"],
-    [15.087269, 37.502669, "Catania"],
-  );
+  await client.geoadd("Sicily", {
+    Palermo: [13.361389, 38.115556],
+    Catania: [15.087269, 37.502669],
+  });
   const resp = await client.geopos("Sicily", "Palermo", "Catania", "Enna");
   assertEquals(resp, [
     ["13.36138933897018433", "38.11555639549629859"],
@@ -54,11 +51,10 @@ suite.test("geopos", async () => {
 });
 
 suite.test("geodist", async () => {
-  await client.geoadd(
-    "Sicily",
-    [13.361389, 38.115556, "Palermo"],
-    [15.087269, 37.502669, "Catania"],
-  );
+  await client.geoadd("Sicily", {
+    Palermo: [13.361389, 38.115556],
+    Catania: [15.087269, 37.502669],
+  });
   let resp = await client.geodist("Sicily", "Palermo", "Catania");
   assertEquals(resp, "166274.1516");
   resp = await client.geodist("Sicily", "Palermo", "Enna");

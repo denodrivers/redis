@@ -122,7 +122,7 @@ suite.test("error while pipeline", async () => {
   const client = await newClient(opts);
   const tx = client.pipeline();
   tx.set("a", "a");
-  tx.eval("var", 1, "k", "v");
+  tx.eval("var", ["k"], ["v"]);
   tx.get("a");
   const resp = await tx.flush();
   assertEquals(resp.length, 3);
