@@ -45,16 +45,17 @@ export type RedisCommands = {
   ping(message: string): Promise<BulkString>;
   quit(): Promise<Status>;
   select(index: number): Promise<Status>;
+
   // Keys
-  del(key: string, ...keys: string[]): Promise<Integer>;
+  del(...keys: string[]): Promise<Integer>;
   dump(key: string): Promise<Bulk>;
-  exists(key: string, ...keys: string[]): Promise<Integer>;
+  exists(...keys: string[]): Promise<Integer>;
   expire(key: string, seconds: number): Promise<Integer>;
   expireat(key: string, timestamp: string): Promise<Integer>;
   keys(pattern: string): Promise<BulkString[]>;
   migrate(
     host: string,
-    port: number,
+    port: number | string,
     key: string,
     destination_db: string,
     timeout: number,
@@ -89,14 +90,15 @@ export type RedisCommands = {
       freq?: number;
     },
   ): Promise<Status>;
+  scan(
+    cursor: number,
+    opts?: { pattern?: string; count?: number; type?: string },
+  ): Promise<[BulkString, BulkString[]]>;
   sort(
     key: string,
     opts?: {
       by?: string;
-      limit?: {
-        offset: number;
-        count: number;
-      };
+      limit?: { offset: number; count: number };
       patterns?: string[];
       order?: "ASC" | "DESC";
       alpha?: boolean;
@@ -106,29 +108,19 @@ export type RedisCommands = {
     key: string,
     opts?: {
       by?: string;
-      limit?: {
-        offset: number;
-        count: number;
-      };
+      limit?: { offset: number; count: number };
       patterns?: string[];
       order?: "ASC" | "DESC";
       alpha?: boolean;
-      store: string;
+      destination: string;
     },
   ): Promise<Integer>;
-  touch(key: string, ...keys: string[]): Promise<Integer>;
+  touch(...keys: string[]): Promise<Integer>;
   ttl(key: string): Promise<Integer>;
   type(key: string): Promise<Status>;
-  unlink(key: string, ...keys: string[]): Promise<Integer>;
+  unlink(...keys: string[]): Promise<Integer>;
   wait(numreplicas: number, timeout: number): Promise<Integer>;
-  scan(
-    cursor: number,
-    opts?: {
-      pattern?: string;
-      count?: number;
-      type?: string;
-    },
-  ): Promise<[BulkString, BulkString[]]>;
+
   // String
   append(key: string, value: string): Promise<Integer>;
   bitcount(key: string): Promise<Integer>;
@@ -153,7 +145,6 @@ export type RedisCommands = {
   bitop(
     operation: "AND" | "OR" | "XOR" | "NOT",
     destkey: string,
-    key: string,
     ...keys: string[]
   ): Promise<Integer>;
   bitpos(
@@ -171,7 +162,7 @@ export type RedisCommands = {
   incr(key: string): Promise<Integer>;
   incrby(key: string, increment: number): Promise<Integer>;
   incrbyfloat(key: string, increment: number): Promise<BulkString>;
-  mget(key: string, ...keys: string[]): Promise<Bulk[]>;
+  mget(...keys: string[]): Promise<Bulk[]>;
   mset(key: string, value: string): Promise<Status>;
   mset(key_values: Record<string, string>): Promise<Status>;
   msetnx(key: string, value: string): Promise<Integer>;
@@ -180,27 +171,19 @@ export type RedisCommands = {
   set(
     key: string,
     value: string,
-    opts?: {
-      ex?: number;
-      px?: number;
-      keepttl?: boolean;
-    },
+    opts?: { ex?: number; px?: number; keepttl?: boolean },
   ): Promise<Status>;
   set(
     key: string,
     value: string,
-    opts: {
-      ex?: number;
-      px?: number;
-      keepttl?: boolean;
-      mode: "NX" | "XX";
-    },
+    opts?: { ex?: number; px?: number; keepttl?: boolean; mode: "NX" | "XX" },
   ): Promise<Status | BulkNil>;
   setbit(key: string, offset: number, value: string): Promise<Integer>;
   setex(key: string, seconds: number, value: string): Promise<Status>;
   setnx(key: string, value: string): Promise<Integer>;
   setrange(key: string, offset: number, value: string): Promise<Integer>;
   strlen(key: string): Promise<Integer>;
+
   // Geo
   geoadd(
     key: string,
@@ -212,12 +195,11 @@ export type RedisCommands = {
     key: string,
     member_lng_lats: Record<string, [number, number]>,
   ): Promise<Integer>;
-  geohash(key: string, member: string, ...members: string[]): Promise<Bulk[]>;
+  geohash(key: string, ...members: string[]): Promise<Bulk[]>;
   geopos(
     key: string,
-    member: string,
     ...members: string[]
-  ): Promise<([Integer, Integer] | BulkNil)[]>;
+  ): Promise<([BulkString, BulkString] | BulkNil)[]>;
   geodist(
     key: string,
     member1: string,
@@ -236,7 +218,7 @@ export type RedisCommands = {
       with_dist?: boolean;
       with_hash?: boolean;
       count?: number;
-      sort?: "ASC" | "DESC";
+      order?: "ASC" | "DESC";
       store?: string;
       store_dist?: string;
     },
@@ -252,13 +234,14 @@ export type RedisCommands = {
       with_dist?: boolean;
       with_hash?: boolean;
       count?: number;
-      sort?: "ASC" | "DESC";
+      order?: "ASC" | "DESC";
       store?: string;
       store_dist?: string;
     },
   ): Promise<ConditionalArray>;
+
   // Hash
-  hdel(key: string, field: string, ...fields: string[]): Promise<Integer>;
+  hdel(key: string, ...fields: string[]): Promise<Integer>;
   hexists(key: string, field: string): Promise<Integer>;
   hget(key: string, field: string): Promise<Bulk>;
   hgetall(key: string): Promise<BulkString[]>;
@@ -270,27 +253,35 @@ export type RedisCommands = {
   ): Promise<BulkString>;
   hkeys(key: string): Promise<BulkString[]>;
   hlen(key: string): Promise<Integer>;
-  hmget(key: string, field: string, ...fields: string[]): Promise<Bulk[]>;
-  /** @deprecated >= 4.0.0 use hset */
+  hmget(key: string, ...fields: string[]): Promise<Bulk[]>;
+  /**
+   * @deprecated since 4.0.0, use hset
+   */
   hmset(key: string, field: string, value: string): Promise<Status>;
-  /** @deprecated >= 4.0.0 use hset */
+  /**
+   * @deprecated since 4.0.0, use hset
+   */
   hmset(key: string, field_values: Record<string, string>): Promise<Status>;
   hscan(
     key: string,
     cursor: number,
-    opts?: {
-      pattern?: string;
-      count?: number;
-    },
+    opts?: { pattern?: string; count?: number },
   ): Promise<[BulkString, BulkString[]]>;
   hset(key: string, field: string, value: string): Promise<Integer>;
   hset(key: string, field_values: Record<string, string>): Promise<Integer>;
   hsetnx(key: string, field: string, value: string): Promise<Integer>;
   hstrlen(key: string, field: string): Promise<Integer>;
   hvals(key: string): Promise<BulkString[]>;
+
   // List
-  blpop(timeout: number, key: string, ...keys: string[]): Promise<Bulk[]>;
-  brpop(timeout: number, key: string, ...keys: string[]): Promise<Bulk[]>;
+  blpop(
+    timeout: number,
+    ...keys: string[]
+  ): Promise<[BulkString, BulkString] | []>;
+  brpop(
+    timeout: number,
+    ...keys: string[]
+  ): Promise<[BulkString, BulkString] | []>;
   brpoplpush(
     source: string,
     destination: string,
@@ -305,49 +296,37 @@ export type RedisCommands = {
   ): Promise<Integer>;
   llen(key: string): Promise<Integer>;
   lpop(key: string): Promise<Bulk>;
-  lpush(key: string, element: string, ...elements: string[]): Promise<Integer>;
-  lpushx(key: string, element: string, ...elements: string[]): Promise<Integer>;
+  lpush(key: string, ...elements: string[]): Promise<Integer>;
+  lpushx(key: string, ...elements: string[]): Promise<Integer>;
   lrange(key: string, start: number, stop: number): Promise<BulkString[]>;
   lrem(key: string, count: number, element: string): Promise<Integer>;
   lset(key: string, index: number, element: string): Promise<Status>;
   ltrim(key: string, start: number, stop: number): Promise<Status>;
   rpop(key: string): Promise<Bulk>;
   rpoplpush(source: string, destination: string): Promise<Bulk>;
-  rpush(key: string, element: string, ...elements: string[]): Promise<Integer>;
-  rpushx(key: string, element: string, ...elements: string[]): Promise<Integer>;
+  rpush(key: string, ...elements: string[]): Promise<Integer>;
+  rpushx(key: string, ...elements: string[]): Promise<Integer>;
+
   // HyperLogLog
-  pfadd(key: string, element: string, ...elements: string[]): Promise<Integer>;
-  pfcount(key: string, ...keys: string[]): Promise<Integer>;
-  pfmerge(
-    destkey: string,
-    sourcekey: string,
-    ...sourcekeys: string[]
-  ): Promise<Status>;
+  pfadd(key: string, ...elements: string[]): Promise<Integer>;
+  pfcount(...keys: string[]): Promise<Integer>;
+  pfmerge(destkey: string, ...sourcekeys: string[]): Promise<Status>;
+
   // PubSub
-  psubscribe(
-    pattern: string,
-    ...patterns: string[]
-  ): Promise<RedisSubscription>;
+  psubscribe(...patterns: string[]): Promise<RedisSubscription>;
   pubsub_channels(pattern?: string): Promise<BulkString[]>;
-  pubsub_numsub(...channels: string[]): Promise<[BulkString, Integer][]>;
+  pubsub_numsub(...channels: string[]): Promise<(BulkString | Integer)[]>;
   pubsub_numpat(): Promise<Integer>;
   publish(channel: string, message: string): Promise<Integer>;
-  subscribe(channel: string, ...channels: string[]): Promise<RedisSubscription>;
+  subscribe(...channels: string[]): Promise<RedisSubscription>;
+
   // Set
-  sadd(key: string, member: string, ...members: string[]): Promise<Integer>;
+  sadd(key: string, ...members: string[]): Promise<Integer>;
   scard(key: string): Promise<Integer>;
-  sdiff(key: string, ...keys: string[]): Promise<BulkString[]>;
-  sdiffstore(
-    destination: string,
-    key: string,
-    ...keys: string[]
-  ): Promise<Integer>;
-  sinter(key: string, ...keys: string[]): Promise<BulkString[]>;
-  sinterstore(
-    destination: string,
-    key: string,
-    ...keys: string[]
-  ): Promise<Integer>;
+  sdiff(...keys: string[]): Promise<BulkString[]>;
+  sdiffstore(destination: string, ...keys: string[]): Promise<Integer>;
+  sinter(...keys: string[]): Promise<BulkString[]>;
+  sinterstore(destination: string, ...keys: string[]): Promise<Integer>;
   sismember(key: string, member: string): Promise<Integer>;
   smembers(key: string): Promise<BulkString[]>;
   smove(source: string, destination: string, member: string): Promise<Integer>;
@@ -355,21 +334,15 @@ export type RedisCommands = {
   spop(key: string, count: number): Promise<BulkString[]>;
   srandmember(key: string): Promise<Bulk>;
   srandmember(key: string, count: number): Promise<BulkString[]>;
-  srem(key: string, member: string, ...members: string[]): Promise<Integer>;
+  srem(key: string, ...members: string[]): Promise<Integer>;
   sscan(
     key: string,
     cursor: number,
-    opts?: {
-      pattern?: string;
-      count?: number;
-    },
+    opts?: { pattern?: string; count?: number },
   ): Promise<[BulkString, BulkString[]]>;
-  sunion(key: string, ...keys: string[]): Promise<BulkString[]>;
-  sunionstore(
-    destination: string,
-    key: string,
-    ...keys: string[]
-  ): Promise<Integer>;
+  sunion(...keys: string[]): Promise<BulkString[]>;
+  sunionstore(destination: string, ...keys: string[]): Promise<Integer>;
+
   // Stream
   /**
    * The XACK command removes one or multiple messages 
@@ -716,52 +689,45 @@ XRANGE somestream - +
    * @param maxlen 
    */
   xtrim(key: string, maxlen: XMaxlen): Promise<Integer>;
+
   // SortedSet
   bzpopmin(
     timeout: number,
-    key: string,
     ...keys: string[]
-  ): Promise<[BulkString, BulkString, BulkString]>;
+  ): Promise<[BulkString, BulkString, BulkString] | []>;
   bzpopmax(
     timeout: number,
-    key: string,
     ...keys: string[]
-  ): Promise<[BulkString, BulkString, BulkString]>;
+  ): Promise<[BulkString, BulkString, BulkString] | []>;
   zadd(
     key: string,
     score: number,
     member: string,
-    opts?: {
-      mode?: "NX" | "XX";
-      ch?: boolean;
-      incr?: boolean;
-    },
+    opts?: { mode?: "NX" | "XX"; ch?: boolean },
   ): Promise<Integer>;
   zadd(
     key: string,
     member_scores: Record<string, number>,
-    opts?: {
-      mode?: "NX" | "XX";
-      ch?: boolean;
-      incr?: boolean;
-    },
+    opts?: { mode?: "NX" | "XX"; ch?: boolean },
   ): Promise<Integer>;
+  zadd_incr(
+    key: string,
+    score: number,
+    member: string,
+    opts?: { mode?: "NX" | "XX"; ch?: boolean },
+  ): Promise<Bulk>;
   zcard(key: string): Promise<Integer>;
   zcount(key: string, min: number, max: number): Promise<Integer>;
   zincrby(key: string, increment: number, member: string): Promise<BulkString>;
   zinterstore(
     destination: string,
     keys: string[],
-    opts?: {
-      aggregate?: "SUM" | "MIN" | "MAX";
-    },
+    opts?: { aggregate?: "SUM" | "MIN" | "MAX" },
   ): Promise<Integer>;
   zinterstore(
     destination: string,
     key_weights: Record<string, number>,
-    opts?: {
-      aggregate?: "SUM" | "MIN" | "MAX";
-    },
+    opts?: { aggregate?: "SUM" | "MIN" | "MAX" },
   ): Promise<Integer>;
   zlexcount(key: string, min: string, max: string): Promise<Integer>;
   zpopmax(key: string, count?: number): Promise<BulkString[]>;
@@ -770,98 +736,70 @@ XRANGE somestream - +
     key: string,
     start: number,
     stop: number,
-    opts?: {
-      with_score?: boolean;
-    },
+    opts?: { with_score?: boolean },
   ): Promise<BulkString[]>;
   zrangebylex(
     key: string,
     min: string,
     max: string,
-    opts?: {
-      limit?: {
-        offset: number;
-        count: number;
-      };
-    },
+    opts?: { limit?: { offset: number; count: number } },
   ): Promise<BulkString[]>;
   zrangebyscore(
     key: string,
     min: number | string,
     max: number | string,
-    opts?: {
-      with_score?: boolean;
-      limit?: {
-        offset: number;
-        count: number;
-      };
-    },
+    opts?: { with_score?: boolean; limit?: { offset: number; count: number } },
   ): Promise<BulkString[]>;
   zrank(key: string, member: string): Promise<Integer | BulkNil>;
-  zrem(key: string, member: string, ...members: string[]): Promise<Integer>;
+  zrem(key: string, ...members: string[]): Promise<Integer>;
   zremrangebylex(key: string, min: string, max: string): Promise<Integer>;
   zremrangebyrank(key: string, start: number, stop: number): Promise<Integer>;
-  zremrangebyscore(key: string, min: number, max: number): Promise<Integer>;
+  zremrangebyscore(
+    key: string,
+    min: number | string,
+    max: number | string,
+  ): Promise<Integer>;
   zrevrange(
     key: string,
     start: number,
     stop: number,
-    opts?: {
-      with_score?: boolean;
-    },
+    opts?: { with_score?: boolean },
   ): Promise<BulkString[]>;
   zrevrangebylex(
     key: string,
-    max: number | string,
-    min: number | string,
-    opts?: {
-      limit?: {
-        offset: number;
-        count: number;
-      };
-    },
+    max: string,
+    min: string,
+    opts?: { limit?: { offset: number; count: number } },
   ): Promise<BulkString[]>;
   zrevrangebyscore(
     key: string,
-    max: number,
-    min: number,
-    ops?: {
-      with_score?: boolean;
-      limit?: {
-        offset: number;
-        count: number;
-      };
-    },
+    max: number | string,
+    min: number | string,
+    opts?: { with_score?: boolean; limit?: { offset: number; count: number } },
   ): Promise<BulkString[]>;
   zrevrank(key: string, member: string): Promise<Integer | BulkNil>;
   zscan(
     key: string,
     cursor: number,
-    opts?: {
-      pattern?: string;
-      count?: number;
-    },
+    opts?: { pattern?: string; count?: number },
   ): Promise<[BulkString, BulkString[]]>;
   zscore(key: string, member: string): Promise<Bulk>;
   zunionstore(
     destination: string,
     keys: string[],
-    opts?: {
-      aggregate?: "SUM" | "MIN" | "MAX";
-    },
+    opts?: { aggregate?: "SUM" | "MIN" | "MAX" },
   ): Promise<Integer>;
   zunionstore(
     destination: string,
     key_weights: Record<string, number>,
-    opts?: {
-      aggregate?: "SUM" | "MIN" | "MAX";
-    },
+    opts?: { aggregate?: "SUM" | "MIN" | "MAX" },
   ): Promise<Integer>;
+
   // Cluster
-  cluster_addslots(slot: number, ...slots: number[]): Promise<Status>;
+  cluster_addslots(...slots: number[]): Promise<Status>;
   cluster_countfailurereports(node_id: string): Promise<Integer>;
   cluster_countkeysinslot(slot: number): Promise<Integer>;
-  cluster_delslots(slot: number, ...slots: number[]): Promise<Status>;
+  cluster_delslots(...slots: number[]): Promise<Status>;
   cluster_failover(mode?: "FORCE" | "TAKEOVER"): Promise<Status>;
   cluster_flushslots(): Promise<Status>;
   cluster_forget(node_id: string): Promise<Status>;
@@ -884,9 +822,10 @@ XRANGE somestream - +
   cluster_slots(): Promise<ConditionalArray>;
   readonly(): Promise<Status>;
   readwrite(): Promise<Status>;
+
   // Server
   acl_cat(categoryname?: string): Promise<BulkString[]>;
-  acl_deluser(username: string, ...usernames: string[]): Promise<Integer>;
+  acl_deluser(...usernames: string[]): Promise<Integer>;
   acl_genpass(bits?: number): Promise<BulkString>;
   acl_getuser(username: string): Promise<(BulkString | BulkString[])[]>;
   acl_help(): Promise<BulkString[]>;
@@ -906,21 +845,9 @@ XRANGE somestream - +
   command_count(): Promise<Integer>;
   command_getkeys(): Promise<BulkString[]>;
   command_info(
-    command_name: string,
     ...command_names: string[]
   ): Promise<
-    (
-      | [
-        BulkString,
-        Integer,
-        BulkString[],
-        Integer,
-        Integer,
-        Integer,
-        BulkString[],
-      ]
-      | BulkNil
-    )[]
+    ([BulkString, Integer, BulkString[], Integer, Integer, Integer] | BulkNil)[]
   >;
   config_get(parameter: string): Promise<BulkString[]>;
   config_resetstat(): Promise<Status>;
@@ -938,18 +865,13 @@ XRANGE somestream - +
   memory_malloc_stats(): Promise<BulkString>;
   memory_purge(): Promise<Status>;
   memory_stats(): Promise<ConditionalArray>;
-  memory_usage(
-    key: string,
-    opts?: {
-      samples?: number;
-    },
-  ): Promise<Integer>;
+  memory_usage(key: string, opts?: { samples?: number }): Promise<Integer>;
   module_list(): Promise<BulkString[]>;
   module_load(path: string, ...args: string[]): Promise<Status>;
   module_unload(name: string): Promise<Status>;
   monitor(): void;
   replicaof(host: string, port: number): Promise<Status>;
-  replicaof_noone(): Promise<Status>;
+  replicaof_none(): Promise<Status>;
   role(): Promise<
     | ["master", Integer, BulkString[][]]
     | ["slave", BulkString, Integer, BulkString, Integer]
@@ -958,25 +880,28 @@ XRANGE somestream - +
   save(): Promise<Status>;
   shutdown(mode?: "NOSAVE" | "SAVE"): Promise<Status>;
   slaveof(host: string, port: number): Promise<Status>;
-  slaveof_noone(): Promise<Status>;
+  slaveof_none(): Promise<Status>;
   slowlog(subcommand: string, ...args: string[]): Promise<ConditionalArray>;
   swapdb(index1: number, index2: number): Promise<Status>;
   sync(): void;
   time(): Promise<[BulkString, BulkString]>;
+
   // Scripting
   eval(script: string, keys: string[], args: string[]): Promise<Raw>;
   evalsha(sha1: string, keys: string[], args: string[]): Promise<Raw>;
   script_debug(mode: "YES" | "SYNC" | "NO"): Promise<Status>;
-  script_exists(sha1: string, ...sha1s: string[]): Promise<Integer[]>;
+  script_exists(...sha1s: string[]): Promise<Integer[]>;
   script_flush(): Promise<Status>;
   script_kill(): Promise<Status>;
   script_load(script: string): Promise<Status>;
+
   // Transactions
   discard(): Promise<Status>;
   exec(): Promise<ConditionalArray>;
   multi(): Promise<Status>;
   unwatch(): Promise<Status>;
-  watch(key: string, ...keys: string[]): Promise<Status>;
+  watch(...keys: string[]): Promise<Status>;
+
   // Pipeline
   tx(): RedisPipeline;
   pipeline(): RedisPipeline;
