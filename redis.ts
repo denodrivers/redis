@@ -524,7 +524,7 @@ export class RedisImpl implements Redis {
       }
     } else {
       args.push(...params);
-      }
+    }
     return this.execIntegerReply("GEOADD", ...args);
   }
 
@@ -696,7 +696,7 @@ export class RedisImpl implements Redis {
       }
     } else {
       args.push(...params);
-      }
+    }
     return this.execStatusReply("HMSET", ...args);
   }
 
@@ -711,7 +711,7 @@ export class RedisImpl implements Redis {
       }
     } else {
       args.push(...params);
-      }
+    }
     return this.execIntegerReply("HSET", ...args);
   }
 
@@ -886,7 +886,7 @@ export class RedisImpl implements Redis {
       }
     } else {
       args.push(...params);
-      }
+    }
     return this.execStatusReply("MSET", ...args);
   }
 
@@ -901,7 +901,7 @@ export class RedisImpl implements Redis {
       }
     } else {
       args.push(...params);
-      }
+    }
     return this.execIntegerReply("MSETNX", ...args);
   }
 

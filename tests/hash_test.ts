@@ -73,11 +73,13 @@ suite.test("hmget", async () => {
 suite.test("hmset", async () => {
   assertEquals(await client.hmset("key", "f1", "1"), "OK");
   assertEquals(await client.hmset("key", { f1: "1", f2: "2" }), "OK");
+  assertEquals(await client.hmset("key", ["f4", "4"], ["f5", "5"]), "OK");
 });
 
 suite.test("hset", async () => {
   assertEquals(await client.hset("key", "f1", "1"), 1);
   assertEquals(await client.hset("key", { f2: "2", f3: "3" }), 2);
+  assertEquals(await client.hset("key", ["f4", "4"], ["f5", "5"]), 2);
 });
 
 suite.test("hsetnx", async () => {

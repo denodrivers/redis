@@ -40,6 +40,13 @@ suite.test("bzpopmax timeout", async () => {
 suite.test("zadd", async () => {
   assertEquals(await client.zadd("key", { "1": 1, "2": 2 }), 2);
   assertEquals(await client.zadd("key", 3, "3"), 1);
+  assertEquals(
+    await client.zadd("key", [
+      [4, "4"],
+      [5, "5"],
+    ]),
+    2,
+  );
 });
 
 suite.test("zcount", async () => {
