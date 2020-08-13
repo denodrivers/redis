@@ -164,8 +164,10 @@ export type RedisCommands = {
   incrbyfloat(key: string, increment: number): Promise<BulkString>;
   mget(...keys: string[]): Promise<Bulk[]>;
   mset(key: string, value: string): Promise<Status>;
+  mset(...key_values: [string, string][]): Promise<Status>;
   mset(key_values: Record<string, string>): Promise<Status>;
   msetnx(key: string, value: string): Promise<Integer>;
+  msetnx(...key_values: [string, string][]): Promise<Integer>;
   msetnx(key_values: Record<string, string>): Promise<Integer>;
   psetex(key: string, milliseconds: number, value: string): Promise<Status>;
   set(
@@ -190,6 +192,10 @@ export type RedisCommands = {
     longitude: number,
     latitude: number,
     member: string,
+  ): Promise<Integer>;
+  geoadd(
+    key: string,
+    ...lng_lat_members: [number, number, string][]
   ): Promise<Integer>;
   geoadd(
     key: string,
@@ -261,6 +267,10 @@ export type RedisCommands = {
   /**
    * @deprecated since 4.0.0, use hset
    */
+  hmset(key: string, ...field_values: [string, string][]): Promise<Status>;
+  /**
+   * @deprecated since 4.0.0, use hset
+   */
   hmset(key: string, field_values: Record<string, string>): Promise<Status>;
   hscan(
     key: string,
@@ -268,6 +278,7 @@ export type RedisCommands = {
     opts?: { pattern?: string; count?: number },
   ): Promise<[BulkString, BulkString[]]>;
   hset(key: string, field: string, value: string): Promise<Integer>;
+  hset(key: string, ...field_values: [string, string][]): Promise<Integer>;
   hset(key: string, field_values: Record<string, string>): Promise<Integer>;
   hsetnx(key: string, field: string, value: string): Promise<Integer>;
   hstrlen(key: string, field: string): Promise<Integer>;
@@ -707,6 +718,11 @@ XRANGE somestream - +
   ): Promise<Integer>;
   zadd(
     key: string,
+    score_members: [number, string][],
+    opts?: { mode?: "NX" | "XX"; ch?: boolean },
+  ): Promise<Integer>;
+  zadd(
+    key: string,
     member_scores: Record<string, number>,
     opts?: { mode?: "NX" | "XX"; ch?: boolean },
   ): Promise<Integer>;
@@ -722,6 +738,11 @@ XRANGE somestream - +
   zinterstore(
     destination: string,
     keys: string[],
+    opts?: { aggregate?: "SUM" | "MIN" | "MAX" },
+  ): Promise<Integer>;
+  zinterstore(
+    destination: string,
+    key_weights: [string, number][],
     opts?: { aggregate?: "SUM" | "MIN" | "MAX" },
   ): Promise<Integer>;
   zinterstore(
@@ -787,6 +808,11 @@ XRANGE somestream - +
   zunionstore(
     destination: string,
     keys: string[],
+    opts?: { aggregate?: "SUM" | "MIN" | "MAX" },
+  ): Promise<Integer>;
+  zunionstore(
+    destination: string,
+    key_weights: [string, number][],
     opts?: { aggregate?: "SUM" | "MIN" | "MAX" },
   ): Promise<Integer>;
   zunionstore(
@@ -871,7 +897,7 @@ XRANGE somestream - +
   module_unload(name: string): Promise<Status>;
   monitor(): void;
   replicaof(host: string, port: number): Promise<Status>;
-  replicaof_none(): Promise<Status>;
+  replicaof_no_one(): Promise<Status>;
   role(): Promise<
     | ["master", Integer, BulkString[][]]
     | ["slave", BulkString, Integer, BulkString, Integer]
@@ -880,7 +906,7 @@ XRANGE somestream - +
   save(): Promise<Status>;
   shutdown(mode?: "NOSAVE" | "SAVE"): Promise<Status>;
   slaveof(host: string, port: number): Promise<Status>;
-  slaveof_none(): Promise<Status>;
+  slaveof_no_one(): Promise<Status>;
   slowlog(subcommand: string, ...args: string[]): Promise<ConditionalArray>;
   swapdb(index1: number, index2: number): Promise<Status>;
   sync(): void;

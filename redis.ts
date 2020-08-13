@@ -513,24 +513,18 @@ export class RedisImpl implements Redis {
     return this.execStatusReply("FLUSHDB");
   }
 
-  geoadd(
-    key: string,
-    lng_or_record: number | Record<string, [number, number]>,
-    lat?: number,
-    member?: string,
-  ) {
-    const args: (number | string)[] = [key];
-    if (
-      typeof lng_or_record === "number" &&
-      lat !== undefined &&
-      member !== undefined
-    ) {
-      args.push(lng_or_record, lat, member);
-    } else {
-      for (let [member, [lng, lat]] of Object.entries(lng_or_record)) {
-        args.push(lng, lat, member);
+  // deno-lint-ignore no-explicit-any
+  geoadd(key: string, ...params: any[]) {
+    const args: (string | number)[] = [key];
+    if (Array.isArray(params[0])) {
+      args.push(...params.flatMap((e) => e));
+    } else if (typeof params[0] === "object") {
+      for (let [member, lnglat] of Object.entries(params[0])) {
+        args.push(...(lnglat as [number, number]), member);
       }
-    }
+    } else {
+      args.push(...params);
+      }
     return this.execIntegerReply("GEOADD", ...args);
   }
 
@@ -691,35 +685,33 @@ export class RedisImpl implements Redis {
     return this.execArrayReply<Bulk>("HMGET", key, ...fields);
   }
 
-  hmset(
-    key: string,
-    field_or_record: string | Record<string, string>,
-    value?: string,
-  ) {
+  // deno-lint-ignore no-explicit-any
+  hmset(key: string, ...params: any[]) {
     const args = [key];
-    if (typeof field_or_record === "string" && value !== undefined) {
-      args.push(field_or_record, value);
-    } else {
-      for (let [field, value] of Object.entries(field_or_record)) {
-        args.push(field, value);
+    if (Array.isArray(params[0])) {
+      args.push(...params.flatMap((e) => e));
+    } else if (typeof params[0] === "object") {
+      for (let [field, value] of Object.entries(params[0])) {
+        args.push(field, value as string);
       }
-    }
+    } else {
+      args.push(...params);
+      }
     return this.execStatusReply("HMSET", ...args);
   }
 
-  hset(
-    key: string,
-    field_or_record: string | Record<string, string>,
-    value?: string,
-  ) {
+  // deno-lint-ignore no-explicit-any
+  hset(key: string, ...params: any[]) {
     const args = [key];
-    if (typeof field_or_record === "string" && value !== undefined) {
-      args.push(field_or_record, value);
-    } else {
-      for (let [field, value] of Object.entries(field_or_record)) {
-        args.push(field, value);
+    if (Array.isArray(params[0])) {
+      args.push(...params.flatMap((e) => e));
+    } else if (typeof params[0] === "object") {
+      for (let [field, value] of Object.entries(params[0])) {
+        args.push(field, value as string);
       }
-    }
+    } else {
+      args.push(...params);
+      }
     return this.execIntegerReply("HSET", ...args);
   }
 
@@ -883,27 +875,33 @@ export class RedisImpl implements Redis {
     return this.execIntegerReply("MOVE", key, db);
   }
 
-  mset(key_or_record: string | Record<string, string>, value?: string) {
+  // deno-lint-ignore no-explicit-any
+  mset(...params: any[]) {
     const args: string[] = [];
-    if (typeof key_or_record === "string" && value !== undefined) {
-      args.push(key_or_record, value);
-    } else {
-      for (let [key, value] of Object.entries(key_or_record)) {
-        args.push(key, value);
+    if (Array.isArray(params[0])) {
+      args.push(...params.flatMap((e) => e));
+    } else if (typeof params[0] === "object") {
+      for (let [key, value] of Object.entries(params[0])) {
+        args.push(key, value as string);
       }
-    }
+    } else {
+      args.push(...params);
+      }
     return this.execStatusReply("MSET", ...args);
   }
 
-  msetnx(key_or_record: string | Record<string, string>, value?: string) {
+  // deno-lint-ignore no-explicit-any
+  msetnx(...params: any[]) {
     const args: string[] = [];
-    if (typeof key_or_record === "string" && value !== undefined) {
-      args.push(key_or_record, value);
-    } else {
-      for (let [key, value] of Object.entries(key_or_record)) {
-        args.push(key, value);
+    if (Array.isArray(params[0])) {
+      args.push(...params.flatMap((e) => e));
+    } else if (typeof params[0] === "object") {
+      for (let [key, value] of Object.entries(params[0])) {
+        args.push(key, value as string);
       }
-    }
+    } else {
+      args.push(...params);
+      }
     return this.execIntegerReply("MSETNX", ...args);
   }
 
@@ -1190,7 +1188,7 @@ export class RedisImpl implements Redis {
     return this.execStatusReply("SLAVEOF", host, port);
   }
 
-  slaveof_none() {
+  slaveof_no_one() {
     return this.execStatusReply("SLAVEOF", "NO ONE");
   }
 
@@ -1198,7 +1196,7 @@ export class RedisImpl implements Redis {
     return this.execStatusReply("REPLICAOF", host, port);
   }
 
-  replicaof_none() {
+  replicaof_no_one() {
     return this.execStatusReply("REPLICAOF", "NO ONE");
   }
 
@@ -1771,26 +1769,19 @@ export class RedisImpl implements Redis {
     return this.execIntegerReply("XTRIM", key, "MAXLEN", ...args);
   }
 
-  zadd(
-    key: string,
-    score_or_record: number | Record<string, number>,
-    member_or_opts?: string | { mode?: "NX" | "XX"; ch?: boolean },
-    opts?: { mode?: "NX" | "XX"; ch?: boolean },
-  ) {
+  // deno-lint-ignore no-explicit-any
+  zadd(key: string, param1: any, param2?: any, opts?: any) {
     const args: (string | number)[] = [key];
-    if (
-      typeof score_or_record === "number" &&
-      typeof member_or_opts === "string"
-    ) {
-      args.push(score_or_record);
-      args.push(member_or_opts);
+    if (Array.isArray(param1)) {
+      args.push(...param1.flatMap((e) => e));
+      opts = param2;
+    } else if (typeof param1 === "object") {
+      for (let [member, score] of Object.entries(param1)) {
+        args.push(score as number, member);
+      }
+      opts = param2;
     } else {
-      for (let [member, score] of Object.entries(score_or_record)) {
-        args.push(score, member);
-      }
-      if (typeof member_or_opts === "object") {
-        opts = member_or_opts;
-      }
+      args.push(param1, param2);
     }
     if (opts?.mode) {
       args.push(opts.mode);
@@ -1832,34 +1823,42 @@ export class RedisImpl implements Redis {
 
   zinterstore(
     destination: string,
-    keys_or_record: string[] | Record<string, number>,
+    keys: string[] | [string, number][] | Record<string, number>,
     opts?: { aggregate?: "SUM" | "MIN" | "MAX" },
   ) {
-    const args = this.pushZStoreArgs([destination], keys_or_record, opts);
+    const args = this.pushZStoreArgs([destination], keys, opts);
     return this.execIntegerReply("ZINTERSTORE", ...args);
   }
 
   zunionstore(
     destination: string,
-    keys_or_record: string[] | Record<string, number>,
+    keys: string[] | [string, number][] | Record<string, number>,
     opts?: { aggregate?: "SUM" | "MIN" | "MAX" },
   ) {
-    const args = this.pushZStoreArgs([destination], keys_or_record, opts);
+    const args = this.pushZStoreArgs([destination], keys, opts);
     return this.execIntegerReply("ZUNIONSTORE", ...args);
   }
 
   private pushZStoreArgs(
     args: (number | string)[],
-    keys_or_record: string[] | Record<string, number>,
+    keys: string[] | [string, number][] | Record<string, number>,
     opts?: { aggregate?: "SUM" | "MIN" | "MAX" },
   ) {
-    if (Array.isArray(keys_or_record)) {
-      args.push(keys_or_record.length, ...keys_or_record);
+    if (Array.isArray(keys)) {
+      args.push(keys.length);
+      if (Array.isArray(keys[0])) {
+        keys = keys as [string, number][];
+        args.push(...keys.map((e) => e[0]));
+        args.push("WEIGHTS");
+        args.push(...keys.map((e) => e[1]));
+      } else {
+        args.push(...(keys as string[]));
+      }
     } else {
-      args.push(Object.keys(keys_or_record).length);
-      args.push(...Object.keys(keys_or_record));
+      args.push(Object.keys(keys).length);
+      args.push(...Object.keys(keys));
       args.push("WEIGHTS");
-      args.push(...Object.values(keys_or_record));
+      args.push(...Object.values(keys));
     }
     if (opts?.aggregate) {
       args.push("AGGREGATE", opts.aggregate);
