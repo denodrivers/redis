@@ -129,7 +129,11 @@ suite.test("mget", async () => {
 });
 
 suite.test("mset", async () => {
-  const rep = await client.mset("key1", "foo", "key2", "bar", "key3", "baz");
+  let rep = await client.mset("key1", "foo");
+  assertEquals(rep, "OK");
+  rep = await client.mset({ key2: "bar", key3: "baz" });
+  assertEquals(rep, "OK");
+  rep = await client.mset(["key4", "bar"], ["key5", "baz"]);
   assertEquals(rep, "OK");
   assertEquals(await client.get("key1"), "foo");
   assertEquals(await client.get("key2"), "bar");
@@ -137,9 +141,13 @@ suite.test("mset", async () => {
 });
 
 suite.test("msetnx", async () => {
-  const rep1 = await client.msetnx("key1", "foo", "key2", "bar");
+  let rep1 = await client.msetnx("key1", "foo");
   assertEquals(rep1, 1); // All the keys were set.
-  const rep2 = await client.msetnx("key2", "baz", "key3", "qux");
+  rep1 = await client.msetnx({ key2: "bar" });
+  assertEquals(rep1, 1); // All the keys were set.
+  rep1 = await client.msetnx(["key4", "bar"], ["key5", "baz"]);
+  assertEquals(rep1, 1);
+  const rep2 = await client.msetnx({ key2: "baz", key3: "qux" });
   assertEquals(rep2, 0); // No key was set.
   assertEquals(await client.get("key1"), "foo");
   assertEquals(await client.get("key2"), "bar");

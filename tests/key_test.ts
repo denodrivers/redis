@@ -87,7 +87,7 @@ suite.test("object encoding", async () => {
 
 suite.test("object idletime", async () => {
   await client.set("key", "baz");
-  const v = await client.object_ideltime("key");
+  const v = await client.object_idletime("key");
   assertEquals(v, 0);
 });
 

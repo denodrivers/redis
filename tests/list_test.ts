@@ -16,20 +16,20 @@ suite.afterAll(() => {
 
 suite.test("blpoop", async () => {
   await client.rpush("list", "1", "2");
-  assertEquals(await client.blpop("list", 2), ["list", "1"]);
+  assertEquals(await client.blpop(2, "list"), ["list", "1"]);
 });
 
 suite.test("blpoop timeout", async () => {
-  assertEquals(await client.blpop("list", 1), []);
+  assertEquals(await client.blpop(1, "list"), []);
 });
 
 suite.test("brpoop", async () => {
   await client.rpush("list", "1", "2");
-  assertEquals(await client.brpop("list", 2), ["list", "2"]);
+  assertEquals(await client.brpop(2, "list"), ["list", "2"]);
 });
 
 suite.test("brpoop timeout", async () => {
-  assertEquals(await client.brpop("list", 1), []);
+  assertEquals(await client.brpop(1, "list"), []);
 });
 
 suite.test("brpoplpush", async () => {
