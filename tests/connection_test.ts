@@ -22,7 +22,10 @@ suite.test("ping", async () => {
 
 suite.test("quit", async () => {
   const tempClient = await connect({ hostname: "127.0.0.1", port: 7003 });
+  assertEquals(tempClient.isConnected, true);
+  assertEquals(tempClient.isClosed, false);
   assertEquals(await tempClient.quit(), "OK");
+  assertEquals(tempClient.isConnected, false);
   assertEquals(tempClient.isClosed, true);
 });
 
