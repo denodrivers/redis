@@ -112,8 +112,9 @@ suite.test("pipeline in concurrent", async () => {
         ["bulk", "a"],
         ["bulk", "b"],
         ["bulk", "c"],
-      ], // flush()
-    ]);
+      ],
+    ] // flush()
+    );
     client.close();
   }
 });
