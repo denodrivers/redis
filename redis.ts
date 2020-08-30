@@ -1289,6 +1289,35 @@ export class RedisImpl implements Redis {
     return this.execIntegerReply("SREM", key, ...members);
   }
 
+  stralgo(
+    algorithm: "LCS",
+    target: "KEYS" | "STRINGS",
+    a: string,
+    b: string,
+    opts?: {
+      idx?: boolean;
+      len?: boolean;
+      minmatchlen?: number;
+      withmatchlen?: boolean;
+    },
+  ) {
+    const args: (number | string)[] = [];
+    if (opts?.idx) {
+      args.push("IDX");
+    }
+    if (opts?.len) {
+      args.push("LEN");
+    }
+    if (opts?.withmatchlen) {
+      args.push("WITHMATCHLEN");
+    }
+    if (opts?.minmatchlen) {
+      args.push("MINMATCHLEN");
+      args.push(opts.minmatchlen);
+    }
+    return this.execBulkReply("STRALGO", "LCS", target, a, b, ...args);
+  }
+
   strlen(key: string) {
     return this.execIntegerReply("STRLEN", key);
   }
