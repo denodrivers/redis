@@ -184,6 +184,18 @@ export type RedisCommands = {
   setex(key: string, seconds: number, value: string): Promise<Status>;
   setnx(key: string, value: string): Promise<Integer>;
   setrange(key: string, offset: number, value: string): Promise<Integer>;
+  stralgo(
+    algorithm: "LCS",
+    target: "KEYS" | "STRINGS",
+    a: string,
+    b: string,
+    opts?: {
+      idx?: boolean;
+      len?: boolean;
+      minmatchlen?: number;
+      withmatchlen?: boolean;
+    },
+  ): Promise<Bulk>;
   strlen(key: string): Promise<Integer>;
 
   // Geo

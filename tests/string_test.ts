@@ -202,6 +202,44 @@ suite.test("setrange", async () => {
   assertEquals(v, "Hello, Redis!");
 });
 
+suite.test("stralgo", async () => {
+  await client.set("a", "Hello");
+  await client.set("b", "Deno!");
+  const matches = [[[4, 4], [3, 3]], [[1, 1], [1, 1]]];
+  const matchesWithLen = [[[4, 4], [3, 3], 1], [[1, 1], [1, 1], 1]];
+  assertEquals(await client.stralgo("LCS", "KEYS", "a", "b"), "eo");
+  assertEquals(await client.stralgo("LCS", "KEYS", "a", "b", { len: true }), 2);
+  assertEquals(
+    await client.stralgo("LCS", "KEYS", "a", "b", { idx: true }),
+    ["matches", matches, "len", 2],
+  );
+  assertEquals(
+    await client.stralgo(
+      "LCS",
+      "KEYS",
+      "a",
+      "b",
+      { idx: true, withmatchlen: true },
+    ),
+    ["matches", matchesWithLen, "len", 2],
+  );
+  assertEquals(
+    await client.stralgo(
+      "LCS",
+      "KEYS",
+      "a",
+      "b",
+      { idx: true, minmatchlen: 2 },
+    ),
+    ["matches", [], "len", 2],
+  );
+  assertEquals(await client.stralgo("LCS", "STRINGS", "Hello", "Deno!"), "eo");
+  assertEquals(
+    await client.stralgo("LCS", "STRINGS", "Hello", "Deno!", { len: true }),
+    2,
+  );
+});
+
 suite.test("strlen", async () => {
   await client.set("key", "foobar");
   const v = await client.strlen("key");
