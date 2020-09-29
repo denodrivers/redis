@@ -1,4 +1,4 @@
-import { Connection } from "./connection.ts";
+import type { Connection } from "./connection.ts";
 import { InvalidStateError } from "./errors.ts";
 import { readArrayReply, sendCommand } from "./io.ts";
 
