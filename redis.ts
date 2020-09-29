@@ -1,7 +1,7 @@
-import { RedisCommands } from "./command.ts";
+import type { RedisCommands } from "./command.ts";
 import { Connection, RedisConnection } from "./connection.ts";
 import { CommandExecutor, MuxExecutor } from "./executor.ts";
-import {
+import type {
   Bulk,
   BulkNil,
   BulkString,

@@ -1,4 +1,4 @@
-import {
+import type {
   Bulk,
   BulkNil,
   BulkString,
@@ -7,9 +7,9 @@ import {
   Raw,
   Status,
 } from "./io.ts";
-import { RedisPipeline } from "./pipeline.ts";
-import { RedisSubscription } from "./pubsub.ts";
-import {
+import type { RedisPipeline } from "./pipeline.ts";
+import type { RedisSubscription } from "./pubsub.ts";
+import type {
   StartEndCount,
   XAddFieldValues,
   XClaimOpts,

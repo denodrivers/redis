@@ -1,5 +1,8 @@
 import { EOFError, ErrorReplyError, InvalidStateError } from "./errors.ts";
-import { BufReader, BufWriter } from "./vendor/https/deno.land/std/io/bufio.ts";
+import type {
+  BufReader,
+  BufWriter,
+} from "./vendor/https/deno.land/std/io/bufio.ts";
 
 export type Status = string;
 export type Integer = number;

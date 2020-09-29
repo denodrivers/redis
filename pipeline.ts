@@ -1,4 +1,4 @@
-import { Connection } from "./connection.ts";
+import type { Connection } from "./connection.ts";
 import { CommandExecutor } from "./executor.ts";
 import { RawReplyOrError, RedisRawReply, sendCommands } from "./io.ts";
 import { Redis, RedisImpl } from "./redis.ts";
