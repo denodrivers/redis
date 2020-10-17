@@ -111,7 +111,7 @@ suite.test("deluser", async () => {
 
 suite.test("genpass", async () => {
   assertEquals((await client.acl_genpass()).length, 64);
-  let testlen = 32;
+  const testlen = 32;
   assertEquals((await client.acl_genpass(testlen)).length, testlen / 4);
 });
 
@@ -120,7 +120,7 @@ suite.test("aclauth", async () => {
 });
 
 suite.test("log", async () => {
-  let randString = "balh";
+  const randString = "balh";
   try {
     await client.auth(randString, randString);
   } catch (error) {

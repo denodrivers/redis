@@ -519,7 +519,7 @@ export class RedisImpl implements Redis {
     if (Array.isArray(params[0])) {
       args.push(...params.flatMap((e) => e));
     } else if (typeof params[0] === "object") {
-      for (let [member, lnglat] of Object.entries(params[0])) {
+      for (const [member, lnglat] of Object.entries(params[0])) {
         args.push(...(lnglat as [number, number]), member);
       }
     } else {
@@ -691,7 +691,7 @@ export class RedisImpl implements Redis {
     if (Array.isArray(params[0])) {
       args.push(...params.flatMap((e) => e));
     } else if (typeof params[0] === "object") {
-      for (let [field, value] of Object.entries(params[0])) {
+      for (const [field, value] of Object.entries(params[0])) {
         args.push(field, value as string);
       }
     } else {
@@ -706,7 +706,7 @@ export class RedisImpl implements Redis {
     if (Array.isArray(params[0])) {
       args.push(...params.flatMap((e) => e));
     } else if (typeof params[0] === "object") {
-      for (let [field, value] of Object.entries(params[0])) {
+      for (const [field, value] of Object.entries(params[0])) {
         args.push(field, value as string);
       }
     } else {
@@ -881,7 +881,7 @@ export class RedisImpl implements Redis {
     if (Array.isArray(params[0])) {
       args.push(...params.flatMap((e) => e));
     } else if (typeof params[0] === "object") {
-      for (let [key, value] of Object.entries(params[0])) {
+      for (const [key, value] of Object.entries(params[0])) {
         args.push(key, value as string);
       }
     } else {
@@ -896,7 +896,7 @@ export class RedisImpl implements Redis {
     if (Array.isArray(params[0])) {
       args.push(...params.flatMap((e) => e));
     } else if (typeof params[0] === "object") {
-      for (let [key, value] of Object.entries(params[0])) {
+      for (const [key, value] of Object.entries(params[0])) {
         args.push(key, value as string);
       }
     } else {
@@ -1805,7 +1805,7 @@ export class RedisImpl implements Redis {
       args.push(...param1.flatMap((e) => e));
       opts = param2;
     } else if (typeof param1 === "object") {
-      for (let [member, score] of Object.entries(param1)) {
+      for (const [member, score] of Object.entries(param1)) {
         args.push(score as number, member);
       }
       opts = param2;

@@ -215,7 +215,7 @@ export interface XClaimOpts {
 export function parseXMessage(
   raw: XReadIdData,
 ): XMessage {
-  let field_values: Map<string, string> = new Map();
+  const field_values: Map<string, string> = new Map();
   let f: string | undefined = undefined;
 
   let m = 0;
@@ -232,7 +232,7 @@ export function parseXMessage(
 }
 
 export function convertMap(raw: ConditionalArray): Map<string, Raw> {
-  let field_values: Map<string, Raw> = new Map();
+  const field_values: Map<string, Raw> = new Map();
   let f: string | undefined = undefined;
 
   let m = 0;
