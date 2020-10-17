@@ -107,7 +107,7 @@ export async function readReply(reader: BufReader): Promise<RedisRawReply> {
 }
 
 export async function readLine(reader: BufReader): Promise<string> {
-  let buf = new Uint8Array(1024);
+  const buf = new Uint8Array(1024);
   let loc = 0;
   let d: number | null = null;
   while ((d = await reader.readByte()) && d !== null) {

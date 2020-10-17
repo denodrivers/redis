@@ -33,7 +33,7 @@ const withConsumerGroup = async (
   const stream = randomStream();
   const group = `test-group-${rn}`;
 
-  let created = await client.xgroup_create(stream, group, "$", true);
+  const created = await client.xgroup_create(stream, group, "$", true);
   assertEquals(created, "OK");
 
   await fn(stream, group);
@@ -76,7 +76,7 @@ suite.test("xreadgroup multiple streams", async () => {
   await withConsumerGroup(async (key, group) => {
     const key2 = randomStream();
 
-    let created = await client.xgroup_create(key2, group, "$", true);
+    const created = await client.xgroup_create(key2, group, "$", true);
     assertEquals(created, "OK");
 
     await Promise.all([
@@ -182,7 +182,7 @@ suite.test("xgroup create and destroy", async () => {
 
   const key = randomStream();
 
-  let created = await client.xgroup_create(key, groupName, "$", true);
+  const created = await client.xgroup_create(key, groupName, "$", true);
   assertEquals(created, "OK");
   await assertThrowsAsync(
     async () => {
@@ -200,17 +200,17 @@ suite.test("xgroup setid and delconsumer", async () => {
   const group = "test-group";
   const consumer = "test-consumer";
 
-  let created = await client.xgroup_create(key, group, "$", true);
+  const created = await client.xgroup_create(key, group, "$", true);
   assertEquals(created, "OK");
 
-  let addedId = await client.xadd(key, "*", { anyfield: "anyval" });
+  const addedId = await client.xadd(key, "*", { anyfield: "anyval" });
 
   assert(addedId);
 
   //  must read from a given stream to create the
   //  consumer
   const xid = ">";
-  let data = await client.xreadgroup([{ key, xid }], { group, consumer });
+  const data = await client.xreadgroup([{ key, xid }], { group, consumer });
 
   assertEquals(data.length, 1);
 
@@ -225,15 +225,15 @@ suite.test("xreadgroup but no ack", async () => {
   const key = randomStream();
   const group = "test-group";
 
-  let created = await client.xgroup_create(key, group, "$", true);
+  const created = await client.xgroup_create(key, group, "$", true);
   assertEquals(created, "OK");
 
-  let addedId = await client.xadd(key, "*", { anyfield: "anyval" });
+  const addedId = await client.xadd(key, "*", { anyfield: "anyval" });
 
   assert(addedId);
 
   const xid = ">";
-  let dataOut = await client.xreadgroup([{ key, xid }], {
+  const dataOut = await client.xreadgroup([{ key, xid }], {
     group,
     consumer: "test-consumer",
   });
@@ -261,10 +261,10 @@ suite.test("xack", async () => {
   const key = randomStream();
   const group = "test-group";
 
-  let created = await client.xgroup_create(key, group, "$", true);
+  const created = await client.xgroup_create(key, group, "$", true);
   assertEquals(created, "OK");
 
-  let addedId = await client.xadd(key, "*", { anyfield: "anyval" });
+  const addedId = await client.xadd(key, "*", { anyfield: "anyval" });
 
   assert(addedId);
 
@@ -402,7 +402,7 @@ suite.test(
     const groups = [group0, group1, group2];
 
     for (const g of groups) {
-      let created = await client.xgroup_create(key, g, "$", true);
+      const created = await client.xgroup_create(key, g, "$", true);
       assertEquals(created, "OK");
     }
 

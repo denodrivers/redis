@@ -85,7 +85,7 @@ suite.test("pipeline in concurrent", async () => {
   {
     const client = await newClient(opts);
     const tx = client.pipeline();
-    let promises: Promise<unknown>[] = [];
+    const promises: Promise<unknown>[] = [];
     await client.del("a", "b", "c");
     for (const key of ["a", "b", "c"]) {
       promises.push(tx.set(key, key));
