@@ -20,7 +20,7 @@ jobs:
 
       - name: Get Deno version
         run: |
-          echo "::set-env name=DENO_VERSION::$(cat .denov)"
+          echo "DENO_VERSION=$(cat .denov)" >> $GITHUB_ENV
 
       - name: Set up Deno ${{ env.DENO_VERSION }}
         uses: denolib/setup-deno@master
