@@ -1,7 +1,7 @@
 import {
   assert,
   assertEquals,
-  assertStringContains,
+  assertStringIncludes,
 } from "../vendor/https/deno.land/std/testing/asserts.ts";
 import { newClient, startRedis, stopRedis, TestSuite } from "./test_util.ts";
 
@@ -47,7 +47,7 @@ suite.test("flushslots", async () => {
 });
 
 suite.test("info", async () => {
-  assertStringContains(await client.cluster_info(), "cluster_state");
+  assertStringIncludes(await client.cluster_info(), "cluster_state");
 });
 
 suite.test("keyslot", async () => {
@@ -61,7 +61,7 @@ suite.test("meet", async () => {
 suite.test("nodes", async () => {
   const nodeId = await client.cluster_myid();
   const nodes = await client.cluster_nodes();
-  assertStringContains(nodes, nodeId);
+  assertStringIncludes(nodes, nodeId);
 });
 
 suite.test("replicas", async () => {
