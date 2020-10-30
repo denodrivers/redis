@@ -286,8 +286,8 @@ export class RedisImpl implements Redis {
     return this.execStatusReply("CLUSTER", "ADDSLOTS", ...slots);
   }
 
-  cluster_countfailurereports(node_id: string) {
-    return this.execIntegerReply("CLUSTER", "COUNT-FAILURE-REPORTS", node_id);
+  cluster_countfailurereports(nodeId: string) {
+    return this.execIntegerReply("CLUSTER", "COUNT-FAILURE-REPORTS", nodeId);
   }
 
   cluster_countkeysinslot(slot: number) {
@@ -309,8 +309,8 @@ export class RedisImpl implements Redis {
     return this.execStatusReply("CLUSTER", "FLUSHSLOTS");
   }
 
-  cluster_forget(node_id: string) {
-    return this.execStatusReply("CLUSTER", "FORGET", node_id);
+  cluster_forget(nodeId: string) {
+    return this.execStatusReply("CLUSTER", "FORGET", nodeId);
   }
 
   cluster_getkeysinslot(slot: number, count: number) {
@@ -342,12 +342,12 @@ export class RedisImpl implements Redis {
     return this.execBulkReply<BulkString>("CLUSTER", "NODES");
   }
 
-  cluster_replicas(node_id: string) {
-    return this.execArrayReply<BulkString>("CLUSTER", "REPLICAS", node_id);
+  cluster_replicas(nodeId: string) {
+    return this.execArrayReply<BulkString>("CLUSTER", "REPLICAS", nodeId);
   }
 
-  cluster_replicate(node_id: string) {
-    return this.execStatusReply("CLUSTER", "REPLICATE", node_id);
+  cluster_replicate(nodeId: string) {
+    return this.execStatusReply("CLUSTER", "REPLICATE", nodeId);
   }
 
   cluster_reset(mode?: "HARD" | "SOFT") {
@@ -364,22 +364,22 @@ export class RedisImpl implements Redis {
   cluster_setslot(
     slot: number,
     subcommand: "IMPORTING" | "MIGRATING" | "NODE" | "STABLE",
-    node_id?: string,
+    nodeId?: string,
   ) {
-    if (node_id !== undefined) {
+    if (nodeId !== undefined) {
       return this.execStatusReply(
         "CLUSTER",
         "SETSLOT",
         slot,
         subcommand,
-        node_id,
+        nodeId,
       );
     }
     return this.execStatusReply("CLUSTER", "SETSLOT", slot, subcommand);
   }
 
-  cluster_slaves(node_id: string) {
-    return this.execArrayReply<BulkString>("CLUSTER", "SLAVES", node_id);
+  cluster_slaves(nodeId: string) {
+    return this.execArrayReply<BulkString>("CLUSTER", "SLAVES", nodeId);
   }
 
   cluster_slots() {
@@ -400,8 +400,8 @@ export class RedisImpl implements Redis {
     return this.execArrayReply<BulkString>("COMMAND", "GETKEYS");
   }
 
-  command_info(...command_names: string[]) {
-    return this.execArrayReply("COMMAND", "INFO", ...command_names) as Promise<
+  command_info(...commandNames: string[]) {
+    return this.execArrayReply("COMMAND", "INFO", ...commandNames) as Promise<
       (
         | [BulkString, Integer, BulkString[], Integer, Integer, Integer]
         | BulkNil
@@ -830,7 +830,7 @@ export class RedisImpl implements Redis {
     host: string,
     port: number,
     key: string,
-    destination_db: string,
+    destinationDB: string,
     timeout: number,
     opts?: {
       copy?: boolean;
@@ -839,7 +839,7 @@ export class RedisImpl implements Redis {
       keys?: string[];
     },
   ) {
-    const args = [host, port, key, destination_db, timeout];
+    const args = [host, port, key, destinationDB, timeout];
     if (opts?.copy) {
       args.push("COPY");
     }
@@ -937,8 +937,8 @@ export class RedisImpl implements Redis {
     return this.execIntegerReply("PEXPIRE", key, milliseconds);
   }
 
-  pexpireat(key: string, milliseconds_timestamp: number) {
-    return this.execIntegerReply("PEXPIREAT", key, milliseconds_timestamp);
+  pexpireat(key: string, millisecondsTimestamp: number) {
+    return this.execIntegerReply("PEXPIREAT", key, millisecondsTimestamp);
   }
 
   pfadd(key: string, ...elements: string[]) {
@@ -1026,7 +1026,7 @@ export class RedisImpl implements Redis {
   restore(
     key: string,
     ttl: number,
-    serialized_value: string,
+    serializedValue: string,
     opts?: {
       replace?: boolean;
       absttl?: boolean;
@@ -1034,7 +1034,7 @@ export class RedisImpl implements Redis {
       freq?: number;
     },
   ) {
-    const args = [key, ttl, serialized_value];
+    const args = [key, ttl, serializedValue];
     if (opts?.replace) {
       args.push("REPLACE");
     }
@@ -1382,7 +1382,7 @@ export class RedisImpl implements Redis {
   xadd(
     key: string,
     xid: XIdAdd,
-    field_values: XAddFieldValues,
+    fieldValues: XAddFieldValues,
     maxlen: XMaxlen | undefined = undefined,
   ) {
     const args: (string | number)[] = [key];
@@ -1397,13 +1397,13 @@ export class RedisImpl implements Redis {
 
     args.push(xidstr(xid));
 
-    if (field_values instanceof Map) {
-      for (const [f, v] of field_values) {
+    if (fieldValues instanceof Map) {
+      for (const [f, v] of fieldValues) {
         args.push(f);
         args.push(v);
       }
     } else {
-      for (const [f, v] of Object.entries(field_values)) {
+      for (const [f, v] of Object.entries(fieldValues)) {
         args.push(f);
         args.push(v);
       }
@@ -1708,7 +1708,7 @@ export class RedisImpl implements Redis {
   }
 
   xread(
-    key_xids: (XKeyId | XKeyIdLike)[],
+    keyXIds: (XKeyId | XKeyIdLike)[],
     opts?: { count?: number; block?: number },
   ) {
     const args = [];
@@ -1724,29 +1724,29 @@ export class RedisImpl implements Redis {
     }
     args.push("STREAMS");
 
-    const the_keys = [];
-    const the_xids = [];
+    const theKeys = [];
+    const theXIds = [];
 
-    for (const a of key_xids) {
+    for (const a of keyXIds) {
       if (a instanceof Array) {
         // XKeyIdLike
-        the_keys.push(a[0]);
-        the_xids.push(xidstr(a[1]));
+        theKeys.push(a[0]);
+        theXIds.push(xidstr(a[1]));
       } else {
         // XKeyId
-        the_keys.push(a.key);
-        the_xids.push(xidstr(a.xid));
+        theKeys.push(a.key);
+        theXIds.push(xidstr(a.xid));
       }
     }
 
     return this.execArrayReply<XReadStreamRaw>(
       "XREAD",
-      ...args.concat(the_keys).concat(the_xids),
+      ...args.concat(theKeys).concat(theXIds),
     ).then((raw) => parseXReadReply(raw));
   }
 
   xreadgroup(
-    key_xids: (XKeyIdGroup | XKeyIdGroupLike)[],
+    keyXIds: (XKeyIdGroup | XKeyIdGroupLike)[],
     { group, consumer, count, block }: XReadGroupOpts,
   ) {
     const args: (string | number)[] = [
@@ -1766,24 +1766,24 @@ export class RedisImpl implements Redis {
 
     args.push("STREAMS");
 
-    const the_keys = [];
-    const the_xids = [];
+    const theKeys = [];
+    const theXIds = [];
 
-    for (const a of key_xids) {
+    for (const a of keyXIds) {
       if (a instanceof Array) {
         // XKeyIdGroupLike
-        the_keys.push(a[0]);
-        the_xids.push(a[1] === ">" ? ">" : xidstr(a[1]));
+        theKeys.push(a[0]);
+        theXIds.push(a[1] === ">" ? ">" : xidstr(a[1]));
       } else {
         // XKeyIdGroup
-        the_keys.push(a.key);
-        the_xids.push(a.xid === ">" ? ">" : xidstr(a.xid));
+        theKeys.push(a.key);
+        theXIds.push(a.xid === ">" ? ">" : xidstr(a.xid));
       }
     }
 
     return this.execArrayReply<XReadStreamRaw>(
       "XREADGROUP",
-      ...args.concat(the_keys).concat(the_xids),
+      ...args.concat(theKeys).concat(theXIds),
     ).then((raw) => parseXReadReply(raw));
   }
 

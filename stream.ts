@@ -215,7 +215,7 @@ export interface XClaimOpts {
 export function parseXMessage(
   raw: XReadIdData,
 ): XMessage {
-  const field_values: Map<string, string> = new Map();
+  const fieldValues: Map<string, string> = new Map();
   let f: string | undefined = undefined;
 
   let m = 0;
@@ -223,16 +223,16 @@ export function parseXMessage(
     if (m % 2 === 0) {
       f = data;
     } else if (f) {
-      field_values.set(f, data);
+      fieldValues.set(f, data);
     }
     m++;
   }
 
-  return { xid: parseXId(raw[0]), field_values: field_values };
+  return { xid: parseXId(raw[0]), field_values: fieldValues };
 }
 
 export function convertMap(raw: ConditionalArray): Map<string, Raw> {
-  const field_values: Map<string, Raw> = new Map();
+  const fieldValues: Map<string, Raw> = new Map();
   let f: string | undefined = undefined;
 
   let m = 0;
@@ -240,12 +240,12 @@ export function convertMap(raw: ConditionalArray): Map<string, Raw> {
     if (m % 2 === 0 && typeof data === "string") {
       f = data;
     } else if (m % 2 === 1 && f) {
-      field_values.set(f, data);
+      fieldValues.set(f, data);
     }
     m++;
   }
 
-  return field_values;
+  return fieldValues;
 }
 
 export function parseXReadReply(

@@ -1,6 +1,6 @@
 import {
   assert,
-  assertArrayContains,
+  assertArrayIncludes,
   assertEquals,
 } from "../vendor/https/deno.land/std/testing/asserts.ts";
 import { newClient, startRedis, stopRedis, TestSuite } from "./test_util.ts";
@@ -30,7 +30,7 @@ suite.test("scard", async () => {
 suite.test("sdiff", async () => {
   await client.sadd("key", "1", "2");
   await client.sadd("key2", "1", "3");
-  assertArrayContains(await client.sdiff("key", "key2"), ["2"]);
+  assertArrayIncludes(await client.sdiff("key", "key2"), ["2"]);
 });
 
 suite.test("sdiffstore", async () => {
@@ -42,7 +42,7 @@ suite.test("sdiffstore", async () => {
 suite.test("sinter", async () => {
   await client.sadd("key", "1", "2");
   await client.sadd("key2", "1", "3");
-  assertArrayContains(await client.sinter("key", "key2"), ["1"]);
+  assertArrayIncludes(await client.sinter("key", "key2"), ["1"]);
 });
 
 suite.test("sinterstore", async () => {
@@ -58,7 +58,7 @@ suite.test("sismember", async () => {
 
 suite.test("smembers", async () => {
   await client.sadd("key", "1", "2");
-  assertArrayContains(await client.smembers("key"), ["1", "2"]);
+  assertArrayIncludes(await client.smembers("key"), ["1", "2"]);
 });
 
 suite.test("smove", async () => {
@@ -75,19 +75,19 @@ suite.test("spop", async () => {
 suite.test("spop with count", async () => {
   await client.sadd("key", "a", "b");
   const v = await client.spop("key", 2);
-  assertArrayContains(v, ["a", "b"]);
+  assertArrayIncludes(v, ["a", "b"]);
 });
 
 suite.test("srandmember", async () => {
   await client.sadd("key", "a", "b");
   const v = await client.srandmember("key");
-  assertArrayContains(["a", "b"], [v]);
+  assertArrayIncludes(["a", "b"], [v]);
 });
 
 suite.test("srandmember with count", async () => {
   await client.sadd("key", "a", "b");
   const v = await client.srandmember("key", 3);
-  assertArrayContains(["a", "b", undefined], v);
+  assertArrayIncludes(["a", "b", undefined], v);
 });
 
 suite.test("srem", async () => {
@@ -99,7 +99,7 @@ suite.test("sunion", async () => {
   await client.sadd("key", "a", "b");
   await client.sadd("key2", "b", "c");
   const v = await client.sunion("key", "key2");
-  assertArrayContains(v, ["a", "b", "c"]);
+  assertArrayIncludes(v, ["a", "b", "c"]);
 });
 
 suite.test("sunionstore", async () => {

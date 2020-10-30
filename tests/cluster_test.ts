@@ -1,7 +1,7 @@
 import {
   assert,
   assertEquals,
-  assertStringContains,
+  assertStringIncludes,
 } from "../vendor/https/deno.land/std/testing/asserts.ts";
 import { newClient, startRedis, stopRedis, TestSuite } from "./test_util.ts";
 
@@ -26,8 +26,8 @@ suite.test("myid", async () => {
 });
 
 suite.test("countfailurereports", async () => {
-  const node_id = await client.cluster_myid();
-  assertEquals(await client.cluster_countfailurereports(node_id), 0);
+  const nodeId = await client.cluster_myid();
+  assertEquals(await client.cluster_countfailurereports(nodeId), 0);
 });
 
 suite.test("countkeysinslot", async () => {
@@ -47,7 +47,7 @@ suite.test("flushslots", async () => {
 });
 
 suite.test("info", async () => {
-  assertStringContains(await client.cluster_info(), "cluster_state");
+  assertStringIncludes(await client.cluster_info(), "cluster_state");
 });
 
 suite.test("keyslot", async () => {
@@ -59,29 +59,29 @@ suite.test("meet", async () => {
 });
 
 suite.test("nodes", async () => {
-  const node_id = await client.cluster_myid();
+  const nodeId = await client.cluster_myid();
   const nodes = await client.cluster_nodes();
-  assertStringContains(nodes, node_id);
+  assertStringIncludes(nodes, nodeId);
 });
 
 suite.test("replicas", async () => {
-  const node_id = await client.cluster_myid();
-  assertEquals(await client.cluster_replicas(node_id), []);
+  const nodeId = await client.cluster_myid();
+  assertEquals(await client.cluster_replicas(nodeId), []);
 });
 
 suite.test("slaves", async () => {
-  const node_id = await client.cluster_myid();
-  assertEquals(await client.cluster_slaves(node_id), []);
+  const nodeId = await client.cluster_myid();
+  assertEquals(await client.cluster_slaves(nodeId), []);
 });
 
 suite.test("forget", async () => {
-  const node_id = await client.cluster_myid();
-  const other_node = (await client.cluster_nodes())
+  const nodeId = await client.cluster_myid();
+  const otherNode = (await client.cluster_nodes())
     .split("\n")
-    .find((n) => !n.startsWith(node_id))
+    .find((n) => !n.startsWith(nodeId))
     ?.split(" ")[0];
-  if (other_node) {
-    assertEquals(await client.cluster_forget(other_node), "OK");
+  if (otherNode) {
+    assertEquals(await client.cluster_forget(otherNode), "OK");
   }
 });
 
@@ -90,9 +90,9 @@ suite.test("saveconfig", async () => {
 });
 
 suite.test("setslot", async () => {
-  const node_id = await client.cluster_myid();
-  assertEquals(await client.cluster_setslot(1, "NODE", node_id), "OK");
-  assertEquals(await client.cluster_setslot(1, "MIGRATING", node_id), "OK");
+  const nodeId = await client.cluster_myid();
+  assertEquals(await client.cluster_setslot(1, "NODE", nodeId), "OK");
+  assertEquals(await client.cluster_setslot(1, "MIGRATING", nodeId), "OK");
   assertEquals(await client.cluster_setslot(1, "STABLE"), "OK");
 });
 
@@ -101,23 +101,23 @@ suite.test("slots", async () => {
 });
 
 suite.test("replicate", async () => {
-  const node_id = await client.cluster_myid();
-  const other_node = (await client.cluster_nodes())
+  const nodeId = await client.cluster_myid();
+  const otherNode = (await client.cluster_nodes())
     .split("\n")
-    .find((n) => !n.startsWith(node_id))
+    .find((n) => !n.startsWith(nodeId))
     ?.split(" ")[0];
-  if (other_node) {
-    assertEquals(await client.cluster_replicate(other_node), "OK");
+  if (otherNode) {
+    assertEquals(await client.cluster_replicate(otherNode), "OK");
   }
 });
 
 suite.test("failover", async () => {
-  const node_id = await client.cluster_myid();
-  const other_node = (await client.cluster_nodes())
+  const nodeId = await client.cluster_myid();
+  const otherNode = (await client.cluster_nodes())
     .split("\n")
-    .find((n) => !n.startsWith(node_id))
+    .find((n) => !n.startsWith(nodeId))
     ?.split(" ")[0];
-  if (other_node) {
+  if (otherNode) {
     assertEquals(await client.cluster_failover(), "OK");
   }
 });
