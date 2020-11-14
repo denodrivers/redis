@@ -2112,7 +2112,8 @@ export async function connect(options: RedisConnectOptions): Promise<Redis> {
  * Extract RedisConnectOptions from redis URL
  * @param url
  * @example
- *  const options = parseURL("redis://foo:bar@localhost:6379/1") // -> {hostname: "localhost", port: "6379", tls: false, db: 1, name: foo, password: bar}
+ *  `const options = parseURL("redis://foo:bar@localhost:6379/1")` // -> {hostname: "localhost", port: "6379", tls: false, db: 1, name: foo, password: bar}
+ *  `const options = parseURL("rediss://127.0.0.1:443/?db=2&password=bar")` // -> {hostname: "127.0.0.1", port: "443", tls: true, db: 2, name: undefined, password: bar}
  */
 export function parseURL(url: string): RedisConnectOptions {
   const {
