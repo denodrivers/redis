@@ -81,4 +81,14 @@ suite.test("Check parameter parsing priority", () => {
   assertEquals(options.password, "password");
 });
 
+suite.test("connect with URL", async () => {
+  const options = parseURL("redis://127.0.0.1:7003/1");
+  const tempClient = await connect(options);
+  assertEquals(tempClient.isConnected, true);
+  assertEquals(tempClient.isClosed, false);
+  assertEquals(await tempClient.quit(), "OK");
+  assertEquals(tempClient.isConnected, false);
+  assertEquals(tempClient.isClosed, true);
+});
+
 suite.runTests();
