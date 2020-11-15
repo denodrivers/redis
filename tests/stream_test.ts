@@ -1,5 +1,5 @@
 import { ErrorReplyError } from "../errors.ts";
-import { Redis } from "../redis.ts";
+import { Redis } from "../mod.ts";
 import { parseXId } from "../stream.ts";
 import { delay } from "../vendor/https/deno.land/std/async/mod.ts";
 import {

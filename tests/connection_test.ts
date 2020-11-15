@@ -1,4 +1,4 @@
-import { connect } from "../redis.ts";
+import { connect } from "../mod.ts";
 import { assertEquals } from "../vendor/https/deno.land/std/testing/asserts.ts";
 import { newClient, startRedis, stopRedis, TestSuite } from "./test_util.ts";
 

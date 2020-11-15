@@ -1,4 +1,4 @@
-import { connect, Redis, RedisConnectOptions } from "../redis.ts";
+import { connect, Redis, RedisConnectOptions } from "../mod.ts";
 import { delay } from "../vendor/https/deno.land/std/async/mod.ts";
 
 type TestFunc = () => void | Promise<void>;
