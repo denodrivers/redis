@@ -1,4 +1,4 @@
-import { parseURL } from "../redis.ts";
+import { parseURL } from "../mod.ts";
 import { ErrorReplyError } from "../errors.ts";
 import {
   assert,
