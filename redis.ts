@@ -2107,3 +2107,35 @@ export async function connect(options: RedisConnectOptions): Promise<Redis> {
   const executor = new MuxExecutor(connection);
   return new RedisImpl(connection, executor);
 }
+
+/**
+ * Extract RedisConnectOptions from redis URL
+ * @param url
+ * @example
+ *  `const options = parseURL("redis://foo:bar@localhost:6379/1")` // -> {hostname: "localhost", port: "6379", tls: false, db: 1, name: foo, password: bar}
+ *  `const options = parseURL("rediss://127.0.0.1:443/?db=2&password=bar")` // -> {hostname: "127.0.0.1", port: "443", tls: true, db: 2, name: undefined, password: bar}
+ */
+export function parseURL(url: string): RedisConnectOptions {
+  const {
+    protocol,
+    hostname,
+    port,
+    username,
+    password,
+    pathname,
+    searchParams,
+  } = new URL(url);
+  const db = pathname.replace("/", "") !== ""
+    ? pathname.replace("/", "")
+    : searchParams.get("db") ?? undefined;
+  return {
+    hostname: hostname !== "" ? hostname : "localhost",
+    port: port !== "" ? parseInt(port, 10) : 6379,
+    tls: protocol == "rediss:" ? true : searchParams.get("ssl") === "true",
+    db: db ? parseInt(db, 10) : undefined,
+    name: username !== "" ? username : undefined,
+    password: password !== ""
+      ? password
+      : searchParams.get("password") ?? undefined,
+  };
+}

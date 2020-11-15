@@ -1,3 +1,4 @@
+import { parseURL } from "../redis.ts";
 import { ErrorReplyError } from "../errors.ts";
 import {
   assert,
@@ -104,6 +105,50 @@ suite.test("eval", async () => {
   );
   assert(Array.isArray(raw));
   assertEquals(raw, ["1", "2", "3", "4"]);
+});
+
+suite.test("parse basic URL", () => {
+  const options = parseURL("redis://127.0.0.1:7003");
+  assertEquals(options.hostname, "127.0.0.1");
+  assertEquals(options.port, 7003);
+  assertEquals(options.tls, false);
+  assertEquals(options.db, undefined);
+  assertEquals(options.name, undefined);
+  assertEquals(options.password, undefined);
+});
+
+suite.test("parse complex URL", () => {
+  const options = parseURL("rediss://username:password@127.0.0.1:7003/1");
+  assertEquals(options.hostname, "127.0.0.1");
+  assertEquals(options.port, 7003);
+  assertEquals(options.tls, true);
+  assertEquals(options.db, 1);
+  assertEquals(options.name, "username");
+  assertEquals(options.password, "password");
+});
+
+suite.test("parse URL with search options", () => {
+  const options = parseURL(
+    "redis://127.0.0.1:7003/?db=2&password=password&ssl=true",
+  );
+  assertEquals(options.hostname, "127.0.0.1");
+  assertEquals(options.port, 7003);
+  assertEquals(options.tls, true);
+  assertEquals(options.db, 2);
+  assertEquals(options.name, undefined);
+  assertEquals(options.password, "password");
+});
+
+suite.test("Check parameter parsing priority", () => {
+  const options = parseURL(
+    "rediss://username:password@127.0.0.1:7003/1?db=2&password=password2&ssl=false",
+  );
+  assertEquals(options.hostname, "127.0.0.1");
+  assertEquals(options.port, 7003);
+  assertEquals(options.tls, true);
+  assertEquals(options.db, 1);
+  assertEquals(options.name, "username");
+  assertEquals(options.password, "password");
 });
 
 suite.runTests();
