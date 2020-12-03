@@ -14,7 +14,7 @@ export interface Connection {
   close(): void;
   connect(): Promise<void>;
   reconnect(): Promise<void>;
-  forceRetry(maxRetryCount: number): void;
+  forceRetry(): void;
 }
 
 export type RedisConnectionOptions = {
@@ -167,8 +167,8 @@ export class RedisConnection implements Connection {
     }
   }
 
-  forceRetry(maxRetryCount: number): void {
-    this.maxRetryCount = maxRetryCount;
+  forceRetry(): void {
+    this.maxRetryCount = 10; // TODO Adjust this.
   }
 }
 
