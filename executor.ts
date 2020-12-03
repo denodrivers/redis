@@ -23,7 +23,7 @@ export class MuxExecutor extends CommandExecutor {
     d: Deferred<RedisRawReply>;
   }[] = [];
 
-  async exec(
+  exec(
     command: string,
     ...args: (string | number)[]
   ): Promise<RedisRawReply> {
