@@ -32,7 +32,7 @@ class RedisSubscriptionImpl implements RedisSubscription {
 
   constructor(private connection: Connection) {
     // Force retriable connection for connection shared for pub/sub.
-    if (connection.maxRetryCount === 0) connection.maxRetryCount = 10;
+    if (!connection.isRetriable) connection.forceRetry(10);
   }
 
   async psubscribe(...patterns: string[]) {

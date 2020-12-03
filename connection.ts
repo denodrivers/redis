@@ -10,9 +10,11 @@ export interface Connection {
   retryInterval: number;
   isClosed: boolean;
   isConnected: boolean;
+  isRetriable: boolean;
   close(): void;
   connect(): Promise<void>;
   reconnect(): Promise<void>;
+  forceRetry(maxRetryCount: number): void;
 }
 
 export type RedisConnectionOptions = {
@@ -43,6 +45,10 @@ export class RedisConnection implements Connection {
 
   get isConnected(): boolean {
     return this._isConnected;
+  }
+
+  get isRetriable(): boolean {
+    return this.maxRetryCount > 0;
   }
 
   constructor(
@@ -159,6 +165,10 @@ export class RedisConnection implements Connection {
         }, this.retryInterval);
       });
     }
+  }
+
+  forceRetry(maxRetryCount: number): void {
+    this.maxRetryCount = maxRetryCount;
   }
 }
 
