@@ -13,7 +13,7 @@ export function createRedisPipeline(
   tx = false,
 ): RedisPipeline {
   const executor = new PipelineExecutor(connection, tx);
-  async function flush(): Promise<RawReplyOrError[]> {
+  function flush(): Promise<RawReplyOrError[]> {
     return executor.flush();
   }
   const client = new RedisImpl(connection, executor);
@@ -37,15 +37,15 @@ export class PipelineExecutor extends CommandExecutor {
     super(connection);
   }
 
-  async exec(
+  exec(
     command: string,
     ...args: (string | number)[]
   ): Promise<RedisRawReply> {
     this.commands.push({ command, args });
-    return ["status", "OK"];
+    return Promise.resolve(["status", "OK"]);
   }
 
-  async flush(): Promise<RawReplyOrError[]> {
+  flush(): Promise<RawReplyOrError[]> {
     if (this.tx) {
       this.commands.unshift({ command: "MULTI", args: [] });
       this.commands.push({ command: "EXEC", args: [] });
