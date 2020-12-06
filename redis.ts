@@ -46,13 +46,13 @@ import {
   XReadStreamRaw,
 } from "./stream.ts";
 
-export type Redis = RedisCommands & {
+export interface Redis extends RedisCommands {
   readonly connection: Connection;
   readonly executor: CommandExecutor;
   readonly isClosed: boolean;
   readonly isConnected: boolean;
   close(): void;
-};
+}
 
 export class RedisImpl implements Redis {
   readonly connection: Connection;
@@ -2082,7 +2082,7 @@ export class RedisImpl implements Redis {
   }
 }
 
-export type RedisConnectOptions = {
+export interface RedisConnectOptions {
   hostname: string;
   port?: number | string;
   tls?: boolean;
@@ -2091,7 +2091,7 @@ export type RedisConnectOptions = {
   name?: string;
   maxRetryCount?: number;
   retryInterval?: number;
-};
+}
 
 /**
  * Connect to Redis server

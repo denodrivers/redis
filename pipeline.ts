@@ -4,9 +4,9 @@ import { RawReplyOrError, RedisRawReply, sendCommands } from "./io.ts";
 import { Redis, RedisImpl } from "./redis.ts";
 import { Deferred, deferred } from "./vendor/https/deno.land/std/async/mod.ts";
 
-export type RedisPipeline = Redis & {
+export interface RedisPipeline extends Redis {
   flush(): Promise<RawReplyOrError[]>;
-};
+}
 
 export function createRedisPipeline(
   connection: Connection,

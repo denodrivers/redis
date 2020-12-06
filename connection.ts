@@ -17,14 +17,14 @@ export interface Connection {
   forceRetry(): void;
 }
 
-export type RedisConnectionOptions = {
+export interface RedisConnectionOptions {
   tls?: boolean;
   db?: number;
   password?: string;
   name?: string;
   maxRetryCount?: number;
   retryInterval?: number;
-};
+}
 
 export class RedisConnection implements Connection {
   name: string | null = null;
