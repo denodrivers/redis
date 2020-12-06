@@ -2,7 +2,7 @@ import type { Connection } from "./connection.ts";
 import { InvalidStateError } from "./errors.ts";
 import { readArrayReply, sendCommand } from "./io.ts";
 
-export type RedisSubscription = {
+export interface RedisSubscription {
   readonly isClosed: boolean;
   receive(): AsyncIterableIterator<RedisPubSubMessage>;
   psubscribe(...patterns: string[]): Promise<void>;
@@ -10,13 +10,13 @@ export type RedisSubscription = {
   punsubscribe(...patterns: string[]): Promise<void>;
   unsubscribe(...channels: string[]): Promise<void>;
   close(): Promise<void>;
-};
+}
 
-export type RedisPubSubMessage = {
+export interface RedisPubSubMessage {
   pattern?: string;
   channel: string;
   message: string;
-};
+}
 
 class RedisSubscriptionImpl implements RedisSubscription {
   get isConnected(): boolean {

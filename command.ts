@@ -36,7 +36,7 @@ import type {
   XReadReply,
 } from "./stream.ts";
 
-export type RedisCommands = {
+export interface RedisCommands {
   // Connection
   auth(password: string): Promise<Status>;
   auth(username: string, password: string): Promise<Status>;
@@ -943,4 +943,4 @@ XRANGE somestream - +
   // Pipeline
   tx(): RedisPipeline;
   pipeline(): RedisPipeline;
-};
+}
