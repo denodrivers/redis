@@ -1,5 +1,6 @@
 import type { RedisCommands } from "./command.ts";
 import { Connection, RedisConnection } from "./connection.ts";
+import type { RedisConnectionOptions } from "./connection.ts";
 import { CommandExecutor, MuxExecutor } from "./executor.ts";
 import type {
   Bulk,
@@ -2082,15 +2083,9 @@ export class RedisImpl implements Redis {
   }
 }
 
-export interface RedisConnectOptions {
+export interface RedisConnectOptions extends RedisConnectionOptions {
   hostname: string;
   port?: number | string;
-  tls?: boolean;
-  db?: number;
-  password?: string;
-  name?: string;
-  maxRetryCount?: number;
-  retryInterval?: number;
 }
 
 /**
