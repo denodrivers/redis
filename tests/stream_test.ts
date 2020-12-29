@@ -486,7 +486,7 @@ suite.test("xclaim and xpending, all options", async () => {
 
     const firstPending = await client.xpending(key, group);
 
-    await delay(50);
+    await delay(5);
 
     assertEquals(firstPending.count, 2);
     assertNotEquals(firstPending.startId, firstPending.endId);
