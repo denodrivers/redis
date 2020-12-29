@@ -19,7 +19,7 @@ suite.afterAll(() => {
   client.close();
 });
 
-const randomStream = () => `test-deno-${Math.floor(Math.random() * 1000)}`;
+const randomStream = () => `test-deno-${Math.floor(Math.random() * 1000)}${Math.floor(Math.random() * 1000)}${Math.floor(Math.random() * 1000)}`;
 
 const cleanupStream = async (client: Redis, ...keys: string[]) => {
   await Promise.all(keys.map((key) => client.xtrim(key, { elements: 0 })));
