@@ -20,7 +20,7 @@ suite.afterAll(() => {
 });
 
 const randomStream = () =>
-  `test-deno-${Math.floor(Math.random() * 1000)}${
+  `test-deno-${(new Date().getTime())}-${Math.floor(Math.random() * 1000)}${
     Math.floor(Math.random() * 1000)
   }${Math.floor(Math.random() * 1000)}`;
 
