@@ -533,7 +533,7 @@ suite.test("xclaim and xpending, all options", async () => {
     });
 
     // take a short nap and increase the lastDeliveredMs
-    await delay(50);
+    await delay(5);
 
     // try another form of xpending: counts for all consumers (we have only one)
     const secondPending = await client.xpending_count(key, group, {
@@ -590,7 +590,7 @@ suite.test("xclaim and xpending, all options", async () => {
       consumer: "weird-interloper",
     });
 
-    await delay(50);
+    await delay(5);
 
     // try another form of xpending: counts
     // efficiently filtered down to a single consumer.
@@ -718,7 +718,7 @@ suite.test("xinfo", async () => {
     await client.xreadgroup([[key, ">"]], { group, consumer: "newbie" });
 
     // Increase the idle time by falling asleep
-    await delay(10);
+    await delay(2);
     const consumerInfos = await client.xinfo_consumers(key, group);
     assertEquals(consumerInfos.length, 2);
     const newConsumer = consumerInfos.find((c) => c.name === "newbie");
