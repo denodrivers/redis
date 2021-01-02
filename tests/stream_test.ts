@@ -123,9 +123,10 @@ suite.test("xread", async () => {
     { air: "ball", friend: "table" },
     { elements: 10 },
   );
-  const exampleMap = new Map<string, string>();
-  exampleMap.set("air", "horn");
-  exampleMap.set("friend", "fiend");
+  const exampleMap = {
+    air: "horn",
+    friend: "fiend",
+  };
   const c = await client.xadd(key2, [1001, 1], exampleMap, { elements: 10 });
   assert(c != null);
 
@@ -140,17 +141,20 @@ suite.test("xread", async () => {
 
   assert(v != null);
 
-  const expectedAnimals = new Map();
-  expectedAnimals.set("cat", "moo");
-  expectedAnimals.set("dog", "honk");
-  expectedAnimals.set("duck", "yodel");
+  const expectedAnimals = {
+    cat: "moo",
+    dog: "honk",
+    duck: "yodel",
+  };
 
-  const expectedWeird = new Map();
-  expectedWeird.set("air", "ball");
-  expectedWeird.set("friend", "table");
-  const expectedOdd = new Map();
-  expectedOdd.set("air", "horn");
-  expectedOdd.set("friend", "fiend");
+  const expectedWeird = {
+    air: "ball",
+    friend: "table",
+  };
+  const expectedOdd = {
+    air: "horn",
+    friend: "fiend",
+  };
   assertEquals(v, [
     {
       key,
@@ -298,9 +302,10 @@ suite.test("xadd with map then xread", async () => {
 
   assert(v != null);
 
-  const expectedMap = new Map();
-  expectedMap.set("zoo", "theorize");
-  expectedMap.set("gable", "train");
+  const expectedMap = {
+    zoo: "theorize",
+    gable: "train",
+  };
 
   assertEquals(v, [
     {
@@ -335,9 +340,10 @@ suite.test("xadd with maxlen on map then xread", async () => {
 
   assert(v != null);
 
-  const expectedMap = new Map();
-  expectedMap.set("hop", "4");
-  expectedMap.set("blip", "5");
+  const expectedMap = {
+    hop: "4",
+    blip: "5",
+  };
 
   assertEquals(v, [
     { key, messages: [{ xid: addedId, field_values: expectedMap }] },
@@ -508,11 +514,11 @@ suite.test("xclaim and xpending, all options", async () => {
     assertEquals(firstClaimed.messages.length, 2);
     assertEquals(
       firstClaimed.messages[0].field_values,
-      new Map(Object.entries({ field: "foo" })),
+      { field: "foo" },
     );
     assertEquals(
       firstClaimed.messages[1].field_values,
-      new Map(Object.entries({ field: "bar" })),
+      { field: "bar" },
     );
 
     // ACK these messages so we can try XPENDING/XCLAIM
@@ -630,11 +636,11 @@ suite.test("xclaim and xpending, all options", async () => {
     assertEquals(thirdClaimed.messages.length, 2);
     assertEquals(
       thirdClaimed.messages[0].field_values,
-      new Map(Object.entries({ field: "woof", farm: "chicken" })),
+      { field: "woof", farm: "chicken" },
     );
     assertEquals(
       thirdClaimed.messages[1].field_values,
-      new Map(Object.entries({ field: "bop", farm: "duck" })),
+      { field: "bop", farm: "duck" },
     );
   });
 });
@@ -652,11 +658,11 @@ suite.test("xinfo", async () => {
     assertEquals(basicStreamInfo.lastGeneratedId, { unixMs: 2, seqNo: 0 });
     assertEquals(basicStreamInfo.firstEntry, {
       xid: { unixMs: 1, seqNo: 0 },
-      field_values: new Map(Object.entries({ hello: "no" })),
+      field_values: { hello: "no" },
     });
     assertEquals(basicStreamInfo.lastEntry, {
       xid: { unixMs: 2, seqNo: 0 },
-      field_values: new Map(Object.entries({ hello: "yes" })),
+      field_values: { hello: "yes" },
     });
 
     // Let's do an XREADGROUP so that we see some entries in the PEL
