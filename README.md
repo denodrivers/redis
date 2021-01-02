@@ -1,8 +1,8 @@
 # deno-redis
 
-[![Build Status](https://github.com/keroxp/deno-redis/workflows/CI/badge.svg)](https://github.com/keroxp/deno-redis/actions)
-![https://img.shields.io/github/tag/keroxp/deno-redis.svg](https://img.shields.io/github/tag/keroxp/deno-redis.svg)
-[![license](https://img.shields.io/github/license/keroxp/deno-redis.svg)](https://github.com/keroxp/deno-redis)
+[![Build Status](https://github.com/denodrivers/redis/workflows/CI/badge.svg)](https://github.com/denodrivers/redis/actions)
+![https://img.shields.io/github/tag/denodrivers/redis.svg](https://img.shields.io/github/tag/denodrivers/redis.svg)
+[![license](https://img.shields.io/github/license/denodrivers/redis.svg)](https://github.com/denodrivers/redis)
 [![deno doc](https://doc.deno.land/badge.svg)](https://doc.deno.land/https/deno.land/x/redis/mod.ts)
 
 An experimental implementation of redis client for deno
@@ -141,4 +141,4 @@ await tx.flush();
 
 ## Roadmap for v1
 
-- See https://github.com/keroxp/deno-redis/issues/78
+- See https://github.com/denodrivers/redis/issues/78
