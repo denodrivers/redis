@@ -3,6 +3,7 @@
 [![Build Status](https://github.com/keroxp/deno-redis/workflows/CI/badge.svg)](https://github.com/keroxp/deno-redis/actions)
 ![https://img.shields.io/github/tag/keroxp/deno-redis.svg](https://img.shields.io/github/tag/keroxp/deno-redis.svg)
 [![license](https://img.shields.io/github/license/keroxp/deno-redis.svg)](https://github.com/keroxp/deno-redis)
+[![deno doc](https://doc.deno.land/badge.svg)](https://doc.deno.land/https/deno.land/x/redis/mod.ts)
 
 An experimental implementation of redis client for deno
 
