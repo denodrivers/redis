@@ -246,7 +246,7 @@ suite.test("xreadgroup but no ack", async () => {
   assertEquals(actualFirstStream.messages[0].xid, addedId);
   assertEquals(actualFirstStream.messages.length, 1);
   assertEquals(
-    actualFirstStream.messages[0].field_values.get("anyfield"),
+    actualFirstStream.messages[0].field_values["anyfield"],
     "anyval",
   );
 
@@ -387,7 +387,7 @@ suite.test("unique message per consumer", async () => {
 
       assertEquals(data[0].messages.length, 1);
 
-      assertEquals(data[0].messages[0].field_values.get("target"), payload);
+      assertEquals(data[0].messages[0].field_values["target"], payload);
     }
 
     await cleanupStream(client, key);
@@ -442,16 +442,16 @@ suite.test("xrange and xrevrange", async () => {
   const basicResult = await client.xrange(key, "-", "+");
   assertEquals(basicResult.length, 1);
   assertEquals(basicResult[0].xid, firstId);
-  assertEquals(basicResult[0].field_values.get("f"), "v0");
+  assertEquals(basicResult[0].field_values["f"], "v0");
 
   const secondId = await client.xadd(key, "*", { f: "v1" });
   const revResult = await client.xrevrange(key, "+", "-");
 
   assertEquals(revResult.length, 2);
   assertEquals(revResult[0].xid, secondId);
-  assertEquals(revResult[0].field_values.get("f"), "v1");
+  assertEquals(revResult[0].field_values["f"], "v1");
   assertEquals(revResult[1].xid, firstId);
-  assertEquals(revResult[1].field_values.get("f"), "v0");
+  assertEquals(revResult[1].field_values["f"], "v0");
 
   // count should limit results
   const lim = await client.xrange(key, "-", "+", 1);
