@@ -7,7 +7,7 @@ export interface XId {
 
 export interface XMessage {
   xid: XId;
-  field_values: Map<string, string>;
+  field_values: Record<string, string>;
 }
 
 export interface XKeyId {
@@ -215,7 +215,7 @@ export interface XClaimOpts {
 export function parseXMessage(
   raw: XReadIdData,
 ): XMessage {
-  const fieldValues: Map<string, string> = new Map();
+  const fieldValues: Record<string, string> = {};
   let f: string | undefined = undefined;
 
   let m = 0;
@@ -223,7 +223,7 @@ export function parseXMessage(
     if (m % 2 === 0) {
       f = data;
     } else if (f) {
-      fieldValues.set(f, data);
+      fieldValues[f] = data;
     }
     m++;
   }
