@@ -1,5 +1,4 @@
-import { parseURL } from "../mod.ts";
-import { ErrorReplyError } from "../errors.ts";
+import { ErrorReplyError, parseURL } from "../mod.ts";
 import {
   assert,
   assertEquals,
