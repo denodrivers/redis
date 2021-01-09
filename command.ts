@@ -319,6 +319,37 @@ export interface RedisCommands {
   ): Promise<Integer>;
   llen(key: string): Promise<Integer>;
   lpop(key: string): Promise<Bulk>;
+
+  /**
+   * Returns the index of the first matching element inside a list.
+   * If no match is found, this method returns `undefined`.
+   */
+  lpos(
+    key: string,
+    element: string,
+    opts?: {
+      rank?: number;
+      count?: null | undefined;
+      maxlen?: number;
+    },
+  ): Promise<Integer | BulkNil>;
+
+  /**
+   * Returns the indexes of the first N matching elements inside a list.
+   * If no match is found. this method returns an empty array.
+   *
+   * @param opts.count Maximum length of the indices returned by this method
+   */
+  lpos(
+    key: string,
+    element: string,
+    opts: {
+      count: number;
+      rank?: number;
+      maxlen?: number;
+    },
+  ): Promise<Integer[]>;
+
   lpush(key: string, ...elements: string[]): Promise<Integer>;
   lpushx(key: string, ...elements: string[]): Promise<Integer>;
   lrange(key: string, start: number, stop: number): Promise<BulkString[]>;

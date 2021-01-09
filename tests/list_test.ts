@@ -62,6 +62,28 @@ suite.test("lpop", async () => {
   assertEquals(await client.lpop("list"), "1");
 });
 
+suite.test("lpos", async () => {
+  await client.rpush("list", "a", "b", "c", "1");
+  assertEquals(await client.lpos("list", "c"), 2);
+  assertEquals(await client.lpos("list", "d"), undefined);
+});
+
+suite.test("lpos with rank", async () => {
+  await client.rpush("list", "a", "b", "c", "1", "2", "c", "c", "d");
+  assertEquals(await client.lpos("list", "c", { rank: 2 }), 5);
+});
+
+suite.test("lpos with count", async () => {
+  await client.rpush("list", "a", "b", "c", "1", "2", "b", "c");
+  assertEquals(await client.lpos("list", "b", { count: 2 }), [1, 5]);
+});
+
+suite.test("lpos with maxlen", async () => {
+  await client.rpush("list", "a", "b", "c");
+  assertEquals(await client.lpos("list", "c", { maxlen: 2 }), undefined);
+  assertEquals(await client.lpos("list", "c", { maxlen: 3 }), 2);
+});
+
 suite.test("lpush", async () => {
   await client.rpush("list", "1", "2");
   assertEquals(await client.lpush("list", "3", "4"), 4);
