@@ -771,6 +771,41 @@ export class RedisImpl implements Redis {
     return this.execBulkReply("LPOP", key);
   }
 
+  lpos(key: string, element: string, opts?: {
+    rank?: number;
+    count?: number | null | undefined;
+    maxlen?: number;
+  }): Promise<Integer | BulkNil>;
+
+  lpos(key: string, element: string, opts: {
+    rank?: number;
+    count: number;
+    maxlen?: number;
+  }): Promise<Integer[]>;
+
+  lpos(key: string, element: string, opts?: {
+    rank?: number;
+    count?: number | null | undefined;
+    maxlen?: number;
+  }): Promise<Integer | BulkNil | Integer[]> {
+    const args = [element];
+    if (opts?.rank != null) {
+      args.push("RANK", String(opts.rank));
+    }
+
+    if (opts?.count != null) {
+      args.push("COUNT", String(opts.count));
+    }
+
+    if (opts?.maxlen != null) {
+      args.push("MAXLEN", String(opts.maxlen));
+    }
+
+    return opts?.count == null
+      ? this.execIntegerReply("LPOS", key, ...args)
+      : this.execArrayReply<Integer>("LPOS", key, ...args);
+  }
+
   lpush(key: string, ...elements: (string | number)[]) {
     return this.execIntegerReply("LPUSH", key, ...elements);
   }

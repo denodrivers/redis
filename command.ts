@@ -319,6 +319,27 @@ export interface RedisCommands {
   ): Promise<Integer>;
   llen(key: string): Promise<Integer>;
   lpop(key: string): Promise<Bulk>;
+
+  lpos(
+    key: string,
+    element: string,
+    opts?: {
+      rank?: number;
+      count?: null | undefined;
+      maxlen?: number;
+    },
+  ): Promise<Integer | BulkNil>;
+
+  lpos(
+    key: string,
+    element: string,
+    opts: {
+      count: number;
+      rank?: number;
+      maxlen?: number;
+    },
+  ): Promise<Integer[]>;
+
   lpush(key: string, ...elements: string[]): Promise<Integer>;
   lpushx(key: string, ...elements: string[]): Promise<Integer>;
   lrange(key: string, start: number, stop: number): Promise<BulkString[]>;
