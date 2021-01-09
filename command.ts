@@ -320,6 +320,10 @@ export interface RedisCommands {
   llen(key: string): Promise<Integer>;
   lpop(key: string): Promise<Bulk>;
 
+  /**
+   * Returns the index of the first matching element inside a list.
+   * If no match is found, this method returns `undefined`.
+   */
   lpos(
     key: string,
     element: string,
@@ -330,6 +334,12 @@ export interface RedisCommands {
     },
   ): Promise<Integer | BulkNil>;
 
+  /**
+   * Returns the indexes of the first N matching elements.
+   * If no match is found. this method returns an empty array.
+   *
+   * @param opts.count Maximum length of the indices returned by this method
+   */
   lpos(
     key: string,
     element: string,
