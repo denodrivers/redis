@@ -37,4 +37,9 @@ suite.test("swapdb", async () => {
   assertEquals(await client.swapdb(0, 1), "OK");
 });
 
+suite.test("client id", async () => {
+  const id = await client.client_id();
+  assertEquals(typeof id, "number");
+});
+
 suite.runTests();
