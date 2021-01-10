@@ -864,6 +864,12 @@ XRANGE somestream - +
     opts?: { aggregate?: "SUM" | "MIN" | "MAX" },
   ): Promise<Integer>;
 
+  // Client
+  /**
+   * Returns the id of the current redis connection.
+   */
+  client_id(): Promise<Integer>;
+
   // Cluster
   cluster_addslots(...slots: number[]): Promise<Status>;
   cluster_countfailurereports(node_id: string): Promise<Integer>;
