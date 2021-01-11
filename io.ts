@@ -4,12 +4,43 @@ import type {
   BufWriter,
 } from "./vendor/https/deno.land/std/io/bufio.ts";
 
+/**
+ * @see https://redis.io/topics/protocol
+ */
+
+/**
+ * @description Represents the **simple string** type in the RESP2 protocol.
+ */
 export type Status = string;
+
+/**
+ * @description Represents the **integer** type in the RESP2 protocol.
+ */
 export type Integer = number;
+
+/**
+ * @description Represents the **bulk string** or **null bulk string** in the RESP2 protocol.
+ */
 export type Bulk = string | undefined;
+
+/**
+ * @description Represents the **bulk string** type in the RESP2 protocol.
+ */
 export type BulkString = string;
+
+/**
+ * @description Represents the **null bulk string** in the RESP2 protocol.
+ */
 export type BulkNil = undefined;
+
+/**
+ * @description Represents the some type in the RESP2 protocol.
+ */
 export type Raw = Status | Integer | Bulk | ConditionalArray;
+
+/**
+ * @description Represents the **array** type in the RESP2 protocol.
+ */
 export type ConditionalArray = Raw[];
 
 export type StatusReply = ["status", Status];
@@ -124,7 +155,7 @@ export async function readLine(reader: BufReader): Promise<string> {
   throw new InvalidStateError();
 }
 
-export async function readStatusReply(reader: BufReader): Promise<string> {
+export async function readStatusReply(reader: BufReader): Promise<Status> {
   const line = await readLine(reader);
   if (line[0] === "+") {
     return line.substr(1, line.length - 3);
@@ -132,7 +163,7 @@ export async function readStatusReply(reader: BufReader): Promise<string> {
   tryParseErrorReply(line);
 }
 
-export async function readIntegerReply(reader: BufReader): Promise<number> {
+export async function readIntegerReply(reader: BufReader): Promise<Integer> {
   const line = await readLine(reader);
   if (line[0] === ":") {
     const str = line.substr(1, line.length - 3);
