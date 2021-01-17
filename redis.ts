@@ -283,8 +283,16 @@ export class RedisImpl implements Redis {
     >;
   }
 
+  client_getname() {
+    return this.execBulkReply("CLIENT", "GETNAME");
+  }
+
   client_id() {
     return this.execIntegerReply("CLIENT", "ID");
+  }
+
+  client_setname(connectionName: string) {
+    return this.execStatusReply("CLIENT", "SETNAME", connectionName);
   }
 
   cluster_addslots(...slots: number[]) {

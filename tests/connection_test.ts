@@ -42,4 +42,9 @@ suite.test("client id", async () => {
   assertEquals(typeof id, "number");
 });
 
+suite.test("client setname & getname", async () => {
+  assertEquals(await client.client_setname("deno-redis"), "OK");
+  assertEquals(await client.client_getname(), "deno-redis");
+});
+
 suite.runTests();
