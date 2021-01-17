@@ -866,9 +866,22 @@ XRANGE somestream - +
 
   // Client
   /**
+   * Returns the name of the current connection which can be set by `client_setname`.
+   * @see https://redis.io/commands/client-getname
+   */
+  client_getname(): Promise<Bulk>;
+
+  /**
    * Returns the id of the current redis connection.
    */
   client_id(): Promise<Integer>;
+
+  /**
+   * Sets a `connectionName` to the current connection.
+   * You can get the name of the current connection using `client_getname()`.
+   * @see https://redis.io/commands/client-setname
+   */
+  client_setname(connectionName: string): Promise<Status>;
 
   // Cluster
   cluster_addslots(...slots: number[]): Promise<Status>;
