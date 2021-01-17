@@ -50,8 +50,8 @@ const [stream] = await client.xread(
 );
 
 const msgFV = stream.messages[0].field_values;
-const plz = msgFV.get("yes");
-const thx = msgFV.get("no");
+const plz = msgFV.get["yes"];
+const thx = msgFV.get["no"];
 ```
 
 **Cluster**
