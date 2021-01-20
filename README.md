@@ -17,7 +17,7 @@ needs `--allow-net` privilege
 import { connect } from "https://deno.land/x/redis/mod.ts";
 const redis = await connect({
   hostname: "127.0.0.1",
-  port: 6379
+  port: 6379,
 });
 const ok = await redis.set("hoge", "fuga");
 const fuga = await redis.get("hoge");
@@ -27,7 +27,7 @@ const fuga = await redis.get("hoge");
 
 ```ts
 const sub = await redis.subscribe("channel");
-(async function() {
+(async function () {
   for await (const { channel, message } of sub.receive()) {
     // on message
   }
@@ -67,8 +67,9 @@ await redis.nodes();
 
 ### Retriable connection
 
-By default, a client's connection will throw an error if the server dies or the network becomes unavailable.
-A connection can be made "retriable" by setting the value `maxRetryCount` when connecting a new client.
+By default, a client's connection will throw an error if the server dies or the
+network becomes unavailable. A connection can be made "retriable" by setting the
+value `maxRetryCount` when connecting a new client.
 
 ```ts
 const redis = await connect({ ...options, maxRetryCount: 10 });
@@ -77,7 +78,8 @@ const redis = await connect({ ...options, maxRetryCount: 10 });
 ```
 
 The property is set automatically to `10` when creating a subscriber client.
-After a reconnection succeeds, the client will subscribe again to all the channels and patterns.
+After a reconnection succeeds, the client will subscribe again to all the
+channels and patterns.
 
 ```ts
 const redis = await connect(options);
@@ -89,8 +91,8 @@ const subscriberClient = await redis.subscribe("channel");
 
 ### Execute raw commands
 
-`redis.executor` is raw level [redis protocol](https://redis.io/topics/protocol) executor.
-You can send raw redis commands and receive replies.
+`redis.executor` is raw level [redis protocol](https://redis.io/topics/protocol)
+executor. You can send raw redis commands and receive replies.
 
 ```ts
 await redis.executor.exec("SET", "redis", "nice"); // => ["status", "OK"]
@@ -104,7 +106,7 @@ https://redis.io/topics/pipelining
 ```ts
 const redis = await connect({
   hostname: "127.0.0.1",
-  port: 6379
+  port: 6379,
 });
 const pl = redis.pipeline();
 pl.ping();
@@ -119,10 +121,14 @@ const replies = await pl.flush();
 
 ### TxPipeline (pipeline with MULTI/EXEC)
 
-We recommend to use `tx()` instead of `multi()/exec()` for transactional operation.  
-`MULTI/EXEC` are potentially stateful operation so that operation's atomicity is guaranteed but redis's state may change between MULTI and EXEC.
+We recommend to use `tx()` instead of `multi()/exec()` for transactional
+operation.
+`MULTI/EXEC` are potentially stateful operation so that operation's atomicity is
+guaranteed but redis's state may change between MULTI and EXEC.
 
-`WATCH` is designed for these problems. You can ignore it by using TxPipeline because pipelined MULTI/EXEC commands are strictly executed in order at the time and no changes will happen during execution.
+`WATCH` is designed for these problems. You can ignore it by using TxPipeline
+because pipelined MULTI/EXEC commands are strictly executed in order at the time
+and no changes will happen during execution.
 
 See detail https://redis.io/topics/transactions
 
