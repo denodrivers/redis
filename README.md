@@ -122,9 +122,8 @@ const replies = await pl.flush();
 ### TxPipeline (pipeline with MULTI/EXEC)
 
 We recommend to use `tx()` instead of `multi()/exec()` for transactional
-operation.
-`MULTI/EXEC` are potentially stateful operation so that operation's atomicity is
-guaranteed but redis's state may change between MULTI and EXEC.
+operation. `MULTI/EXEC` are potentially stateful operation so that operation's
+atomicity is guaranteed but redis's state may change between MULTI and EXEC.
 
 `WATCH` is designed for these problems. You can ignore it by using TxPipeline
 because pipelined MULTI/EXEC commands are strictly executed in order at the time
