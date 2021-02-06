@@ -877,12 +877,10 @@ XRANGE somestream - +
   client_id(): Promise<Integer>;
 
   /**
-   * Suspend all the Redis clients for the specified amount of time (in milliseconds). Currently supports two modes:
-   * ALL: This is the default mode. All client commands are blocked.
-   * WRITE: Clients are only blocked if they attempt to execute a write command.
+   * Suspend all the Redis clients for the specified amount of time (in milliseconds).
    * @see https://redis.io/commands/client-pause
    */
-  client_pause(timeout: number, mode?: "WRITE" | "ALL"): Promise<Status>;
+  client_pause(timeout: number): Promise<Status>;
 
   /**
    * Sets a `connectionName` to the current connection.
@@ -890,12 +888,6 @@ XRANGE somestream - +
    * @see https://redis.io/commands/client-setname
    */
   client_setname(connectionName: string): Promise<Status>;
-
-  /**
-   * Used to resume command processing for all clients that were paused by `client_pause()`.
-   * @see https://redis.io/commands/client-unpause
-   */
-  client_unpause(): Promise<Status>;
 
   // Cluster
   cluster_addslots(...slots: number[]): Promise<Status>;

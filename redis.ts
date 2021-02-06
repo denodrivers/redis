@@ -291,19 +291,12 @@ export class RedisImpl implements Redis {
     return this.execIntegerReply("CLIENT", "ID");
   }
 
-  client_pause(timeout: number, mode?: "WRITE" | "ALL") {
-    if (mode) {
-      return this.execStatusReply("CLIENT", "PAUSE", timeout, mode);
-    }
+  client_pause(timeout: number) {
     return this.execStatusReply("CLIENT", "PAUSE", timeout);
   }
 
   client_setname(connectionName: string) {
     return this.execStatusReply("CLIENT", "SETNAME", connectionName);
-  }
-
-  client_unpause() {
-    return this.execStatusReply("CLIENT", "UNPAUSE");
   }
 
   cluster_addslots(...slots: number[]) {
