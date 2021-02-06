@@ -291,6 +291,10 @@ export class RedisImpl implements Redis {
     return this.execIntegerReply("CLIENT", "ID");
   }
 
+  client_pause(timeout: number) {
+    return this.execStatusReply("CLIENT", "PAUSE", timeout);
+  }
+
   client_setname(connectionName: string) {
     return this.execStatusReply("CLIENT", "SETNAME", connectionName);
   }

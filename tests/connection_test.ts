@@ -47,4 +47,8 @@ suite.test("client setname & getname", async () => {
   assertEquals(await client.client_getname(), "deno-redis");
 });
 
+suite.test("client pause", async () => {
+  assertEquals(await client.client_pause(10), "OK");
+});
+
 suite.runTests();

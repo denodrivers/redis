@@ -877,6 +877,12 @@ XRANGE somestream - +
   client_id(): Promise<Integer>;
 
   /**
+   * Suspend all the Redis clients for the specified amount of time (in milliseconds).
+   * @see https://redis.io/commands/client-pause
+   */
+  client_pause(timeout: number): Promise<Status>;
+
+  /**
    * Sets a `connectionName` to the current connection.
    * You can get the name of the current connection using `client_getname()`.
    * @see https://redis.io/commands/client-setname
