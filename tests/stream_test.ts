@@ -160,15 +160,15 @@ suite.test("xread", async () => {
       messages: [
         {
           xid: parseXId("1000-0"),
-          field_values: expectedAnimals,
+          fieldValues: expectedAnimals,
         },
       ],
     },
     {
       key: key2,
       messages: [
-        { xid: parseXId("1000-0"), field_values: expectedWeird },
-        { xid: parseXId("1001-1"), field_values: expectedOdd },
+        { xid: parseXId("1000-0"), fieldValues: expectedWeird },
+        { xid: parseXId("1001-1"), fieldValues: expectedOdd },
       ],
     },
   ]);
@@ -312,7 +312,7 @@ suite.test("xadd with map then xread", async () => {
       messages: [
         {
           xid: addedId,
-          field_values: expectedMap,
+          fieldValues: expectedMap,
         },
       ],
     },
@@ -345,7 +345,7 @@ suite.test("xadd with maxlen on map then xread", async () => {
   };
 
   assertEquals(v, [
-    { key, messages: [{ xid: addedId, field_values: expectedMap }] },
+    { key, messages: [{ xid: addedId, fieldValues: expectedMap }] },
   ]);
 
   await cleanupStream(client, key);
@@ -657,11 +657,11 @@ suite.test("xinfo", async () => {
     assertEquals(basicStreamInfo.lastGeneratedId, { unixMs: 2, seqNo: 0 });
     assertEquals(basicStreamInfo.firstEntry, {
       xid: { unixMs: 1, seqNo: 0 },
-      field_values: { hello: "no" },
+      fieldValues: { hello: "no" },
     });
     assertEquals(basicStreamInfo.lastEntry, {
       xid: { unixMs: 2, seqNo: 0 },
-      field_values: { hello: "yes" },
+      fieldValues: { hello: "yes" },
     });
 
     // Let's do an XREADGROUP so that we see some entries in the PEL
