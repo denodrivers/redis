@@ -7,7 +7,7 @@ export interface XId {
 
 export interface XMessage {
   xid: XId;
-  field_values: Record<string, string>;
+  fieldValues: Record<string, string>;
 }
 
 export interface XKeyId {
@@ -228,7 +228,7 @@ export function parseXMessage(
     m++;
   }
 
-  return { xid: parseXId(raw[0]), field_values: fieldValues };
+  return { xid: parseXId(raw[0]), fieldValues: fieldValues };
 }
 
 export function convertMap(raw: ConditionalArray): Map<string, Raw> {

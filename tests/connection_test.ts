@@ -38,17 +38,17 @@ suite.test("swapdb", async () => {
 });
 
 suite.test("client id", async () => {
-  const id = await client.client_id();
+  const id = await client.clientID();
   assertEquals(typeof id, "number");
 });
 
 suite.test("client setname & getname", async () => {
-  assertEquals(await client.client_setname("deno-redis"), "OK");
-  assertEquals(await client.client_getname(), "deno-redis");
+  assertEquals(await client.clientSetName("deno-redis"), "OK");
+  assertEquals(await client.clientGetName(), "deno-redis");
 });
 
 suite.test("client pause", async () => {
-  assertEquals(await client.client_pause(10), "OK");
+  assertEquals(await client.clientPause(10), "OK");
 });
 
 suite.runTests();

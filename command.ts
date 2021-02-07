@@ -36,6 +36,79 @@ import type {
   XReadReply,
 } from "./stream.ts";
 
+export interface MigrateOpts {
+  copy?: boolean;
+  replace?: boolean;
+  auth?: string;
+  keys?: string[];
+}
+
+export interface RestoreOpts {
+  replace?: boolean;
+  absttl?: boolean;
+  idletime?: number;
+  freq?: number;
+}
+
+export interface StrargoOpts {
+  idx?: boolean;
+  len?: boolean;
+  minmatchlen?: number;
+  withmatchlen?: boolean;
+}
+
+export interface GeoRadiusOpts {
+  withCoord?: boolean;
+  withDist?: boolean;
+  withHash?: boolean;
+  count?: number;
+  order?: "ASC" | "DESC";
+  store?: string;
+  storeDist?: string;
+}
+
+interface BaseScanOpts {
+  pattern?: string;
+  count?: number;
+}
+
+export interface ScanOpts {
+  type?: string;
+}
+
+export type HscanOpts = BaseScanOpts;
+export type SscanOpts = BaseScanOpts;
+export type ZscanOpts = BaseScanOpts;
+
+export interface ZaddOpts {
+  mode?: "NX" | "XX";
+  ch?: boolean;
+}
+
+interface ZstoreOpts {
+  aggregate?: "SUM" | "MIN" | "MAX";
+}
+
+export type ZinterstoreOpts = ZstoreOpts;
+export type ZunionstoreOpts = ZstoreOpts;
+
+export interface ZrangeOpts {
+  withScore?: boolean;
+}
+
+export interface ZrangeByLexOpts {
+  limit?: { offset: number; count: number };
+}
+
+export interface ZrangeByScoreOpts {
+  withScore?: boolean;
+  limit?: { offset: number; count: number };
+}
+
+export interface MemoryUsageOpts {
+  samples?: number;
+}
+
 export interface RedisCommands {
   // Connection
   auth(password: string): Promise<Status>;
@@ -59,19 +132,14 @@ export interface RedisCommands {
     key: string,
     destination_db: string,
     timeout: number,
-    opts?: {
-      copy?: boolean;
-      replace?: boolean;
-      auth?: string;
-      keys?: string[];
-    },
+    opts?: MigrateOpts,
   ): Promise<Status>;
   move(key: string, db: string): Promise<Integer>;
-  object_refcount(key: string): Promise<Integer | BulkNil>;
-  object_encoding(key: string): Promise<Bulk>;
-  object_idletime(key: string): Promise<Integer | BulkNil>;
-  object_freq(key: string): Promise<Integer | BulkNil>;
-  object_help(): Promise<BulkString[]>;
+  objectRefCount(key: string): Promise<Integer | BulkNil>;
+  objectEncoding(key: string): Promise<Bulk>;
+  objectIdletime(key: string): Promise<Integer | BulkNil>;
+  objectFreq(key: string): Promise<Integer | BulkNil>;
+  objectHelp(): Promise<BulkString[]>;
   persist(key: string): Promise<Integer>;
   pexpire(key: string, milliseconds: number): Promise<Integer>;
   pexpireat(key: string, milliseconds_timestamp: number): Promise<Integer>;
@@ -83,16 +151,11 @@ export interface RedisCommands {
     key: string,
     ttl: number,
     serialized_value: string,
-    opts?: {
-      replace?: boolean;
-      absttl?: boolean;
-      idletime?: number;
-      freq?: number;
-    },
+    opts?: RestoreOpts,
   ): Promise<Status>;
   scan(
     cursor: number,
-    opts?: { pattern?: string; count?: number; type?: string },
+    opts?: ScanOpts,
   ): Promise<[BulkString, BulkString[]]>;
   sort(
     key: string,
@@ -189,12 +252,7 @@ export interface RedisCommands {
     target: "KEYS" | "STRINGS",
     a: string,
     b: string,
-    opts?: {
-      idx?: boolean;
-      len?: boolean;
-      minmatchlen?: number;
-      withmatchlen?: boolean;
-    },
+    opts?: StrargoOpts,
   ): Promise<Bulk>;
   strlen(key: string): Promise<Integer>;
 
@@ -231,15 +289,7 @@ export interface RedisCommands {
     latitude: number,
     radius: number,
     unit: "m" | "km" | "ft" | "mi",
-    opts?: {
-      with_coord?: boolean;
-      with_dist?: boolean;
-      with_hash?: boolean;
-      count?: number;
-      order?: "ASC" | "DESC";
-      store?: string;
-      store_dist?: string;
-    },
+    opts?: GeoRadiusOpts,
   ): Promise<ConditionalArray>;
   // FIXME: Return type is too conditional
   georadiusbymember(
@@ -247,15 +297,7 @@ export interface RedisCommands {
     member: string,
     radius: number,
     unit: "m" | "km" | "ft" | "mi",
-    opts?: {
-      with_coord?: boolean;
-      with_dist?: boolean;
-      with_hash?: boolean;
-      count?: number;
-      order?: "ASC" | "DESC";
-      store?: string;
-      store_dist?: string;
-    },
+    opts?: GeoRadiusOpts,
   ): Promise<ConditionalArray>;
 
   // Hash
@@ -287,7 +329,7 @@ export interface RedisCommands {
   hscan(
     key: string,
     cursor: number,
-    opts?: { pattern?: string; count?: number },
+    opts?: HscanOpts,
   ): Promise<[BulkString, BulkString[]]>;
   hset(key: string, field: string, value: string): Promise<Integer>;
   hset(key: string, ...field_values: [string, string][]): Promise<Integer>;
@@ -368,9 +410,9 @@ export interface RedisCommands {
 
   // PubSub
   psubscribe(...patterns: string[]): Promise<RedisSubscription>;
-  pubsub_channels(pattern?: string): Promise<BulkString[]>;
-  pubsub_numsub(...channels: string[]): Promise<(BulkString | Integer)[]>;
-  pubsub_numpat(): Promise<Integer>;
+  pubsubChannels(pattern?: string): Promise<BulkString[]>;
+  pubsubNumsub(...channels: string[]): Promise<(BulkString | Integer)[]>;
+  pubsubNumpat(): Promise<Integer>;
   publish(channel: string, message: string): Promise<Integer>;
   subscribe(...channels: string[]): Promise<RedisSubscription>;
 
@@ -392,7 +434,7 @@ export interface RedisCommands {
   sscan(
     key: string,
     cursor: number,
-    opts?: { pattern?: string; count?: number },
+    opts?: SscanOpts,
   ): Promise<[BulkString, BulkString[]]>;
   sunion(...keys: string[]): Promise<BulkString[]>;
   sunionstore(destination: string, ...keys: string[]): Promise<Integer>;
@@ -536,7 +578,7 @@ XCLAIM mystream mygroup Alice 3600000 1526569498055-0
    *            the consumer group
    * @param mkstream You can use the optional MKSTREAM subcommand as the last argument after the XId to automatically create the stream, if it doesn't exist. Note that if the stream is created in this way it will have a length of 0.
    */
-  xgroup_create(
+  xgroupCreate(
     key: string,
     groupName: string,
     xid: XIdInput | "$",
@@ -554,7 +596,7 @@ XGROUP DELCONSUMER test-man-000 hellogroup 4
    * @param groupName the name of the consumer group
    * @param consumerName the specific consumer to delete
    */
-  xgroup_delconsumer(
+  xgroupDelConsumer(
     key: string,
     groupName: string,
     consumerName: string,
@@ -572,10 +614,10 @@ XGROUP DESTROY test-man-000 test-group
    * @param key stream key
    * @param groupName the consumer group to destroy
    */
-  xgroup_destroy(key: string, groupName: string): Promise<Integer>;
+  xgroupDestroy(key: string, groupName: string): Promise<Integer>;
   /** A support command which displays text about the 
    * various subcommands in XGROUP. */
-  xgroup_help(): Promise<BulkString>;
+  xgroupHelp(): Promise<BulkString>;
   /**
      * Finally it possible to set the next message to deliver
      * using the SETID subcommand. Normally the next XId is set
@@ -594,24 +636,24 @@ XGROUP SETID mystream consumer-group-name 0
      * @param groupName   the consumer group
      * @param xid the XId to use for the next message delivered
      */
-  xgroup_setid(
+  xgroupSetID(
     key: string,
     groupName: string,
     xid: XIdInput,
   ): Promise<Status>;
-  xinfo_stream(key: string): Promise<XInfoStreamReply>;
+  xinfoStream(key: string): Promise<XInfoStreamReply>;
   /**
    *  returns the entire state of the stream, including entries, groups, consumers and PELs. This form is available since Redis 6.0.
    * @param key The stream key
    */
-  xinfo_stream_full(key: string, count?: number): Promise<XInfoStreamFullReply>;
+  xinfoStreamFull(key: string, count?: number): Promise<XInfoStreamFullReply>;
   /**
    * Get as output all the consumer groups associated 
    * with the stream.
    * 
    * @param key the stream key
    */
-  xinfo_groups(key: string): Promise<XInfoGroupsReply>;
+  xinfoGroups(key: string): Promise<XInfoGroupsReply>;
   /**
    * Get the list of every consumer in a specific 
    * consumer group.
@@ -619,7 +661,7 @@ XGROUP SETID mystream consumer-group-name 0
    * @param key the stream key
    * @param group list consumers for this group
    */
-  xinfo_consumers(key: string, group: string): Promise<XInfoConsumersReply>;
+  xinfoConsumers(key: string, group: string): Promise<XInfoConsumersReply>;
   /**
    * Returns the number of entries inside a stream. If the specified key does not exist the command returns zero, as if the stream was empty. However note that unlike other Redis types, zero-length streams are possible, so you should call TYPE or EXISTS in order to check if a key exists or not.
    * @param key  the stream key to inspect
@@ -650,7 +692,7 @@ XGROUP SETID mystream consumer-group-name 0
    * @param startEndCount start and end: XId range params. you may specify "-" for start and "+" for end. you must also provide a max count of messages.
    * @param consumer optional, filter by this consumer as owner
    */
-  xpending_count(
+  xpendingCount(
     key: string,
     group: string,
     startEndCount: StartEndCount,
@@ -757,23 +799,23 @@ XRANGE somestream - +
     key: string,
     score: number,
     member: string,
-    opts?: { mode?: "NX" | "XX"; ch?: boolean },
+    opts?: ZaddOpts,
   ): Promise<Integer>;
   zadd(
     key: string,
     score_members: [number, string][],
-    opts?: { mode?: "NX" | "XX"; ch?: boolean },
+    opts?: ZaddOpts,
   ): Promise<Integer>;
   zadd(
     key: string,
     member_scores: Record<string, number>,
-    opts?: { mode?: "NX" | "XX"; ch?: boolean },
+    opts?: ZaddOpts,
   ): Promise<Integer>;
-  zadd_incr(
+  zaddIncr(
     key: string,
     score: number,
     member: string,
-    opts?: { mode?: "NX" | "XX"; ch?: boolean },
+    opts?: ZaddOpts,
   ): Promise<Bulk>;
   zcard(key: string): Promise<Integer>;
   zcount(key: string, min: number, max: number): Promise<Integer>;
@@ -781,17 +823,17 @@ XRANGE somestream - +
   zinterstore(
     destination: string,
     keys: string[],
-    opts?: { aggregate?: "SUM" | "MIN" | "MAX" },
+    opts?: ZinterstoreOpts,
   ): Promise<Integer>;
   zinterstore(
     destination: string,
     key_weights: [string, number][],
-    opts?: { aggregate?: "SUM" | "MIN" | "MAX" },
+    opts?: ZinterstoreOpts,
   ): Promise<Integer>;
   zinterstore(
     destination: string,
     key_weights: Record<string, number>,
-    opts?: { aggregate?: "SUM" | "MIN" | "MAX" },
+    opts?: ZinterstoreOpts,
   ): Promise<Integer>;
   zlexcount(key: string, min: string, max: string): Promise<Integer>;
   zpopmax(key: string, count?: number): Promise<BulkString[]>;
@@ -800,19 +842,19 @@ XRANGE somestream - +
     key: string,
     start: number,
     stop: number,
-    opts?: { with_score?: boolean },
+    opts?: ZrangeOpts,
   ): Promise<BulkString[]>;
   zrangebylex(
     key: string,
     min: string,
     max: string,
-    opts?: { limit?: { offset: number; count: number } },
+    opts?: ZrangeByLexOpts,
   ): Promise<BulkString[]>;
   zrangebyscore(
     key: string,
     min: number | string,
     max: number | string,
-    opts?: { with_score?: boolean; limit?: { offset: number; count: number } },
+    opts?: ZrangeByScoreOpts,
   ): Promise<BulkString[]>;
   zrank(key: string, member: string): Promise<Integer | BulkNil>;
   zrem(key: string, ...members: string[]): Promise<Integer>;
@@ -827,145 +869,145 @@ XRANGE somestream - +
     key: string,
     start: number,
     stop: number,
-    opts?: { with_score?: boolean },
+    opts?: ZrangeOpts,
   ): Promise<BulkString[]>;
   zrevrangebylex(
     key: string,
     max: string,
     min: string,
-    opts?: { limit?: { offset: number; count: number } },
+    opts?: ZrangeByLexOpts,
   ): Promise<BulkString[]>;
   zrevrangebyscore(
     key: string,
     max: number | string,
     min: number | string,
-    opts?: { with_score?: boolean; limit?: { offset: number; count: number } },
+    opts?: ZrangeByScoreOpts,
   ): Promise<BulkString[]>;
   zrevrank(key: string, member: string): Promise<Integer | BulkNil>;
   zscan(
     key: string,
     cursor: number,
-    opts?: { pattern?: string; count?: number },
+    opts?: ZscanOpts,
   ): Promise<[BulkString, BulkString[]]>;
   zscore(key: string, member: string): Promise<Bulk>;
   zunionstore(
     destination: string,
     keys: string[],
-    opts?: { aggregate?: "SUM" | "MIN" | "MAX" },
+    opts?: ZunionstoreOpts,
   ): Promise<Integer>;
   zunionstore(
     destination: string,
     key_weights: [string, number][],
-    opts?: { aggregate?: "SUM" | "MIN" | "MAX" },
+    opts?: ZunionstoreOpts,
   ): Promise<Integer>;
   zunionstore(
     destination: string,
     key_weights: Record<string, number>,
-    opts?: { aggregate?: "SUM" | "MIN" | "MAX" },
+    opts?: ZunionstoreOpts,
   ): Promise<Integer>;
 
   // Client
   /**
-   * Returns the name of the current connection which can be set by `client_setname`.
+   * Returns the name of the current connection which can be set by `clientSetName`.
    * @see https://redis.io/commands/client-getname
    */
-  client_getname(): Promise<Bulk>;
+  clientGetName(): Promise<Bulk>;
 
   /**
    * Returns the id of the current redis connection.
    */
-  client_id(): Promise<Integer>;
+  clientID(): Promise<Integer>;
 
   /**
    * Suspend all the Redis clients for the specified amount of time (in milliseconds).
    * @see https://redis.io/commands/client-pause
    */
-  client_pause(timeout: number): Promise<Status>;
+  clientPause(timeout: number): Promise<Status>;
 
   /**
    * Sets a `connectionName` to the current connection.
-   * You can get the name of the current connection using `client_getname()`.
+   * You can get the name of the current connection using `clientGetName()`.
    * @see https://redis.io/commands/client-setname
    */
-  client_setname(connectionName: string): Promise<Status>;
+  clientSetName(connectionName: string): Promise<Status>;
 
   // Cluster
-  cluster_addslots(...slots: number[]): Promise<Status>;
-  cluster_countfailurereports(node_id: string): Promise<Integer>;
-  cluster_countkeysinslot(slot: number): Promise<Integer>;
-  cluster_delslots(...slots: number[]): Promise<Status>;
-  cluster_failover(mode?: "FORCE" | "TAKEOVER"): Promise<Status>;
-  cluster_flushslots(): Promise<Status>;
-  cluster_forget(node_id: string): Promise<Status>;
-  cluster_getkeysinslot(slot: number, count: number): Promise<BulkString[]>;
-  cluster_info(): Promise<BulkString>;
-  cluster_keyslot(key: string): Promise<Integer>;
-  cluster_meet(ip: string, port: number): Promise<Status>;
-  cluster_myid(): Promise<BulkString>;
-  cluster_nodes(): Promise<BulkString>;
-  cluster_replicas(node_id: string): Promise<BulkString[]>;
-  cluster_replicate(node_id: string): Promise<Status>;
-  cluster_reset(mode?: "HARD" | "SOFT"): Promise<Status>;
-  cluster_saveconfig(): Promise<Status>;
-  cluster_setslot(
+  clusterAddSlots(...slots: number[]): Promise<Status>;
+  clusterCountFailureReports(node_id: string): Promise<Integer>;
+  clusterCountKeysInSlot(slot: number): Promise<Integer>;
+  clusterDelSlots(...slots: number[]): Promise<Status>;
+  clusterFailover(mode?: "FORCE" | "TAKEOVER"): Promise<Status>;
+  clusterFlushSlots(): Promise<Status>;
+  clusterForget(node_id: string): Promise<Status>;
+  clusterGetKeysInSlot(slot: number, count: number): Promise<BulkString[]>;
+  clusterInfo(): Promise<BulkString>;
+  clusterKeySlot(key: string): Promise<Integer>;
+  clusterMeet(ip: string, port: number): Promise<Status>;
+  clusterMyID(): Promise<BulkString>;
+  clusterNodes(): Promise<BulkString>;
+  clusterReplicas(node_id: string): Promise<BulkString[]>;
+  clusterReplicate(node_id: string): Promise<Status>;
+  clusterReset(mode?: "HARD" | "SOFT"): Promise<Status>;
+  clusterSaveConfig(): Promise<Status>;
+  clusterSetSlot(
     slot: number,
     subcommand: "IMPORTING" | "MIGRATING" | "NODE" | "STABLE",
     node_id?: string,
   ): Promise<Status>;
-  cluster_slaves(node_id: string): Promise<BulkString[]>;
-  cluster_slots(): Promise<ConditionalArray>;
+  clusterSlaves(node_id: string): Promise<BulkString[]>;
+  clusterSlots(): Promise<ConditionalArray>;
   readonly(): Promise<Status>;
   readwrite(): Promise<Status>;
 
   // Server
-  acl_cat(categoryname?: string): Promise<BulkString[]>;
-  acl_deluser(...usernames: string[]): Promise<Integer>;
-  acl_genpass(bits?: number): Promise<BulkString>;
-  acl_getuser(username: string): Promise<(BulkString | BulkString[])[]>;
-  acl_help(): Promise<BulkString[]>;
-  acl_list(): Promise<BulkString[]>;
-  acl_load(): Promise<Status>;
-  acl_log(count: number): Promise<BulkString[]>;
-  acl_log(mode: "RESET"): Promise<Status>;
-  acl_save(): Promise<Status>;
-  acl_setuser(username: string, ...rules: string[]): Promise<Status>;
-  acl_users(): Promise<BulkString[]>;
-  acl_whoami(): Promise<BulkString>;
+  aclCat(categoryname?: string): Promise<BulkString[]>;
+  aclDelUser(...usernames: string[]): Promise<Integer>;
+  aclGenPass(bits?: number): Promise<BulkString>;
+  aclGetUser(username: string): Promise<(BulkString | BulkString[])[]>;
+  aclHelp(): Promise<BulkString[]>;
+  aclList(): Promise<BulkString[]>;
+  aclLoad(): Promise<Status>;
+  aclLog(count: number): Promise<BulkString[]>;
+  aclLog(mode: "RESET"): Promise<Status>;
+  aclSave(): Promise<Status>;
+  aclSetUser(username: string, ...rules: string[]): Promise<Status>;
+  aclUsers(): Promise<BulkString[]>;
+  aclWhoami(): Promise<BulkString>;
   bgrewriteaof(): Promise<Status>;
   bgsave(): Promise<Status>;
   command(): Promise<
     [BulkString, Integer, BulkString[], Integer, Integer, Integer][]
   >;
-  command_count(): Promise<Integer>;
-  command_getkeys(): Promise<BulkString[]>;
-  command_info(
+  commandCount(): Promise<Integer>;
+  commandGetKeys(): Promise<BulkString[]>;
+  commandInfo(
     ...command_names: string[]
   ): Promise<
     ([BulkString, Integer, BulkString[], Integer, Integer, Integer] | BulkNil)[]
   >;
-  config_get(parameter: string): Promise<BulkString[]>;
-  config_resetstat(): Promise<Status>;
-  config_rewrite(): Promise<Status>;
-  config_set(parameter: string, value: string): Promise<Status>;
+  configGet(parameter: string): Promise<BulkString[]>;
+  configResetStat(): Promise<Status>;
+  configRewrite(): Promise<Status>;
+  configSet(parameter: string, value: string): Promise<Status>;
   dbsize(): Promise<Integer>;
-  debug_object(key: string): Promise<Status>;
-  debug_segfault(): Promise<Status>;
+  debugObject(key: string): Promise<Status>;
+  debugSegfault(): Promise<Status>;
   flushall(async?: boolean): Promise<Status>;
   flushdb(async?: boolean): Promise<Status>;
   info(section?: string): Promise<BulkString>;
   lastsave(): Promise<Integer>;
-  memory_doctor(): Promise<BulkString>;
-  memory_help(): Promise<BulkString[]>;
-  memory_malloc_stats(): Promise<BulkString>;
-  memory_purge(): Promise<Status>;
-  memory_stats(): Promise<ConditionalArray>;
-  memory_usage(key: string, opts?: { samples?: number }): Promise<Integer>;
-  module_list(): Promise<BulkString[]>;
-  module_load(path: string, ...args: string[]): Promise<Status>;
-  module_unload(name: string): Promise<Status>;
+  memoryDoctor(): Promise<BulkString>;
+  memoryHelp(): Promise<BulkString[]>;
+  memoryMallocStats(): Promise<BulkString>;
+  memoryPurge(): Promise<Status>;
+  memoryStats(): Promise<ConditionalArray>;
+  memoryUsage(key: string, opts?: MemoryUsageOpts): Promise<Integer>;
+  moduleList(): Promise<BulkString[]>;
+  moduleLoad(path: string, ...args: string[]): Promise<Status>;
+  moduleUnload(name: string): Promise<Status>;
   monitor(): void;
   replicaof(host: string, port: number): Promise<Status>;
-  replicaof_no_one(): Promise<Status>;
+  replicaofNoOne(): Promise<Status>;
   role(): Promise<
     | ["master", Integer, BulkString[][]]
     | ["slave", BulkString, Integer, BulkString, Integer]
@@ -974,7 +1016,7 @@ XRANGE somestream - +
   save(): Promise<Status>;
   shutdown(mode?: "NOSAVE" | "SAVE"): Promise<Status>;
   slaveof(host: string, port: number): Promise<Status>;
-  slaveof_no_one(): Promise<Status>;
+  slaveofNoOne(): Promise<Status>;
   slowlog(subcommand: string, ...args: string[]): Promise<ConditionalArray>;
   swapdb(index1: number, index2: number): Promise<Status>;
   sync(): void;
@@ -983,11 +1025,11 @@ XRANGE somestream - +
   // Scripting
   eval(script: string, keys: string[], args: string[]): Promise<Raw>;
   evalsha(sha1: string, keys: string[], args: string[]): Promise<Raw>;
-  script_debug(mode: "YES" | "SYNC" | "NO"): Promise<Status>;
-  script_exists(...sha1s: string[]): Promise<Integer[]>;
-  script_flush(): Promise<Status>;
-  script_kill(): Promise<Status>;
-  script_load(script: string): Promise<Status>;
+  scriptDebug(mode: "YES" | "SYNC" | "NO"): Promise<Status>;
+  scriptExists(...sha1s: string[]): Promise<Integer[]>;
+  scriptFlush(): Promise<Status>;
+  scriptKill(): Promise<Status>;
+  scriptLoad(script: string): Promise<Status>;
 
   // Transactions
   discard(): Promise<Status>;

@@ -1,4 +1,4 @@
-import type { RedisCommands } from "./command.ts";
+import type { RedisCommands, ZrangeOpts } from "./command.ts";
 import { Connection, RedisConnection } from "./connection.ts";
 import type { RedisConnectionOptions } from "./connection.ts";
 import { CommandExecutor, MuxExecutor } from "./executor.ts";
@@ -124,25 +124,25 @@ export class RedisImpl implements Redis {
     return reply as Status | BulkNil;
   }
 
-  acl_cat(categoryname?: string) {
+  aclCat(categoryname?: string) {
     if (categoryname !== undefined) {
       return this.execArrayReply<BulkString>("ACL", "CAT", categoryname);
     }
     return this.execArrayReply<BulkString>("ACL", "CAT");
   }
 
-  acl_deluser(...usernames: string[]) {
+  aclDelUser(...usernames: string[]) {
     return this.execIntegerReply("ACL", "DELUSER", ...usernames);
   }
 
-  acl_genpass(bits?: number) {
+  aclGenPass(bits?: number) {
     if (bits !== undefined) {
       return this.execBulkReply<BulkString>("ACL", "GENPASS", bits);
     }
     return this.execBulkReply<BulkString>("ACL", "GENPASS");
   }
 
-  acl_getuser(username: string) {
+  aclGetUser(username: string) {
     return this.execArrayReply<BulkString | BulkString[]>(
       "ACL",
       "GETUSER",
@@ -150,40 +150,40 @@ export class RedisImpl implements Redis {
     );
   }
 
-  acl_help() {
+  aclHelp() {
     return this.execArrayReply<BulkString>("ACL", "HELP");
   }
 
-  acl_list() {
+  aclList() {
     return this.execArrayReply<BulkString>("ACL", "LIST");
   }
 
-  acl_load() {
+  aclLoad() {
     return this.execStatusReply("ACL", "LOAD");
   }
 
-  acl_log(count: number): Promise<BulkString[]>;
-  acl_log(mode: "RESET"): Promise<Status>;
-  acl_log(param: number | "RESET") {
+  aclLog(count: number): Promise<BulkString[]>;
+  aclLog(mode: "RESET"): Promise<Status>;
+  aclLog(param: number | "RESET") {
     if (param === "RESET") {
       return this.execStatusReply("ACL", "LOG", "RESET");
     }
     return this.execArrayReply<BulkString>("ACL", "LOG", param);
   }
 
-  acl_save() {
+  aclSave() {
     return this.execStatusReply("ACL", "SAVE");
   }
 
-  acl_setuser(username: string, ...rules: string[]) {
+  aclSetUser(username: string, ...rules: string[]) {
     return this.execStatusReply("ACL", "SETUSER", username, ...rules);
   }
 
-  acl_users() {
+  aclUsers() {
     return this.execArrayReply<BulkString>("ACL", "USERS");
   }
 
-  acl_whoami() {
+  aclWhoami() {
     return this.execBulkReply<BulkString>("ACL", "WHOAMI");
   }
 
@@ -283,54 +283,54 @@ export class RedisImpl implements Redis {
     >;
   }
 
-  client_getname() {
+  clientGetName() {
     return this.execBulkReply("CLIENT", "GETNAME");
   }
 
-  client_id() {
+  clientID() {
     return this.execIntegerReply("CLIENT", "ID");
   }
 
-  client_pause(timeout: number) {
+  clientPause(timeout: number) {
     return this.execStatusReply("CLIENT", "PAUSE", timeout);
   }
 
-  client_setname(connectionName: string) {
+  clientSetName(connectionName: string) {
     return this.execStatusReply("CLIENT", "SETNAME", connectionName);
   }
 
-  cluster_addslots(...slots: number[]) {
+  clusterAddSlots(...slots: number[]) {
     return this.execStatusReply("CLUSTER", "ADDSLOTS", ...slots);
   }
 
-  cluster_countfailurereports(nodeId: string) {
+  clusterCountFailureReports(nodeId: string) {
     return this.execIntegerReply("CLUSTER", "COUNT-FAILURE-REPORTS", nodeId);
   }
 
-  cluster_countkeysinslot(slot: number) {
+  clusterCountKeysInSlot(slot: number) {
     return this.execIntegerReply("CLUSTER", "COUNTKEYSINSLOT", slot);
   }
 
-  cluster_delslots(...slots: number[]) {
+  clusterDelSlots(...slots: number[]) {
     return this.execStatusReply("CLUSTER", "DELSLOTS", ...slots);
   }
 
-  cluster_failover(mode?: "FORCE" | "TAKEOVER") {
+  clusterFailover(mode?: "FORCE" | "TAKEOVER") {
     if (mode) {
       return this.execStatusReply("CLUSTER", "FAILOVER", mode);
     }
     return this.execStatusReply("CLUSTER", "FAILOVER");
   }
 
-  cluster_flushslots() {
+  clusterFlushSlots() {
     return this.execStatusReply("CLUSTER", "FLUSHSLOTS");
   }
 
-  cluster_forget(nodeId: string) {
+  clusterForget(nodeId: string) {
     return this.execStatusReply("CLUSTER", "FORGET", nodeId);
   }
 
-  cluster_getkeysinslot(slot: number, count: number) {
+  clusterGetKeysInSlot(slot: number, count: number) {
     return this.execArrayReply<BulkString>(
       "CLUSTER",
       "GETKEYSINSLOT",
@@ -339,46 +339,46 @@ export class RedisImpl implements Redis {
     );
   }
 
-  cluster_info() {
+  clusterInfo() {
     return this.execStatusReply("CLUSTER", "INFO");
   }
 
-  cluster_keyslot(key: string) {
+  clusterKeySlot(key: string) {
     return this.execIntegerReply("CLUSTER", "KEYSLOT", key);
   }
 
-  cluster_meet(ip: string, port: number) {
+  clusterMeet(ip: string, port: number) {
     return this.execStatusReply("CLUSTER", "MEET", ip, port);
   }
 
-  cluster_myid() {
+  clusterMyID() {
     return this.execStatusReply("CLUSTER", "MYID");
   }
 
-  cluster_nodes() {
+  clusterNodes() {
     return this.execBulkReply<BulkString>("CLUSTER", "NODES");
   }
 
-  cluster_replicas(nodeId: string) {
+  clusterReplicas(nodeId: string) {
     return this.execArrayReply<BulkString>("CLUSTER", "REPLICAS", nodeId);
   }
 
-  cluster_replicate(nodeId: string) {
+  clusterReplicate(nodeId: string) {
     return this.execStatusReply("CLUSTER", "REPLICATE", nodeId);
   }
 
-  cluster_reset(mode?: "HARD" | "SOFT") {
+  clusterReset(mode?: "HARD" | "SOFT") {
     if (mode) {
       return this.execStatusReply("CLUSTER", "RESET", mode);
     }
     return this.execStatusReply("CLUSTER", "RESET");
   }
 
-  cluster_saveconfig() {
+  clusterSaveConfig() {
     return this.execStatusReply("CLUSTER", "SAVECONFIG");
   }
 
-  cluster_setslot(
+  clusterSetSlot(
     slot: number,
     subcommand: "IMPORTING" | "MIGRATING" | "NODE" | "STABLE",
     nodeId?: string,
@@ -395,11 +395,11 @@ export class RedisImpl implements Redis {
     return this.execStatusReply("CLUSTER", "SETSLOT", slot, subcommand);
   }
 
-  cluster_slaves(nodeId: string) {
+  clusterSlaves(nodeId: string) {
     return this.execArrayReply<BulkString>("CLUSTER", "SLAVES", nodeId);
   }
 
-  cluster_slots() {
+  clusterSlots() {
     return this.execArrayReply("CLUSTER", "SLOTS");
   }
 
@@ -409,15 +409,15 @@ export class RedisImpl implements Redis {
     >;
   }
 
-  command_count() {
+  commandCount() {
     return this.execIntegerReply("COMMAND", "COUNT");
   }
 
-  command_getkeys() {
+  commandGetKeys() {
     return this.execArrayReply<BulkString>("COMMAND", "GETKEYS");
   }
 
-  command_info(...commandNames: string[]) {
+  commandInfo(...commandNames: string[]) {
     return this.execArrayReply("COMMAND", "INFO", ...commandNames) as Promise<
       (
         | [BulkString, Integer, BulkString[], Integer, Integer, Integer]
@@ -426,19 +426,19 @@ export class RedisImpl implements Redis {
     >;
   }
 
-  config_get(parameter: string) {
+  configGet(parameter: string) {
     return this.execArrayReply<BulkString>("CONFIG", "GET", parameter);
   }
 
-  config_resetstat() {
+  configResetStat() {
     return this.execStatusReply("CONFIG", "RESETSTAT");
   }
 
-  config_rewrite() {
+  configRewrite() {
     return this.execStatusReply("CONFIG", "REWRITE");
   }
 
-  config_set(parameter: string, value: string | number) {
+  configSet(parameter: string, value: string | number) {
     return this.execStatusReply("CONFIG", "SET", parameter, value);
   }
 
@@ -446,11 +446,11 @@ export class RedisImpl implements Redis {
     return this.execIntegerReply("DBSIZE");
   }
 
-  debug_object(key: string) {
+  debugObject(key: string) {
     return this.execStatusReply("DEBUG", "OBJECT", key);
   }
 
-  debug_segfault() {
+  debugSegfault() {
     return this.execStatusReply("DEBUG", "SEGFAULT");
   }
 
@@ -846,27 +846,27 @@ export class RedisImpl implements Redis {
     return this.execStatusReply("LTRIM", key, start, stop);
   }
 
-  memory_doctor() {
+  memoryDoctor() {
     return this.execBulkReply<BulkString>("MEMORY", "DOCTOR");
   }
 
-  memory_help() {
+  memoryHelp() {
     return this.execArrayReply<BulkString>("MEMORY", "HELP");
   }
 
-  memory_malloc_stats() {
+  memoryMallocStats() {
     return this.execBulkReply<BulkString>("MEMORY", "MALLOC", "STATS");
   }
 
-  memory_purge() {
+  memoryPurge() {
     return this.execStatusReply("MEMORY", "PURGE");
   }
 
-  memory_stats() {
+  memoryStats() {
     return this.execArrayReply("MEMORY", "STATS");
   }
 
-  memory_usage(key: string, opts?: { samples?: number }) {
+  memoryUsage(key: string, opts?: { samples?: number }) {
     const args: (number | string)[] = [key];
     if (opts?.samples !== undefined) {
       args.push("SAMPLES", opts.samples);
@@ -907,15 +907,15 @@ export class RedisImpl implements Redis {
     return this.execStatusReply("MIGRATE", ...args);
   }
 
-  module_list() {
+  moduleList() {
     return this.execArrayReply<BulkString>("MODULE", "LIST");
   }
 
-  module_load(path: string, ...args: string[]) {
+  moduleLoad(path: string, ...args: string[]) {
     return this.execStatusReply("MODULE", "LOAD", path, ...args);
   }
 
-  module_unload(name: string) {
+  moduleUnload(name: string) {
     return this.execStatusReply("MODULE", "UNLOAD", name);
   }
 
@@ -961,23 +961,23 @@ export class RedisImpl implements Redis {
     return this.execStatusReply("MULTI");
   }
 
-  object_encoding(key: string) {
+  objectEncoding(key: string) {
     return this.execBulkReply("OBJECT", "ENCODING", key);
   }
 
-  object_freq(key: string) {
+  objectFreq(key: string) {
     return this.execIntegerOrNilReply("OBJECT", "FREQ", key);
   }
 
-  object_help() {
+  objectHelp() {
     return this.execArrayReply<BulkString>("OBJECT", "HELP");
   }
 
-  object_idletime(key: string) {
+  objectIdletime(key: string) {
     return this.execIntegerOrNilReply("OBJECT", "IDLETIME", key);
   }
 
-  object_refcount(key: string) {
+  objectRefCount(key: string) {
     return this.execIntegerOrNilReply("OBJECT", "REFCOUNT", key);
   }
 
@@ -1028,18 +1028,18 @@ export class RedisImpl implements Redis {
     return psubscribe(this.connection, ...patterns);
   }
 
-  pubsub_channels(pattern?: string) {
+  pubsubChannels(pattern?: string) {
     if (pattern !== undefined) {
       return this.execArrayReply<BulkString>("PUBSUB", "CHANNELS", pattern);
     }
     return this.execArrayReply<BulkString>("PUBSUB", "CHANNELS");
   }
 
-  pubsub_numpat() {
+  pubsubNumpat() {
     return this.execIntegerReply("PUBSUB", "NUMPAT");
   }
 
-  pubsub_numsub(...channels: string[]) {
+  pubsubNumsub(...channels: string[]) {
     return this.execArrayReply<BulkString | Integer>(
       "PUBSUB",
       "NUMSUBS",
@@ -1138,23 +1138,23 @@ export class RedisImpl implements Redis {
     return this.execIntegerReply("SCARD", key);
   }
 
-  script_debug(mode: "YES" | "SYNC" | "NO") {
+  scriptDebug(mode: "YES" | "SYNC" | "NO") {
     return this.execStatusReply("SCRIPT", "DEBUG", mode);
   }
 
-  script_exists(...sha1s: string[]) {
+  scriptExists(...sha1s: string[]) {
     return this.execArrayReply<Integer>("SCRIPT", "EXISTS", ...sha1s);
   }
 
-  script_flush() {
+  scriptFlush() {
     return this.execStatusReply("SCRIPT", "FLUSH");
   }
 
-  script_kill() {
+  scriptKill() {
     return this.execStatusReply("SCRIPT", "KILL");
   }
 
-  script_load(script: string) {
+  scriptLoad(script: string) {
     return this.execStatusReply("SCRIPT", "LOAD", script);
   }
 
@@ -1240,7 +1240,7 @@ export class RedisImpl implements Redis {
     return this.execStatusReply("SLAVEOF", host, port);
   }
 
-  slaveof_no_one() {
+  slaveofNoOne() {
     return this.execStatusReply("SLAVEOF", "NO ONE");
   }
 
@@ -1248,7 +1248,7 @@ export class RedisImpl implements Redis {
     return this.execStatusReply("REPLICAOF", host, port);
   }
 
-  replicaof_no_one() {
+  replicaofNoOne() {
     return this.execStatusReply("REPLICAOF", "NO ONE");
   }
 
@@ -1535,7 +1535,7 @@ export class RedisImpl implements Redis {
     return this.execIntegerReply("XLEN", key);
   }
 
-  xgroup_create(
+  xgroupCreate(
     key: string,
     groupName: string,
     xid: XIdInput | "$",
@@ -1556,7 +1556,7 @@ export class RedisImpl implements Redis {
     );
   }
 
-  xgroup_delconsumer(
+  xgroupDelConsumer(
     key: string,
     groupName: string,
     consumerName: string,
@@ -1570,15 +1570,15 @@ export class RedisImpl implements Redis {
     );
   }
 
-  xgroup_destroy(key: string, groupName: string) {
+  xgroupDestroy(key: string, groupName: string) {
     return this.execIntegerReply("XGROUP", "DESTROY", key, groupName);
   }
 
-  xgroup_help() {
+  xgroupHelp() {
     return this.execBulkReply<BulkString>("XGROUP", "HELP");
   }
 
-  xgroup_setid(
+  xgroupSetID(
     key: string,
     groupName: string,
     xid: XId,
@@ -1592,7 +1592,7 @@ export class RedisImpl implements Redis {
     );
   }
 
-  xinfo_stream(key: string) {
+  xinfoStream(key: string) {
     return this.execArrayReply<Raw>("XINFO", "STREAM", key).then(
       (raw) => {
         // Note that you should not rely on the fields
@@ -1620,7 +1620,7 @@ export class RedisImpl implements Redis {
     );
   }
 
-  xinfo_stream_full(key: string, count?: number) {
+  xinfoStreamFull(key: string, count?: number) {
     const args = [];
     if (count) {
       args.push("COUNT");
@@ -1652,7 +1652,7 @@ export class RedisImpl implements Redis {
       );
   }
 
-  xinfo_groups(key: string) {
+  xinfoGroups(key: string) {
     return this.execArrayReply<ConditionalArray>("XINFO", "GROUPS", key).then(
       (raws) =>
         raws.map((raw) => {
@@ -1667,7 +1667,7 @@ export class RedisImpl implements Redis {
     );
   }
 
-  xinfo_consumers(key: string, group: string) {
+  xinfoConsumers(key: string, group: string) {
     return this.execArrayReply<ConditionalArray>(
       "XINFO",
       "CONSUMERS",
@@ -1708,7 +1708,7 @@ export class RedisImpl implements Redis {
       });
   }
 
-  xpending_count(
+  xpendingCount(
     key: string,
     group: string,
     startEndCount: StartEndCount,
@@ -1873,7 +1873,7 @@ export class RedisImpl implements Redis {
     return this.execIntegerReply("ZADD", ...args);
   }
 
-  zadd_incr(
+  zaddIncr(
     key: string,
     score: number,
     member: string,
@@ -1969,7 +1969,7 @@ export class RedisImpl implements Redis {
     key: string,
     start: number,
     stop: number,
-    opts?: { with_score?: boolean },
+    opts?: ZrangeOpts,
   ) {
     const args = this.pushZRangeOpts([key, start, stop], opts);
     return this.execArrayReply<BulkString>("ZRANGE", ...args);
@@ -2019,7 +2019,7 @@ export class RedisImpl implements Redis {
     key: string,
     start: number,
     stop: number,
-    opts?: { with_score?: boolean },
+    opts?: ZrangeOpts,
   ) {
     const args = this.pushZRangeOpts([key, start, stop], opts);
     return this.execArrayReply<BulkString>("ZREVRANGE", ...args);
@@ -2047,9 +2047,9 @@ export class RedisImpl implements Redis {
 
   private pushZRangeOpts(
     args: (number | string)[],
-    opts?: { with_score?: boolean; limit?: { offset: number; count: number } },
+    opts?: { withScore?: boolean; limit?: { offset: number; count: number } },
   ) {
-    if (opts?.with_score) {
+    if (opts?.withScore) {
       args.push("WITHSCORES");
     }
     if (opts?.limit) {

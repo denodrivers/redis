@@ -75,29 +75,29 @@ suite.test("move", async () => {
 
 suite.test("object refcount", async () => {
   await client.set("key", "hello");
-  const v = await client.object_refcount("key");
+  const v = await client.objectRefCount("key");
   assertEquals(v, 1);
 });
 
 suite.test("object encoding", async () => {
   await client.set("key", "foobar");
-  const v = await client.object_encoding("key");
+  const v = await client.objectEncoding("key");
   assertEquals(typeof v, "string");
 });
 
 suite.test("object idletime", async () => {
   await client.set("key", "baz");
-  const v = await client.object_idletime("key");
+  const v = await client.objectIdletime("key");
   assertEquals(v, 0);
 });
 
 suite.test("object freq", async () => {
-  const v = await client.object_freq("nosuchkey");
+  const v = await client.objectFreq("nosuchkey");
   assertEquals(v, undefined);
 });
 
 suite.test("object help", async () => {
-  const v = await client.object_help();
+  const v = await client.objectHelp();
   assert(Array.isArray(v));
 });
 
