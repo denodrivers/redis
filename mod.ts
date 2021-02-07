@@ -7,7 +7,24 @@ export {
   InvalidStateError,
   SubscriptionClosedError,
 } from "./errors.ts";
-export type { RedisCommands } from "./command.ts";
+export type {
+  GeoRadiusOpts,
+  HscanOpts,
+  MemoryUsageOpts,
+  MigrateOpts,
+  RedisCommands,
+  RestoreOpts,
+  ScanOpts,
+  SscanOpts,
+  StrargoOpts,
+  ZaddOpts,
+  ZinterstoreOpts,
+  ZrangeByLexOpts,
+  ZrangeByScoreOpts,
+  ZrangeOpts,
+  ZscanOpts,
+  ZunionstoreOpts,
+} from "./command.ts";
 export type { Connection, RedisConnectionOptions } from "./connection.ts";
 export type {
   ArrayReply,
