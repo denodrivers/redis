@@ -57,5 +57,5 @@ jobs:
         run: |
           yarn install --frozen-lockfile
           deno bundle benchmark.ts > benchmark.js
-          deno test -A deno-redis.ts
+          deno run -A deno-redis.ts
           node ioredis.js
