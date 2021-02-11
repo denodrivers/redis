@@ -1,0 +1,13 @@
+{
+  "name": "deno-redis-benchmark",
+  "version": "0.0.0",
+  "type": "module",
+  "description": "",
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "private": true,
+  "devDependencies": {
+    "ioredis": "^4.22.0"
+  }
+}

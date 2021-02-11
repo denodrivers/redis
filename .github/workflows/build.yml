@@ -27,6 +27,11 @@ jobs:
         with:
           deno-version: ${{ env.DENO_VERSION }}
 
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: "12"
+
       - name: Check mod.ts
         run: |
           deno run --allow-read --allow-write --allow-run tools/make_mod.ts
@@ -41,8 +46,17 @@ jobs:
         uses: shogo82148/actions-setup-redis@v1
         with:
           redis-version: ${{ matrix.redis }}
-          auto-start: "false"
+          auto-start: "true"
 
       - name: Run tests
         run: |
           deno test -A redis_test.ts
+      - uses: bahmutov/npm-install@v1
+        with:
+          working-directory: benchmark
+      - name: Run benchmarks
+        working-directory: benchmark
+        run: |
+          deno bundle benchmark.ts > benchmark.js
+          deno run -A deno-redis.ts
+          node ioredis.js

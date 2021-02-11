@@ -3,6 +3,7 @@
     "version": "@0.86.0",
     "modules": [
       "/async/mod.ts",
+      "/testing/bench.ts",
       "/testing/asserts.ts",
       "/io/bufio.ts",
       "/fmt/colors.ts"
