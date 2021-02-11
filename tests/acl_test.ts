@@ -11,15 +11,15 @@ suite.afterAll(() => {
 });
 
 suite.test("whoami", async () => {
-  assertEquals(await client.acl_whoami(), "default");
+  assertEquals(await client.aclWhoami(), "default");
 });
 
 suite.test("list", async () => {
-  assertEquals(await client.acl_list(), ["user default on nopass ~* +@all"]);
+  assertEquals(await client.aclList(), ["user default on nopass ~* +@all"]);
 });
 
 suite.test("getuser", async () => {
-  assertEquals(await client.acl_getuser("default"), [
+  assertEquals(await client.aclGetUser("default"), [
     "flags",
     ["on", "allkeys", "allcommands", "nopass"],
     "passwords",
@@ -33,7 +33,7 @@ suite.test("getuser", async () => {
 
 suite.test("cat", async () => {
   assertEquals(
-    (await client.acl_cat()).sort(),
+    (await client.aclCat()).sort(),
     [
       "keyspace",
       "read",
@@ -59,7 +59,7 @@ suite.test("cat", async () => {
     ].sort(),
   );
   assertEquals(
-    (await client.acl_cat("dangerous")).sort(),
+    (await client.aclCat("dangerous")).sort(),
     [
       "lastsave",
       "shutdown",
@@ -97,22 +97,22 @@ suite.test("cat", async () => {
 });
 
 suite.test("users", async () => {
-  assertEquals(await client.acl_users(), ["default"]);
+  assertEquals(await client.aclUsers(), ["default"]);
 });
 
 suite.test("acl_setuser", async () => {
-  assertEquals(await client.acl_setuser("alan", "+get"), "OK");
-  assertEquals(await client.acl_deluser("alan"), 1);
+  assertEquals(await client.aclSetUser("alan", "+get"), "OK");
+  assertEquals(await client.aclDelUser("alan"), 1);
 });
 
 suite.test("deluser", async () => {
-  assertEquals(await client.acl_deluser("alan"), 0);
+  assertEquals(await client.aclDelUser("alan"), 0);
 });
 
 suite.test("genpass", async () => {
-  assertEquals((await client.acl_genpass()).length, 64);
+  assertEquals((await client.aclGenPass()).length, 64);
   const testlen = 32;
-  assertEquals((await client.acl_genpass(testlen)).length, testlen / 4);
+  assertEquals((await client.aclGenPass(testlen)).length, testlen / 4);
 });
 
 suite.test("aclauth", async () => {
@@ -126,12 +126,12 @@ suite.test("log", async () => {
   } catch (error) {
     // skip invalid username-password pair error
   }
-  assertEquals((await client.acl_log(1))[0][9], randString);
-  assertEquals(await client.acl_log("RESET"), "OK");
+  assertEquals((await client.aclLog(1))[0][9], randString);
+  assertEquals(await client.aclLog("RESET"), "OK");
 });
 
 suite.test("module_list", async () => {
-  assertEquals(await client.module_list(), []);
+  assertEquals(await client.moduleList(), []);
 });
 
 suite.runTests();

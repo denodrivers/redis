@@ -165,7 +165,7 @@ suite.test("testZrangeWithScores", async function testZrangeWithScores() {
   client.zadd("zrangeWithScores", 1, "one");
   client.zadd("zrangeWithScores", 2, "two");
   client.zadd("zrangeWithScores", 3, "three");
-  const v = await client.zrange("zrangeWithScores", 0, 1, { with_score: true });
+  const v = await client.zrange("zrangeWithScores", 0, 1, { withScore: true });
   assertEquals(v, ["one", "1", "two", "2"]);
 });
 
@@ -182,7 +182,7 @@ suite.test("testZrevrangeWithScores", async function testZrevrangeWithScores() {
   client.zadd("zrevrangeWithScores", 2, "two");
   client.zadd("zrevrangeWithScores", 3, "three");
   const v = await client.zrevrange("zrevrangeWithScores", 0, 1, {
-    with_score: true,
+    withScore: true,
   });
   assertEquals(v, ["three", "3", "two", "2"]);
 });
@@ -204,7 +204,7 @@ suite.test(
     client.zadd("zrangebyscoreWithScores", 8, "m3");
     client.zadd("zrangebyscoreWithScores", 10, "m4");
     const v = await client.zrangebyscore("zrangebyscoreWithScores", 3, 9, {
-      with_score: true,
+      withScore: true,
     });
     assertEquals(v, ["m2", "5", "m3", "8"]);
   },
@@ -225,7 +225,7 @@ suite.test("testZrevrangebyscore", async function testZrevrangebyscore() {
   client.zadd("zrevrangebyscoreWithScores", 8, "m3");
   client.zadd("zrevrangebyscoreWithScores", 10, "m4");
   const v = await client.zrevrangebyscore("zrevrangebyscoreWithScores", 9, 4, {
-    with_score: true,
+    withScore: true,
   });
   assertEquals(v, ["m3", "8", "m2", "5"]);
 });

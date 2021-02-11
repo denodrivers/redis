@@ -21,7 +21,7 @@ export type Integer = number;
 /**
  * @description Represents the **bulk string** or **null bulk string** in the RESP2 protocol.
  */
-export type Bulk = string | undefined;
+export type Bulk = BulkString | BulkNil;
 
 /**
  * @description Represents the **bulk string** type in the RESP2 protocol.
