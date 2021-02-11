@@ -46,7 +46,7 @@ jobs:
         uses: shogo82148/actions-setup-redis@v1
         with:
           redis-version: ${{ matrix.redis }}
-          auto-start: "false"
+          auto-start: "true"
 
       - name: Run tests
         run: |
