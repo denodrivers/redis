@@ -1,3 +1,4 @@
+// deno-lint-ignore-file
 import { run } from "./benchmark.js";
 import { performance } from "perf_hooks";
 import Redis from "ioredis";
