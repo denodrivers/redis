@@ -1,4 +1,7 @@
-import { bench, runBenchmarks } from "../vendor/https/deno.land/std/testing/bench.ts"
+import {
+  bench,
+  runBenchmarks,
+} from "../vendor/https/deno.land/std/testing/bench.ts";
 
 interface Redis {
   ping(message: string): Promise<string>;
@@ -26,13 +29,15 @@ export async function run(options: RunOptions): Promise<void> {
   });
 
   const result = await runBenchmarks();
-  const results = result.results.map(({ name, totalMs, runsCount, measuredRunsAvgMs }) => {
-    return {
-      name,
-      totalMs,
-      runsCount,
-      measuredRunsAvgMs,
-    };
-  });
+  const results = result.results.map(
+    ({ name, totalMs, runsCount, measuredRunsAvgMs }) => {
+      return {
+        name,
+        totalMs,
+        runsCount,
+        measuredRunsAvgMs,
+      };
+    },
+  );
   console.table(results);
 }
