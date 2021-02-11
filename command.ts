@@ -36,6 +36,27 @@ import type {
   XReadReply,
 } from "./stream.ts";
 
+export type ACLLogMode = "RESET";
+type BitopOperation = "AND" | "OR" | "XOR" | "NOT";
+
+export interface BitfieldOpts {
+  get?: { type: string; offset: number | string };
+  set?: { type: string; offset: number | string; value: number };
+  incrby?: { type: string; offset: number | string; increment: number };
+}
+
+export interface BitfieldWithOverflowOpts extends BitfieldOpts {
+  overflow: "WRAP" | "SAT" | "FAIL";
+}
+
+export type ClusterFailoverMode = "FORCE" | "TAKEOVER";
+export type ClusterResetMode = "HARD" | "SOFT";
+export type ClusterSetSlotSubcommand =
+  | "IMPORTING"
+  | "MIGRATING"
+  | "NODE"
+  | "STABLE";
+
 export interface MigrateOpts {
   copy?: boolean;
   replace?: boolean;
@@ -50,11 +71,24 @@ export interface RestoreOpts {
   freq?: number;
 }
 
-export interface StrargoOpts {
+export interface StralgoOpts {
   idx?: boolean;
   len?: boolean;
   minmatchlen?: number;
   withmatchlen?: boolean;
+}
+
+export type StralgoAlgorithm = "LCS";
+export type StralgoTarget = "KEYS" | "STRINGS";
+
+export interface SetOpts {
+  ex?: number;
+  px?: number;
+  keepttl?: boolean;
+}
+
+export interface SetWithModeOpts extends SetOpts {
+  mode: "NX" | "XX";
 }
 
 export interface GeoRadiusOpts {
@@ -62,52 +96,90 @@ export interface GeoRadiusOpts {
   withDist?: boolean;
   withHash?: boolean;
   count?: number;
-  order?: "ASC" | "DESC";
+  sort?: "ASC" | "DESC";
   store?: string;
   storeDist?: string;
 }
+
+export type GeoUnit = "m" | "km" | "ft" | "mi";
 
 interface BaseScanOpts {
   pattern?: string;
   count?: number;
 }
 
-export interface ScanOpts {
+export interface ScanOpts extends BaseScanOpts {
   type?: string;
 }
 
-export type HscanOpts = BaseScanOpts;
-export type SscanOpts = BaseScanOpts;
-export type ZscanOpts = BaseScanOpts;
+export type HScanOpts = BaseScanOpts;
+export type SScanOpts = BaseScanOpts;
+export type ZScanOpts = BaseScanOpts;
 
-export interface ZaddOpts {
+export interface ZAddOpts {
   mode?: "NX" | "XX";
   ch?: boolean;
 }
 
-interface ZstoreOpts {
+interface ZStoreOpts {
   aggregate?: "SUM" | "MIN" | "MAX";
 }
 
-export type ZinterstoreOpts = ZstoreOpts;
-export type ZunionstoreOpts = ZstoreOpts;
+export type ZInterstoreOpts = ZStoreOpts;
+export type ZUnionstoreOpts = ZStoreOpts;
 
-export interface ZrangeOpts {
+export interface ZRangeOpts {
   withScore?: boolean;
 }
 
-export interface ZrangeByLexOpts {
+export interface ZRangeByLexOpts {
   limit?: { offset: number; count: number };
 }
 
-export interface ZrangeByScoreOpts {
+export interface ZRangeByScoreOpts {
   withScore?: boolean;
   limit?: { offset: number; count: number };
 }
+
+interface BaseLPosOpts {
+  rank?: number;
+  maxlen?: number;
+}
+
+export interface LPosOpts extends BaseLPosOpts {
+  count?: null | undefined;
+}
+
+export interface LPosWithCountOpts extends BaseLPosOpts {
+  count: number;
+}
+
+export type LInsertLocation = "BEFORE" | "AFTER";
 
 export interface MemoryUsageOpts {
   samples?: number;
 }
+
+type RoleReply =
+  | ["master", Integer, BulkString[][]]
+  | ["slave", BulkString, Integer, BulkString, Integer]
+  | ["sentinel", BulkString[]];
+
+export type ScriptDebugMode = "YES" | "SYNC" | "NO";
+
+export interface SortOpts {
+  by?: string;
+  limit?: { offset: number; count: number };
+  patterns?: string[];
+  order?: "ASC" | "DESC";
+  alpha?: boolean;
+}
+
+export interface SortWithDestinationOpts extends SortOpts {
+  destination: string;
+}
+
+export type ShutdownMode = "NOSAVE" | "SAVE";
 
 export interface RedisCommands {
   // Connection
@@ -159,24 +231,11 @@ export interface RedisCommands {
   ): Promise<[BulkString, BulkString[]]>;
   sort(
     key: string,
-    opts?: {
-      by?: string;
-      limit?: { offset: number; count: number };
-      patterns?: string[];
-      order?: "ASC" | "DESC";
-      alpha?: boolean;
-    },
+    opts?: SortOpts,
   ): Promise<BulkString[]>;
   sort(
     key: string,
-    opts?: {
-      by?: string;
-      limit?: { offset: number; count: number };
-      patterns?: string[];
-      order?: "ASC" | "DESC";
-      alpha?: boolean;
-      destination: string;
-    },
+    opts?: SortWithDestinationOpts,
   ): Promise<Integer>;
   touch(...keys: string[]): Promise<Integer>;
   ttl(key: string): Promise<Integer>;
@@ -190,23 +249,14 @@ export interface RedisCommands {
   bitcount(key: string, start: number, end: number): Promise<Integer>;
   bitfield(
     key: string,
-    opts?: {
-      get?: { type: string; offset: number | string };
-      set?: { type: string; offset: number | string; value: number };
-      incrby?: { type: string; offset: number | string; increment: number };
-    },
+    opts?: BitfieldOpts,
   ): Promise<Integer[]>;
   bitfield(
     key: string,
-    opts?: {
-      get?: { type: string; offset: number | string };
-      set?: { type: string; offset: number | string; value: number };
-      incrby?: { type: string; offset: number | string; increment: number };
-      overflow: "WRAP" | "SAT" | "FAIL";
-    },
+    opts?: BitfieldWithOverflowOpts,
   ): Promise<(Integer | BulkNil)[]>;
   bitop(
-    operation: "AND" | "OR" | "XOR" | "NOT",
+    operation: BitopOperation,
     destkey: string,
     ...keys: string[]
   ): Promise<Integer>;
@@ -236,23 +286,23 @@ export interface RedisCommands {
   set(
     key: string,
     value: string,
-    opts?: { ex?: number; px?: number; keepttl?: boolean },
+    opts?: SetOpts,
   ): Promise<Status>;
   set(
     key: string,
     value: string,
-    opts?: { ex?: number; px?: number; keepttl?: boolean; mode: "NX" | "XX" },
+    opts?: SetWithModeOpts,
   ): Promise<Status | BulkNil>;
   setbit(key: string, offset: number, value: string): Promise<Integer>;
   setex(key: string, seconds: number, value: string): Promise<Status>;
   setnx(key: string, value: string): Promise<Integer>;
   setrange(key: string, offset: number, value: string): Promise<Integer>;
   stralgo(
-    algorithm: "LCS",
-    target: "KEYS" | "STRINGS",
+    algorithm: StralgoAlgorithm,
+    target: StralgoTarget,
     a: string,
     b: string,
-    opts?: StrargoOpts,
+    opts?: StralgoOpts,
   ): Promise<Bulk>;
   strlen(key: string): Promise<Integer>;
 
@@ -288,7 +338,7 @@ export interface RedisCommands {
     longitude: number,
     latitude: number,
     radius: number,
-    unit: "m" | "km" | "ft" | "mi",
+    unit: GeoUnit,
     opts?: GeoRadiusOpts,
   ): Promise<ConditionalArray>;
   // FIXME: Return type is too conditional
@@ -296,7 +346,7 @@ export interface RedisCommands {
     key: string,
     member: string,
     radius: number,
-    unit: "m" | "km" | "ft" | "mi",
+    unit: GeoUnit,
     opts?: GeoRadiusOpts,
   ): Promise<ConditionalArray>;
 
@@ -329,7 +379,7 @@ export interface RedisCommands {
   hscan(
     key: string,
     cursor: number,
-    opts?: HscanOpts,
+    opts?: HScanOpts,
   ): Promise<[BulkString, BulkString[]]>;
   hset(key: string, field: string, value: string): Promise<Integer>;
   hset(key: string, ...field_values: [string, string][]): Promise<Integer>;
@@ -355,7 +405,7 @@ export interface RedisCommands {
   lindex(key: string, index: number): Promise<Bulk>;
   linsert(
     key: string,
-    loc: "BEFORE" | "AFTER",
+    loc: LInsertLocation,
     pivot: string,
     value: string,
   ): Promise<Integer>;
@@ -369,11 +419,7 @@ export interface RedisCommands {
   lpos(
     key: string,
     element: string,
-    opts?: {
-      rank?: number;
-      count?: null | undefined;
-      maxlen?: number;
-    },
+    opts?: LPosOpts,
   ): Promise<Integer | BulkNil>;
 
   /**
@@ -385,11 +431,7 @@ export interface RedisCommands {
   lpos(
     key: string,
     element: string,
-    opts: {
-      count: number;
-      rank?: number;
-      maxlen?: number;
-    },
+    opts: LPosWithCountOpts,
   ): Promise<Integer[]>;
 
   lpush(key: string, ...elements: string[]): Promise<Integer>;
@@ -434,7 +476,7 @@ export interface RedisCommands {
   sscan(
     key: string,
     cursor: number,
-    opts?: SscanOpts,
+    opts?: SScanOpts,
   ): Promise<[BulkString, BulkString[]]>;
   sunion(...keys: string[]): Promise<BulkString[]>;
   sunionstore(destination: string, ...keys: string[]): Promise<Integer>;
@@ -799,23 +841,23 @@ XRANGE somestream - +
     key: string,
     score: number,
     member: string,
-    opts?: ZaddOpts,
+    opts?: ZAddOpts,
   ): Promise<Integer>;
   zadd(
     key: string,
     score_members: [number, string][],
-    opts?: ZaddOpts,
+    opts?: ZAddOpts,
   ): Promise<Integer>;
   zadd(
     key: string,
     member_scores: Record<string, number>,
-    opts?: ZaddOpts,
+    opts?: ZAddOpts,
   ): Promise<Integer>;
   zaddIncr(
     key: string,
     score: number,
     member: string,
-    opts?: ZaddOpts,
+    opts?: ZAddOpts,
   ): Promise<Bulk>;
   zcard(key: string): Promise<Integer>;
   zcount(key: string, min: number, max: number): Promise<Integer>;
@@ -823,17 +865,17 @@ XRANGE somestream - +
   zinterstore(
     destination: string,
     keys: string[],
-    opts?: ZinterstoreOpts,
+    opts?: ZInterstoreOpts,
   ): Promise<Integer>;
   zinterstore(
     destination: string,
     key_weights: [string, number][],
-    opts?: ZinterstoreOpts,
+    opts?: ZInterstoreOpts,
   ): Promise<Integer>;
   zinterstore(
     destination: string,
     key_weights: Record<string, number>,
-    opts?: ZinterstoreOpts,
+    opts?: ZInterstoreOpts,
   ): Promise<Integer>;
   zlexcount(key: string, min: string, max: string): Promise<Integer>;
   zpopmax(key: string, count?: number): Promise<BulkString[]>;
@@ -842,19 +884,19 @@ XRANGE somestream - +
     key: string,
     start: number,
     stop: number,
-    opts?: ZrangeOpts,
+    opts?: ZRangeOpts,
   ): Promise<BulkString[]>;
   zrangebylex(
     key: string,
     min: string,
     max: string,
-    opts?: ZrangeByLexOpts,
+    opts?: ZRangeByLexOpts,
   ): Promise<BulkString[]>;
   zrangebyscore(
     key: string,
     min: number | string,
     max: number | string,
-    opts?: ZrangeByScoreOpts,
+    opts?: ZRangeByScoreOpts,
   ): Promise<BulkString[]>;
   zrank(key: string, member: string): Promise<Integer | BulkNil>;
   zrem(key: string, ...members: string[]): Promise<Integer>;
@@ -869,41 +911,41 @@ XRANGE somestream - +
     key: string,
     start: number,
     stop: number,
-    opts?: ZrangeOpts,
+    opts?: ZRangeOpts,
   ): Promise<BulkString[]>;
   zrevrangebylex(
     key: string,
     max: string,
     min: string,
-    opts?: ZrangeByLexOpts,
+    opts?: ZRangeByLexOpts,
   ): Promise<BulkString[]>;
   zrevrangebyscore(
     key: string,
     max: number | string,
     min: number | string,
-    opts?: ZrangeByScoreOpts,
+    opts?: ZRangeByScoreOpts,
   ): Promise<BulkString[]>;
   zrevrank(key: string, member: string): Promise<Integer | BulkNil>;
   zscan(
     key: string,
     cursor: number,
-    opts?: ZscanOpts,
+    opts?: ZScanOpts,
   ): Promise<[BulkString, BulkString[]]>;
   zscore(key: string, member: string): Promise<Bulk>;
   zunionstore(
     destination: string,
     keys: string[],
-    opts?: ZunionstoreOpts,
+    opts?: ZUnionstoreOpts,
   ): Promise<Integer>;
   zunionstore(
     destination: string,
     key_weights: [string, number][],
-    opts?: ZunionstoreOpts,
+    opts?: ZUnionstoreOpts,
   ): Promise<Integer>;
   zunionstore(
     destination: string,
     key_weights: Record<string, number>,
-    opts?: ZunionstoreOpts,
+    opts?: ZUnionstoreOpts,
   ): Promise<Integer>;
 
   // Client
@@ -936,7 +978,7 @@ XRANGE somestream - +
   clusterCountFailureReports(node_id: string): Promise<Integer>;
   clusterCountKeysInSlot(slot: number): Promise<Integer>;
   clusterDelSlots(...slots: number[]): Promise<Status>;
-  clusterFailover(mode?: "FORCE" | "TAKEOVER"): Promise<Status>;
+  clusterFailover(mode?: ClusterFailoverMode): Promise<Status>;
   clusterFlushSlots(): Promise<Status>;
   clusterForget(node_id: string): Promise<Status>;
   clusterGetKeysInSlot(slot: number, count: number): Promise<BulkString[]>;
@@ -947,11 +989,11 @@ XRANGE somestream - +
   clusterNodes(): Promise<BulkString>;
   clusterReplicas(node_id: string): Promise<BulkString[]>;
   clusterReplicate(node_id: string): Promise<Status>;
-  clusterReset(mode?: "HARD" | "SOFT"): Promise<Status>;
+  clusterReset(mode?: ClusterResetMode): Promise<Status>;
   clusterSaveConfig(): Promise<Status>;
   clusterSetSlot(
     slot: number,
-    subcommand: "IMPORTING" | "MIGRATING" | "NODE" | "STABLE",
+    subcommand: ClusterSetSlotSubcommand,
     node_id?: string,
   ): Promise<Status>;
   clusterSlaves(node_id: string): Promise<BulkString[]>;
@@ -968,7 +1010,7 @@ XRANGE somestream - +
   aclList(): Promise<BulkString[]>;
   aclLoad(): Promise<Status>;
   aclLog(count: number): Promise<BulkString[]>;
-  aclLog(mode: "RESET"): Promise<Status>;
+  aclLog(mode: ACLLogMode): Promise<Status>;
   aclSave(): Promise<Status>;
   aclSetUser(username: string, ...rules: string[]): Promise<Status>;
   aclUsers(): Promise<BulkString[]>;
@@ -1008,13 +1050,9 @@ XRANGE somestream - +
   monitor(): void;
   replicaof(host: string, port: number): Promise<Status>;
   replicaofNoOne(): Promise<Status>;
-  role(): Promise<
-    | ["master", Integer, BulkString[][]]
-    | ["slave", BulkString, Integer, BulkString, Integer]
-    | ["sentinel", BulkString[]]
-  >;
+  role(): Promise<RoleReply>;
   save(): Promise<Status>;
-  shutdown(mode?: "NOSAVE" | "SAVE"): Promise<Status>;
+  shutdown(mode?: ShutdownMode): Promise<Status>;
   slaveof(host: string, port: number): Promise<Status>;
   slaveofNoOne(): Promise<Status>;
   slowlog(subcommand: string, ...args: string[]): Promise<ConditionalArray>;
@@ -1025,7 +1063,7 @@ XRANGE somestream - +
   // Scripting
   eval(script: string, keys: string[], args: string[]): Promise<Raw>;
   evalsha(sha1: string, keys: string[], args: string[]): Promise<Raw>;
-  scriptDebug(mode: "YES" | "SYNC" | "NO"): Promise<Status>;
+  scriptDebug(mode: ScriptDebugMode): Promise<Status>;
   scriptExists(...sha1s: string[]): Promise<Integer[]>;
   scriptFlush(): Promise<Status>;
   scriptKill(): Promise<Status>;

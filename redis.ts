@@ -1,4 +1,39 @@
-import type { RedisCommands, ZrangeOpts } from "./command.ts";
+import type {
+  ACLLogMode,
+  BitfieldOpts,
+  BitfieldWithOverflowOpts,
+  ClusterFailoverMode,
+  ClusterResetMode,
+  ClusterSetSlotSubcommand,
+  GeoRadiusOpts,
+  GeoUnit,
+  HScanOpts,
+  LInsertLocation,
+  LPosOpts,
+  LPosWithCountOpts,
+  MemoryUsageOpts,
+  MigrateOpts,
+  RedisCommands,
+  RestoreOpts,
+  ScanOpts,
+  ScriptDebugMode,
+  SetOpts,
+  SetWithModeOpts,
+  ShutdownMode,
+  SortOpts,
+  SortWithDestinationOpts,
+  SScanOpts,
+  StralgoAlgorithm,
+  StralgoOpts,
+  StralgoTarget,
+  ZAddOpts,
+  ZInterstoreOpts,
+  ZRangeByLexOpts,
+  ZRangeByScoreOpts,
+  ZRangeOpts,
+  ZScanOpts,
+  ZUnionstoreOpts,
+} from "./command.ts";
 import { Connection, RedisConnection } from "./connection.ts";
 import type { RedisConnectionOptions } from "./connection.ts";
 import { CommandExecutor, MuxExecutor } from "./executor.ts";
@@ -44,6 +79,7 @@ import {
   XMaxlen,
   XReadGroupOpts,
   XReadIdData,
+  XReadOpts,
   XReadStreamRaw,
 } from "./stream.ts";
 
@@ -163,8 +199,8 @@ export class RedisImpl implements Redis {
   }
 
   aclLog(count: number): Promise<BulkString[]>;
-  aclLog(mode: "RESET"): Promise<Status>;
-  aclLog(param: number | "RESET") {
+  aclLog(mode: ACLLogMode): Promise<Status>;
+  aclLog(param: number | ACLLogMode) {
     if (param === "RESET") {
       return this.execStatusReply("ACL", "LOG", "RESET");
     }
@@ -215,12 +251,7 @@ export class RedisImpl implements Redis {
 
   bitfield(
     key: string,
-    opts?: {
-      get?: { type: string; offset: number | string };
-      set?: { type: string; offset: number | string; value: number };
-      incrby?: { type: string; offset: number | string; increment: number };
-      overflow?: "WRAP" | "SAT" | "FAIL";
-    },
+    opts?: BitfieldOpts | BitfieldWithOverflowOpts,
   ) {
     const args: (number | string)[] = [key];
     if (opts?.get) {
@@ -235,8 +266,8 @@ export class RedisImpl implements Redis {
       const { type, offset, increment } = opts.incrby;
       args.push("INCRBY", type, offset, increment);
     }
-    if (opts?.overflow) {
-      args.push("OVERFLOW", opts.overflow);
+    if ((opts as BitfieldWithOverflowOpts)?.overflow) {
+      args.push("OVERFLOW", (opts as BitfieldWithOverflowOpts).overflow);
     }
     return this.execArrayReply<Integer>("BITFIELD", ...args);
   }
@@ -315,7 +346,7 @@ export class RedisImpl implements Redis {
     return this.execStatusReply("CLUSTER", "DELSLOTS", ...slots);
   }
 
-  clusterFailover(mode?: "FORCE" | "TAKEOVER") {
+  clusterFailover(mode?: ClusterFailoverMode) {
     if (mode) {
       return this.execStatusReply("CLUSTER", "FAILOVER", mode);
     }
@@ -367,7 +398,7 @@ export class RedisImpl implements Redis {
     return this.execStatusReply("CLUSTER", "REPLICATE", nodeId);
   }
 
-  clusterReset(mode?: "HARD" | "SOFT") {
+  clusterReset(mode?: ClusterResetMode) {
     if (mode) {
       return this.execStatusReply("CLUSTER", "RESET", mode);
     }
@@ -380,7 +411,7 @@ export class RedisImpl implements Redis {
 
   clusterSetSlot(
     slot: number,
-    subcommand: "IMPORTING" | "MIGRATING" | "NODE" | "STABLE",
+    subcommand: ClusterSetSlotSubcommand,
     nodeId?: string,
   ) {
     if (nodeId !== undefined) {
@@ -559,7 +590,7 @@ export class RedisImpl implements Redis {
     key: string,
     member1: string,
     member2: string,
-    unit?: "m" | "km" | "ft" | "mi",
+    unit?: GeoUnit,
   ) {
     if (unit) {
       return this.execBulkReply("GEODIST", key, member1, member2, unit);
@@ -573,15 +604,7 @@ export class RedisImpl implements Redis {
     latitude: number,
     radius: number,
     unit: "m" | "km" | "ft" | "mi",
-    opts?: {
-      with_coord?: boolean;
-      with_dist?: boolean;
-      with_hash?: boolean;
-      count?: number;
-      sort?: "ASC" | "DESC";
-      store?: string;
-      store_dist?: string;
-    },
+    opts?: GeoRadiusOpts,
   ) {
     const args = this.pushGeoRadiusOpts(
       [key, longitude, latitude, radius, unit],
@@ -594,16 +617,8 @@ export class RedisImpl implements Redis {
     key: string,
     member: string,
     radius: number,
-    unit: "m" | "km" | "ft" | "mi",
-    opts?: {
-      with_coord?: boolean;
-      with_dist?: boolean;
-      with_hash?: boolean;
-      count?: number;
-      sort?: "ASC" | "DESC";
-      store?: string;
-      store_dist?: string;
-    },
+    unit: GeoUnit,
+    opts?: GeoRadiusOpts,
   ) {
     const args = this.pushGeoRadiusOpts([key, member, radius, unit], opts);
     return this.execArrayReply("GEORADIUSBYMEMBER", ...args);
@@ -611,23 +626,15 @@ export class RedisImpl implements Redis {
 
   private pushGeoRadiusOpts(
     args: (string | number)[],
-    opts?: {
-      with_coord?: boolean;
-      with_dist?: boolean;
-      with_hash?: boolean;
-      count?: number;
-      sort?: "ASC" | "DESC";
-      store?: string;
-      store_dist?: string;
-    },
+    opts?: GeoRadiusOpts,
   ) {
-    if (opts?.with_coord) {
+    if (opts?.withCoord) {
       args.push("WITHCOORD");
     }
-    if (opts?.with_dist) {
+    if (opts?.withDist) {
       args.push("WITHDIST");
     }
-    if (opts?.with_hash) {
+    if (opts?.withHash) {
       args.push("WITHHASH");
     }
     if (opts?.count !== undefined) {
@@ -639,8 +646,8 @@ export class RedisImpl implements Redis {
     if (opts?.store !== undefined) {
       args.push(opts.store);
     }
-    if (opts?.store_dist !== undefined) {
-      args.push(opts.store_dist);
+    if (opts?.storeDist !== undefined) {
+      args.push(opts.storeDist);
     }
     return args;
   }
@@ -775,7 +782,7 @@ export class RedisImpl implements Redis {
     return this.execBulkReply("LINDEX", key, index);
   }
 
-  linsert(key: string, loc: "BEFORE" | "AFTER", pivot: string, value: string) {
+  linsert(key: string, loc: LInsertLocation, pivot: string, value: string) {
     return this.execIntegerReply("LINSERT", key, loc, pivot, value);
   }
 
@@ -787,23 +794,23 @@ export class RedisImpl implements Redis {
     return this.execBulkReply("LPOP", key);
   }
 
-  lpos(key: string, element: string, opts?: {
-    rank?: number;
-    count?: number | null | undefined;
-    maxlen?: number;
-  }): Promise<Integer | BulkNil>;
+  lpos(
+    key: string,
+    element: string,
+    opts?: LPosOpts,
+  ): Promise<Integer | BulkNil>;
 
-  lpos(key: string, element: string, opts: {
-    rank?: number;
-    count: number;
-    maxlen?: number;
-  }): Promise<Integer[]>;
+  lpos(
+    key: string,
+    element: string,
+    opts: LPosWithCountOpts,
+  ): Promise<Integer[]>;
 
-  lpos(key: string, element: string, opts?: {
-    rank?: number;
-    count?: number | null | undefined;
-    maxlen?: number;
-  }): Promise<Integer | BulkNil | Integer[]> {
+  lpos(
+    key: string,
+    element: string,
+    opts?: LPosOpts | LPosWithCountOpts,
+  ): Promise<Integer | BulkNil | Integer[]> {
     const args = [element];
     if (opts?.rank != null) {
       args.push("RANK", String(opts.rank));
@@ -866,7 +873,7 @@ export class RedisImpl implements Redis {
     return this.execArrayReply("MEMORY", "STATS");
   }
 
-  memoryUsage(key: string, opts?: { samples?: number }) {
+  memoryUsage(key: string, opts?: MemoryUsageOpts) {
     const args: (number | string)[] = [key];
     if (opts?.samples !== undefined) {
       args.push("SAMPLES", opts.samples);
@@ -884,12 +891,7 @@ export class RedisImpl implements Redis {
     key: string,
     destinationDB: string,
     timeout: number,
-    opts?: {
-      copy?: boolean;
-      replace?: boolean;
-      auth?: string;
-      keys?: string[];
-    },
+    opts?: MigrateOpts,
   ) {
     const args = [host, port, key, destinationDB, timeout];
     if (opts?.copy) {
@@ -1079,12 +1081,7 @@ export class RedisImpl implements Redis {
     key: string,
     ttl: number,
     serializedValue: string,
-    opts?: {
-      replace?: boolean;
-      absttl?: boolean;
-      idletime?: number;
-      freq?: number;
-    },
+    opts?: RestoreOpts,
   ) {
     const args = [key, ttl, serializedValue];
     if (opts?.replace) {
@@ -1138,7 +1135,7 @@ export class RedisImpl implements Redis {
     return this.execIntegerReply("SCARD", key);
   }
 
-  scriptDebug(mode: "YES" | "SYNC" | "NO") {
+  scriptDebug(mode: ScriptDebugMode) {
     return this.execStatusReply("SCRIPT", "DEBUG", mode);
   }
 
@@ -1173,17 +1170,17 @@ export class RedisImpl implements Redis {
   set(
     key: string,
     value: string,
-    opts?: { ex?: number; px?: number; keepttl?: boolean },
+    opts?: SetOpts,
   ): Promise<Status>;
   set(
     key: string,
     value: string,
-    opts?: { ex?: number; px?: number; keepttl?: boolean; mode: "NX" | "XX" },
+    opts?: SetWithModeOpts,
   ): Promise<Status | BulkNil>;
   set(
     key: string,
     value: string,
-    opts?: { ex?: number; px?: number; keepttl?: boolean; mode?: "NX" | "XX" },
+    opts?: SetOpts | SetWithModeOpts,
   ) {
     const args: (number | string)[] = [key, value];
     if (opts?.ex !== undefined) {
@@ -1194,8 +1191,8 @@ export class RedisImpl implements Redis {
     if (opts?.keepttl) {
       args.push("KEEPTTL");
     }
-    if (opts?.mode) {
-      args.push(opts.mode);
+    if ((opts as SetWithModeOpts)?.mode) {
+      args.push((opts as SetWithModeOpts).mode);
       return this.execStatusOrNilReply("SET", ...args);
     }
     return this.execStatusReply("SET", ...args);
@@ -1217,7 +1214,7 @@ export class RedisImpl implements Redis {
     return this.execIntegerReply("SETRANGE", key, offset, value);
   }
 
-  shutdown(mode?: "NOSAVE" | "SAVE") {
+  shutdown(mode?: ShutdownMode) {
     if (mode) {
       return this.execStatusReply("SHUTDOWN", mode);
     }
@@ -1266,35 +1263,15 @@ export class RedisImpl implements Redis {
 
   sort(
     key: string,
-    opts?: {
-      by?: string;
-      limit?: { offset: number; count: number };
-      patterns?: string[];
-      order?: "ASC" | "DESC";
-      alpha?: boolean;
-    },
+    opts?: SortOpts,
   ): Promise<BulkString[]>;
   sort(
     key: string,
-    opts?: {
-      by?: string;
-      limit?: { offset: number; count: number };
-      patterns?: string[];
-      order?: "ASC" | "DESC";
-      alpha?: boolean;
-      destination: string;
-    },
+    opts?: SortWithDestinationOpts,
   ): Promise<Integer>;
   sort(
     key: string,
-    opts?: {
-      by?: string;
-      limit?: { offset: number; count: number };
-      patterns?: string[];
-      order?: "ASC" | "DESC";
-      alpha?: boolean;
-      destination?: string;
-    },
+    opts?: SortOpts | SortWithDestinationOpts,
   ) {
     const args: (number | string)[] = [key];
     if (opts?.by !== undefined) {
@@ -1312,8 +1289,8 @@ export class RedisImpl implements Redis {
     if (opts?.alpha) {
       args.push("ALPHA");
     }
-    if (opts?.destination !== undefined) {
-      args.push("STORE", opts.destination);
+    if ((opts as SortWithDestinationOpts)?.destination !== undefined) {
+      args.push("STORE", (opts as SortWithDestinationOpts).destination);
       return this.execIntegerReply("SORT", ...args);
     }
     return this.execArrayReply<BulkString>("SORT", ...args);
@@ -1342,16 +1319,11 @@ export class RedisImpl implements Redis {
   }
 
   stralgo(
-    algorithm: "LCS",
-    target: "KEYS" | "STRINGS",
+    algorithm: StralgoAlgorithm,
+    target: StralgoTarget,
     a: string,
     b: string,
-    opts?: {
-      idx?: boolean;
-      len?: boolean;
-      minmatchlen?: number;
-      withmatchlen?: boolean;
-    },
+    opts?: StralgoOpts,
   ) {
     const args: (number | string)[] = [];
     if (opts?.idx) {
@@ -1761,7 +1733,7 @@ export class RedisImpl implements Redis {
 
   xread(
     keyXIds: (XKeyId | XKeyIdLike)[],
-    opts?: { count?: number; block?: number },
+    opts?: XReadOpts,
   ) {
     const args = [];
     if (opts) {
@@ -1850,19 +1822,39 @@ export class RedisImpl implements Redis {
     return this.execIntegerReply("XTRIM", key, "MAXLEN", ...args);
   }
 
-  // deno-lint-ignore no-explicit-any
-  zadd(key: string, param1: any, param2?: any, opts?: any) {
+  zadd(
+    key: string,
+    score: number,
+    member: string,
+    opts?: ZAddOpts,
+  ): Promise<Integer>;
+  zadd(
+    key: string,
+    scoreMembers: [number, string][],
+    opts?: ZAddOpts,
+  ): Promise<Integer>;
+  zadd(
+    key: string,
+    memberScores: Record<string, number>,
+    opts?: ZAddOpts,
+  ): Promise<Integer>;
+  zadd(
+    key: string,
+    param1: number | [number, string][] | Record<string, number>,
+    param2?: string | ZAddOpts,
+    opts?: ZAddOpts,
+  ) {
     const args: (string | number)[] = [key];
     if (Array.isArray(param1)) {
       args.push(...param1.flatMap((e) => e));
-      opts = param2;
+      opts = param2 as ZAddOpts;
     } else if (typeof param1 === "object") {
       for (const [member, score] of Object.entries(param1)) {
         args.push(score as number, member);
       }
-      opts = param2;
+      opts = param2 as ZAddOpts;
     } else {
-      args.push(param1, param2);
+      args.push(param1, param2 as string);
     }
     if (opts?.mode) {
       args.push(opts.mode);
@@ -1877,7 +1869,7 @@ export class RedisImpl implements Redis {
     key: string,
     score: number,
     member: string,
-    opts?: { mode?: "NX" | "XX"; ch?: boolean },
+    opts?: ZAddOpts,
   ) {
     const args: (string | number)[] = [key, score, member];
     if (opts?.mode) {
@@ -1905,7 +1897,7 @@ export class RedisImpl implements Redis {
   zinterstore(
     destination: string,
     keys: string[] | [string, number][] | Record<string, number>,
-    opts?: { aggregate?: "SUM" | "MIN" | "MAX" },
+    opts?: ZInterstoreOpts,
   ) {
     const args = this.pushZStoreArgs([destination], keys, opts);
     return this.execIntegerReply("ZINTERSTORE", ...args);
@@ -1914,7 +1906,7 @@ export class RedisImpl implements Redis {
   zunionstore(
     destination: string,
     keys: string[] | [string, number][] | Record<string, number>,
-    opts?: { aggregate?: "SUM" | "MIN" | "MAX" },
+    opts?: ZUnionstoreOpts,
   ) {
     const args = this.pushZStoreArgs([destination], keys, opts);
     return this.execIntegerReply("ZUNIONSTORE", ...args);
@@ -1923,7 +1915,7 @@ export class RedisImpl implements Redis {
   private pushZStoreArgs(
     args: (number | string)[],
     keys: string[] | [string, number][] | Record<string, number>,
-    opts?: { aggregate?: "SUM" | "MIN" | "MAX" },
+    opts?: ZInterstoreOpts | ZUnionstoreOpts,
   ) {
     if (Array.isArray(keys)) {
       args.push(keys.length);
@@ -1969,7 +1961,7 @@ export class RedisImpl implements Redis {
     key: string,
     start: number,
     stop: number,
-    opts?: ZrangeOpts,
+    opts?: ZRangeOpts,
   ) {
     const args = this.pushZRangeOpts([key, start, stop], opts);
     return this.execArrayReply<BulkString>("ZRANGE", ...args);
@@ -1979,7 +1971,7 @@ export class RedisImpl implements Redis {
     key: string,
     min: string,
     max: string,
-    opts?: { limit?: { offset: number; count: number } },
+    opts?: ZRangeByLexOpts,
   ) {
     const args = this.pushZRangeOpts([key, min, max], opts);
     return this.execArrayReply<BulkString>("ZRANGEBYLEX", ...args);
@@ -1989,7 +1981,7 @@ export class RedisImpl implements Redis {
     key: string,
     min: number | string,
     max: number | string,
-    opts?: { with_score?: boolean; limit?: { offset: number; count: number } },
+    opts?: ZRangeByScoreOpts,
   ) {
     const args = this.pushZRangeOpts([key, min, max], opts);
     return this.execArrayReply<BulkString>("ZRANGEBYSCORE", ...args);
@@ -2019,7 +2011,7 @@ export class RedisImpl implements Redis {
     key: string,
     start: number,
     stop: number,
-    opts?: ZrangeOpts,
+    opts?: ZRangeOpts,
   ) {
     const args = this.pushZRangeOpts([key, start, stop], opts);
     return this.execArrayReply<BulkString>("ZREVRANGE", ...args);
@@ -2029,7 +2021,7 @@ export class RedisImpl implements Redis {
     key: string,
     max: string,
     min: string,
-    opts?: { limit?: { offset: number; count: number } },
+    opts?: ZRangeByLexOpts,
   ) {
     const args = this.pushZRangeOpts([key, min, max], opts);
     return this.execArrayReply<BulkString>("ZREVRANGEBYLEX", ...args);
@@ -2039,7 +2031,7 @@ export class RedisImpl implements Redis {
     key: string,
     max: number,
     min: number,
-    opts?: { with_score?: boolean; limit?: { offset: number; count: number } },
+    opts?: ZRangeByScoreOpts,
   ) {
     const args = this.pushZRangeOpts([key, max, min], opts);
     return this.execArrayReply<BulkString>("ZREVRANGEBYSCORE", ...args);
@@ -2047,13 +2039,17 @@ export class RedisImpl implements Redis {
 
   private pushZRangeOpts(
     args: (number | string)[],
-    opts?: { withScore?: boolean; limit?: { offset: number; count: number } },
+    opts?: ZRangeOpts | ZRangeByLexOpts | ZRangeByScoreOpts,
   ) {
-    if (opts?.withScore) {
+    if ((opts as ZRangeByScoreOpts)?.withScore) {
       args.push("WITHSCORES");
     }
-    if (opts?.limit) {
-      args.push("LIMIT", opts.limit.offset, opts.limit.count);
+    if ((opts as ZRangeByScoreOpts)?.limit) {
+      args.push(
+        "LIMIT",
+        (opts as ZRangeByScoreOpts).limit!.offset,
+        (opts as ZRangeByScoreOpts).limit!.count,
+      );
     }
     return args;
   }
@@ -2068,7 +2064,7 @@ export class RedisImpl implements Redis {
 
   scan(
     cursor: number,
-    opts?: { pattern?: string; count?: number; type?: string },
+    opts?: ScanOpts,
   ) {
     const args = this.pushScanOpts([cursor], opts);
     return this.execArrayReply("SCAN", ...args) as Promise<
@@ -2079,7 +2075,7 @@ export class RedisImpl implements Redis {
   sscan(
     key: string,
     cursor: number,
-    opts?: { pattern?: string; count?: number },
+    opts?: SScanOpts,
   ) {
     const args = this.pushScanOpts([key, cursor], opts);
     return this.execArrayReply("SSCAN", ...args) as Promise<
@@ -2090,7 +2086,7 @@ export class RedisImpl implements Redis {
   hscan(
     key: string,
     cursor: number,
-    opts?: { pattern?: string; count?: number },
+    opts?: HScanOpts,
   ) {
     const args = this.pushScanOpts([key, cursor], opts);
     return this.execArrayReply("HSCAN", ...args) as Promise<
@@ -2101,7 +2097,7 @@ export class RedisImpl implements Redis {
   zscan(
     key: string,
     cursor: number,
-    opts?: { pattern?: string; count?: number },
+    opts?: ZScanOpts,
   ) {
     const args = this.pushScanOpts([key, cursor], opts);
     return this.execArrayReply("ZSCAN", ...args) as Promise<
@@ -2111,7 +2107,7 @@ export class RedisImpl implements Redis {
 
   private pushScanOpts(
     args: (number | string)[],
-    opts?: { pattern?: string; count?: number; type?: string },
+    opts?: ScanOpts | HScanOpts | ZScanOpts | SScanOpts,
   ) {
     if (opts?.pattern !== undefined) {
       args.push("MATCH", opts.pattern);
@@ -2119,8 +2115,8 @@ export class RedisImpl implements Redis {
     if (opts?.count !== undefined) {
       args.push("COUNT", opts.count);
     }
-    if (opts?.type !== undefined) {
-      args.push("TYPE", opts.type);
+    if ((opts as ScanOpts)?.type !== undefined) {
+      args.push("TYPE", (opts as ScanOpts).type!);
     }
     return args;
   }
