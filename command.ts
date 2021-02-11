@@ -381,9 +381,24 @@ export interface RedisCommands {
     cursor: number,
     opts?: HScanOpts,
   ): Promise<[BulkString, BulkString[]]>;
+
+  /**
+   * @description Sets `field` in the hash to `value`.
+   * @see https://redis.io/commands/hset
+   */
   hset(key: string, field: string, value: string): Promise<Integer>;
-  hset(key: string, ...field_values: [string, string][]): Promise<Integer>;
-  hset(key: string, field_values: Record<string, string>): Promise<Integer>;
+
+  /**
+   * @description Sets the field-value pairs specified by `fieldValues` to the hash stored at `key`.
+   *   NOTE: Variadic form for `HSET` is supported only in Redis v4.0.0 or higher.
+   */
+  hset(key: string, ...fieldValues: [string, string][]): Promise<Integer>;
+
+  /**
+   * @description Sets the field-value pairs specified by `fieldValues` to the hash stored at `key`.
+   *   NOTE: Variadic form for `HSET` is supported only in Redis v4.0.0 or higher.
+   */
+  hset(key: string, fieldValues: Record<string, string>): Promise<Integer>;
   hsetnx(key: string, field: string, value: string): Promise<Integer>;
   hstrlen(key: string, field: string): Promise<Integer>;
   hvals(key: string): Promise<BulkString[]>;
