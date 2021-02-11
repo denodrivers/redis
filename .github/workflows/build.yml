@@ -51,11 +51,12 @@ jobs:
       - name: Run tests
         run: |
           deno test -A redis_test.ts
-
+      - uses: bahmutov/npm-install@v1
+        with:
+          working-directory: benchmark
       - name: Run benchmarks
-        working-directory: ./benchmark
+        working-directory: benchmark
         run: |
-          yarn install --frozen-lockfile
           deno bundle benchmark.ts > benchmark.js
           deno run -A deno-redis.ts
           node ioredis.js
