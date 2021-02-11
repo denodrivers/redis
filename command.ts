@@ -390,13 +390,13 @@ export interface RedisCommands {
 
   /**
    * @description Sets the field-value pairs specified by `fieldValues` to the hash stored at `key`.
-   *   NOTE: Variadic form for `HSET` is supported only in Redis v4.0.0 or later.
+   *   NOTE: Variadic form for `HSET` is supported only in Redis v4.0.0 or higher.
    */
   hset(key: string, ...fieldValues: [string, string][]): Promise<Integer>;
 
   /**
    * @description Sets the field-value pairs specified by `fieldValues` to the hash stored at `key`.
-   *   NOTE: Variadic form for `HSET` is supported only in Redis v4.0.0 or later.
+   *   NOTE: Variadic form for `HSET` is supported only in Redis v4.0.0 or higher.
    */
   hset(key: string, fieldValues: Record<string, string>): Promise<Integer>;
   hsetnx(key: string, field: string, value: string): Promise<Integer>;
