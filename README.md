@@ -49,7 +49,7 @@ const [stream] = await client.xread(
   { block: 5000 },
 );
 
-const msgFV = stream.messages[0].field_values;
+const msgFV = stream.messages[0].fieldValues;
 const plz = msgFV["yes"];
 const thx = msgFV["no"];
 ```
@@ -57,8 +57,8 @@ const thx = msgFV["no"];
 **Cluster**
 
 ```ts
-await redis.meet("127.0.0.1", 6380);
-await redis.nodes();
+await redis.clusterMeet("127.0.0.1", 6380);
+await redis.clusterNodes();
 // ... 127.0.0.1:6379@16379 myself,master - 0 1593978765000 0 connected
 // ... 127.0.0.1:6380@16380 master - 0 1593978766503 1 connected
 ```
