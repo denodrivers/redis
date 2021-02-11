@@ -10,7 +10,7 @@ const redis = new Redis();
 redis.on("connect", async () => {
   await run({
     client: redis,
-    prefix: "ioredis",
+    driver: "ioredis",
   });
 
   redis.disconnect();
