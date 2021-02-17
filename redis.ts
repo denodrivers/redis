@@ -2,6 +2,7 @@ import type {
   ACLLogMode,
   BitfieldOpts,
   BitfieldWithOverflowOpts,
+  ClientTrackingOpts,
   ClusterFailoverMode,
   ClusterResetMode,
   ClusterSetSlotSubcommand,
@@ -328,6 +329,32 @@ export class RedisImpl implements Redis {
 
   clientSetName(connectionName: string) {
     return this.execStatusReply("CLIENT", "SETNAME", connectionName);
+  }
+
+  clientTracking(opts: ClientTrackingOpts) {
+    const args: (number | string)[] = [opts.mode];
+    if (opts.redirect) {
+      args.push("REDIRECT", opts.redirect);
+    }
+    if (opts.prefixes) {
+      opts.prefixes.map((prefix) => {
+        args.push("PREFIX");
+        args.push(prefix);
+      });
+    }
+    if (opts.bcast) {
+      args.push("BCAST");
+    }
+    if (opts.optIn) {
+      args.push("OPTIN");
+    }
+    if (opts.optOut) {
+      args.push("OPTOUT");
+    }
+    if (opts.noLoop) {
+      args.push("NOLOOP");
+    }
+    return this.execStatusReply("CLIENT", "TRACKING", ...args);
   }
 
   clusterAddSlots(...slots: number[]) {
