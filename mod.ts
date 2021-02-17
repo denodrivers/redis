@@ -11,6 +11,7 @@ export type {
   ACLLogMode,
   BitfieldOpts,
   BitfieldWithOverflowOpts,
+  ClientTrackingOpts,
   ClusterFailoverMode,
   ClusterResetMode,
   ClusterSetSlotSubcommand,
