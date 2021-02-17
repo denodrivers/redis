@@ -337,7 +337,7 @@ export class RedisImpl implements Redis {
       args.push("REDIRECT", opts.redirect);
     }
     if (opts.prefixes) {
-      opts.prefixes.map((prefix) => {
+      opts.prefixes.forEach((prefix) => {
         args.push("PREFIX");
         args.push(prefix);
       });
