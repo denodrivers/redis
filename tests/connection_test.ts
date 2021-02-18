@@ -1,4 +1,4 @@
-import { connect } from "../mod.ts";
+import { connect, Redis } from "../mod.ts";
 import {
   assertEquals,
   assertThrowsAsync,
@@ -7,7 +7,15 @@ import { newClient, startRedis, stopRedis, TestSuite } from "./test_util.ts";
 
 const suite = new TestSuite("connection");
 const server = await startRedis({ port: 7003 });
-const client = await newClient({ hostname: "127.0.0.1", port: 7003 });
+let client: Redis;
+
+suite.beforeEach(async () => {
+  client = await newClient({ hostname: "127.0.0.1", port: 7003 });
+});
+
+suite.afterEach(async () => {
+  client.close();
+});
 
 suite.afterAll(() => {
   stopRedis(server);
@@ -24,12 +32,11 @@ suite.test("ping", async () => {
 });
 
 suite.test("quit", async () => {
-  const tempClient = await connect({ hostname: "127.0.0.1", port: 7003 });
-  assertEquals(tempClient.isConnected, true);
-  assertEquals(tempClient.isClosed, false);
-  assertEquals(await tempClient.quit(), "OK");
-  assertEquals(tempClient.isConnected, false);
-  assertEquals(tempClient.isClosed, true);
+  assertEquals(client.isConnected, true);
+  assertEquals(client.isClosed, false);
+  assertEquals(await client.quit(), "OK");
+  assertEquals(client.isConnected, false);
+  assertEquals(client.isClosed, true);
 });
 
 suite.test("select", async () => {
