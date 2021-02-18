@@ -49,6 +49,16 @@ export interface BitfieldWithOverflowOpts extends BitfieldOpts {
   overflow: "WRAP" | "SAT" | "FAIL";
 }
 
+export interface ClientTrackingOpts {
+  mode: "ON" | "OFF";
+  redirect?: number;
+  prefixes?: string[];
+  bcast?: boolean;
+  optIn?: boolean;
+  optOut?: boolean;
+  noLoop?: boolean;
+}
+
 export type ClusterFailoverMode = "FORCE" | "TAKEOVER";
 export type ClusterResetMode = "HARD" | "SOFT";
 export type ClusterSetSlotSubcommand =
@@ -987,6 +997,12 @@ XRANGE somestream - +
    * @see https://redis.io/commands/client-setname
    */
   clientSetName(connectionName: string): Promise<Status>;
+
+  /**
+   * Enables the tracking feature for the Redis server that is used for server assisted client side caching.
+   * @see https://redis.io/commands/client-tracking
+   */
+  clientTracking(opts: ClientTrackingOpts): Promise<Status>;
 
   // Cluster
   clusterAddSlots(...slots: number[]): Promise<Status>;

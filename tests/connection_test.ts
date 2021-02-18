@@ -1,5 +1,8 @@
 import { connect } from "../mod.ts";
-import { assertEquals } from "../vendor/https/deno.land/std/testing/asserts.ts";
+import {
+  assertEquals,
+  assertThrowsAsync,
+} from "../vendor/https/deno.land/std/testing/asserts.ts";
 import { newClient, startRedis, stopRedis, TestSuite } from "./test_util.ts";
 
 const suite = new TestSuite("connection");
@@ -49,6 +52,33 @@ suite.test("client setname & getname", async () => {
 
 suite.test("client pause", async () => {
   assertEquals(await client.clientPause(10), "OK");
+});
+
+suite.test("client tracking", async () => {
+  assertEquals(
+    await client.clientTracking({
+      mode: "ON",
+      prefixes: ["foo", "bar"],
+      bcast: true,
+    }),
+    "OK",
+  );
+  assertEquals(
+    await client.clientTracking({
+      mode: "ON",
+      bcast: true,
+      optIn: false,
+      noLoop: true,
+    }),
+    "OK",
+  );
+  await assertThrowsAsync(
+    () => {
+      return client.clientTracking({ mode: "ON", bcast: true, optIn: true });
+    },
+    Error,
+    "-ERR OPTIN and OPTOUT are not compatible with BCAST",
+  );
 });
 
 suite.runTests();
