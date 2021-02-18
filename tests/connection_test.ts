@@ -13,7 +13,7 @@ suite.beforeEach(async () => {
   client = await newClient({ hostname: "127.0.0.1", port: 7003 });
 });
 
-suite.afterEach(async () => {
+suite.afterEach(() => {
   client.close();
 });
 
