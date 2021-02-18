@@ -2,6 +2,7 @@ import type {
   ACLLogMode,
   BitfieldOpts,
   BitfieldWithOverflowOpts,
+  ClientCachingMode,
   ClientTrackingOpts,
   ClusterFailoverMode,
   ClusterResetMode,
@@ -313,6 +314,10 @@ export class RedisImpl implements Redis {
     return this.execArrayReply("BZPOPMAX", ...keys, timeout) as Promise<
       [BulkString, BulkString, BulkString] | []
     >;
+  }
+
+  clientCaching(mode: ClientCachingMode) {
+    return this.execStatusReply("CLIENT", "CACHING", mode);
   }
 
   clientGetName() {

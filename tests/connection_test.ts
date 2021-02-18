@@ -47,6 +47,26 @@ suite.test("swapdb", async () => {
   assertEquals(await client.swapdb(0, 1), "OK");
 });
 
+suite.test("client caching with opt in", async () => {
+  await client.clientTracking({ mode: "ON", optIn: true });
+  assertEquals(await client.clientCaching("YES"), "OK");
+});
+
+suite.test("client caching with opt out", async () => {
+  await client.clientTracking({ mode: "ON", optOut: true });
+  assertEquals(await client.clientCaching("NO"), "OK");
+});
+
+suite.test("client caching without opt in or opt out", async () => {
+  await assertThrowsAsync(
+    () => {
+      return client.clientCaching("YES");
+    },
+    Error,
+    "-ERR CLIENT CACHING can be called only when the client is in tracking mode with OPTIN or OPTOUT mode enabled",
+  );
+});
+
 suite.test("client id", async () => {
   const id = await client.clientID();
   assertEquals(typeof id, "number");
