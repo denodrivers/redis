@@ -37,9 +37,12 @@ export class TestSuite {
         for (const f of this.beforeEachs) {
           await f();
         }
-        await test.func();
-        for (const f of this.afterEachs) {
-          await f();
+        try {
+          await test.func();
+        } finally {
+          for (const f of this.afterEachs) {
+            await f();
+          }
         }
       });
     }
