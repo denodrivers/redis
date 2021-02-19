@@ -10,12 +10,17 @@ type TestServer = {
 export class TestSuite {
   private tests: { name: string; func: TestFunc }[] = [];
   private beforeEachs: TestFunc[] = [];
+  private afterEachs: TestFunc[] = [];
   private afterAlls: TestFunc[] = [];
 
   constructor(private prefix: string) {}
 
   beforeEach(func: TestFunc): void {
     this.beforeEachs.push(func);
+  }
+
+  afterEach(func: TestFunc): void {
+    this.afterEachs.push(func);
   }
 
   afterAll(func: TestFunc): void {
@@ -32,7 +37,13 @@ export class TestSuite {
         for (const f of this.beforeEachs) {
           await f();
         }
-        await test.func();
+        try {
+          await test.func();
+        } finally {
+          for (const f of this.afterEachs) {
+            await f();
+          }
+        }
       });
     }
     Deno.test({

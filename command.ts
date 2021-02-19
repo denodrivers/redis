@@ -49,6 +49,8 @@ export interface BitfieldWithOverflowOpts extends BitfieldOpts {
   overflow: "WRAP" | "SAT" | "FAIL";
 }
 
+export type ClientCachingMode = "YES" | "NO";
+
 export interface ClientTrackingOpts {
   mode: "ON" | "OFF";
   redirect?: number;
@@ -974,6 +976,12 @@ XRANGE somestream - +
   ): Promise<Integer>;
 
   // Client
+  /**
+   * This command controls the tracking of the keys in the next command executed by the connection.
+   * @see https://redis.io/commands/client-caching
+   */
+  clientCaching(mode: ClientCachingMode): Promise<Status>;
+
   /**
    * Returns the name of the current connection which can be set by `clientSetName`.
    * @see https://redis.io/commands/client-getname
