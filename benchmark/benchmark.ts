@@ -5,6 +5,9 @@ import {
 
 interface Redis {
   ping(message: string): Promise<string>;
+  set(key: string, value: string): Promise<string>;
+  get(key: string): Promise<string | undefined>;
+  flushdb(): Promise<string>;
 }
 
 interface RunOptions {
@@ -20,10 +23,23 @@ export async function run(options: RunOptions): Promise<void> {
 
   bench({
     name: `${driver}: ping`,
-    runs: 1000,
+    runs: 10000,
     func: async (b) => {
       b.start();
       await client.ping("HELLO");
+      b.stop();
+    },
+  });
+
+  bench({
+    name: `${driver}: set & get`,
+    runs: 10000,
+    func: async (b) => {
+      const key = "foo";
+      const value = "bar".repeat(10);
+      b.start();
+      await client.set(key, value);
+      await client.get(key);
       b.stop();
     },
   });
@@ -40,4 +56,5 @@ export async function run(options: RunOptions): Promise<void> {
     },
   );
   console.table(results);
+  await client.flushdb();
 }
