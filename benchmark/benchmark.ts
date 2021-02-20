@@ -23,7 +23,7 @@ export async function run(options: RunOptions): Promise<void> {
 
   bench({
     name: `${driver}: ping`,
-    runs: 1000,
+    runs: 10000,
     func: async (b) => {
       b.start();
       await client.ping("HELLO");
@@ -33,7 +33,7 @@ export async function run(options: RunOptions): Promise<void> {
 
   bench({
     name: `${driver}: set & get`,
-    runs: 1000,
+    runs: 10000,
     func: async (b) => {
       const key = "foo";
       const value = "bar".repeat(10);
