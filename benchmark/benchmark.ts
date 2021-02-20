@@ -5,6 +5,9 @@ import {
 
 interface Redis {
   ping(message: string): Promise<string>;
+  set(key: string, value: string): Promise<string>;
+  get(key: string): Promise<string | undefined>;
+  flushdb(): Promise<string>;
 }
 
 interface RunOptions {
@@ -28,6 +31,19 @@ export async function run(options: RunOptions): Promise<void> {
     },
   });
 
+  bench({
+    name: `${driver}: set & get`,
+    runs: 1000,
+    func: async (b) => {
+      const key = "foo";
+      const value = "bar".repeat(10);
+      b.start();
+      await client.set(key, value);
+      await client.get(key);
+      b.stop();
+    },
+  });
+
   const result = await runBenchmarks();
   const results = result.results.map(
     ({ name, totalMs, runsCount, measuredRunsAvgMs }) => {
@@ -40,4 +56,5 @@ export async function run(options: RunOptions): Promise<void> {
     },
   );
   console.table(results);
+  await client.flushdb();
 }
