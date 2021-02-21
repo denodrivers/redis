@@ -1054,12 +1054,16 @@ export class RedisImpl implements Redis {
     return this.execIntegerReply("PUBLISH", channel, message);
   }
 
-  subscribe(...channels: string[]) {
-    return subscribe(this.connection, ...channels);
+  subscribe<TMessage extends string | string[] = string>(
+    ...channels: string[]
+  ) {
+    return subscribe<TMessage>(this.connection, ...channels);
   }
 
-  psubscribe(...patterns: string[]) {
-    return psubscribe(this.connection, ...patterns);
+  psubscribe<TMessage extends string | string[] = string>(
+    ...patterns: string[]
+  ) {
+    return psubscribe<TMessage>(this.connection, ...patterns);
   }
 
   pubsubChannels(pattern?: string) {
