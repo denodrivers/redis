@@ -77,6 +77,18 @@ suite.test("client setname & getname", async () => {
   assertEquals(await client.clientGetName(), "deno-redis");
 });
 
+suite.test("client getredir with no redirect", async () => {
+  assertEquals(await client.clientGetRedir(), -1);
+});
+
+suite.test("client getredir with redirect", async () => {
+  const tempClient = await newClient({ hostname: "127.0.0.1", port: 7003 });
+  const id = await tempClient.clientID();
+  await client.clientTracking({ mode: "ON", redirect: id });
+  assertEquals(await client.clientGetRedir(), id);
+  tempClient.close();
+});
+
 suite.test("client pause", async () => {
   assertEquals(await client.clientPause(10), "OK");
 });

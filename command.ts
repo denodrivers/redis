@@ -989,6 +989,12 @@ XRANGE somestream - +
   clientGetName(): Promise<Bulk>;
 
   /**
+   * Returns the client ID we are redirecting our tracking notifications to.
+   * @see https://redis.io/commands/client-getredir
+   */
+  clientGetRedir(): Promise<Integer>;
+
+  /**
    * Returns the id of the current redis connection.
    */
   clientID(): Promise<Integer>;

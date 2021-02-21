@@ -324,6 +324,10 @@ export class RedisImpl implements Redis {
     return this.execBulkReply("CLIENT", "GETNAME");
   }
 
+  clientGetRedir() {
+    return this.execIntegerReply("CLIENT", "GETREDIR");
+  }
+
   clientID() {
     return this.execIntegerReply("CLIENT", "ID");
   }
