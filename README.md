@@ -144,6 +144,28 @@ await tx.flush();
 // EXEC
 ```
 
+### Client side caching
+
+https://redis.io/topics/client-side-caching
+
+```typescript
+const mainClient = await connect({ hostname: "127.0.0.1" });
+const cacheClient = await connect({ hostname: "127.0.0.1" });
+
+const cacheClientID = await cacheClient.clientID();
+await mainClient.clientTracking({
+  mode: "ON",
+  redirect: cacheClientID,
+});
+const sub = await cacheClient.subscribe("__redis__:invalidate");
+
+(async () => {
+  for await (const { channel, message } of sub.receive()) {
+    // Handle invalidation messages...
+  }
+})();
+```
+
 ## Roadmap for v1
 
 - See https://github.com/denodrivers/redis/issues/78
