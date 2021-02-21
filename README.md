@@ -157,7 +157,7 @@ await mainClient.clientTracking({
   mode: "ON",
   redirect: cacheClientID,
 });
-const sub = await cacheClient.subscribe("__redis__:invalidate");
+const sub = await cacheClient.subscribe<string[]>("__redis__:invalidate");
 
 (async () => {
   for await (const { channel, message } of sub.receive()) {

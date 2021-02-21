@@ -2,9 +2,14 @@ import type { Connection } from "./connection.ts";
 import { InvalidStateError } from "./errors.ts";
 import { readArrayReply, sendCommand } from "./io.ts";
 
-export interface RedisSubscription {
+type DefaultMessageType = string;
+type ValidMessageType = string | string[];
+
+export interface RedisSubscription<
+  TMessage extends ValidMessageType = DefaultMessageType,
+> {
   readonly isClosed: boolean;
-  receive(): AsyncIterableIterator<RedisPubSubMessage>;
+  receive(): AsyncIterableIterator<RedisPubSubMessage<TMessage>>;
   psubscribe(...patterns: string[]): Promise<void>;
   subscribe(...channels: string[]): Promise<void>;
   punsubscribe(...patterns: string[]): Promise<void>;
@@ -12,13 +17,15 @@ export interface RedisSubscription {
   close(): Promise<void>;
 }
 
-export interface RedisPubSubMessage {
+export interface RedisPubSubMessage<TMessage = DefaultMessageType> {
   pattern?: string;
   channel: string;
-  message: string;
+  message: TMessage;
 }
 
-class RedisSubscriptionImpl implements RedisSubscription {
+class RedisSubscriptionImpl<
+  TMessage extends ValidMessageType = DefaultMessageType,
+> implements RedisSubscription<TMessage> {
   get isConnected(): boolean {
     return this.connection.isConnected;
   }
@@ -83,13 +90,22 @@ class RedisSubscriptionImpl implements RedisSubscription {
     }
   }
 
-  async *receive(): AsyncIterableIterator<RedisPubSubMessage> {
+  async *receive(): AsyncIterableIterator<RedisPubSubMessage<TMessage>> {
     let forceReconnect = false;
     while (this.isConnected) {
       try {
-        let rep: string[];
+        let rep: [string, string, TMessage] | [
+          string,
+          string,
+          string,
+          TMessage,
+        ];
         try {
-          rep = (await readArrayReply(this.connection.reader)) as string[];
+          rep = (await readArrayReply(this.connection.reader)) as [
+            string,
+            string,
+            TMessage,
+          ] | [string, string, string, TMessage];
         } catch (err) {
           if (err instanceof Deno.errors.BadResource) {
             // Connection already closed.
@@ -145,20 +161,24 @@ class RedisSubscriptionImpl implements RedisSubscription {
   }
 }
 
-export async function subscribe(
+export async function subscribe<
+  TMessage extends ValidMessageType = DefaultMessageType,
+>(
   connection: Connection,
   ...channels: string[]
-): Promise<RedisSubscription> {
-  const sub = new RedisSubscriptionImpl(connection);
+): Promise<RedisSubscription<TMessage>> {
+  const sub = new RedisSubscriptionImpl<TMessage>(connection);
   await sub.subscribe(...channels);
   return sub;
 }
 
-export async function psubscribe(
+export async function psubscribe<
+  TMessage extends ValidMessageType = DefaultMessageType,
+>(
   connection: Connection,
   ...patterns: string[]
-): Promise<RedisSubscription> {
-  const sub = new RedisSubscriptionImpl(connection);
+): Promise<RedisSubscription<TMessage>> {
+  const sub = new RedisSubscriptionImpl<TMessage>(connection);
   await sub.psubscribe(...patterns);
   return sub;
 }

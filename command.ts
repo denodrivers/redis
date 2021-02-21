@@ -478,12 +478,16 @@ export interface RedisCommands {
   pfmerge(destkey: string, ...sourcekeys: string[]): Promise<Status>;
 
   // PubSub
-  psubscribe(...patterns: string[]): Promise<RedisSubscription>;
+  psubscribe<TMessage extends string | string[] = string>(
+    ...patterns: string[]
+  ): Promise<RedisSubscription<TMessage>>;
   pubsubChannels(pattern?: string): Promise<BulkString[]>;
   pubsubNumsub(...channels: string[]): Promise<(BulkString | Integer)[]>;
   pubsubNumpat(): Promise<Integer>;
   publish(channel: string, message: string): Promise<Integer>;
-  subscribe(...channels: string[]): Promise<RedisSubscription>;
+  subscribe<TMessage extends string | string[] = string>(
+    ...channels: string[]
+  ): Promise<RedisSubscription<TMessage>>;
 
   // Set
   sadd(key: string, ...members: string[]): Promise<Integer>;
