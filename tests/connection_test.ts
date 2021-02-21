@@ -83,10 +83,13 @@ suite.test("client getredir with no redirect", async () => {
 
 suite.test("client getredir with redirect", async () => {
   const tempClient = await newClient({ hostname: "127.0.0.1", port: 7003 });
-  const id = await tempClient.clientID();
-  await client.clientTracking({ mode: "ON", redirect: id });
-  assertEquals(await client.clientGetRedir(), id);
-  tempClient.close();
+  try {
+    const id = await tempClient.clientID();
+    await client.clientTracking({ mode: "ON", redirect: id });
+    assertEquals(await client.clientGetRedir(), id);
+  } finally {
+    tempClient.close();
+  }
 });
 
 suite.test("client pause", async () => {
