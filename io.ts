@@ -43,6 +43,11 @@ export type Raw = Status | Integer | Bulk | ConditionalArray;
  */
 export type ConditionalArray = Raw[];
 
+/**
+ * @description This type is a binary representation of the **bulk string** type as binary format in the RESP2 protocol.
+ */
+export type Binary = BulkNil | Uint8Array;
+
 export type StatusReply = ["status", Status];
 export type IntegerReply = ["integer", Integer];
 export type BulkReply = ["bulk", Bulk];
@@ -60,22 +65,31 @@ const ErrorReplyCode = "-".charCodeAt(0);
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
 
+const CRLF = encoder.encode("\r\n");
+
+export type RedisArg = string | number | Uint8Array;
+
 export function createRequest(
   command: string,
-  args: (string | number)[],
-): string {
+  args: RedisArg[],
+): Uint8Array {
   const _args = args.filter((v) => v !== void 0 && v !== null);
-  let msg = "";
-  msg += `*${1 + _args.length}\r\n`;
-  msg += `$${command.length}\r\n`;
-  msg += `${command}\r\n`;
+  let msg = new Deno.Buffer();
+  msg.writeSync(encoder.encode(`*${1 + _args.length}`));
+  msg.writeSync(CRLF);
+  msg.writeSync(encoder.encode(`$${command.length}`));
+  msg.writeSync(CRLF);
+  msg.writeSync(encoder.encode(`${command}`));
+  msg.writeSync(CRLF);
   for (const arg of _args) {
-    const val = String(arg);
-    const bytesLen = encoder.encode(val).byteLength;
-    msg += `$${bytesLen}\r\n`;
-    msg += `${val}\r\n`;
+    const bytes = arg instanceof Uint8Array ? arg : encoder.encode(String(arg));
+    const bytesLen = bytes.byteLength;
+    msg.writeSync(encoder.encode(`$${bytesLen}`));
+    msg.writeSync(CRLF);
+    msg.writeSync(bytes);
+    msg.writeSync(CRLF);
   }
-  return msg;
+  return msg.bytes();
 }
 
 export async function sendCommand(
@@ -85,7 +99,7 @@ export async function sendCommand(
   ...args: (number | string)[]
 ): Promise<RedisRawReply> {
   const msg = createRequest(command, args);
-  await writer.write(encoder.encode(msg));
+  await writer.write(msg);
   await writer.flush();
   return readReply(reader);
 }
@@ -95,11 +109,12 @@ export async function sendCommands(
   reader: BufReader,
   commands: {
     command: string;
-    args: (number | string)[];
+    args: RedisArg[];
   }[],
 ): Promise<RawReplyOrError[]> {
-  const msg = commands.map((c) => createRequest(c.command, c.args)).join("");
-  await writer.write(encoder.encode(msg));
+  for (const { command, args } of commands) {
+    await writer.write(createRequest(command, args));
+  }
   await writer.flush();
   const ret: RawReplyOrError[] = [];
   for (let i = 0; i < commands.length; i++) {
