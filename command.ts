@@ -1007,6 +1007,12 @@ XRANGE somestream - +
   clientID(): Promise<Integer>;
 
   /**
+   * Returns information and statistics about the current client connection in a mostly human readable format.
+   * @see https://redis.io/commands/client-info
+   */
+  clientInfo(): Promise<Bulk>;
+
+  /**
    * Suspend all the Redis clients for the specified amount of time (in milliseconds).
    * @see https://redis.io/commands/client-pause
    */
