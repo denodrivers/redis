@@ -125,4 +125,37 @@ suite.test("client tracking", async () => {
   );
 });
 
+suite.test("client unblock nothing", async () => {
+  const id = await client.clientID();
+  assertEquals(await client.clientUnblock(id), 0);
+});
+
+suite.test("client unblock with timeout", async () => {
+  const tempClient = await newClient({ hostname: "127.0.0.1", port: 7003 });
+  try {
+    const id = await tempClient.clientID();
+    tempClient.brpop(0, "key1"); // block
+    await new Promise((r) => setTimeout(r, 100)); // give some leeway for the command to reach redis
+    assertEquals(await client.clientUnblock(id, "TIMEOUT"), 1);
+  } finally {
+    tempClient.close();
+  }
+});
+
+suite.test("client unblock with error", async () => {
+  const tempClient = await newClient({ hostname: "127.0.0.1", port: 7003 });
+  try {
+    const id = await tempClient.clientID();
+    assertThrowsAsync(
+      () => tempClient.brpop(0, "key1"),
+      Error,
+      "-UNBLOCKED",
+    );
+    await new Promise((r) => setTimeout(r, 100)); // give some leeway for the command to reach redis
+    assertEquals(await client.clientUnblock(id, "ERROR"), 1);
+  } finally {
+    tempClient.close();
+  }
+});
+
 suite.runTests();
