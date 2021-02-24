@@ -15,18 +15,20 @@ suite.test("whoami", async () => {
 });
 
 suite.test("list", async () => {
-  assertEquals(await client.aclList(), ["user default on nopass ~* +@all"]);
+  assertEquals(await client.aclList(), ["user default on nopass ~* &* +@all"]);
 });
 
 suite.test("getuser", async () => {
   assertEquals(await client.aclGetUser("default"), [
     "flags",
-    ["on", "allkeys", "allcommands", "nopass"],
+    ["on", "allkeys", "allchannels", "allcommands", "nopass"],
     "passwords",
     [],
     "commands",
     "+@all",
     "keys",
+    ["*"],
+    "channels",
     ["*"],
   ]);
 });
@@ -86,6 +88,7 @@ suite.test("cat", async () => {
       "psync",
       "pfdebug",
       "flushall",
+      "failover",
       "cluster",
       "info",
       "migrate",
