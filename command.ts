@@ -61,6 +61,8 @@ export interface ClientTrackingOpts {
   noLoop?: boolean;
 }
 
+export type ClientPauseMode = "WRITE" | "ALL";
+
 export type ClusterFailoverMode = "FORCE" | "TAKEOVER";
 export type ClusterResetMode = "HARD" | "SOFT";
 export type ClusterSetSlotSubcommand =
@@ -1007,7 +1009,7 @@ XRANGE somestream - +
    * Suspend all the Redis clients for the specified amount of time (in milliseconds).
    * @see https://redis.io/commands/client-pause
    */
-  clientPause(timeout: number): Promise<Status>;
+  clientPause(timeout: number, mode?: ClientPauseMode): Promise<Status>;
 
   /**
    * Sets a `connectionName` to the current connection.
