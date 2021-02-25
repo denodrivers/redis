@@ -370,6 +370,10 @@ export class RedisImpl implements Redis {
     return this.execStatusReply("CLIENT", "TRACKING", ...args);
   }
 
+  clientUnpause(): Promise<Status> {
+    return this.execStatusReply("CLIENT", "UNPAUSE");
+  }
+
   clusterAddSlots(...slots: number[]) {
     return this.execStatusReply("CLUSTER", "ADDSLOTS", ...slots);
   }
