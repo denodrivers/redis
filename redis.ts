@@ -3,6 +3,7 @@ import type {
   BitfieldOpts,
   BitfieldWithOverflowOpts,
   ClientCachingMode,
+  ClientPauseMode,
   ClientTrackingOpts,
   ClusterFailoverMode,
   ClusterResetMode,
@@ -332,7 +333,10 @@ export class RedisImpl implements Redis {
     return this.execIntegerReply("CLIENT", "ID");
   }
 
-  clientPause(timeout: number) {
+  clientPause(timeout: number, mode?: ClientPauseMode) {
+    if (mode) {
+      return this.execStatusReply("CLIENT", "PAUSE", timeout, mode);
+    }
     return this.execStatusReply("CLIENT", "PAUSE", timeout);
   }
 

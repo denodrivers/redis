@@ -12,6 +12,7 @@ export type {
   BitfieldOpts,
   BitfieldWithOverflowOpts,
   ClientCachingMode,
+  ClientPauseMode,
   ClientTrackingOpts,
   ClusterFailoverMode,
   ClusterResetMode,
