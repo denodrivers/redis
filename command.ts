@@ -62,6 +62,7 @@ export interface ClientTrackingOpts {
 }
 
 export type ClientPauseMode = "WRITE" | "ALL";
+export type ClientUnblockingBehaviour = "TIMEOUT" | "ERROR";
 
 export type ClusterFailoverMode = "FORCE" | "TAKEOVER";
 export type ClusterResetMode = "HARD" | "SOFT";
@@ -1023,6 +1024,15 @@ XRANGE somestream - +
    * @see https://redis.io/commands/client-tracking
    */
   clientTracking(opts: ClientTrackingOpts): Promise<Status>;
+
+  /**
+   * This command can unblock, from a different connection, a client blocked in a blocking operation.
+   * @see https://redis.io/commands/client-unblock
+   */
+  clientUnblock(
+    id: number,
+    behaviour?: ClientUnblockingBehaviour,
+  ): Promise<Integer>;
 
   /**
    * Used to resume command processing for all clients that were paused by `clientPause`.

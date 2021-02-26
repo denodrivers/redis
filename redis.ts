@@ -5,6 +5,7 @@ import type {
   ClientCachingMode,
   ClientPauseMode,
   ClientTrackingOpts,
+  ClientUnblockingBehaviour,
   ClusterFailoverMode,
   ClusterResetMode,
   ClusterSetSlotSubcommand,
@@ -368,6 +369,16 @@ export class RedisImpl implements Redis {
       args.push("NOLOOP");
     }
     return this.execStatusReply("CLIENT", "TRACKING", ...args);
+  }
+
+  clientUnblock(
+    id: number,
+    behaviour?: ClientUnblockingBehaviour,
+  ): Promise<Integer> {
+    if (behaviour) {
+      return this.execIntegerReply("CLIENT", "UNBLOCK", id, behaviour);
+    }
+    return this.execIntegerReply("CLIENT", "UNBLOCK", id);
   }
 
   clientUnpause(): Promise<Status> {
