@@ -1,4 +1,5 @@
 import { connect, Redis } from "../mod.ts";
+import { delay } from "../vendor/https/deno.land/std/async/mod.ts";
 import {
   assertEquals,
   assertThrowsAsync,
@@ -134,8 +135,8 @@ suite.test("client unblock with timeout", async () => {
   const tempClient = await newClient({ hostname: "127.0.0.1", port: 7003 });
   try {
     const id = await tempClient.clientID();
-    tempClient.brpop(0, "key1"); // block
-    await new Promise((r) => setTimeout(r, 100)); // give some leeway for the command to reach redis
+    tempClient.brpop(0, "key1"); // Block.
+    await delay(5); // Give some leeway for brpop to reach redis.
     assertEquals(await client.clientUnblock(id, "TIMEOUT"), 1);
   } finally {
     tempClient.close();
@@ -151,7 +152,7 @@ suite.test("client unblock with error", async () => {
       Error,
       "-UNBLOCKED",
     );
-    await new Promise((r) => setTimeout(r, 100)); // give some leeway for the command to reach redis
+    await delay(5); // Give some leeway for brpop to reach redis.
     assertEquals(await client.clientUnblock(id, "ERROR"), 1);
   } finally {
     tempClient.close();
