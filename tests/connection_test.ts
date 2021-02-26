@@ -92,10 +92,11 @@ suite.test("client getredir with redirect", async () => {
   }
 });
 
-suite.test("client pause", async () => {
-  assertEquals(await client.clientPause(10), "OK");
-  assertEquals(await client.clientPause(10, "WRITE"), "OK");
-  assertEquals(await client.clientPause(10, "ALL"), "OK");
+suite.test("client pause & unpause", async () => {
+  assertEquals(await client.clientPause(5), "OK");
+  assertEquals(await client.clientPause(5, "ALL"), "OK");
+  assertEquals(await client.clientPause(5, "WRITE"), "OK");
+  assertEquals(await client.clientUnpause(), "OK");
 });
 
 suite.test("client tracking", async () => {
