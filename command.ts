@@ -1034,6 +1034,12 @@ XRANGE somestream - +
     behaviour?: ClientUnblockingBehaviour,
   ): Promise<Integer>;
 
+  /**
+   * Used to resume command processing for all clients that were paused by `clientPause`.
+   * @see https://redis.io/commands/client-unpause
+   */
+  clientUnpause(): Promise<Status>;
+
   // Cluster
   clusterAddSlots(...slots: number[]): Promise<Status>;
   clusterCountFailureReports(node_id: string): Promise<Integer>;
