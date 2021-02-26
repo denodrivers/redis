@@ -1,4 +1,5 @@
 import { connect, Redis } from "../mod.ts";
+import { delay } from "../vendor/https/deno.land/std/async/mod.ts";
 import {
   assertEquals,
   assertThrowsAsync,
@@ -123,6 +124,39 @@ suite.test("client tracking", async () => {
     Error,
     "-ERR OPTIN and OPTOUT are not compatible with BCAST",
   );
+});
+
+suite.test("client unblock nothing", async () => {
+  const id = await client.clientID();
+  assertEquals(await client.clientUnblock(id), 0);
+});
+
+suite.test("client unblock with timeout", async () => {
+  const tempClient = await newClient({ hostname: "127.0.0.1", port: 7003 });
+  try {
+    const id = await tempClient.clientID();
+    tempClient.brpop(0, "key1"); // Block.
+    await delay(5); // Give some leeway for brpop to reach redis.
+    assertEquals(await client.clientUnblock(id, "TIMEOUT"), 1);
+  } finally {
+    tempClient.close();
+  }
+});
+
+suite.test("client unblock with error", async () => {
+  const tempClient = await newClient({ hostname: "127.0.0.1", port: 7003 });
+  try {
+    const id = await tempClient.clientID();
+    assertThrowsAsync(
+      () => tempClient.brpop(0, "key1"),
+      Error,
+      "-UNBLOCKED",
+    );
+    await delay(5); // Give some leeway for brpop to reach redis.
+    assertEquals(await client.clientUnblock(id, "ERROR"), 1);
+  } finally {
+    tempClient.close();
+  }
 });
 
 suite.runTests();

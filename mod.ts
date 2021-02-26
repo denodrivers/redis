@@ -14,6 +14,7 @@ export type {
   ClientCachingMode,
   ClientPauseMode,
   ClientTrackingOpts,
+  ClientUnblockingBehaviour,
   ClusterFailoverMode,
   ClusterResetMode,
   ClusterSetSlotSubcommand,
