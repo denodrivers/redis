@@ -141,3 +141,5 @@ suite.test("client unblock with error", async () => {
     tempClient.close();
   }
 });
+
+suite.runTests();
