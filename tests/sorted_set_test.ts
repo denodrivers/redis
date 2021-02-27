@@ -4,7 +4,7 @@ import {
 } from "../vendor/https/deno.land/std/testing/asserts.ts";
 import { newClient, startRedis, stopRedis, TestSuite } from "./test_util.ts";
 
-const suite = new TestSuite("zet");
+const suite = new TestSuite("zset");
 const server = await startRedis({ port: 7011 });
 const client = await newClient({ hostname: "127.0.0.1", port: 7011 });
 
