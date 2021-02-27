@@ -5,7 +5,7 @@ import { newClient, startRedis, stopRedis, TestSuite } from "./test_util.ts";
 
 const suite = new TestSuite("connection");
 const server = await startRedis({ port: 7003 });
-let client = await newClient({ hostname: "127.0.0.1", port: 7003 });
+const client = await newClient({ hostname: "127.0.0.1", port: 7003 });
 
 suite.afterAll(() => {
   stopRedis(server);
