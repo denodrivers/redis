@@ -1,6 +1,7 @@
 import { connect, Redis } from "../mod.ts";
 import { delay } from "../vendor/https/deno.land/std/async/mod.ts";
 import {
+  assert,
   assertEquals,
   assertThrowsAsync,
 } from "../vendor/https/deno.land/std/testing/asserts.ts";
@@ -71,6 +72,12 @@ suite.test("client caching without opt in or opt out", async () => {
 suite.test("client id", async () => {
   const id = await client.clientID();
   assertEquals(typeof id, "number");
+});
+
+suite.test("client info", async () => {
+  const id = await client.clientID();
+  const info = await client.clientInfo();
+  assert(info!.includes(`id=${id}`));
 });
 
 suite.test("client setname & getname", async () => {
