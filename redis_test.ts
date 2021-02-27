@@ -1,4 +1,5 @@
 import "./tests/acl_test.ts";
+import "./tests/client_test.ts";
 import "./tests/cluster_test.ts";
 import "./tests/connection_test.ts";
 import "./tests/general_test.ts";
