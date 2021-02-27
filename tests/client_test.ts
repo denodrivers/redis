@@ -8,11 +8,11 @@ import {
 import { newClient, startRedis, stopRedis, TestSuite } from "./test_util.ts";
 
 const suite = new TestSuite("client");
-const server = await startRedis({ port: 7004 });
+const server = await startRedis({ port: 7016 });
 let client: Redis;
 
 suite.beforeEach(async () => {
-  client = await newClient({ hostname: "127.0.0.1", port: 7004 });
+  client = await newClient({ hostname: "127.0.0.1", port: 7016 });
 });
 
 suite.afterEach(() => {
@@ -65,7 +65,7 @@ suite.test("client getredir with no redirect", async () => {
 });
 
 suite.test("client getredir with redirect", async () => {
-  const tempClient = await newClient({ hostname: "127.0.0.1", port: 7004 });
+  const tempClient = await newClient({ hostname: "127.0.0.1", port: 7016 });
   try {
     const id = await tempClient.clientID();
     await client.clientTracking({ mode: "ON", redirect: id });
@@ -115,7 +115,7 @@ suite.test("client unblock nothing", async () => {
 });
 
 suite.test("client unblock with timeout", async () => {
-  const tempClient = await newClient({ hostname: "127.0.0.1", port: 7004 });
+  const tempClient = await newClient({ hostname: "127.0.0.1", port: 7016 });
   try {
     const id = await tempClient.clientID();
     tempClient.brpop(0, "key1"); // Block.
@@ -127,7 +127,7 @@ suite.test("client unblock with timeout", async () => {
 });
 
 suite.test("client unblock with error", async () => {
-  const tempClient = await newClient({ hostname: "127.0.0.1", port: 7004 });
+  const tempClient = await newClient({ hostname: "127.0.0.1", port: 7016 });
   try {
     const id = await tempClient.clientID();
     assertThrowsAsync(
