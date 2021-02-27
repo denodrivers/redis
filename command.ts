@@ -1032,6 +1032,12 @@ XRANGE somestream - +
   clientTracking(opts: ClientTrackingOpts): Promise<Status>;
 
   /**
+   * Returns information about the current client connection's use of the server assisted client side caching feature.
+   * @see https://redis.io/commands/client-trackinginfo
+   */
+  clientTrackingInfo(): Promise<ConditionalArray>;
+
+  /**
    * This command can unblock, from a different connection, a client blocked in a blocking operation.
    * @see https://redis.io/commands/client-unblock
    */
