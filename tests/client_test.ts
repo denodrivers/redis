@@ -109,6 +109,13 @@ suite.test("client tracking", async () => {
   );
 });
 
+suite.test("client trackinginfo", async () => {
+  const info = await client.clientTrackingInfo();
+  assert(info.includes("flags"));
+  assert(info.includes("redirect"));
+  assert(info.includes("prefixes"));
+});
+
 suite.test("client unblock nothing", async () => {
   const id = await client.clientID();
   assertEquals(await client.clientUnblock(id), 0);

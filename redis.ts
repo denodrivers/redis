@@ -375,6 +375,10 @@ export class RedisImpl implements Redis {
     return this.execStatusReply("CLIENT", "TRACKING", ...args);
   }
 
+  clientTrackingInfo() {
+    return this.execArrayReply("CLIENT", "TRACKINGINFO");
+  }
+
   clientUnblock(
     id: number,
     behaviour?: ClientUnblockingBehaviour,
