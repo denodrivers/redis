@@ -82,6 +82,29 @@ suite.test("client pause & unpause", async () => {
   assertEquals(await client.clientUnpause(), "OK");
 });
 
+suite.test("client list", async () => {
+  const id = await client.clientID();
+  let list = await client.clientList();
+  assert(list!.includes(`id=${id}`));
+
+  list = await client.clientList({ type: "PUBSUB" });
+  assertEquals(list, "");
+
+  list = await client.clientList({ type: "NORMAL" });
+  assert(list!.includes(`id=${id}`));
+
+  list = await client.clientList({ ids: [id] });
+  assert(list!.includes(`id=${id}`));
+
+  await assertThrowsAsync(
+    () => {
+      return client.clientList({ type: "MASTER", ids: [id] });
+    },
+    Error,
+    "only one of `type` or `ids` may be specified",
+  );
+});
+
 suite.test("client tracking", async () => {
   assertEquals(
     await client.clientTracking({

@@ -3,6 +3,7 @@ import type {
   BitfieldOpts,
   BitfieldWithOverflowOpts,
   ClientCachingMode,
+  ClientListOps,
   ClientPauseMode,
   ClientTrackingOpts,
   ClientUnblockingBehaviour,
@@ -336,6 +337,19 @@ export class RedisImpl implements Redis {
 
   clientInfo() {
     return this.execBulkReply("CLIENT", "INFO");
+  }
+
+  clientList(opts?: ClientListOps) {
+    if (opts && opts.type && opts.ids) {
+      throw new Error("only one of `type` or `ids` may be specified");
+    }
+    if (opts && opts.type) {
+      return this.execBulkReply("CLIENT", "LIST", "TYPE", opts.type);
+    }
+    if (opts && opts.ids) {
+      return this.execBulkReply("CLIENT", "LIST", "ID", ...opts.ids);
+    }
+    return this.execBulkReply("CLIENT", "LIST");
   }
 
   clientPause(timeout: number, mode?: ClientPauseMode) {
