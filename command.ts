@@ -51,6 +51,13 @@ export interface BitfieldWithOverflowOpts extends BitfieldOpts {
 
 export type ClientCachingMode = "YES" | "NO";
 
+export interface ClientListOps {
+  type?: "NORMAL" | "MASTER" | "REPLICA" | "PUBSUB";
+  ids?: number[];
+}
+
+export type ClientPauseMode = "WRITE" | "ALL";
+
 export interface ClientTrackingOpts {
   mode: "ON" | "OFF";
   redirect?: number;
@@ -61,7 +68,6 @@ export interface ClientTrackingOpts {
   noLoop?: boolean;
 }
 
-export type ClientPauseMode = "WRITE" | "ALL";
 export type ClientUnblockingBehaviour = "TIMEOUT" | "ERROR";
 
 export type ClusterFailoverMode = "FORCE" | "TAKEOVER";
@@ -1011,6 +1017,12 @@ XRANGE somestream - +
    * @see https://redis.io/commands/client-info
    */
   clientInfo(): Promise<Bulk>;
+
+  /**
+   * Returns information and statistics about the client connections server in a mostly human readable format.
+   * @see https://redis.io/commands/client-list
+   */
+  clientList(opts?: ClientListOps): Promise<Bulk>;
 
   /**
    * Suspend all the Redis clients for the specified amount of time (in milliseconds).
