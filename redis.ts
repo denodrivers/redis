@@ -341,7 +341,7 @@ export class RedisImpl implements Redis {
 
   clientList(opts?: ClientListOps) {
     if (opts && opts.type && opts.ids) {
-      throw new Error("only one of `type` or `ids` may be specified");
+      throw new Error("only one of `type` or `ids` can be specified");
     }
     if (opts && opts.type) {
       return this.execBulkReply("CLIENT", "LIST", "TYPE", opts.type);

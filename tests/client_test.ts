@@ -101,7 +101,7 @@ suite.test("client list", async () => {
       return client.clientList({ type: "MASTER", ids: [id] });
     },
     Error,
-    "only one of `type` or `ids` may be specified",
+    "only one of `type` or `ids` can be specified",
   );
 });
 
