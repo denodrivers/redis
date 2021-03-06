@@ -4,6 +4,7 @@
 ![https://img.shields.io/github/tag/denodrivers/redis.svg](https://img.shields.io/github/tag/denodrivers/redis.svg)
 [![license](https://img.shields.io/github/license/denodrivers/redis.svg)](https://github.com/denodrivers/redis)
 [![deno doc](https://doc.deno.land/badge.svg)](https://doc.deno.land/https/deno.land/x/redis/mod.ts)
+[![Discord](https://img.shields.io/discord/768918486575480863?logo=discord)](https://discord.gg/QXuHBMcgWx)
 
 An experimental implementation of redis client for deno
 
