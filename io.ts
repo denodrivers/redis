@@ -43,11 +43,6 @@ export type Raw = Status | Integer | Bulk | ConditionalArray;
  */
 export type ConditionalArray = Raw[];
 
-/**
- * @description This type is a binary representation of the **bulk string** type as binary format in the RESP2 protocol.
- */
-export type Binary = BulkNil | Uint8Array;
-
 export type StatusReply = ["status", Status];
 export type IntegerReply = ["integer", Integer];
 export type BulkReply = ["bulk", Bulk];
