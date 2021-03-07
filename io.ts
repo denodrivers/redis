@@ -69,7 +69,7 @@ export function createRequest(
   args: RedisArg[],
 ): Uint8Array {
   const _args = args.filter((v) => v !== void 0 && v !== null);
-  let msg = new Deno.Buffer();
+  const msg = new Deno.Buffer();
   msg.writeSync(encoder.encode(`*${1 + _args.length}`));
   msg.writeSync(CRLF);
   msg.writeSync(encoder.encode(`$${command.length}`));
