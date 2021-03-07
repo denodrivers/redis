@@ -67,7 +67,7 @@ const decoder = new TextDecoder();
 
 const CRLF = encoder.encode("\r\n");
 
-export type RedisArg = string | number | Uint8Array;
+export type RedisArg = string | number;
 
 export function createRequest(
   command: string,
