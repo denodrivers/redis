@@ -77,7 +77,7 @@ export function createRequest(
   msg.writeSync(encoder.encode(`${command}`));
   msg.writeSync(CRLF);
   for (const arg of _args) {
-    const bytes = arg instanceof Uint8Array ? arg : encoder.encode(String(arg));
+    const bytes = encoder.encode(String(arg)); // TODO: Add support for `Uint8Array`
     const bytesLen = bytes.byteLength;
     msg.writeSync(encoder.encode(`$${bytesLen}`));
     msg.writeSync(CRLF);
