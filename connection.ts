@@ -1,4 +1,4 @@
-import { RedisRawReply, sendCommand } from "./io.ts";
+import { RedisRawReply, sendCommand } from "./protocol/mod.ts";
 import { BufReader, BufWriter } from "./vendor/https/deno.land/std/io/bufio.ts";
 type Closer = Deno.Closer;
 

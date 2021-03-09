@@ -1,6 +1,11 @@
 import type { Connection } from "./connection.ts";
 import { CommandExecutor } from "./executor.ts";
-import { RawReplyOrError, RedisRawReply, sendCommands } from "./io.ts";
+import {
+  createStatusReply,
+  RawReplyOrError,
+  RedisRawReply,
+  sendCommands,
+} from "./protocol/mod.ts";
 import { Redis, RedisImpl } from "./redis.ts";
 import { Deferred, deferred } from "./vendor/https/deno.land/std/async/mod.ts";
 
@@ -42,7 +47,7 @@ export class PipelineExecutor extends CommandExecutor {
     ...args: (string | number)[]
   ): Promise<RedisRawReply> {
     this.commands.push({ command, args });
-    return Promise.resolve(["status", "OK"]);
+    return Promise.resolve(createStatusReply("OK"));
   }
 
   flush(): Promise<RawReplyOrError[]> {

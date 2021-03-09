@@ -1,6 +1,6 @@
 import type { Connection } from "./connection.ts";
 import { InvalidStateError } from "./errors.ts";
-import { readArrayReply, sendCommand } from "./io.ts";
+import { readArrayReply, sendCommand } from "./protocol/mod.ts";
 
 type DefaultMessageType = string;
 type ValidMessageType = string | string[];
@@ -101,7 +101,7 @@ class RedisSubscriptionImpl<
           TMessage,
         ];
         try {
-          rep = (await readArrayReply(this.connection.reader)) as [
+          rep = (await readArrayReply(this.connection.reader)).array() as [
             string,
             string,
             TMessage,

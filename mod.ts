@@ -49,22 +49,6 @@ export type {
   ZUnionstoreOpts,
 } from "./command.ts";
 export type { Connection, RedisConnectionOptions } from "./connection.ts";
-export type {
-  ArrayReply,
-  Bulk,
-  BulkNil,
-  BulkReply,
-  BulkString,
-  ConditionalArray,
-  ErrorReply,
-  Integer,
-  IntegerReply,
-  Raw,
-  RawReplyOrError,
-  RedisRawReply,
-  Status,
-  StatusReply,
-} from "./io.ts";
 export type { RedisPipeline } from "./pipeline.ts";
 export type { RedisPubSubMessage, RedisSubscription } from "./pubsub.ts";
 export type { Redis, RedisConnectOptions } from "./redis.ts";

@@ -1,7 +1,8 @@
 import type { Connection } from "./connection.ts";
 import { EOFError } from "./errors.ts";
-import { RedisRawReply, sendCommand } from "./io.ts";
 import { Deferred, deferred } from "./vendor/https/deno.land/std/async/mod.ts";
+import { sendCommand } from "./protocol/mod.ts";
+import type { RedisRawReply } from "./protocol/mod.ts";
 
 export abstract class CommandExecutor {
   connection: Connection;

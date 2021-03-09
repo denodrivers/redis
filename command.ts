@@ -6,7 +6,7 @@ import type {
   Integer,
   Raw,
   Status,
-} from "./io.ts";
+} from "./protocol/mod.ts";
 import type { RedisPipeline } from "./pipeline.ts";
 import type { RedisSubscription } from "./pubsub.ts";
 import type {
