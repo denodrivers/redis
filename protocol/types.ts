@@ -46,7 +46,6 @@ export type RedisReply =
   | ArrayReply;
 
 export type RedisReplyOrError = RedisReply | ErrorReplyError;
-export type RawOrError = Raw | ErrorReplyError;
 
 // TODO(uki00a): Add `attributes()` methods when implementing RESP3
 export interface Reply {

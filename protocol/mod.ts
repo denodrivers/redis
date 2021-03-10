@@ -8,7 +8,6 @@ export type {
   Integer,
   IntegerReply,
   Raw,
-  RawOrError,
   RedisReply,
   RedisReplyOrError,
   Status,

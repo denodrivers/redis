@@ -1,4 +1,5 @@
 import { ErrorReplyError } from "../mod.ts";
+import type { BulkReply, IntegerReply, StatusReply } from "../protocol/mod.ts";
 import {
   assert,
   assertEquals,
@@ -63,20 +64,38 @@ suite.test("testTx", async () => {
     tx3.incr("key"),
     tx3.get("key"),
   ]);
-  const rep1 = await tx1.flush();
-  const rep2 = await tx2.flush();
-  const rep3 = await tx3.flush();
+  const rep1 = await tx1.flush() as [
+    BulkReply,
+    IntegerReply,
+    IntegerReply,
+    IntegerReply,
+    BulkReply,
+  ];
+  const rep2 = await tx2.flush() as [
+    BulkReply,
+    IntegerReply,
+    IntegerReply,
+    IntegerReply,
+    BulkReply,
+  ];
+  const rep3 = await tx3.flush() as [
+    BulkReply,
+    IntegerReply,
+    IntegerReply,
+    IntegerReply,
+    BulkReply,
+  ];
   assertEquals(
-    parseInt(rep1[4][1] as string),
-    parseInt(rep1[0][1] as string) + 3,
+    parseInt(rep1[4].string()!),
+    parseInt(rep1[0].string()!) + 3,
   );
   assertEquals(
-    parseInt(rep2[4][1] as string),
-    parseInt(rep2[0][1] as string) + 3,
+    parseInt(rep2[4].string()!),
+    parseInt(rep2[0].string()!) + 3,
   );
   assertEquals(
-    parseInt(rep3[4][1] as string),
-    parseInt(rep3[0][1] as string) + 3,
+    parseInt(rep3[4].string()!),
+    parseInt(rep3[0].string()!) + 3,
   );
   client.close();
 });
@@ -127,10 +146,11 @@ suite.test("error while pipeline", async () => {
   tx.get("a");
   const resp = await tx.flush();
   assertEquals(resp.length, 3);
-  assertEquals(resp[0], ["status", "OK"]);
-  assertEquals(resp[1][0], "error");
-  assert(resp[1][1] instanceof ErrorReplyError);
-  assertEquals(resp[2], ["bulk", "a"]);
+  assertEquals((resp[0] as StatusReply).type, "status");
+  assertEquals((resp[0] as StatusReply).status(), "status");
+  assert(resp[1] instanceof ErrorReplyError);
+  assertEquals((resp[2] as BulkReply).type, "bulk");
+  assertEquals((resp[2] as BulkReply).string(), "a");
   client.close();
 });
 

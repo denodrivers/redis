@@ -2,17 +2,15 @@ import type { Connection } from "./connection.ts";
 import { CommandExecutor } from "./executor.ts";
 import {
   createStatusReply,
-  RawOrError,
   RedisReply,
   RedisReplyOrError,
   sendCommands,
-  unwrapReply,
 } from "./protocol/mod.ts";
 import { Redis, RedisImpl } from "./redis.ts";
 import { Deferred, deferred } from "./vendor/https/deno.land/std/async/mod.ts";
 
 export interface RedisPipeline extends Redis {
-  flush(): Promise<RawOrError[]>;
+  flush(): Promise<RedisReplyOrError[]>;
 }
 
 export function createRedisPipeline(
@@ -20,7 +18,7 @@ export function createRedisPipeline(
   tx = false,
 ): RedisPipeline {
   const executor = new PipelineExecutor(connection, tx);
-  function flush(): Promise<RawOrError[]> {
+  function flush(): Promise<RedisReplyOrError[]> {
     return executor.flush();
   }
   const client = new RedisImpl(connection, executor);
@@ -37,7 +35,7 @@ export class PipelineExecutor extends CommandExecutor {
       command: string;
       args: (number | string)[];
     }[];
-    d: Deferred<RawOrError[]>;
+    d: Deferred<RedisReplyOrError[]>;
   }[] = [];
 
   constructor(connection: Connection, private tx: boolean) {
@@ -52,12 +50,12 @@ export class PipelineExecutor extends CommandExecutor {
     return Promise.resolve(createStatusReply("OK"));
   }
 
-  flush(): Promise<RawOrError[]> {
+  flush(): Promise<RedisReplyOrError[]> {
     if (this.tx) {
       this.commands.unshift({ command: "MULTI", args: [] });
       this.commands.push({ command: "EXEC", args: [] });
     }
-    const d = deferred<RawOrError[]>();
+    const d = deferred<RedisReplyOrError[]>();
     this.queue.push({ commands: [...this.commands], d });
     if (this.queue.length === 1) {
       this.dequeue();
@@ -70,7 +68,7 @@ export class PipelineExecutor extends CommandExecutor {
     const [e] = this.queue;
     if (!e) return;
     sendCommands(this.connection.writer, this.connection.reader, e.commands)
-      .then((replies) => e.d.resolve(replies.map(unwrapReply))) // TODO: Make this more efficient.
+      .then((replies) => e.d.resolve(replies)) // TODO: Make this more efficient.
       .catch(e.d.reject)
       .finally(() => {
         this.queue.shift();
