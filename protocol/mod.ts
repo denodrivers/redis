@@ -21,4 +21,4 @@ export {
   unwrapReply,
 } from "./reply.ts";
 
-export { createRequest, sendCommand, sendCommands } from "./io.ts";
+export { createRequest, sendCommand, sendCommands } from "./command.ts";
