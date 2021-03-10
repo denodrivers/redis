@@ -9,6 +9,28 @@ const SimpleStringCode = "+".charCodeAt(0);
 const ArrayReplyCode = "*".charCodeAt(0);
 const ErrorReplyCode = "-".charCodeAt(0);
 
+export function unwrapReply(
+  reply: types.RedisReplyOrError,
+): types.Raw | ErrorReplyError {
+  if (reply instanceof ErrorReplyError) {
+    return reply;
+  }
+
+  switch (reply.type) {
+    case "integer":
+      return reply.integer();
+    case "array":
+      return reply.array();
+    case "status":
+      return reply.status();
+    case "string":
+      return reply.string();
+    default:
+      // TODO: Improve error handling
+      throw new Error("Unknown reply type: " + reply);
+  }
+}
+
 export function createStatusReply(status: string): types.StatusReply {
   return new StatusReply(status);
 }
@@ -19,7 +41,7 @@ export function readArrayReply(reader: BufReader): Promise<types.ArrayReply> {
 
 export async function readReply(
   reader: BufReader,
-): Promise<types.RedisRawReply> {
+): Promise<types.RedisReply> {
   const res = await reader.peek(1);
   if (res === null) {
     throw new EOFError();

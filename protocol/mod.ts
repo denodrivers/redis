@@ -8,12 +8,18 @@ export type {
   Integer,
   IntegerReply,
   Raw,
-  RawReplyOrError,
-  RedisRawReply,
+  RawOrError,
+  RedisReply,
+  RedisReplyOrError,
   Status,
   StatusReply,
 } from "./types.ts";
 
-export { createStatusReply, readArrayReply, readReply } from "./reply.ts";
+export {
+  createStatusReply,
+  readArrayReply,
+  readReply,
+  unwrapReply,
+} from "./reply.ts";
 
 export { createRequest, sendCommand, sendCommands } from "./io.ts";

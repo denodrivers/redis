@@ -5,7 +5,7 @@ import {
 import { readReply } from "./reply.ts";
 import { ErrorReplyError } from "../errors.ts";
 import { encoder } from "./_util.ts";
-import type { RawReplyOrError, RedisRawReply } from "./types.ts";
+import type { RedisReply, RedisReplyOrError } from "./types.ts";
 
 export function createRequest(
   command: string,
@@ -30,7 +30,7 @@ export async function sendCommand(
   reader: BufReader,
   command: string,
   ...args: (number | string)[]
-): Promise<RedisRawReply> {
+): Promise<RedisReply> {
   const msg = createRequest(command, args);
   await writer.write(encoder.encode(msg));
   await writer.flush();
@@ -44,11 +44,11 @@ export async function sendCommands(
     command: string;
     args: (number | string)[];
   }[],
-): Promise<RawReplyOrError[]> {
+): Promise<RedisReplyOrError[]> {
   const msg = commands.map((c) => createRequest(c.command, c.args)).join("");
   await writer.write(encoder.encode(msg));
   await writer.flush();
-  const ret: RawReplyOrError[] = [];
+  const ret: RedisReplyOrError[] = [];
   for (let i = 0; i < commands.length; i++) {
     try {
       const rep = await readReply(reader);

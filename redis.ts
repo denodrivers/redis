@@ -42,6 +42,7 @@ import type {
 import { Connection, RedisConnection } from "./connection.ts";
 import type { RedisConnectionOptions } from "./connection.ts";
 import { CommandExecutor, MuxExecutor } from "./executor.ts";
+import { unwrapReply } from "./protocol/mod.ts";
 import type {
   ArrayReply,
   Bulk,
@@ -121,25 +122,12 @@ export class RedisImpl implements Redis {
     this.connection.close();
   }
 
-  async execReply(command: string, ...args: (string | number)[]) {
+  async execReply(command: string, ...args: (string | number)[]): Promise<Raw> {
     const reply = await this.executor.exec(
       command,
       ...args,
     );
-
-    switch (reply.type) {
-      case "integer":
-        return reply.integer();
-      case "array":
-        return reply.array();
-      case "status":
-        return reply.status();
-      case "string":
-        return reply.string();
-      default:
-        // TODO: Improve error handling
-        throw new Error("Unknown reply type: " + reply);
-    }
+    return unwrapReply(reply) as Raw;
   }
 
   async execStatusReply(
