@@ -1,5 +1,10 @@
 import { ErrorReplyError } from "../mod.ts";
-import type { BulkReply, IntegerReply, StatusReply } from "../protocol/mod.ts";
+import type {
+  ArrayReply,
+  BulkReply,
+  IntegerReply,
+  StatusReply,
+} from "../protocol/mod.ts";
 import {
   assert,
   assertEquals,
@@ -27,15 +32,21 @@ suite.test("testPipeline", async () => {
     pl.del("set2"),
   ]);
   const ret = await pl.flush();
-  assertEquals(ret, [
-    ["status", "PONG"],
-    ["status", "PONG"],
-    ["status", "OK"],
-    ["status", "OK"],
-    ["array", ["value1", "value2"]],
-    ["integer", 1],
-    ["integer", 1],
-  ]);
+  assertEquals(ret.length, 7);
+  assertEquals((ret[0] as StatusReply).type, "status");
+  assertEquals((ret[0] as StatusReply).value(), "PONG");
+  assertEquals((ret[1] as StatusReply).type, "status");
+  assertEquals((ret[1] as StatusReply).value(), "PONG");
+  assertEquals((ret[2] as StatusReply).type, "status");
+  assertEquals((ret[2] as StatusReply).value(), "OK");
+  assertEquals((ret[3] as StatusReply).type, "status");
+  assertEquals((ret[3] as StatusReply).value(), "OK");
+  assertEquals((ret[4] as ArrayReply).type, "array");
+  assertEquals((ret[4] as ArrayReply).value(), ["value1", "value2"]);
+  assertEquals((ret[5] as IntegerReply).type, "integer");
+  assertEquals((ret[5] as IntegerReply).value(), 1);
+  assertEquals((ret[6] as IntegerReply).type, "integer");
+  assertEquals((ret[6] as IntegerReply).value(), 1);
   client.close();
 });
 
@@ -115,25 +126,31 @@ suite.test("pipeline in concurrent", async () => {
     }
     promises.push(tx.flush());
     const res = await Promise.all(promises);
-    assertEquals(res, [
-      "OK", // set(a)
-      "OK", // set(b)
-      "OK", // set(c)
-      [
-        ["status", "OK"],
-        ["status", "OK"],
-        ["status", "OK"],
-      ], // flush()
-      "OK", // get(a)
-      "OK", // get(b)
-      "OK", // get(c)
-      [
-        ["bulk", "a"],
-        ["bulk", "b"],
-        ["bulk", "c"],
-      ],
-    ] // flush()
-    );
+    assertEquals(res.length, 12);
+    assertEquals(res[0], "OK"); // set(a)
+    assertEquals(res[1], "OK"); // set(b)
+    assertEquals(res[2], "OK"); // set(c)
+
+    // flush()
+    assertEquals((res[3] as StatusReply).type, "status");
+    assertEquals((res[3] as StatusReply).value(), "OK");
+    assertEquals((res[4] as StatusReply).type, "status");
+    assertEquals((res[4] as StatusReply).value(), "OK");
+    assertEquals((res[5] as StatusReply).type, "status");
+    assertEquals((res[5] as StatusReply).value(), "OK");
+
+    assertEquals(res[6], "OK"); // get(a)
+    assertEquals(res[7], "OK"); // get(b)
+    assertEquals(res[8], "OK"); // get(c)
+
+    // flush()
+    assertEquals((res[9] as BulkReply).type, "string");
+    assertEquals((res[9] as BulkReply).value(), "a");
+    assertEquals((res[10] as BulkReply).type, "string");
+    assertEquals((res[10] as BulkReply).value(), "b");
+    assertEquals((res[11] as BulkReply).type, "string");
+    assertEquals((res[11] as BulkReply).value(), "c");
+
     client.close();
   }
 });
