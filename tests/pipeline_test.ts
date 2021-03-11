@@ -86,16 +86,16 @@ suite.test("testTx", async () => {
     BulkReply,
   ];
   assertEquals(
-    parseInt(rep1[4].string()!),
-    parseInt(rep1[0].string()!) + 3,
+    parseInt(rep1[4].value()!),
+    parseInt(rep1[0].value()!) + 3,
   );
   assertEquals(
-    parseInt(rep2[4].string()!),
-    parseInt(rep2[0].string()!) + 3,
+    parseInt(rep2[4].value()!),
+    parseInt(rep2[0].value()!) + 3,
   );
   assertEquals(
-    parseInt(rep3[4].string()!),
-    parseInt(rep3[0].string()!) + 3,
+    parseInt(rep3[4].value()!),
+    parseInt(rep3[0].value()!) + 3,
   );
   client.close();
 });
@@ -147,10 +147,10 @@ suite.test("error while pipeline", async () => {
   const resp = await tx.flush();
   assertEquals(resp.length, 3);
   assertEquals((resp[0] as StatusReply).type, "status");
-  assertEquals((resp[0] as StatusReply).status(), "status");
+  assertEquals((resp[0] as StatusReply).value(), "status");
   assert(resp[1] instanceof ErrorReplyError);
   assertEquals((resp[2] as BulkReply).type, "bulk");
-  assertEquals((resp[2] as BulkReply).string(), "a");
+  assertEquals((resp[2] as BulkReply).value(), "a");
   client.close();
 });
 
