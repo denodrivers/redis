@@ -118,7 +118,9 @@ class BulkReply implements types.BulkReply {
   }
 
   string(): types.Bulk {
-    return this.#buffer ? decoder.decode(this.#buffer) : undefined;
+    return this.#buffer
+      ? decoder.decode(this.#buffer.subarray(0, this.#buffer.length - 2))
+      : undefined;
   }
 
   buffer(): Uint8Array | types.BulkNil {
