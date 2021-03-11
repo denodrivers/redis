@@ -125,31 +125,43 @@ suite.test("pipeline in concurrent", async () => {
       promises.push(tx.get(key));
     }
     promises.push(tx.flush());
-    const res = await Promise.all(promises);
-    assertEquals(res.length, 12);
+    const res = await Promise.all(promises) as [
+      string,
+      string,
+      string,
+      [StatusReply, StatusReply, StatusReply],
+      string,
+      string,
+      string,
+      [BulkReply, BulkReply, BulkReply],
+    ];
+
+    assertEquals(res.length, 8);
     assertEquals(res[0], "OK"); // set(a)
     assertEquals(res[1], "OK"); // set(b)
     assertEquals(res[2], "OK"); // set(c)
 
     // flush()
-    assertEquals((res[3] as StatusReply).type, "status");
-    assertEquals((res[3] as StatusReply).value(), "OK");
-    assertEquals((res[4] as StatusReply).type, "status");
-    assertEquals((res[4] as StatusReply).value(), "OK");
-    assertEquals((res[5] as StatusReply).type, "status");
-    assertEquals((res[5] as StatusReply).value(), "OK");
+    assertEquals(res[3].length, 3);
+    assertEquals(res[3][0].type, "status");
+    assertEquals(res[3][0].value(), "OK");
+    assertEquals(res[3][1].type, "status");
+    assertEquals(res[3][1].value(), "OK");
+    assertEquals(res[3][2].type, "status");
+    assertEquals(res[3][2].value(), "OK");
 
-    assertEquals(res[6], "OK"); // get(a)
-    assertEquals(res[7], "OK"); // get(b)
-    assertEquals(res[8], "OK"); // get(c)
+    assertEquals(res[4], "OK"); // get(a)
+    assertEquals(res[5], "OK"); // get(b)
+    assertEquals(res[6], "OK"); // get(c)
 
     // flush()
-    assertEquals((res[9] as BulkReply).type, "string");
-    assertEquals((res[9] as BulkReply).value(), "a");
-    assertEquals((res[10] as BulkReply).type, "string");
-    assertEquals((res[10] as BulkReply).value(), "b");
-    assertEquals((res[11] as BulkReply).type, "string");
-    assertEquals((res[11] as BulkReply).value(), "c");
+    assertEquals(res[7].length, 3);
+    assertEquals(res[7][0].type, "string");
+    assertEquals(res[7][0].value(), "a");
+    assertEquals(res[7][1].type, "string");
+    assertEquals(res[7][1].value(), "b");
+    assertEquals(res[7][2].type, "string");
+    assertEquals(res[7][2].value(), "c");
 
     client.close();
   }
@@ -164,9 +176,9 @@ suite.test("error while pipeline", async () => {
   const resp = await tx.flush();
   assertEquals(resp.length, 3);
   assertEquals((resp[0] as StatusReply).type, "status");
-  assertEquals((resp[0] as StatusReply).value(), "status");
+  assertEquals((resp[0] as StatusReply).value(), "OK");
   assert(resp[1] instanceof ErrorReplyError);
-  assertEquals((resp[2] as BulkReply).type, "bulk");
+  assertEquals((resp[2] as BulkReply).type, "string");
   assertEquals((resp[2] as BulkReply).value(), "a");
   client.close();
 });
