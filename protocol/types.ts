@@ -48,27 +48,28 @@ export type RedisReply =
 export type RedisReplyOrError = RedisReply | ErrorReplyError;
 
 // TODO(uki00a): Add `attributes()` methods when implementing RESP3
-export interface Reply {
+export interface Reply<T> {
   type: string;
+  value(): T;
 }
 
-export interface IntegerReply extends Reply {
+export interface IntegerReply extends Reply<Integer> {
   type: "integer";
-  integer(): Integer;
+  value(): Integer;
 }
 
-export interface BulkReply extends Reply {
+export interface BulkReply extends Reply<Bulk> {
   type: "string";
-  string(): Bulk;
+  value(): Bulk;
   buffer(): Uint8Array | BulkNil;
 }
 
-export interface StatusReply extends Reply {
+export interface StatusReply extends Reply<Status> {
   type: "status";
-  status(): Status;
+  value(): Status;
 }
 
-export interface ArrayReply extends Reply {
+export interface ArrayReply extends Reply<ConditionalArray> {
   type: "array";
-  array(): ConditionalArray;
+  value(): ConditionalArray;
 }

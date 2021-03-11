@@ -15,20 +15,7 @@ export function unwrapReply(
   if (reply instanceof ErrorReplyError) {
     return reply;
   }
-
-  switch (reply.type) {
-    case "integer":
-      return reply.integer();
-    case "array":
-      return reply.array();
-    case "status":
-      return reply.status();
-    case "string":
-      return reply.string();
-    default:
-      // TODO: Improve error handling
-      throw new Error("Unknown reply type: " + reply);
-  }
+  return reply.value();
 }
 
 export function createStatusReply(status: string): types.StatusReply {
@@ -81,7 +68,7 @@ class IntegerReply implements types.IntegerReply {
     return "integer";
   }
 
-  integer(): types.Integer {
+  value(): types.Integer {
     return this.#integer;
   }
 }
@@ -117,7 +104,7 @@ class BulkReply implements types.BulkReply {
     return "string";
   }
 
-  string(): types.Bulk {
+  value(): types.Bulk {
     return this.#buffer
       ? decoder.decode(this.#buffer.subarray(0, this.#buffer.length - 2))
       : undefined;
@@ -147,7 +134,7 @@ class StatusReply implements types.StatusReply {
     return "status";
   }
 
-  status(): types.Status {
+  value(): types.Status {
     return this.#status;
   }
 }
@@ -171,22 +158,22 @@ class ArrayReply implements types.ArrayReply {
       switch (res[0]) {
         case SimpleStringCode: {
           const reply = await StatusReply.decode(reader);
-          result.push(reply.status());
+          result.push(reply.value());
           break;
         }
         case BulkReplyCode: {
           const reply = await BulkReply.decode(reader);
-          result.push(reply.string());
+          result.push(reply.value());
           break;
         }
         case IntegerReplyCode: {
           const reply = await IntegerReply.decode(reader);
-          result.push(reply.integer());
+          result.push(reply.value());
           break;
         }
         case ArrayReplyCode: {
           const reply = await ArrayReply.decode(reader);
-          result.push(reply.array());
+          result.push(reply.value());
           break;
         }
       }
@@ -198,7 +185,7 @@ class ArrayReply implements types.ArrayReply {
     return "array";
   }
 
-  array() {
+  value() {
     return this.#array;
   }
 }

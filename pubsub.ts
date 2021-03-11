@@ -101,7 +101,7 @@ class RedisSubscriptionImpl<
           TMessage,
         ];
         try {
-          rep = (await readArrayReply(this.connection.reader)).array() as [
+          rep = (await readArrayReply(this.connection.reader)).value() as [
             string,
             string,
             TMessage,

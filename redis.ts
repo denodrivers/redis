@@ -134,48 +134,48 @@ export class RedisImpl implements Redis {
     command: string,
     ...args: (string | number)[]
   ): Promise<Status> {
-    const reply = await this.executor.exec(command, ...args) as StatusReply;
-    return reply.status();
+    const reply = await this.executor.exec(command, ...args);
+    return reply.value() as Status;
   }
 
   async execIntegerReply(
     command: string,
     ...args: (string | number)[]
   ): Promise<Integer> {
-    const reply = await this.executor.exec(command, ...args) as IntegerReply;
-    return reply.integer();
+    const reply = await this.executor.exec(command, ...args);
+    return reply.value() as Integer;
   }
 
   async execBulkReply<T extends Bulk = Bulk>(
     command: string,
     ...args: (string | number)[]
   ): Promise<T> {
-    const reply = await this.executor.exec(command, ...args) as BulkReply;
-    return reply.string() as T;
+    const reply = await this.executor.exec(command, ...args);
+    return reply.value() as T;
   }
 
   async execArrayReply<T extends Raw = Raw>(
     command: string,
     ...args: (string | number)[]
   ): Promise<T[]> {
-    const reply = await this.executor.exec(command, ...args) as ArrayReply;
-    return reply.array() as T[];
+    const reply = await this.executor.exec(command, ...args);
+    return reply.value() as T[];
   }
 
   async execIntegerOrNilReply(
     command: string,
     ...args: (string | number)[]
   ): Promise<Integer | BulkNil> {
-    const reply = await this.executor.exec(command, ...args) as IntegerReply;
-    return reply.integer() as Integer | BulkNil;
+    const reply = await this.executor.exec(command, ...args);
+    return reply.value() as Integer | BulkNil;
   }
 
   async execStatusOrNilReply(
     command: string,
     ...args: (string | number)[]
   ): Promise<Status | BulkNil> {
-    const reply = await this.executor.exec(command, ...args) as StatusReply;
-    return reply.status() as Status | BulkNil;
+    const reply = await this.executor.exec(command, ...args);
+    return reply.value() as Status | BulkNil;
   }
 
   aclCat(categoryname?: string) {
