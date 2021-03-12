@@ -68,7 +68,7 @@ export class PipelineExecutor extends CommandExecutor {
     const [e] = this.queue;
     if (!e) return;
     sendCommands(this.connection.writer, this.connection.reader, e.commands)
-      .then((replies) => e.d.resolve(replies)) // TODO: Make this more efficient.
+      .then(e.d.resolve)
       .catch(e.d.reject)
       .finally(() => {
         this.queue.shift();
