@@ -1,7 +1,7 @@
 import type { Connection } from "./connection.ts";
 import { CommandExecutor } from "./executor.ts";
 import {
-  createStatusReply,
+  createSimpleStringReply,
   RedisReply,
   RedisReplyOrError,
   sendCommands,
@@ -47,7 +47,7 @@ export class PipelineExecutor extends CommandExecutor {
     ...args: (string | number)[]
   ): Promise<RedisReply> {
     this.commands.push({ command, args });
-    return Promise.resolve(createStatusReply("OK"));
+    return Promise.resolve(createSimpleStringReply("OK"));
   }
 
   flush(): Promise<RedisReplyOrError[]> {

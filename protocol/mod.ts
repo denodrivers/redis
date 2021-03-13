@@ -10,14 +10,18 @@ export type {
   Raw,
   RedisReply,
   RedisReplyOrError,
-  Status,
-  StatusReply,
+  SimpleString,
+  SimpleStringReply,
 } from "./types.ts";
 
 export {
-  createStatusReply,
+  ARRAY_TYPE,
+  BULK_TYPE,
+  createSimpleStringReply,
+  INTEGER_TYPE,
   readArrayReply,
   readReply,
+  SIMPLE_STRING_TYPE,
   unwrapReply,
 } from "./reply.ts";
 

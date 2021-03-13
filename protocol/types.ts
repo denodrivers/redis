@@ -7,7 +7,7 @@ import { ErrorReplyError } from "../errors.ts";
 /**
  * @description Represents the **simple string** type in the RESP2 protocol.
  */
-export type Status = string;
+export type SimpleString = string;
 
 /**
  * @description Represents the **integer** type in the RESP2 protocol.
@@ -32,7 +32,7 @@ export type BulkNil = undefined;
 /**
  * @description Represents the some type in the RESP2 protocol.
  */
-export type Raw = Status | Integer | Bulk | ConditionalArray;
+export type Raw = SimpleString | Integer | Bulk | ConditionalArray;
 
 /**
  * @description Represents the **array** type in the RESP2 protocol.
@@ -42,7 +42,7 @@ export type ConditionalArray = Raw[];
 export type RedisReply =
   | IntegerReply
   | BulkReply
-  | StatusReply
+  | SimpleStringReply
   | ArrayReply;
 
 export type RedisReplyOrError = RedisReply | ErrorReplyError;
@@ -59,14 +59,14 @@ export interface IntegerReply extends Reply<Integer> {
 }
 
 export interface BulkReply extends Reply<Bulk> {
-  type: "string";
+  type: "bulk string";
   value(): Bulk;
   buffer(): Uint8Array | BulkNil;
 }
 
-export interface StatusReply extends Reply<Status> {
-  type: "status";
-  value(): Status;
+export interface SimpleStringReply extends Reply<SimpleString> {
+  type: "simple string";
+  value(): SimpleString;
 }
 
 export interface ArrayReply extends Reply<ConditionalArray> {

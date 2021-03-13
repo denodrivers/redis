@@ -95,14 +95,14 @@ suite.test("execRawReply", async () => {
   // simple string
   {
     const reply = await client.executor.exec("SET", "key", "a");
-    assertEquals(reply.type, "status");
+    assertEquals(reply.type, "simple string");
     assertEquals(reply.value(), "OK");
   }
 
   // bulk string
   {
     const reply = await client.executor.exec("GET", "key");
-    assertEquals(reply.type, "string");
+    assertEquals(reply.type, "bulk string");
     assertEquals(reply.value(), "a");
   }
 });

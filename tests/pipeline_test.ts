@@ -3,7 +3,7 @@ import type {
   ArrayReply,
   BulkReply,
   IntegerReply,
-  StatusReply,
+  SimpleStringReply,
 } from "../protocol/mod.ts";
 import {
   assert,
@@ -33,14 +33,14 @@ suite.test("testPipeline", async () => {
   ]);
   const ret = await pl.flush();
   assertEquals(ret.length, 7);
-  assertEquals((ret[0] as StatusReply).type, "status");
-  assertEquals((ret[0] as StatusReply).value(), "PONG");
-  assertEquals((ret[1] as StatusReply).type, "status");
-  assertEquals((ret[1] as StatusReply).value(), "PONG");
-  assertEquals((ret[2] as StatusReply).type, "status");
-  assertEquals((ret[2] as StatusReply).value(), "OK");
-  assertEquals((ret[3] as StatusReply).type, "status");
-  assertEquals((ret[3] as StatusReply).value(), "OK");
+  assertEquals((ret[0] as SimpleStringReply).type, "simple string");
+  assertEquals((ret[0] as SimpleStringReply).value(), "PONG");
+  assertEquals((ret[1] as SimpleStringReply).type, "simple string");
+  assertEquals((ret[1] as SimpleStringReply).value(), "PONG");
+  assertEquals((ret[2] as SimpleStringReply).type, "simple string");
+  assertEquals((ret[2] as SimpleStringReply).value(), "OK");
+  assertEquals((ret[3] as SimpleStringReply).type, "simple string");
+  assertEquals((ret[3] as SimpleStringReply).value(), "OK");
   assertEquals((ret[4] as ArrayReply).type, "array");
   assertEquals((ret[4] as ArrayReply).value(), ["value1", "value2"]);
   assertEquals((ret[5] as IntegerReply).type, "integer");
@@ -129,7 +129,7 @@ suite.test("pipeline in concurrent", async () => {
       string,
       string,
       string,
-      [StatusReply, StatusReply, StatusReply],
+      [SimpleStringReply, SimpleStringReply, SimpleStringReply],
       string,
       string,
       string,
@@ -143,11 +143,11 @@ suite.test("pipeline in concurrent", async () => {
 
     // flush()
     assertEquals(res[3].length, 3);
-    assertEquals(res[3][0].type, "status");
+    assertEquals(res[3][0].type, "simple string");
     assertEquals(res[3][0].value(), "OK");
-    assertEquals(res[3][1].type, "status");
+    assertEquals(res[3][1].type, "simple string");
     assertEquals(res[3][1].value(), "OK");
-    assertEquals(res[3][2].type, "status");
+    assertEquals(res[3][2].type, "simple string");
     assertEquals(res[3][2].value(), "OK");
 
     assertEquals(res[4], "OK"); // get(a)
@@ -156,11 +156,11 @@ suite.test("pipeline in concurrent", async () => {
 
     // flush()
     assertEquals(res[7].length, 3);
-    assertEquals(res[7][0].type, "string");
+    assertEquals(res[7][0].type, "blob");
     assertEquals(res[7][0].value(), "a");
-    assertEquals(res[7][1].type, "string");
+    assertEquals(res[7][1].type, "blob");
     assertEquals(res[7][1].value(), "b");
-    assertEquals(res[7][2].type, "string");
+    assertEquals(res[7][2].type, "blob");
     assertEquals(res[7][2].value(), "c");
 
     client.close();
@@ -175,10 +175,10 @@ suite.test("error while pipeline", async () => {
   tx.get("a");
   const resp = await tx.flush();
   assertEquals(resp.length, 3);
-  assertEquals((resp[0] as StatusReply).type, "status");
-  assertEquals((resp[0] as StatusReply).value(), "OK");
+  assertEquals((resp[0] as SimpleStringReply).type, "simple string");
+  assertEquals((resp[0] as SimpleStringReply).value(), "OK");
   assert(resp[1] instanceof ErrorReplyError);
-  assertEquals((resp[2] as BulkReply).type, "string");
+  assertEquals((resp[2] as BulkReply).type, "bulk string");
   assertEquals((resp[2] as BulkReply).value(), "a");
   client.close();
 });

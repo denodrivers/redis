@@ -9,6 +9,11 @@ const SimpleStringCode = "+".charCodeAt(0);
 const ArrayReplyCode = "*".charCodeAt(0);
 const ErrorReplyCode = "-".charCodeAt(0);
 
+export const INTEGER_TYPE = "integer";
+export const SIMPLE_STRING_TYPE = "simple string";
+export const ARRAY_TYPE = "array";
+export const BULK_TYPE = "bulk string";
+
 export function unwrapReply(
   reply: types.RedisReplyOrError,
 ): types.Raw | ErrorReplyError {
@@ -18,8 +23,10 @@ export function unwrapReply(
   return reply.value();
 }
 
-export function createStatusReply(status: string): types.StatusReply {
-  return new StatusReply(status);
+export function createSimpleStringReply(
+  status: string,
+): types.SimpleStringReply {
+  return new SimpleStringReply(status);
 }
 
 export function readArrayReply(reader: BufReader): Promise<types.ArrayReply> {
@@ -37,7 +44,7 @@ export async function readReply(
     case IntegerReplyCode:
       return await IntegerReply.decode(reader);
     case SimpleStringCode:
-      return await StatusReply.decode(reader);
+      return await SimpleStringReply.decode(reader);
     case BulkReplyCode:
       return await BulkReply.decode(reader);
     case ArrayReplyCode:
@@ -65,7 +72,7 @@ class IntegerReply implements types.IntegerReply {
   }
 
   get type(): "integer" {
-    return "integer";
+    return INTEGER_TYPE;
   }
 
   value(): types.Integer {
@@ -100,8 +107,8 @@ class BulkReply implements types.BulkReply {
     return new BulkReply(dest);
   }
 
-  get type(): "string" {
-    return "string";
+  get type(): "bulk string" {
+    return BULK_TYPE;
   }
 
   value(): types.Bulk {
@@ -115,26 +122,26 @@ class BulkReply implements types.BulkReply {
   }
 }
 
-class StatusReply implements types.StatusReply {
+class SimpleStringReply implements types.SimpleStringReply {
   #status: string;
 
   constructor(status: string) {
     this.#status = status;
   }
 
-  static async decode(reader: BufReader): Promise<types.StatusReply> {
+  static async decode(reader: BufReader): Promise<types.SimpleStringReply> {
     const line = await readLine(reader);
     if (line[0] === "+") {
-      return new StatusReply(line.substr(1, line.length - 3));
+      return new SimpleStringReply(line.substr(1, line.length - 3));
     }
     tryParseErrorReply(line);
   }
 
-  get type(): "status" {
-    return "status";
+  get type(): "simple string" {
+    return SIMPLE_STRING_TYPE;
   }
 
-  value(): types.Status {
+  value(): types.SimpleString {
     return this.#status;
   }
 }
@@ -157,7 +164,7 @@ class ArrayReply implements types.ArrayReply {
       }
       switch (res[0]) {
         case SimpleStringCode: {
-          const reply = await StatusReply.decode(reader);
+          const reply = await SimpleStringReply.decode(reader);
           result.push(reply.value());
           break;
         }
@@ -182,7 +189,7 @@ class ArrayReply implements types.ArrayReply {
   }
 
   get type(): "array" {
-    return "array";
+    return ARRAY_TYPE;
   }
 
   value() {

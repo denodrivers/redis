@@ -53,8 +53,8 @@ import type {
   Integer,
   IntegerReply,
   Raw,
-  Status,
-  StatusReply,
+  SimpleString,
+  SimpleStringReply,
 } from "./protocol/mod.ts";
 import { createRedisPipeline } from "./pipeline.ts";
 import { psubscribe, subscribe } from "./pubsub.ts";
@@ -133,9 +133,9 @@ export class RedisImpl implements Redis {
   async execStatusReply(
     command: string,
     ...args: (string | number)[]
-  ): Promise<Status> {
+  ): Promise<SimpleString> {
     const reply = await this.executor.exec(command, ...args);
-    return reply.value() as Status;
+    return reply.value() as SimpleString;
   }
 
   async execIntegerReply(
@@ -173,9 +173,9 @@ export class RedisImpl implements Redis {
   async execStatusOrNilReply(
     command: string,
     ...args: (string | number)[]
-  ): Promise<Status | BulkNil> {
+  ): Promise<SimpleString | BulkNil> {
     const reply = await this.executor.exec(command, ...args);
-    return reply.value() as Status | BulkNil;
+    return reply.value() as SimpleString | BulkNil;
   }
 
   aclCat(categoryname?: string) {
@@ -217,7 +217,7 @@ export class RedisImpl implements Redis {
   }
 
   aclLog(count: number): Promise<BulkString[]>;
-  aclLog(mode: ACLLogMode): Promise<Status>;
+  aclLog(mode: ACLLogMode): Promise<SimpleString>;
   aclLog(param: number | ACLLogMode) {
     if (param === "RESET") {
       return this.execStatusReply("ACL", "LOG", "RESET");
@@ -416,7 +416,7 @@ export class RedisImpl implements Redis {
     return this.execIntegerReply("CLIENT", "UNBLOCK", id);
   }
 
-  clientUnpause(): Promise<Status> {
+  clientUnpause(): Promise<SimpleString> {
     return this.execStatusReply("CLIENT", "UNPAUSE");
   }
 
@@ -1263,12 +1263,12 @@ export class RedisImpl implements Redis {
     key: string,
     value: string,
     opts?: SetOpts,
-  ): Promise<Status>;
+  ): Promise<SimpleString>;
   set(
     key: string,
     value: string,
     opts?: SetWithModeOpts,
-  ): Promise<Status | BulkNil>;
+  ): Promise<SimpleString | BulkNil>;
   set(
     key: string,
     value: string,
