@@ -68,6 +68,7 @@ export type {
   Raw,
   RedisReply,
   RedisReplyOrError,
+  Reply,
   SimpleString,
   SimpleStringReply,
 } from "./protocol/mod.ts";
