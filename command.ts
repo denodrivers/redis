@@ -5,8 +5,8 @@ import type {
   ConditionalArray,
   Integer,
   Raw,
-  Status,
-} from "./io.ts";
+  SimpleString,
+} from "./protocol/mod.ts";
 import type { RedisPipeline } from "./pipeline.ts";
 import type { RedisSubscription } from "./pubsub.ts";
 import type {
@@ -204,13 +204,13 @@ export type ShutdownMode = "NOSAVE" | "SAVE";
 
 export interface RedisCommands {
   // Connection
-  auth(password: string): Promise<Status>;
-  auth(username: string, password: string): Promise<Status>;
+  auth(password: string): Promise<SimpleString>;
+  auth(username: string, password: string): Promise<SimpleString>;
   echo(message: string): Promise<BulkString>;
-  ping(): Promise<Status>;
+  ping(): Promise<SimpleString>;
   ping(message: string): Promise<BulkString>;
-  quit(): Promise<Status>;
-  select(index: number): Promise<Status>;
+  quit(): Promise<SimpleString>;
+  select(index: number): Promise<SimpleString>;
 
   // Keys
   del(...keys: string[]): Promise<Integer>;
@@ -226,7 +226,7 @@ export interface RedisCommands {
     destination_db: string,
     timeout: number,
     opts?: MigrateOpts,
-  ): Promise<Status>;
+  ): Promise<SimpleString>;
   move(key: string, db: string): Promise<Integer>;
   objectRefCount(key: string): Promise<Integer | BulkNil>;
   objectEncoding(key: string): Promise<Bulk>;
@@ -238,14 +238,14 @@ export interface RedisCommands {
   pexpireat(key: string, milliseconds_timestamp: number): Promise<Integer>;
   pttl(key: string): Promise<Integer>;
   randomkey(): Promise<Bulk>;
-  rename(key: string, newkey: string): Promise<Status>;
+  rename(key: string, newkey: string): Promise<SimpleString>;
   renamenx(key: string, newkey: string): Promise<Integer>;
   restore(
     key: string,
     ttl: number,
     serialized_value: string,
     opts?: RestoreOpts,
-  ): Promise<Status>;
+  ): Promise<SimpleString>;
   scan(
     cursor: number,
     opts?: ScanOpts,
@@ -260,7 +260,7 @@ export interface RedisCommands {
   ): Promise<Integer>;
   touch(...keys: string[]): Promise<Integer>;
   ttl(key: string): Promise<Integer>;
-  type(key: string): Promise<Status>;
+  type(key: string): Promise<SimpleString>;
   unlink(...keys: string[]): Promise<Integer>;
   wait(numreplicas: number, timeout: number): Promise<Integer>;
 
@@ -297,25 +297,29 @@ export interface RedisCommands {
   incrby(key: string, increment: number): Promise<Integer>;
   incrbyfloat(key: string, increment: number): Promise<BulkString>;
   mget(...keys: string[]): Promise<Bulk[]>;
-  mset(key: string, value: string): Promise<Status>;
-  mset(...key_values: [string, string][]): Promise<Status>;
-  mset(key_values: Record<string, string>): Promise<Status>;
+  mset(key: string, value: string): Promise<SimpleString>;
+  mset(...key_values: [string, string][]): Promise<SimpleString>;
+  mset(key_values: Record<string, string>): Promise<SimpleString>;
   msetnx(key: string, value: string): Promise<Integer>;
   msetnx(...key_values: [string, string][]): Promise<Integer>;
   msetnx(key_values: Record<string, string>): Promise<Integer>;
-  psetex(key: string, milliseconds: number, value: string): Promise<Status>;
+  psetex(
+    key: string,
+    milliseconds: number,
+    value: string,
+  ): Promise<SimpleString>;
   set(
     key: string,
     value: string,
     opts?: SetOpts,
-  ): Promise<Status>;
+  ): Promise<SimpleString>;
   set(
     key: string,
     value: string,
     opts?: SetWithModeOpts,
-  ): Promise<Status | BulkNil>;
+  ): Promise<SimpleString | BulkNil>;
   setbit(key: string, offset: number, value: string): Promise<Integer>;
-  setex(key: string, seconds: number, value: string): Promise<Status>;
+  setex(key: string, seconds: number, value: string): Promise<SimpleString>;
   setnx(key: string, value: string): Promise<Integer>;
   setrange(key: string, offset: number, value: string): Promise<Integer>;
   stralgo(
@@ -388,15 +392,21 @@ export interface RedisCommands {
   /**
    * @deprecated since 4.0.0, use hset
    */
-  hmset(key: string, field: string, value: string): Promise<Status>;
+  hmset(key: string, field: string, value: string): Promise<SimpleString>;
   /**
    * @deprecated since 4.0.0, use hset
    */
-  hmset(key: string, ...field_values: [string, string][]): Promise<Status>;
+  hmset(
+    key: string,
+    ...field_values: [string, string][]
+  ): Promise<SimpleString>;
   /**
    * @deprecated since 4.0.0, use hset
    */
-  hmset(key: string, field_values: Record<string, string>): Promise<Status>;
+  hmset(
+    key: string,
+    field_values: Record<string, string>,
+  ): Promise<SimpleString>;
   hscan(
     key: string,
     cursor: number,
@@ -474,8 +484,8 @@ export interface RedisCommands {
   lpushx(key: string, ...elements: string[]): Promise<Integer>;
   lrange(key: string, start: number, stop: number): Promise<BulkString[]>;
   lrem(key: string, count: number, element: string): Promise<Integer>;
-  lset(key: string, index: number, element: string): Promise<Status>;
-  ltrim(key: string, start: number, stop: number): Promise<Status>;
+  lset(key: string, index: number, element: string): Promise<SimpleString>;
+  ltrim(key: string, start: number, stop: number): Promise<SimpleString>;
   rpop(key: string): Promise<Bulk>;
   rpoplpush(source: string, destination: string): Promise<Bulk>;
   rpush(key: string, ...elements: string[]): Promise<Integer>;
@@ -484,7 +494,7 @@ export interface RedisCommands {
   // HyperLogLog
   pfadd(key: string, ...elements: string[]): Promise<Integer>;
   pfcount(...keys: string[]): Promise<Integer>;
-  pfmerge(destkey: string, ...sourcekeys: string[]): Promise<Status>;
+  pfmerge(destkey: string, ...sourcekeys: string[]): Promise<SimpleString>;
 
   // PubSub
   psubscribe<TMessage extends string | string[] = string>(
@@ -665,7 +675,7 @@ XCLAIM mystream mygroup Alice 3600000 1526569498055-0
     groupName: string,
     xid: XIdInput | "$",
     mkstream?: boolean,
-  ): Promise<Status>;
+  ): Promise<SimpleString>;
   /**
    * Delete a specific consumer from a group, leaving
    * the group itself intact.
@@ -722,7 +732,7 @@ XGROUP SETID mystream consumer-group-name 0
     key: string,
     groupName: string,
     xid: XIdInput,
-  ): Promise<Status>;
+  ): Promise<SimpleString>;
   xinfoStream(key: string): Promise<XInfoStreamReply>;
   /**
    *  returns the entire state of the stream, including entries, groups, consumers and PELs. This form is available since Redis 6.0.
@@ -993,7 +1003,7 @@ XRANGE somestream - +
    * This command controls the tracking of the keys in the next command executed by the connection.
    * @see https://redis.io/commands/client-caching
    */
-  clientCaching(mode: ClientCachingMode): Promise<Status>;
+  clientCaching(mode: ClientCachingMode): Promise<SimpleString>;
 
   /**
    * Returns the name of the current connection which can be set by `clientSetName`.
@@ -1028,20 +1038,20 @@ XRANGE somestream - +
    * Suspend all the Redis clients for the specified amount of time (in milliseconds).
    * @see https://redis.io/commands/client-pause
    */
-  clientPause(timeout: number, mode?: ClientPauseMode): Promise<Status>;
+  clientPause(timeout: number, mode?: ClientPauseMode): Promise<SimpleString>;
 
   /**
    * Sets a `connectionName` to the current connection.
    * You can get the name of the current connection using `clientGetName()`.
    * @see https://redis.io/commands/client-setname
    */
-  clientSetName(connectionName: string): Promise<Status>;
+  clientSetName(connectionName: string): Promise<SimpleString>;
 
   /**
    * Enables the tracking feature for the Redis server that is used for server assisted client side caching.
    * @see https://redis.io/commands/client-tracking
    */
-  clientTracking(opts: ClientTrackingOpts): Promise<Status>;
+  clientTracking(opts: ClientTrackingOpts): Promise<SimpleString>;
 
   /**
    * Returns information about the current client connection's use of the server assisted client side caching feature.
@@ -1062,35 +1072,35 @@ XRANGE somestream - +
    * Used to resume command processing for all clients that were paused by `clientPause`.
    * @see https://redis.io/commands/client-unpause
    */
-  clientUnpause(): Promise<Status>;
+  clientUnpause(): Promise<SimpleString>;
 
   // Cluster
-  clusterAddSlots(...slots: number[]): Promise<Status>;
+  clusterAddSlots(...slots: number[]): Promise<SimpleString>;
   clusterCountFailureReports(node_id: string): Promise<Integer>;
   clusterCountKeysInSlot(slot: number): Promise<Integer>;
-  clusterDelSlots(...slots: number[]): Promise<Status>;
-  clusterFailover(mode?: ClusterFailoverMode): Promise<Status>;
-  clusterFlushSlots(): Promise<Status>;
-  clusterForget(node_id: string): Promise<Status>;
+  clusterDelSlots(...slots: number[]): Promise<SimpleString>;
+  clusterFailover(mode?: ClusterFailoverMode): Promise<SimpleString>;
+  clusterFlushSlots(): Promise<SimpleString>;
+  clusterForget(node_id: string): Promise<SimpleString>;
   clusterGetKeysInSlot(slot: number, count: number): Promise<BulkString[]>;
   clusterInfo(): Promise<BulkString>;
   clusterKeySlot(key: string): Promise<Integer>;
-  clusterMeet(ip: string, port: number): Promise<Status>;
+  clusterMeet(ip: string, port: number): Promise<SimpleString>;
   clusterMyID(): Promise<BulkString>;
   clusterNodes(): Promise<BulkString>;
   clusterReplicas(node_id: string): Promise<BulkString[]>;
-  clusterReplicate(node_id: string): Promise<Status>;
-  clusterReset(mode?: ClusterResetMode): Promise<Status>;
-  clusterSaveConfig(): Promise<Status>;
+  clusterReplicate(node_id: string): Promise<SimpleString>;
+  clusterReset(mode?: ClusterResetMode): Promise<SimpleString>;
+  clusterSaveConfig(): Promise<SimpleString>;
   clusterSetSlot(
     slot: number,
     subcommand: ClusterSetSlotSubcommand,
     node_id?: string,
-  ): Promise<Status>;
+  ): Promise<SimpleString>;
   clusterSlaves(node_id: string): Promise<BulkString[]>;
   clusterSlots(): Promise<ConditionalArray>;
-  readonly(): Promise<Status>;
-  readwrite(): Promise<Status>;
+  readonly(): Promise<SimpleString>;
+  readwrite(): Promise<SimpleString>;
 
   // Server
   aclCat(categoryname?: string): Promise<BulkString[]>;
@@ -1099,15 +1109,15 @@ XRANGE somestream - +
   aclGetUser(username: string): Promise<(BulkString | BulkString[])[]>;
   aclHelp(): Promise<BulkString[]>;
   aclList(): Promise<BulkString[]>;
-  aclLoad(): Promise<Status>;
+  aclLoad(): Promise<SimpleString>;
   aclLog(count: number): Promise<BulkString[]>;
-  aclLog(mode: ACLLogMode): Promise<Status>;
-  aclSave(): Promise<Status>;
-  aclSetUser(username: string, ...rules: string[]): Promise<Status>;
+  aclLog(mode: ACLLogMode): Promise<SimpleString>;
+  aclSave(): Promise<SimpleString>;
+  aclSetUser(username: string, ...rules: string[]): Promise<SimpleString>;
   aclUsers(): Promise<BulkString[]>;
   aclWhoami(): Promise<BulkString>;
-  bgrewriteaof(): Promise<Status>;
-  bgsave(): Promise<Status>;
+  bgrewriteaof(): Promise<SimpleString>;
+  bgsave(): Promise<SimpleString>;
   command(): Promise<
     [BulkString, Integer, BulkString[], Integer, Integer, Integer][]
   >;
@@ -1119,53 +1129,53 @@ XRANGE somestream - +
     ([BulkString, Integer, BulkString[], Integer, Integer, Integer] | BulkNil)[]
   >;
   configGet(parameter: string): Promise<BulkString[]>;
-  configResetStat(): Promise<Status>;
-  configRewrite(): Promise<Status>;
-  configSet(parameter: string, value: string): Promise<Status>;
+  configResetStat(): Promise<SimpleString>;
+  configRewrite(): Promise<SimpleString>;
+  configSet(parameter: string, value: string): Promise<SimpleString>;
   dbsize(): Promise<Integer>;
-  debugObject(key: string): Promise<Status>;
-  debugSegfault(): Promise<Status>;
-  flushall(async?: boolean): Promise<Status>;
-  flushdb(async?: boolean): Promise<Status>;
+  debugObject(key: string): Promise<SimpleString>;
+  debugSegfault(): Promise<SimpleString>;
+  flushall(async?: boolean): Promise<SimpleString>;
+  flushdb(async?: boolean): Promise<SimpleString>;
   info(section?: string): Promise<BulkString>;
   lastsave(): Promise<Integer>;
   memoryDoctor(): Promise<BulkString>;
   memoryHelp(): Promise<BulkString[]>;
   memoryMallocStats(): Promise<BulkString>;
-  memoryPurge(): Promise<Status>;
+  memoryPurge(): Promise<SimpleString>;
   memoryStats(): Promise<ConditionalArray>;
   memoryUsage(key: string, opts?: MemoryUsageOpts): Promise<Integer>;
   moduleList(): Promise<BulkString[]>;
-  moduleLoad(path: string, ...args: string[]): Promise<Status>;
-  moduleUnload(name: string): Promise<Status>;
+  moduleLoad(path: string, ...args: string[]): Promise<SimpleString>;
+  moduleUnload(name: string): Promise<SimpleString>;
   monitor(): void;
-  replicaof(host: string, port: number): Promise<Status>;
-  replicaofNoOne(): Promise<Status>;
+  replicaof(host: string, port: number): Promise<SimpleString>;
+  replicaofNoOne(): Promise<SimpleString>;
   role(): Promise<RoleReply>;
-  save(): Promise<Status>;
-  shutdown(mode?: ShutdownMode): Promise<Status>;
-  slaveof(host: string, port: number): Promise<Status>;
-  slaveofNoOne(): Promise<Status>;
+  save(): Promise<SimpleString>;
+  shutdown(mode?: ShutdownMode): Promise<SimpleString>;
+  slaveof(host: string, port: number): Promise<SimpleString>;
+  slaveofNoOne(): Promise<SimpleString>;
   slowlog(subcommand: string, ...args: string[]): Promise<ConditionalArray>;
-  swapdb(index1: number, index2: number): Promise<Status>;
+  swapdb(index1: number, index2: number): Promise<SimpleString>;
   sync(): void;
   time(): Promise<[BulkString, BulkString]>;
 
   // Scripting
   eval(script: string, keys: string[], args: string[]): Promise<Raw>;
   evalsha(sha1: string, keys: string[], args: string[]): Promise<Raw>;
-  scriptDebug(mode: ScriptDebugMode): Promise<Status>;
+  scriptDebug(mode: ScriptDebugMode): Promise<SimpleString>;
   scriptExists(...sha1s: string[]): Promise<Integer[]>;
-  scriptFlush(): Promise<Status>;
-  scriptKill(): Promise<Status>;
-  scriptLoad(script: string): Promise<Status>;
+  scriptFlush(): Promise<SimpleString>;
+  scriptKill(): Promise<SimpleString>;
+  scriptLoad(script: string): Promise<SimpleString>;
 
   // Transactions
-  discard(): Promise<Status>;
+  discard(): Promise<SimpleString>;
   exec(): Promise<ConditionalArray>;
-  multi(): Promise<Status>;
-  unwatch(): Promise<Status>;
-  watch(...keys: string[]): Promise<Status>;
+  multi(): Promise<SimpleString>;
+  unwatch(): Promise<SimpleString>;
+  watch(...keys: string[]): Promise<SimpleString>;
 
   // Pipeline
   tx(): RedisPipeline;

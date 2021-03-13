@@ -1,4 +1,4 @@
-import { RedisRawReply, sendCommand } from "./io.ts";
+import { RedisReply, sendCommand } from "./protocol/mod.ts";
 import { BufReader, BufWriter } from "./vendor/https/deno.land/std/io/bufio.ts";
 type Closer = Deno.Closer;
 
@@ -105,13 +105,13 @@ export class RedisConnection implements Connection {
     };
   }
 
-  private authenticate(password: string): Promise<RedisRawReply> {
+  private authenticate(password: string): Promise<RedisReply> {
     return sendCommand(this.writer, this.reader, "AUTH", password);
   }
 
   private selectDb(
     db: number | undefined = this.options.db,
-  ): Promise<RedisRawReply> {
+  ): Promise<RedisReply> {
     if (!db) throw new Error("The database index is undefined.");
     return sendCommand(this.writer, this.reader, "SELECT", db);
   }

@@ -42,15 +42,20 @@ import type {
 import { Connection, RedisConnection } from "./connection.ts";
 import type { RedisConnectionOptions } from "./connection.ts";
 import { CommandExecutor, MuxExecutor } from "./executor.ts";
+import { unwrapReply } from "./protocol/mod.ts";
 import type {
+  ArrayReply,
   Bulk,
   BulkNil,
+  BulkReply,
   BulkString,
   ConditionalArray,
   Integer,
+  IntegerReply,
   Raw,
-  Status,
-} from "./io.ts";
+  SimpleString,
+  SimpleStringReply,
+} from "./protocol/mod.ts";
 import { createRedisPipeline } from "./pipeline.ts";
 import { psubscribe, subscribe } from "./pubsub.ts";
 import {
@@ -117,52 +122,60 @@ export class RedisImpl implements Redis {
     this.connection.close();
   }
 
+  async execReply(command: string, ...args: (string | number)[]): Promise<Raw> {
+    const reply = await this.executor.exec(
+      command,
+      ...args,
+    );
+    return unwrapReply(reply) as Raw;
+  }
+
   async execStatusReply(
     command: string,
     ...args: (string | number)[]
-  ): Promise<Status> {
-    const [_, reply] = await this.executor.exec(command, ...args);
-    return reply as Status;
+  ): Promise<SimpleString> {
+    const reply = await this.executor.exec(command, ...args);
+    return reply.value() as SimpleString;
   }
 
   async execIntegerReply(
     command: string,
     ...args: (string | number)[]
   ): Promise<Integer> {
-    const [_, reply] = await this.executor.exec(command, ...args);
-    return reply as number;
+    const reply = await this.executor.exec(command, ...args);
+    return reply.value() as Integer;
   }
 
   async execBulkReply<T extends Bulk = Bulk>(
     command: string,
     ...args: (string | number)[]
   ): Promise<T> {
-    const [_, reply] = await this.executor.exec(command, ...args);
-    return reply as T;
+    const reply = await this.executor.exec(command, ...args);
+    return reply.value() as T;
   }
 
   async execArrayReply<T extends Raw = Raw>(
     command: string,
     ...args: (string | number)[]
   ): Promise<T[]> {
-    const [_, reply] = await this.executor.exec(command, ...args);
-    return reply as T[];
+    const reply = await this.executor.exec(command, ...args);
+    return reply.value() as T[];
   }
 
   async execIntegerOrNilReply(
     command: string,
     ...args: (string | number)[]
   ): Promise<Integer | BulkNil> {
-    const [_, reply] = await this.executor.exec(command, ...args);
-    return reply as Integer | BulkNil;
+    const reply = await this.executor.exec(command, ...args);
+    return reply.value() as Integer | BulkNil;
   }
 
   async execStatusOrNilReply(
     command: string,
     ...args: (string | number)[]
-  ): Promise<Status | BulkNil> {
-    const [_, reply] = await this.executor.exec(command, ...args);
-    return reply as Status | BulkNil;
+  ): Promise<SimpleString | BulkNil> {
+    const reply = await this.executor.exec(command, ...args);
+    return reply.value() as SimpleString | BulkNil;
   }
 
   aclCat(categoryname?: string) {
@@ -204,7 +217,7 @@ export class RedisImpl implements Redis {
   }
 
   aclLog(count: number): Promise<BulkString[]>;
-  aclLog(mode: ACLLogMode): Promise<Status>;
+  aclLog(mode: ACLLogMode): Promise<SimpleString>;
   aclLog(param: number | ACLLogMode) {
     if (param === "RESET") {
       return this.execStatusReply("ACL", "LOG", "RESET");
@@ -403,7 +416,7 @@ export class RedisImpl implements Redis {
     return this.execIntegerReply("CLIENT", "UNBLOCK", id);
   }
 
-  clientUnpause(): Promise<Status> {
+  clientUnpause(): Promise<SimpleString> {
     return this.execStatusReply("CLIENT", "UNPAUSE");
   }
 
@@ -586,26 +599,24 @@ export class RedisImpl implements Redis {
     return this.execBulkReply<BulkString>("ECHO", message);
   }
 
-  async eval(script: string, keys: string[], args: string[]) {
-    const [_, raw] = await this.executor.exec(
+  eval(script: string, keys: string[], args: string[]) {
+    return this.execReply(
       "EVAL",
       script,
       keys.length,
       ...keys,
       ...args,
     );
-    return raw;
   }
 
-  async evalsha(sha1: string, keys: string[], args: string[]) {
-    const [_, raw] = await this.executor.exec(
+  evalsha(sha1: string, keys: string[], args: string[]) {
+    return this.execReply(
       "EVALSHA",
       sha1,
       keys.length,
       ...keys,
       ...args,
     );
-    return raw;
   }
 
   exec() {
@@ -1252,12 +1263,12 @@ export class RedisImpl implements Redis {
     key: string,
     value: string,
     opts?: SetOpts,
-  ): Promise<Status>;
+  ): Promise<SimpleString>;
   set(
     key: string,
     value: string,
     opts?: SetWithModeOpts,
-  ): Promise<Status | BulkNil>;
+  ): Promise<SimpleString | BulkNil>;
   set(
     key: string,
     value: string,

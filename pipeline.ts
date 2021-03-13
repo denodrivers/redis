@@ -1,11 +1,16 @@
 import type { Connection } from "./connection.ts";
 import { CommandExecutor } from "./executor.ts";
-import { RawReplyOrError, RedisRawReply, sendCommands } from "./io.ts";
+import {
+  createSimpleStringReply,
+  RedisReply,
+  RedisReplyOrError,
+  sendCommands,
+} from "./protocol/mod.ts";
 import { Redis, RedisImpl } from "./redis.ts";
 import { Deferred, deferred } from "./vendor/https/deno.land/std/async/mod.ts";
 
 export interface RedisPipeline extends Redis {
-  flush(): Promise<RawReplyOrError[]>;
+  flush(): Promise<RedisReplyOrError[]>;
 }
 
 export function createRedisPipeline(
@@ -13,7 +18,7 @@ export function createRedisPipeline(
   tx = false,
 ): RedisPipeline {
   const executor = new PipelineExecutor(connection, tx);
-  function flush(): Promise<RawReplyOrError[]> {
+  function flush(): Promise<RedisReplyOrError[]> {
     return executor.flush();
   }
   const client = new RedisImpl(connection, executor);
@@ -30,7 +35,7 @@ export class PipelineExecutor extends CommandExecutor {
       command: string;
       args: (number | string)[];
     }[];
-    d: Deferred<RawReplyOrError[]>;
+    d: Deferred<RedisReplyOrError[]>;
   }[] = [];
 
   constructor(connection: Connection, private tx: boolean) {
@@ -40,17 +45,17 @@ export class PipelineExecutor extends CommandExecutor {
   exec(
     command: string,
     ...args: (string | number)[]
-  ): Promise<RedisRawReply> {
+  ): Promise<RedisReply> {
     this.commands.push({ command, args });
-    return Promise.resolve(["status", "OK"]);
+    return Promise.resolve(createSimpleStringReply("OK"));
   }
 
-  flush(): Promise<RawReplyOrError[]> {
+  flush(): Promise<RedisReplyOrError[]> {
     if (this.tx) {
       this.commands.unshift({ command: "MULTI", args: [] });
       this.commands.push({ command: "EXEC", args: [] });
     }
-    const d = deferred<RawReplyOrError[]>();
+    const d = deferred<RedisReplyOrError[]>();
     this.queue.push({ commands: [...this.commands], d });
     if (this.queue.length === 1) {
       this.dequeue();
