@@ -118,7 +118,7 @@ class BulkReply implements types.BulkReply {
   }
 
   buffer(): Uint8Array | types.BulkNil {
-    return this.#buffer;
+    return this.#buffer?.subarray(0, this.#buffer.length - 2);
   }
 }
 
