@@ -49,6 +49,17 @@ export async function run(options: RunOptions): Promise<void> {
     },
   });
 
+  bench({
+    name: `${driver}: zadd & zscore`,
+    runs: 10000,
+    func: async (b) => {
+      b.start();
+      await client.zadd("zset", 1234567, "member");
+      await client.zscore("zset", "member");
+      b.stop();
+    },
+  });
+
   const results = await runBenchmarksAndFormatResults();
   console.table(results);
   await client.flushdb();
