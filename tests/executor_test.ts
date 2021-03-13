@@ -16,7 +16,7 @@ suite.afterAll(() => {
   client.close();
 });
 
-suite.test("get simple, string, and integer replies", async () => {
+suite.test("simple, string, and integer replies", async () => {
   // simple string
   {
     const reply = await client.executor.exec("SET", "key", "a");
@@ -39,7 +39,7 @@ suite.test("get simple, string, and integer replies", async () => {
   }
 });
 
-suite.test("set and get binary data", async () => {
+suite.test("get the raw data as Uint8Array", async () => {
   const encoder = new TextEncoder();
   await client.set("key", encoder.encode("hello"));
   const reply = await client.executor.exec("GET", "key");
