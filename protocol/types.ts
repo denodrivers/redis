@@ -5,17 +5,17 @@ import { ErrorReplyError } from "../errors.ts";
  */
 
 /**
- * @description Represents the **simple string** type in the RESP2 protocol.
+ * @description Represents the type of the value returned by `SimpleStringReply#value()`.
  */
 export type SimpleString = string;
 
 /**
- * @description Represents the **integer** type in the RESP2 protocol.
+ * @description Represents the type of the value returned by `IntegerReply#value()`.
  */
 export type Integer = number;
 
 /**
- * @description Represents the **bulk string** or **null bulk string** in the RESP2 protocol.
+ * @description Represents the type of the value returned by `BulkReply#value()`.
  */
 export type Bulk = BulkString | BulkNil;
 
@@ -35,7 +35,7 @@ export type BulkNil = undefined;
 export type Raw = SimpleString | Integer | Bulk | ConditionalArray;
 
 /**
- * @description Represents the **array** type in the RESP2 protocol.
+ * @description Represents the type of the value returned by `ArrayReply#value()`.
  */
 export type ConditionalArray = Raw[];
 
@@ -53,22 +53,34 @@ export interface Reply<T> {
   value(): T;
 }
 
+/**
+ * @description Represents the **integer** reply in the RESP2 protocol.
+ */
 export interface IntegerReply extends Reply<Integer> {
   type: "integer";
   value(): Integer;
 }
 
+/**
+ * @description Represents the **bulk string** or **null bulk string** reply in the RESP2 protocol.
+ */
 export interface BulkReply extends Reply<Bulk> {
   type: "bulk string";
   value(): Bulk;
   buffer(): Uint8Array | BulkNil;
 }
 
+/**
+ * @description Represents the **simple string** reply in the RESP2 protocol.
+ */
 export interface SimpleStringReply extends Reply<SimpleString> {
   type: "simple string";
   value(): SimpleString;
 }
 
+/**
+ * @description Represents the **array** reply in the RESP2 protocol.
+ */
 export interface ArrayReply extends Reply<ConditionalArray> {
   type: "array";
   value(): ConditionalArray;
