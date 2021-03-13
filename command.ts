@@ -5,6 +5,7 @@ import type {
   ConditionalArray,
   Integer,
   Raw,
+  RedisValue,
   SimpleString,
 } from "./protocol/mod.ts";
 import type { RedisPipeline } from "./pipeline.ts";
@@ -204,11 +205,11 @@ export type ShutdownMode = "NOSAVE" | "SAVE";
 
 export interface RedisCommands {
   // Connection
-  auth(password: string): Promise<SimpleString>;
-  auth(username: string, password: string): Promise<SimpleString>;
-  echo(message: string): Promise<BulkString>;
+  auth(password: RedisValue): Promise<SimpleString>;
+  auth(username: RedisValue, password: RedisValue): Promise<SimpleString>;
+  echo(message: RedisValue): Promise<BulkString>;
   ping(): Promise<SimpleString>;
-  ping(message: string): Promise<BulkString>;
+  ping(message: RedisValue): Promise<BulkString>;
   quit(): Promise<SimpleString>;
   select(index: number): Promise<SimpleString>;
 
@@ -265,7 +266,7 @@ export interface RedisCommands {
   wait(numreplicas: number, timeout: number): Promise<Integer>;
 
   // String
-  append(key: string, value: string): Promise<Integer>;
+  append(key: string, value: RedisValue): Promise<Integer>;
   bitcount(key: string): Promise<Integer>;
   bitcount(key: string, start: number, end: number): Promise<Integer>;
   bitfield(
@@ -292,36 +293,36 @@ export interface RedisCommands {
   get(key: string): Promise<Bulk>;
   getbit(key: string, offset: number): Promise<Integer>;
   getrange(key: string, start: number, end: number): Promise<BulkString>;
-  getset(key: string, value: string): Promise<Bulk>;
+  getset(key: string, value: RedisValue): Promise<Bulk>;
   incr(key: string): Promise<Integer>;
   incrby(key: string, increment: number): Promise<Integer>;
   incrbyfloat(key: string, increment: number): Promise<BulkString>;
   mget(...keys: string[]): Promise<Bulk[]>;
-  mset(key: string, value: string): Promise<SimpleString>;
-  mset(...key_values: [string, string][]): Promise<SimpleString>;
-  mset(key_values: Record<string, string>): Promise<SimpleString>;
-  msetnx(key: string, value: string): Promise<Integer>;
-  msetnx(...key_values: [string, string][]): Promise<Integer>;
-  msetnx(key_values: Record<string, string>): Promise<Integer>;
+  mset(key: string, value: RedisValue): Promise<SimpleString>;
+  mset(...key_values: [string, RedisValue][]): Promise<SimpleString>;
+  mset(key_values: Record<string, RedisValue>): Promise<SimpleString>;
+  msetnx(key: string, value: RedisValue): Promise<Integer>;
+  msetnx(...key_values: [string, RedisValue][]): Promise<Integer>;
+  msetnx(key_values: Record<string, RedisValue>): Promise<Integer>;
   psetex(
     key: string,
     milliseconds: number,
-    value: string,
+    value: RedisValue,
   ): Promise<SimpleString>;
   set(
     key: string,
-    value: string,
+    value: RedisValue,
     opts?: SetOpts,
   ): Promise<SimpleString>;
   set(
     key: string,
-    value: string,
+    value: RedisValue,
     opts?: SetWithModeOpts,
   ): Promise<SimpleString | BulkNil>;
-  setbit(key: string, offset: number, value: string): Promise<Integer>;
-  setex(key: string, seconds: number, value: string): Promise<SimpleString>;
-  setnx(key: string, value: string): Promise<Integer>;
-  setrange(key: string, offset: number, value: string): Promise<Integer>;
+  setbit(key: string, offset: number, value: RedisValue): Promise<Integer>;
+  setex(key: string, seconds: number, value: RedisValue): Promise<SimpleString>;
+  setnx(key: string, value: RedisValue): Promise<Integer>;
+  setrange(key: string, offset: number, value: RedisValue): Promise<Integer>;
   stralgo(
     algorithm: StralgoAlgorithm,
     target: StralgoTarget,
@@ -392,20 +393,20 @@ export interface RedisCommands {
   /**
    * @deprecated since 4.0.0, use hset
    */
-  hmset(key: string, field: string, value: string): Promise<SimpleString>;
+  hmset(key: string, field: string, value: RedisValue): Promise<SimpleString>;
   /**
    * @deprecated since 4.0.0, use hset
    */
   hmset(
     key: string,
-    ...field_values: [string, string][]
+    ...field_values: [string, RedisValue][]
   ): Promise<SimpleString>;
   /**
    * @deprecated since 4.0.0, use hset
    */
   hmset(
     key: string,
-    field_values: Record<string, string>,
+    field_values: Record<string, RedisValue>,
   ): Promise<SimpleString>;
   hscan(
     key: string,
@@ -417,20 +418,20 @@ export interface RedisCommands {
    * @description Sets `field` in the hash to `value`.
    * @see https://redis.io/commands/hset
    */
-  hset(key: string, field: string, value: string): Promise<Integer>;
+  hset(key: string, field: string, value: RedisValue): Promise<Integer>;
 
   /**
    * @description Sets the field-value pairs specified by `fieldValues` to the hash stored at `key`.
    *   NOTE: Variadic form for `HSET` is supported only in Redis v4.0.0 or higher.
    */
-  hset(key: string, ...fieldValues: [string, string][]): Promise<Integer>;
+  hset(key: string, ...fieldValues: [string, RedisValue][]): Promise<Integer>;
 
   /**
    * @description Sets the field-value pairs specified by `fieldValues` to the hash stored at `key`.
    *   NOTE: Variadic form for `HSET` is supported only in Redis v4.0.0 or higher.
    */
-  hset(key: string, fieldValues: Record<string, string>): Promise<Integer>;
-  hsetnx(key: string, field: string, value: string): Promise<Integer>;
+  hset(key: string, fieldValues: Record<string, RedisValue>): Promise<Integer>;
+  hsetnx(key: string, field: string, value: RedisValue): Promise<Integer>;
   hstrlen(key: string, field: string): Promise<Integer>;
   hvals(key: string): Promise<BulkString[]>;
 
@@ -453,7 +454,7 @@ export interface RedisCommands {
     key: string,
     loc: LInsertLocation,
     pivot: string,
-    value: string,
+    value: RedisValue,
   ): Promise<Integer>;
   llen(key: string): Promise<Integer>;
   lpop(key: string): Promise<Bulk>;
@@ -464,7 +465,7 @@ export interface RedisCommands {
    */
   lpos(
     key: string,
-    element: string,
+    element: RedisValue,
     opts?: LPosOpts,
   ): Promise<Integer | BulkNil>;
 
@@ -476,20 +477,20 @@ export interface RedisCommands {
    */
   lpos(
     key: string,
-    element: string,
+    element: RedisValue,
     opts: LPosWithCountOpts,
   ): Promise<Integer[]>;
 
-  lpush(key: string, ...elements: string[]): Promise<Integer>;
-  lpushx(key: string, ...elements: string[]): Promise<Integer>;
+  lpush(key: string, ...elements: RedisValue[]): Promise<Integer>;
+  lpushx(key: string, ...elements: RedisValue[]): Promise<Integer>;
   lrange(key: string, start: number, stop: number): Promise<BulkString[]>;
-  lrem(key: string, count: number, element: string): Promise<Integer>;
-  lset(key: string, index: number, element: string): Promise<SimpleString>;
+  lrem(key: string, count: number, element: RedisValue): Promise<Integer>;
+  lset(key: string, index: number, element: RedisValue): Promise<SimpleString>;
   ltrim(key: string, start: number, stop: number): Promise<SimpleString>;
   rpop(key: string): Promise<Bulk>;
   rpoplpush(source: string, destination: string): Promise<Bulk>;
-  rpush(key: string, ...elements: string[]): Promise<Integer>;
-  rpushx(key: string, ...elements: string[]): Promise<Integer>;
+  rpush(key: string, ...elements: RedisValue[]): Promise<Integer>;
+  rpushx(key: string, ...elements: RedisValue[]): Promise<Integer>;
 
   // HyperLogLog
   pfadd(key: string, ...elements: string[]): Promise<Integer>;

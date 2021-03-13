@@ -2,7 +2,7 @@ import type { Connection } from "./connection.ts";
 import { EOFError } from "./errors.ts";
 import { Deferred, deferred } from "./vendor/https/deno.land/std/async/mod.ts";
 import { sendCommand } from "./protocol/mod.ts";
-import type { RedisReply } from "./protocol/mod.ts";
+import type { RedisReply, RedisValue } from "./protocol/mod.ts";
 
 export abstract class CommandExecutor {
   connection: Connection;
@@ -13,20 +13,20 @@ export abstract class CommandExecutor {
 
   abstract exec(
     command: string,
-    ...args: (string | number)[]
+    ...args: RedisValue[]
   ): Promise<RedisReply>;
 }
 
 export class MuxExecutor extends CommandExecutor {
   private queue: {
     command: string;
-    args: (string | number)[];
+    args: RedisValue[];
     d: Deferred<RedisReply>;
   }[] = [];
 
   exec(
     command: string,
-    ...args: (string | number)[]
+    ...args: RedisValue[]
   ): Promise<RedisReply> {
     const d = deferred<RedisReply>();
     this.queue.push({ command, args, d });

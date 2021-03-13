@@ -91,29 +91,6 @@ suite.test("exists", async () => {
   });
 });
 
-suite.test("execRawReply", async () => {
-  // simple string
-  {
-    const reply = await client.executor.exec("SET", "key", "a");
-    assertEquals(reply.type, "simple string");
-    assertEquals(reply.value(), "OK");
-  }
-
-  // bulk string
-  {
-    const reply = await client.executor.exec("GET", "key");
-    assertEquals(reply.type, "bulk string");
-    assertEquals(reply.value(), "a");
-  }
-
-  // integer
-  {
-    const reply = await client.executor.exec("EXISTS", "key");
-    assertEquals(reply.type, "integer");
-    assertEquals(reply.value(), 1);
-  }
-});
-
 suite.test("eval", async () => {
   const raw = await client.eval(
     "return {KEYS[1],KEYS[2],ARGV[1],ARGV[2]}",

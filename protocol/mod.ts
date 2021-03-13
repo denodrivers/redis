@@ -10,6 +10,7 @@ export type {
   Raw,
   RedisReply,
   RedisReplyOrError,
+  RedisValue,
   Reply,
   SimpleString,
   SimpleStringReply,
@@ -26,4 +27,4 @@ export {
   unwrapReply,
 } from "./reply.ts";
 
-export { createRequest, sendCommand, sendCommands } from "./command.ts";
+export { sendCommand, sendCommands } from "./command.ts";

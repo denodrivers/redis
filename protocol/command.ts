@@ -5,34 +5,46 @@ import {
 import { readReply } from "./reply.ts";
 import { ErrorReplyError } from "../errors.ts";
 import { encoder } from "./_util.ts";
-import type { RedisReply, RedisReplyOrError } from "./types.ts";
+import type { RedisReply, RedisReplyOrError, RedisValue } from "./types.ts";
 
-export function createRequest(
+const CRLF = encoder.encode("\r\n");
+const ArrayCode = encoder.encode("*");
+const BulkCode = encoder.encode("$");
+
+function createRequest(
   command: string,
-  args: (string | number)[],
-): string {
+  args: RedisValue[],
+): Uint8Array {
   const _args = args.filter((v) => v !== void 0 && v !== null);
-  let msg = "";
-  msg += `*${1 + _args.length}\r\n`;
-  msg += `$${command.length}\r\n`;
-  msg += `${command}\r\n`;
+  const msg = new Deno.Buffer();
+  msg.writeSync(ArrayCode);
+  msg.writeSync(encoder.encode(String(1 + _args.length)));
+  msg.writeSync(CRLF);
+  msg.writeSync(BulkCode);
+  msg.writeSync(encoder.encode(String(command.length)));
+  msg.writeSync(CRLF);
+  msg.writeSync(encoder.encode(command));
+  msg.writeSync(CRLF);
   for (const arg of _args) {
-    const val = String(arg);
-    const bytesLen = encoder.encode(val).byteLength;
-    msg += `$${bytesLen}\r\n`;
-    msg += `${val}\r\n`;
+    const bytes = arg instanceof Uint8Array ? arg : encoder.encode(String(arg));
+    const bytesLen = bytes.byteLength;
+    msg.writeSync(BulkCode);
+    msg.writeSync(encoder.encode(String(bytesLen)));
+    msg.writeSync(CRLF);
+    msg.writeSync(bytes);
+    msg.writeSync(CRLF);
   }
-  return msg;
+  return msg.bytes();
 }
 
 export async function sendCommand(
   writer: BufWriter,
   reader: BufReader,
   command: string,
-  ...args: (number | string)[]
+  ...args: RedisValue[]
 ): Promise<RedisReply> {
   const msg = createRequest(command, args);
-  await writer.write(encoder.encode(msg));
+  await writer.write(msg);
   await writer.flush();
   return readReply(reader);
 }
@@ -42,11 +54,13 @@ export async function sendCommands(
   reader: BufReader,
   commands: {
     command: string;
-    args: (number | string)[];
+    args: RedisValue[];
   }[],
 ): Promise<RedisReplyOrError[]> {
-  const msg = commands.map((c) => createRequest(c.command, c.args)).join("");
-  await writer.write(encoder.encode(msg));
+  const requests = commands.map((c) => createRequest(c.command, c.args));
+  for (const request of requests) {
+    await writer.write(request);
+  }
   await writer.flush();
   const ret: RedisReplyOrError[] = [];
   for (let i = 0; i < commands.length; i++) {
