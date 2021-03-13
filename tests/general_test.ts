@@ -105,6 +105,13 @@ suite.test("execRawReply", async () => {
     assertEquals(reply.type, "bulk string");
     assertEquals(reply.value(), "a");
   }
+
+  // integer
+  {
+    const reply = await client.executor.exec("EXISTS", "key");
+    assertEquals(reply.type, "integer");
+    assertEquals(reply.value(), 1);
+  }
 });
 
 suite.test("eval", async () => {
