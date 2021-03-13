@@ -2,13 +2,7 @@ import {
   bench,
   runBenchmarks,
 } from "../vendor/https/deno.land/std/testing/bench.ts";
-
-interface Redis {
-  ping(message: string): Promise<string>;
-  set(key: string, value: string): Promise<string>;
-  get(key: string): Promise<string | undefined>;
-  flushdb(): Promise<string>;
-}
+import type { Redis } from "../redis.ts";
 
 interface RunOptions {
   driver: string;
@@ -44,6 +38,30 @@ export async function run(options: RunOptions): Promise<void> {
     },
   });
 
+  bench({
+    name: `${driver}: mset & mget`,
+    runs: 10000,
+    func: async (b) => {
+      b.start();
+      await client.mset({ a: "foo", b: "bar" });
+      await client.mget("a", "b");
+      b.stop();
+    },
+  });
+
+  const results = await runBenchmarksAndFormatResults();
+  console.table(results);
+  await client.flushdb();
+}
+
+async function runBenchmarksAndFormatResults(): Promise<
+  Array<{
+    name: string;
+    totalMs: number;
+    runsCount: number;
+    measuredRunsAvgMs: number;
+  }>
+> {
   const result = await runBenchmarks();
   const results = result.results.map(
     ({ name, totalMs, runsCount, measuredRunsAvgMs }) => {
@@ -55,6 +73,5 @@ export async function run(options: RunOptions): Promise<void> {
       };
     },
   );
-  console.table(results);
-  await client.flushdb();
+  return results;
 }
