@@ -156,11 +156,11 @@ suite.test("pipeline in concurrent", async () => {
 
     // flush()
     assertEquals(res[7].length, 3);
-    assertEquals(res[7][0].type, "blob");
+    assertEquals(res[7][0].type, "bulk string");
     assertEquals(res[7][0].value(), "a");
-    assertEquals(res[7][1].type, "blob");
+    assertEquals(res[7][1].type, "bulk string");
     assertEquals(res[7][1].value(), "b");
-    assertEquals(res[7][2].type, "blob");
+    assertEquals(res[7][2].type, "bulk string");
     assertEquals(res[7][2].value(), "c");
 
     client.close();
