@@ -16,7 +16,7 @@ export type {
 
 export {
   ARRAY_TYPE,
-  BULK_TYPE,
+  BULK_STRING_TYPE,
   createSimpleStringReply,
   INTEGER_TYPE,
   readArrayReply,

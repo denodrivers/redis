@@ -96,8 +96,17 @@ const subscriberClient = await redis.subscribe("channel");
 executor. You can send raw redis commands and receive replies.
 
 ```ts
-await redis.executor.exec("SET", "redis", "nice"); // => ["status", "OK"]
-await redis.executor.exec("GET", "redis"); // => ["bulk", "nice"]
+{
+  const reply = await redis.executor.exec("SET", "redis", "nice");
+  assert(reply.type === SIMPLE_STRING_TYPE);
+  assert(reply.value() === "OK");
+}
+
+{
+  const reply = await redis.executor.exec("GET", "redis");
+  assert(reply.type === BULK_STRING_TYPE);
+  assert(reply.value() === "nice");
+}
 ```
 
 ### Pipelining

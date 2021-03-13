@@ -12,7 +12,7 @@ const ErrorReplyCode = "-".charCodeAt(0);
 export const INTEGER_TYPE = "integer";
 export const SIMPLE_STRING_TYPE = "simple string";
 export const ARRAY_TYPE = "array";
-export const BULK_TYPE = "bulk string";
+export const BULK_STRING_TYPE = "bulk string";
 
 export function unwrapReply(
   reply: types.RedisReplyOrError,
@@ -108,7 +108,7 @@ class BulkReply implements types.BulkReply {
   }
 
   get type(): "bulk string" {
-    return BULK_TYPE;
+    return BULK_STRING_TYPE;
   }
 
   value(): types.Bulk {
