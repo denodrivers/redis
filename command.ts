@@ -51,8 +51,17 @@ export interface BitfieldWithOverflowOpts extends BitfieldOpts {
 
 export type ClientCachingMode = "YES" | "NO";
 
+export interface ClientKillOpts {
+  addr?: string; // ip:port
+  laddr?: string; // ip:port
+  id?: number;
+  type?: ClientType;
+  user?: string;
+  skipme?: "YES" | "NO";
+}
+
 export interface ClientListOpts {
-  type?: "NORMAL" | "MASTER" | "REPLICA" | "PUBSUB";
+  type?: ClientType;
   ids?: number[];
 }
 
@@ -68,6 +77,7 @@ export interface ClientTrackingOpts {
   noLoop?: boolean;
 }
 
+export type ClientType = "NORMAL" | "MASTER" | "REPLICA" | "PUBSUB";
 export type ClientUnblockingBehaviour = "TIMEOUT" | "ERROR";
 
 export type ClusterFailoverMode = "FORCE" | "TAKEOVER";
@@ -1027,6 +1037,12 @@ XRANGE somestream - +
    * @see https://redis.io/commands/client-info
    */
   clientInfo(): Promise<Bulk>;
+
+  /**
+   * Closes a given client connection.
+   * @see https://redis.io/commands/client-kill
+   */
+  clientKill(opts?: ClientKillOpts): Promise<Integer>;
 
   /**
    * Returns information and statistics about the client connections server in a mostly human readable format.

@@ -82,6 +82,18 @@ suite.test("client pause & unpause", async () => {
   assertEquals(await client.clientUnpause(), "OK");
 });
 
+suite.test("client kill by id", async () => {
+  const tempClient = await newClient({ hostname: "127.0.0.1", port: 7016 });
+  try {
+    const id = await client.clientID();
+    assertEquals(await tempClient.clientKill({ id }), 1);
+    const newId = await client.clientID(); // this will error as client is no longer connected
+    assert(client.isClosed);
+  } finally {
+    tempClient.close();
+  }
+});
+
 suite.test("client list", async () => {
   const id = await client.clientID();
   let list = await client.clientList();
