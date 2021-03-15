@@ -18,7 +18,7 @@ export type {
   BitfieldOpts,
   BitfieldWithOverflowOpts,
   ClientCachingMode,
-  ClientListOps,
+  ClientListOpts,
   ClientPauseMode,
   ClientTrackingOpts,
   ClientUnblockingBehaviour,
