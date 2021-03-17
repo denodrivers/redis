@@ -3,6 +3,7 @@ import type {
   BitfieldOpts,
   BitfieldWithOverflowOpts,
   ClientCachingMode,
+  ClientKillOpts,
   ClientListOpts,
   ClientPauseMode,
   ClientTrackingOpts,
@@ -350,6 +351,29 @@ export class RedisImpl implements Redis {
 
   clientInfo() {
     return this.execBulkReply("CLIENT", "INFO");
+  }
+
+  clientKill(opts: ClientKillOpts) {
+    const args: (string | number)[] = [];
+    if (opts.addr) {
+      args.push("ADDR", opts.addr);
+    }
+    if (opts.laddr) {
+      args.push("LADDR", opts.laddr);
+    }
+    if (opts.id) {
+      args.push("ID", opts.id);
+    }
+    if (opts.type) {
+      args.push("TYPE", opts.type);
+    }
+    if (opts.user) {
+      args.push("USER", opts.user);
+    }
+    if (opts.skipme) {
+      args.push("SKIPME", opts.skipme);
+    }
+    return this.execIntegerReply("CLIENT", "KILL", ...args);
   }
 
   clientList(opts?: ClientListOpts) {
