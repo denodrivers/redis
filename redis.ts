@@ -3,7 +3,8 @@ import type {
   BitfieldOpts,
   BitfieldWithOverflowOpts,
   ClientCachingMode,
-  ClientListOps,
+  ClientKillOpts,
+  ClientListOpts,
   ClientPauseMode,
   ClientTrackingOpts,
   ClientUnblockingBehaviour,
@@ -353,7 +354,30 @@ export class RedisImpl implements Redis {
     return this.execBulkReply("CLIENT", "INFO");
   }
 
-  clientList(opts?: ClientListOps) {
+  clientKill(opts: ClientKillOpts) {
+    const args: (string | number)[] = [];
+    if (opts.addr) {
+      args.push("ADDR", opts.addr);
+    }
+    if (opts.laddr) {
+      args.push("LADDR", opts.laddr);
+    }
+    if (opts.id) {
+      args.push("ID", opts.id);
+    }
+    if (opts.type) {
+      args.push("TYPE", opts.type);
+    }
+    if (opts.user) {
+      args.push("USER", opts.user);
+    }
+    if (opts.skipme) {
+      args.push("SKIPME", opts.skipme);
+    }
+    return this.execIntegerReply("CLIENT", "KILL", ...args);
+  }
+
+  clientList(opts?: ClientListOpts) {
     if (opts && opts.type && opts.ids) {
       throw new Error("only one of `type` or `ids` can be specified");
     }

@@ -52,8 +52,17 @@ export interface BitfieldWithOverflowOpts extends BitfieldOpts {
 
 export type ClientCachingMode = "YES" | "NO";
 
-export interface ClientListOps {
-  type?: "NORMAL" | "MASTER" | "REPLICA" | "PUBSUB";
+export interface ClientKillOpts {
+  addr?: string; // ip:port
+  laddr?: string; // ip:port
+  id?: number;
+  type?: ClientType;
+  user?: string;
+  skipme?: "YES" | "NO";
+}
+
+export interface ClientListOpts {
+  type?: ClientType;
   ids?: number[];
 }
 
@@ -69,6 +78,7 @@ export interface ClientTrackingOpts {
   noLoop?: boolean;
 }
 
+export type ClientType = "NORMAL" | "MASTER" | "REPLICA" | "PUBSUB";
 export type ClientUnblockingBehaviour = "TIMEOUT" | "ERROR";
 
 export type ClusterFailoverMode = "FORCE" | "TAKEOVER";
@@ -1030,10 +1040,16 @@ XRANGE somestream - +
   clientInfo(): Promise<Bulk>;
 
   /**
+   * Closes a given client connection.
+   * @see https://redis.io/commands/client-kill
+   */
+  clientKill(opts?: ClientKillOpts): Promise<Integer>;
+
+  /**
    * Returns information and statistics about the client connections server in a mostly human readable format.
    * @see https://redis.io/commands/client-list
    */
-  clientList(opts?: ClientListOps): Promise<Bulk>;
+  clientList(opts?: ClientListOpts): Promise<Bulk>;
 
   /**
    * Suspend all the Redis clients for the specified amount of time (in milliseconds).

@@ -82,6 +82,33 @@ suite.test("client pause & unpause", async () => {
   assertEquals(await client.clientUnpause(), "OK");
 });
 
+suite.test("client kill by addr", async () => {
+  const tempClient = await newClient({ hostname: "127.0.0.1", port: 7016 });
+  try {
+    const info = await client.clientInfo() as string;
+    const addr = info.split(" ").find((s) =>
+      s.startsWith("addr=")
+    )!.split("=")[1];
+    assertEquals(await tempClient.clientKill({ addr }), 1);
+  } finally {
+    tempClient.close();
+  }
+});
+
+suite.test("client kill by id", async () => {
+  const tempClient = await newClient({ hostname: "127.0.0.1", port: 7016 });
+  try {
+    const id = await client.clientID();
+    assertEquals(await tempClient.clientKill({ id }), 1);
+  } finally {
+    tempClient.close();
+  }
+});
+
+suite.test("client kill by type and don't skip ourselves", async () => {
+  assertEquals(await client.clientKill({ type: "NORMAL", skipme: "NO" }), 1);
+});
+
 suite.test("client list", async () => {
   const id = await client.clientID();
   let list = await client.clientList();
