@@ -528,7 +528,11 @@ export interface RedisCommands {
   sinterstore(destination: string, ...keys: string[]): Promise<Integer>;
   sismember(key: string, member: RedisValue): Promise<Integer>;
   smembers(key: string): Promise<BulkString[]>;
-  smove(source: string, destination: string, member: RedisValue): Promise<Integer>;
+  smove(
+    source: string,
+    destination: string,
+    member: RedisValue,
+  ): Promise<Integer>;
   spop(key: string): Promise<Bulk>;
   spop(key: string, count: number): Promise<BulkString[]>;
   srandmember(key: string): Promise<Bulk>;
@@ -922,7 +926,11 @@ XRANGE somestream - +
   ): Promise<Bulk>;
   zcard(key: string): Promise<Integer>;
   zcount(key: string, min: number, max: number): Promise<Integer>;
-  zincrby(key: string, increment: number, member: RedisValue): Promise<BulkString>;
+  zincrby(
+    key: string,
+    increment: number,
+    member: RedisValue,
+  ): Promise<BulkString>;
   zinterstore(
     destination: string,
     keys: string[],
