@@ -1526,7 +1526,7 @@ export class RedisImpl implements Redis {
     fieldValues: XAddFieldValues,
     maxlen: XMaxlen | undefined = undefined,
   ) {
-    const args: (string | number)[] = [key];
+    const args: RedisValue[] = [key];
 
     if (maxlen) {
       args.push("MAXLEN");

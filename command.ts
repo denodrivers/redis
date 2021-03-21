@@ -514,26 +514,26 @@ export interface RedisCommands {
   pubsubChannels(pattern?: string): Promise<BulkString[]>;
   pubsubNumsub(...channels: string[]): Promise<(BulkString | Integer)[]>;
   pubsubNumpat(): Promise<Integer>;
-  publish(channel: string, message: string): Promise<Integer>;
+  publish(channel: string, message: RedisValue): Promise<Integer>;
   subscribe<TMessage extends string | string[] = string>(
     ...channels: string[]
   ): Promise<RedisSubscription<TMessage>>;
 
   // Set
-  sadd(key: string, ...members: string[]): Promise<Integer>;
+  sadd(key: string, ...members: RedisValue[]): Promise<Integer>;
   scard(key: string): Promise<Integer>;
   sdiff(...keys: string[]): Promise<BulkString[]>;
   sdiffstore(destination: string, ...keys: string[]): Promise<Integer>;
   sinter(...keys: string[]): Promise<BulkString[]>;
   sinterstore(destination: string, ...keys: string[]): Promise<Integer>;
-  sismember(key: string, member: string): Promise<Integer>;
+  sismember(key: string, member: RedisValue): Promise<Integer>;
   smembers(key: string): Promise<BulkString[]>;
-  smove(source: string, destination: string, member: string): Promise<Integer>;
+  smove(source: string, destination: string, member: RedisValue): Promise<Integer>;
   spop(key: string): Promise<Bulk>;
   spop(key: string, count: number): Promise<BulkString[]>;
   srandmember(key: string): Promise<Bulk>;
   srandmember(key: string, count: number): Promise<BulkString[]>;
-  srem(key: string, ...members: string[]): Promise<Integer>;
+  srem(key: string, ...members: RedisValue[]): Promise<Integer>;
   sscan(
     key: string,
     cursor: number,
@@ -901,28 +901,28 @@ XRANGE somestream - +
   zadd(
     key: string,
     score: number,
-    member: string,
+    member: RedisValue,
     opts?: ZAddOpts,
   ): Promise<Integer>;
   zadd(
     key: string,
-    score_members: [number, string][],
+    score_members: [number, RedisValue][],
     opts?: ZAddOpts,
   ): Promise<Integer>;
   zadd(
     key: string,
-    member_scores: Record<string, number>,
+    member_scores: Record<string | number, number>,
     opts?: ZAddOpts,
   ): Promise<Integer>;
   zaddIncr(
     key: string,
     score: number,
-    member: string,
+    member: RedisValue,
     opts?: ZAddOpts,
   ): Promise<Bulk>;
   zcard(key: string): Promise<Integer>;
   zcount(key: string, min: number, max: number): Promise<Integer>;
-  zincrby(key: string, increment: number, member: string): Promise<BulkString>;
+  zincrby(key: string, increment: number, member: RedisValue): Promise<BulkString>;
   zinterstore(
     destination: string,
     keys: string[],
@@ -959,8 +959,8 @@ XRANGE somestream - +
     max: number | string,
     opts?: ZRangeByScoreOpts,
   ): Promise<BulkString[]>;
-  zrank(key: string, member: string): Promise<Integer | BulkNil>;
-  zrem(key: string, ...members: string[]): Promise<Integer>;
+  zrank(key: string, member: RedisValue): Promise<Integer | BulkNil>;
+  zrem(key: string, ...members: RedisValue[]): Promise<Integer>;
   zremrangebylex(key: string, min: string, max: string): Promise<Integer>;
   zremrangebyrank(key: string, start: number, stop: number): Promise<Integer>;
   zremrangebyscore(
@@ -986,13 +986,13 @@ XRANGE somestream - +
     min: number | string,
     opts?: ZRangeByScoreOpts,
   ): Promise<BulkString[]>;
-  zrevrank(key: string, member: string): Promise<Integer | BulkNil>;
+  zrevrank(key: string, member: RedisValue): Promise<Integer | BulkNil>;
   zscan(
     key: string,
     cursor: number,
     opts?: ZScanOpts,
   ): Promise<[BulkString, BulkString[]]>;
-  zscore(key: string, member: string): Promise<Bulk>;
+  zscore(key: string, member: RedisValue): Promise<Bulk>;
   zunionstore(
     destination: string,
     keys: string[],
@@ -1179,8 +1179,8 @@ XRANGE somestream - +
   time(): Promise<[BulkString, BulkString]>;
 
   // Scripting
-  eval(script: string, keys: string[], args: string[]): Promise<Raw>;
-  evalsha(sha1: string, keys: string[], args: string[]): Promise<Raw>;
+  eval(script: string, keys: string[], args: RedisValue[]): Promise<Raw>;
+  evalsha(sha1: string, keys: string[], args: RedisValue[]): Promise<Raw>;
   scriptDebug(mode: ScriptDebugMode): Promise<SimpleString>;
   scriptExists(...sha1s: string[]): Promise<Integer[]>;
   scriptFlush(): Promise<SimpleString>;
