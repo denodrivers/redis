@@ -17,13 +17,10 @@ export type {
 } from "./types.ts";
 
 export {
-  ARRAY_TYPE,
-  BULK_STRING_TYPE,
   createSimpleStringReply,
-  INTEGER_TYPE,
   readArrayReply,
   readReply,
-  SIMPLE_STRING_TYPE,
+  replyTypes,
   unwrapReply,
 } from "./reply.ts";
 
