@@ -11,30 +11,29 @@ const CRLF = encoder.encode("\r\n");
 const ArrayCode = encoder.encode("*");
 const BulkCode = encoder.encode("$");
 
-function createRequest(
+async function writeRequest(
+  writer: BufWriter,
   command: string,
   args: RedisValue[],
-): Uint8Array {
+) {
   const _args = args.filter((v) => v !== void 0 && v !== null);
-  const msg = new Deno.Buffer();
-  msg.writeSync(ArrayCode);
-  msg.writeSync(encoder.encode(String(1 + _args.length)));
-  msg.writeSync(CRLF);
-  msg.writeSync(BulkCode);
-  msg.writeSync(encoder.encode(String(command.length)));
-  msg.writeSync(CRLF);
-  msg.writeSync(encoder.encode(command));
-  msg.writeSync(CRLF);
+  await writer.write(ArrayCode);
+  await writer.write(encoder.encode(String(1 + _args.length)));
+  await writer.write(CRLF);
+  await writer.write(BulkCode);
+  await writer.write(encoder.encode(String(command.length)));
+  await writer.write(CRLF);
+  await writer.write(encoder.encode(command));
+  await writer.write(CRLF);
   for (const arg of _args) {
     const bytes = arg instanceof Uint8Array ? arg : encoder.encode(String(arg));
     const bytesLen = bytes.byteLength;
-    msg.writeSync(BulkCode);
-    msg.writeSync(encoder.encode(String(bytesLen)));
-    msg.writeSync(CRLF);
-    msg.writeSync(bytes);
-    msg.writeSync(CRLF);
+    await writer.write(BulkCode);
+    await writer.write(encoder.encode(String(bytesLen)));
+    await writer.write(CRLF);
+    await writer.write(bytes);
+    await writer.write(CRLF);
   }
-  return msg.bytes();
 }
 
 export async function sendCommand(
@@ -43,8 +42,7 @@ export async function sendCommand(
   command: string,
   ...args: RedisValue[]
 ): Promise<RedisReply> {
-  const msg = createRequest(command, args);
-  await writer.write(msg);
+  await writeRequest(writer, command, args);
   await writer.flush();
   return readReply(reader);
 }
@@ -57,9 +55,8 @@ export async function sendCommands(
     args: RedisValue[];
   }[],
 ): Promise<RedisReplyOrError[]> {
-  const requests = commands.map((c) => createRequest(c.command, c.args));
-  for (const request of requests) {
-    await writer.write(request);
+  for (const { command, args } of commands) {
+    await writeRequest(writer, command, args);
   }
   await writer.flush();
   const ret: RedisReplyOrError[] = [];
