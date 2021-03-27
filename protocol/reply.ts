@@ -9,10 +9,12 @@ const SimpleStringCode = "+".charCodeAt(0);
 const ArrayReplyCode = "*".charCodeAt(0);
 const ErrorReplyCode = "-".charCodeAt(0);
 
-export const INTEGER_TYPE = "integer";
-export const SIMPLE_STRING_TYPE = "simple string";
-export const ARRAY_TYPE = "array";
-export const BULK_STRING_TYPE = "bulk string";
+export const replyTypes = {
+  Integer: "integer",
+  SimpleString: "simple string",
+  Array: "array",
+  BulkString: "bulk string",
+} as const;
 
 export function unwrapReply(
   reply: types.RedisReplyOrError,
@@ -72,7 +74,7 @@ class IntegerReply implements types.IntegerReply {
   }
 
   get type(): "integer" {
-    return INTEGER_TYPE;
+    return replyTypes.Integer;
   }
 
   value(): types.Integer {
@@ -108,7 +110,7 @@ class BulkReply implements types.BulkReply {
   }
 
   get type(): "bulk string" {
-    return BULK_STRING_TYPE;
+    return replyTypes.BulkString;
   }
 
   value(): types.Bulk {
@@ -138,7 +140,7 @@ class SimpleStringReply implements types.SimpleStringReply {
   }
 
   get type(): "simple string" {
-    return SIMPLE_STRING_TYPE;
+    return replyTypes.SimpleString;
   }
 
   value(): types.SimpleString {
@@ -189,7 +191,7 @@ class ArrayReply implements types.ArrayReply {
   }
 
   get type(): "array" {
-    return ARRAY_TYPE;
+    return replyTypes.Array;
   }
 
   value() {

@@ -98,13 +98,13 @@ executor. You can send raw redis commands and receive replies.
 ```ts
 {
   const reply = await redis.executor.exec("SET", "redis", "nice");
-  assert(reply.type === SIMPLE_STRING_TYPE);
+  assert(reply.type === replyTypes.SimpleString);
   assert(reply.value() === "OK");
 }
 
 {
   const reply = await redis.executor.exec("GET", "redis");
-  assert(reply.type === BULK_STRING_TYPE);
+  assert(reply.type === replyTypes.BulkString);
   assert(reply.value() === "nice");
 }
 ```
