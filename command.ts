@@ -215,8 +215,8 @@ export type ShutdownMode = "NOSAVE" | "SAVE";
 
 export interface RedisCommands {
   // Connection
-  auth(password: RedisValue): Promise<SimpleString>;
-  auth(username: RedisValue, password: RedisValue): Promise<SimpleString>;
+  auth(password: string): Promise<SimpleString>;
+  auth(username: string, password: string): Promise<SimpleString>;
   echo(message: RedisValue): Promise<BulkString>;
   ping(): Promise<SimpleString>;
   ping(message: RedisValue): Promise<BulkString>;
