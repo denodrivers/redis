@@ -4,6 +4,7 @@ import {
   createSimpleStringReply,
   RedisReply,
   RedisReplyOrError,
+  RedisValue,
   sendCommands,
 } from "./protocol/mod.ts";
 import { Redis, RedisImpl } from "./redis.ts";
@@ -28,12 +29,12 @@ export function createRedisPipeline(
 export class PipelineExecutor extends CommandExecutor {
   private commands: {
     command: string;
-    args: (number | string)[];
+    args: RedisValue[];
   }[] = [];
   private queue: {
     commands: {
       command: string;
-      args: (number | string)[];
+      args: RedisValue[];
     }[];
     d: Deferred<RedisReplyOrError[]>;
   }[] = [];
@@ -44,7 +45,7 @@ export class PipelineExecutor extends CommandExecutor {
 
   exec(
     command: string,
-    ...args: (string | number)[]
+    ...args: RedisValue[]
   ): Promise<RedisReply> {
     this.commands.push({ command, args });
     return Promise.resolve(createSimpleStringReply("OK"));

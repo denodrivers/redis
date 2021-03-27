@@ -1,4 +1,4 @@
-import type { ConditionalArray, Raw } from "./protocol/mod.ts";
+import type { ConditionalArray, Raw, RedisValue } from "./protocol/mod.ts";
 
 export interface XId {
   unixMs: number;
@@ -66,8 +66,8 @@ export type XIdNeg = XIdInput | "-";
 export type XIdCreateGroup = XIdInput | "$";
 
 export type XAddFieldValues =
-  | Record<string | number, string | number>
-  | Map<string | number, string | number>;
+  | Record<string | number, RedisValue>
+  | Map<string | number, RedisValue>;
 
 export interface XReadOpts {
   count?: number;

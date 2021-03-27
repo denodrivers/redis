@@ -167,6 +167,13 @@ suite.test("set", async () => {
   assertEquals(fuga, "fuga你好こんにちは");
 });
 
+suite.test("set Number", async () => {
+  const s = await client.set("key", 123);
+  assertEquals(s, "OK");
+  const v = await client.get("key");
+  assertEquals(v, "123");
+});
+
 suite.test("setbit", async () => {
   await client.set("key", "2"); // 00110010
   assertEquals(

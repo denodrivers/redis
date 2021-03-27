@@ -54,6 +54,7 @@ import type {
   Integer,
   IntegerReply,
   Raw,
+  RedisValue,
   SimpleString,
   SimpleStringReply,
 } from "./protocol/mod.ts";
@@ -123,7 +124,7 @@ export class RedisImpl implements Redis {
     this.connection.close();
   }
 
-  async execReply(command: string, ...args: (string | number)[]): Promise<Raw> {
+  async execReply(command: string, ...args: RedisValue[]): Promise<Raw> {
     const reply = await this.executor.exec(
       command,
       ...args,
@@ -133,7 +134,7 @@ export class RedisImpl implements Redis {
 
   async execStatusReply(
     command: string,
-    ...args: (string | number)[]
+    ...args: RedisValue[]
   ): Promise<SimpleString> {
     const reply = await this.executor.exec(command, ...args);
     return reply.value() as SimpleString;
@@ -141,7 +142,7 @@ export class RedisImpl implements Redis {
 
   async execIntegerReply(
     command: string,
-    ...args: (string | number)[]
+    ...args: RedisValue[]
   ): Promise<Integer> {
     const reply = await this.executor.exec(command, ...args);
     return reply.value() as Integer;
@@ -149,7 +150,7 @@ export class RedisImpl implements Redis {
 
   async execBulkReply<T extends Bulk = Bulk>(
     command: string,
-    ...args: (string | number)[]
+    ...args: RedisValue[]
   ): Promise<T> {
     const reply = await this.executor.exec(command, ...args);
     return reply.value() as T;
@@ -157,7 +158,7 @@ export class RedisImpl implements Redis {
 
   async execArrayReply<T extends Raw = Raw>(
     command: string,
-    ...args: (string | number)[]
+    ...args: RedisValue[]
   ): Promise<T[]> {
     const reply = await this.executor.exec(command, ...args);
     return reply.value() as T[];
@@ -165,7 +166,7 @@ export class RedisImpl implements Redis {
 
   async execIntegerOrNilReply(
     command: string,
-    ...args: (string | number)[]
+    ...args: RedisValue[]
   ): Promise<Integer | BulkNil> {
     const reply = await this.executor.exec(command, ...args);
     return reply.value() as Integer | BulkNil;
@@ -173,7 +174,7 @@ export class RedisImpl implements Redis {
 
   async execStatusOrNilReply(
     command: string,
-    ...args: (string | number)[]
+    ...args: RedisValue[]
   ): Promise<SimpleString | BulkNil> {
     const reply = await this.executor.exec(command, ...args);
     return reply.value() as SimpleString | BulkNil;
@@ -242,11 +243,11 @@ export class RedisImpl implements Redis {
     return this.execBulkReply<BulkString>("ACL", "WHOAMI");
   }
 
-  append(key: string, value: string | number) {
+  append(key: string, value: RedisValue) {
     return this.execIntegerReply("APPEND", key, value);
   }
 
-  auth(param1: string, param2?: string) {
+  auth(param1: RedisValue, param2?: RedisValue) {
     if (param2 !== undefined) {
       return this.execStatusReply("AUTH", param1, param2);
     }
@@ -619,7 +620,7 @@ export class RedisImpl implements Redis {
     return this.execBulkReply("DUMP", key);
   }
 
-  echo(message: string) {
+  echo(message: RedisValue) {
     return this.execBulkReply<BulkString>("ECHO", message);
   }
 
@@ -776,7 +777,7 @@ export class RedisImpl implements Redis {
     return this.execBulkReply<BulkString>("GETRANGE", key, start, end);
   }
 
-  getset(key: string, value: string) {
+  getset(key: string, value: RedisValue) {
     return this.execBulkReply("GETSET", key, value);
   }
 
@@ -823,12 +824,12 @@ export class RedisImpl implements Redis {
 
   // deno-lint-ignore no-explicit-any
   hmset(key: string, ...params: any[]) {
-    const args = [key];
+    const args = [key] as RedisValue[];
     if (Array.isArray(params[0])) {
       args.push(...params.flatMap((e) => e));
     } else if (typeof params[0] === "object") {
       for (const [field, value] of Object.entries(params[0])) {
-        args.push(field, value as string);
+        args.push(field, value as RedisValue);
       }
     } else {
       args.push(...params);
@@ -838,12 +839,12 @@ export class RedisImpl implements Redis {
 
   // deno-lint-ignore no-explicit-any
   hset(key: string, ...params: any[]) {
-    const args = [key];
+    const args = [key] as RedisValue[];
     if (Array.isArray(params[0])) {
       args.push(...params.flatMap((e) => e));
     } else if (typeof params[0] === "object") {
       for (const [field, value] of Object.entries(params[0])) {
-        args.push(field, value as string);
+        args.push(field, value as RedisValue);
       }
     } else {
       args.push(...params);
@@ -851,7 +852,7 @@ export class RedisImpl implements Redis {
     return this.execIntegerReply("HSET", ...args);
   }
 
-  hsetnx(key: string, field: string, value: string) {
+  hsetnx(key: string, field: string, value: RedisValue) {
     return this.execIntegerReply("HSETNX", key, field, value);
   }
 
@@ -894,7 +895,7 @@ export class RedisImpl implements Redis {
     return this.execBulkReply("LINDEX", key, index);
   }
 
-  linsert(key: string, loc: LInsertLocation, pivot: string, value: string) {
+  linsert(key: string, loc: LInsertLocation, pivot: string, value: RedisValue) {
     return this.execIntegerReply("LINSERT", key, loc, pivot, value);
   }
 
@@ -908,19 +909,19 @@ export class RedisImpl implements Redis {
 
   lpos(
     key: string,
-    element: string,
+    element: RedisValue,
     opts?: LPosOpts,
   ): Promise<Integer | BulkNil>;
 
   lpos(
     key: string,
-    element: string,
+    element: RedisValue,
     opts: LPosWithCountOpts,
   ): Promise<Integer[]>;
 
   lpos(
     key: string,
-    element: string,
+    element: RedisValue,
     opts?: LPosOpts | LPosWithCountOpts,
   ): Promise<Integer | BulkNil | Integer[]> {
     const args = [element];
@@ -941,11 +942,11 @@ export class RedisImpl implements Redis {
       : this.execArrayReply<Integer>("LPOS", key, ...args);
   }
 
-  lpush(key: string, ...elements: (string | number)[]) {
+  lpush(key: string, ...elements: RedisValue[]) {
     return this.execIntegerReply("LPUSH", key, ...elements);
   }
 
-  lpushx(key: string, ...elements: (string | number)[]) {
+  lpushx(key: string, ...elements: RedisValue[]) {
     return this.execIntegerReply("LPUSHX", key, ...elements);
   }
 
@@ -1043,12 +1044,12 @@ export class RedisImpl implements Redis {
 
   // deno-lint-ignore no-explicit-any
   mset(...params: any[]) {
-    const args: string[] = [];
+    const args: RedisValue[] = [];
     if (Array.isArray(params[0])) {
       args.push(...params.flatMap((e) => e));
     } else if (typeof params[0] === "object") {
       for (const [key, value] of Object.entries(params[0])) {
-        args.push(key, value as string);
+        args.push(key, value as RedisValue);
       }
     } else {
       args.push(...params);
@@ -1058,12 +1059,12 @@ export class RedisImpl implements Redis {
 
   // deno-lint-ignore no-explicit-any
   msetnx(...params: any[]) {
-    const args: string[] = [];
+    const args: RedisValue[] = [];
     if (Array.isArray(params[0])) {
       args.push(...params.flatMap((e) => e));
     } else if (typeof params[0] === "object") {
       for (const [key, value] of Object.entries(params[0])) {
-        args.push(key, value as string);
+        args.push(key, value as RedisValue);
       }
     } else {
       args.push(...params);
@@ -1119,14 +1120,14 @@ export class RedisImpl implements Redis {
     return this.execStatusReply("PFMERGE", destkey, ...sourcekeys);
   }
 
-  ping(message?: string) {
+  ping(message?: RedisValue) {
     if (message) {
       return this.execBulkReply<BulkString>("PING", message);
     }
     return this.execStatusReply("PING");
   }
 
-  psetex(key: string, milliseconds: number, value: string) {
+  psetex(key: string, milliseconds: number, value: RedisValue) {
     return this.execStatusReply("PSETEX", key, milliseconds, value);
   }
 
@@ -1231,11 +1232,11 @@ export class RedisImpl implements Redis {
     return this.execBulkReply("RPOPLPUSH", source, destination);
   }
 
-  rpush(key: string, ...elements: (string | number)[]) {
+  rpush(key: string, ...elements: RedisValue[]) {
     return this.execIntegerReply("RPUSH", key, ...elements);
   }
 
-  rpushx(key: string, ...elements: (string | number)[]) {
+  rpushx(key: string, ...elements: RedisValue[]) {
     return this.execIntegerReply("RPUSHX", key, ...elements);
   }
 
@@ -1285,20 +1286,20 @@ export class RedisImpl implements Redis {
 
   set(
     key: string,
-    value: string,
+    value: RedisValue,
     opts?: SetOpts,
   ): Promise<SimpleString>;
   set(
     key: string,
-    value: string,
+    value: RedisValue,
     opts?: SetWithModeOpts,
   ): Promise<SimpleString | BulkNil>;
   set(
     key: string,
-    value: string,
+    value: RedisValue,
     opts?: SetOpts | SetWithModeOpts,
   ) {
-    const args: (number | string)[] = [key, value];
+    const args: RedisValue[] = [key, value];
     if (opts?.ex !== undefined) {
       args.push("EX", opts.ex);
     } else if (opts?.px !== undefined) {
@@ -1314,19 +1315,19 @@ export class RedisImpl implements Redis {
     return this.execStatusReply("SET", ...args);
   }
 
-  setbit(key: string, offset: number, value: string) {
+  setbit(key: string, offset: number, value: RedisValue) {
     return this.execIntegerReply("SETBIT", key, offset, value);
   }
 
-  setex(key: string, seconds: number, value: string) {
+  setex(key: string, seconds: number, value: RedisValue) {
     return this.execStatusReply("SETEX", key, seconds, value);
   }
 
-  setnx(key: string, value: string) {
+  setnx(key: string, value: RedisValue) {
     return this.execIntegerReply("SETNX", key, value);
   }
 
-  setrange(key: string, offset: number, value: string) {
+  setrange(key: string, offset: number, value: RedisValue) {
     return this.execIntegerReply("SETRANGE", key, offset, value);
   }
 
@@ -1525,7 +1526,7 @@ export class RedisImpl implements Redis {
     fieldValues: XAddFieldValues,
     maxlen: XMaxlen | undefined = undefined,
   ) {
-    const args: (string | number)[] = [key];
+    const args: RedisValue[] = [key];
 
     if (maxlen) {
       args.push("MAXLEN");

@@ -4,6 +4,8 @@ import { ErrorReplyError } from "../errors.ts";
  * @see https://redis.io/topics/protocol
  */
 
+export type RedisValue = string | number | Uint8Array;
+
 /**
  * @description Represents the type of the value returned by `SimpleStringReply#value()`.
  */
