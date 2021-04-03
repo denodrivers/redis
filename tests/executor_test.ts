@@ -43,8 +43,8 @@ suite.test("get the raw data as Uint8Array", async () => {
   const encoder = new TextEncoder();
   await client.set("key", encoder.encode("hello"));
   const reply = await client.executor.exec("GET", "key");
-  assert(reply.type === replyTypes.BulkString);
-  assertEquals(reply.buffer(), encoder.encode("hello"));
+  assertEquals(reply.type, replyTypes.BulkString);
+  assertEquals((reply as BulkReply).buffer(), encoder.encode("hello"));
 });
 
 suite.runTests();
