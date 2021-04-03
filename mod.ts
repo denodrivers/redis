@@ -55,6 +55,7 @@ export type { Connection, RedisConnectionOptions } from "./connection.ts";
 export type { RedisPipeline } from "./pipeline.ts";
 export type {
   ArrayReply,
+  Binary,
   Bulk,
   BulkNil,
   BulkReply,
