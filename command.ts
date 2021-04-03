@@ -1,4 +1,5 @@
 import type {
+  Binary,
   Bulk,
   BulkNil,
   BulkString,
@@ -225,7 +226,7 @@ export interface RedisCommands {
 
   // Keys
   del(...keys: string[]): Promise<Integer>;
-  dump(key: string): Promise<Bulk>;
+  dump(key: string): Promise<Binary | BulkNil>;
   exists(...keys: string[]): Promise<Integer>;
   expire(key: string, seconds: number): Promise<Integer>;
   expireat(key: string, timestamp: string): Promise<Integer>;
@@ -254,7 +255,7 @@ export interface RedisCommands {
   restore(
     key: string,
     ttl: number,
-    serialized_value: string,
+    serialized_value: Binary,
     opts?: RestoreOpts,
   ): Promise<SimpleString>;
   scan(
