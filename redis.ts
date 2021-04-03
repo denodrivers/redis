@@ -46,6 +46,7 @@ import { CommandExecutor, MuxExecutor } from "./executor.ts";
 import { unwrapReply } from "./protocol/mod.ts";
 import type {
   ArrayReply,
+  Binary,
   Bulk,
   BulkNil,
   BulkReply,
@@ -146,6 +147,14 @@ export class RedisImpl implements Redis {
   ): Promise<Integer> {
     const reply = await this.executor.exec(command, ...args);
     return reply.value() as Integer;
+  }
+
+  async execBinaryReply(
+    command: string,
+    ...args: RedisValue[]
+  ): Promise<Binary | BulkNil> {
+    const reply = await this.executor.exec(command, ...args) as BulkReply;
+    return reply.buffer();
   }
 
   async execBulkReply<T extends Bulk = Bulk>(
@@ -617,7 +626,7 @@ export class RedisImpl implements Redis {
   }
 
   dump(key: string) {
-    return this.execBulkReply("DUMP", key);
+    return this.execBinaryReply("DUMP", key);
   }
 
   echo(message: RedisValue) {
@@ -1197,7 +1206,7 @@ export class RedisImpl implements Redis {
   restore(
     key: string,
     ttl: number,
-    serializedValue: string,
+    serializedValue: Binary,
     opts?: RestoreOpts,
   ) {
     const args = [key, ttl, serializedValue];

@@ -1,5 +1,6 @@
 export type {
   ArrayReply,
+  Binary,
   Bulk,
   BulkNil,
   BulkReply,

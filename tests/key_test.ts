@@ -26,14 +26,13 @@ suite.test("del", async () => {
   assertEquals(deleted, 2);
 });
 
-/* TODO This test fails currently.
-test("dump and restore", async () => {
+suite.test("dump and restore", async () => {
   await client.set("key", "hello");
   const v = await client.dump("key");
   await client.del("key");
   await client.restore("key", 2000, v!);
+  assertEquals(await client.get("key"), "hello");
 });
-*/
 
 suite.test("exists", async () => {
   const none = await client.exists("none", "none2");

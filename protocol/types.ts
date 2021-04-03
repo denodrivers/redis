@@ -36,6 +36,8 @@ export type BulkNil = undefined;
  */
 export type Raw = SimpleString | Integer | Bulk | ConditionalArray;
 
+export type Binary = Uint8Array;
+
 /**
  * @description Represents the type of the value returned by `ArrayReply#value()`.
  */
@@ -69,7 +71,7 @@ export interface IntegerReply extends Reply<Integer> {
 export interface BulkReply extends Reply<Bulk> {
   type: "bulk string";
   value(): Bulk;
-  buffer(): Uint8Array | BulkNil;
+  buffer(): Binary | BulkNil;
 }
 
 /**
