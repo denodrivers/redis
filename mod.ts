@@ -52,6 +52,7 @@ export type {
   ZUnionstoreOpts,
 } from "./command.ts";
 export type { Connection, RedisConnectionOptions } from "./connection.ts";
+export type { CommandExecutor } from "./executor.ts";
 export type { RedisPipeline } from "./pipeline.ts";
 export type {
   ArrayReply,
