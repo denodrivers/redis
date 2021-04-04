@@ -4,11 +4,18 @@ import {
   assertEquals,
   assertThrowsAsync,
 } from "../vendor/https/deno.land/std/testing/asserts.ts";
-import { newClient, startRedis, stopRedis, TestSuite } from "./test_util.ts";
+import {
+  newClient,
+  nextPort,
+  startRedis,
+  stopRedis,
+  TestSuite,
+} from "./test_util.ts";
 
 const suite = new TestSuite("general");
-const server = await startRedis({ port: 7004 });
-const opts = { hostname: "127.0.0.1", port: 7004 };
+const port = nextPort();
+const server = await startRedis({ port });
+const opts = { hostname: "127.0.0.1", port };
 const client = await newClient(opts);
 
 suite.afterAll(() => {
@@ -49,7 +56,7 @@ suite.test("connect with wrong password", async () => {
   await assertThrowsAsync(async () => {
     await newClient({
       hostname: "127.0.0.1",
-      port: 7004,
+      port,
       password: "wrong_password",
     });
   }, ErrorReplyError);
@@ -60,7 +67,7 @@ suite.test("connect with empty password", async () => {
   await assertThrowsAsync(async () => {
     await newClient({
       hostname: "127.0.0.1",
-      port: 7004,
+      port,
       password: "",
     });
   }, ErrorReplyError);

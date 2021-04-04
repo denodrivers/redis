@@ -9,11 +9,18 @@ import {
   assert,
   assertEquals,
 } from "../vendor/https/deno.land/std/testing/asserts.ts";
-import { newClient, startRedis, stopRedis, TestSuite } from "./test_util.ts";
+import {
+  newClient,
+  nextPort,
+  startRedis,
+  stopRedis,
+  TestSuite,
+} from "./test_util.ts";
 
 const suite = new TestSuite("pipeline");
-const server = await startRedis({ port: 7014 });
-const opts = { hostname: "127.0.0.1", port: 7014 };
+const port = nextPort();
+const server = await startRedis({ port });
+const opts = { hostname: "127.0.0.1", port };
 
 suite.afterAll(() => {
   stopRedis(server);

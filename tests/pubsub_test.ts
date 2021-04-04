@@ -4,11 +4,18 @@ import {
   assertEquals,
   assertThrowsAsync,
 } from "../vendor/https/deno.land/std/testing/asserts.ts";
-import { newClient, startRedis, stopRedis, TestSuite } from "./test_util.ts";
+import {
+  newClient,
+  nextPort,
+  startRedis,
+  stopRedis,
+  TestSuite,
+} from "./test_util.ts";
 
 const suite = new TestSuite("pubsub");
-const server = await startRedis({ port: 7015 });
-const opts = { hostname: "127.0.0.1", port: 7015 };
+const port = nextPort();
+const server = await startRedis({ port });
+const opts = { hostname: "127.0.0.1", port };
 
 suite.afterAll(() => {
   stopRedis(server);
@@ -76,7 +83,7 @@ suite.test("testSubscribe3", async () => {
 });
 
 suite.test("testSubscribe4", async () => {
-  const port = 7016;
+  const port = nextPort();
   let tempServer = await startRedis({ port });
   const client = await newClient({ ...opts, port });
   const pub = await newClient({ ...opts, maxRetryCount: 10, port });

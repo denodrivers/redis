@@ -5,14 +5,21 @@ import {
   assertEquals,
   assertThrowsAsync,
 } from "../vendor/https/deno.land/std/testing/asserts.ts";
-import { newClient, startRedis, stopRedis, TestSuite } from "./test_util.ts";
+import {
+  newClient,
+  nextPort,
+  startRedis,
+  stopRedis,
+  TestSuite,
+} from "./test_util.ts";
 
 const suite = new TestSuite("client");
-const server = await startRedis({ port: 7016 });
+const port = nextPort();
+const server = await startRedis({ port });
 let client: Redis;
 
 suite.beforeEach(async () => {
-  client = await newClient({ hostname: "127.0.0.1", port: 7016 });
+  client = await newClient({ hostname: "127.0.0.1", port });
 });
 
 suite.afterEach(() => {
@@ -65,7 +72,7 @@ suite.test("client getredir with no redirect", async () => {
 });
 
 suite.test("client getredir with redirect", async () => {
-  const tempClient = await newClient({ hostname: "127.0.0.1", port: 7016 });
+  const tempClient = await newClient({ hostname: "127.0.0.1", port });
   try {
     const id = await tempClient.clientID();
     await client.clientTracking({ mode: "ON", redirect: id });
@@ -83,7 +90,7 @@ suite.test("client pause & unpause", async () => {
 });
 
 suite.test("client kill by addr", async () => {
-  const tempClient = await newClient({ hostname: "127.0.0.1", port: 7016 });
+  const tempClient = await newClient({ hostname: "127.0.0.1", port });
   try {
     const info = await client.clientInfo() as string;
     const addr = info.split(" ").find((s) =>
@@ -96,7 +103,7 @@ suite.test("client kill by addr", async () => {
 });
 
 suite.test("client kill by id", async () => {
-  const tempClient = await newClient({ hostname: "127.0.0.1", port: 7016 });
+  const tempClient = await newClient({ hostname: "127.0.0.1", port });
   try {
     const id = await client.clientID();
     assertEquals(await tempClient.clientKill({ id }), 1);
@@ -172,7 +179,7 @@ suite.test("client unblock nothing", async () => {
 });
 
 suite.test("client unblock with timeout", async () => {
-  const tempClient = await newClient({ hostname: "127.0.0.1", port: 7016 });
+  const tempClient = await newClient({ hostname: "127.0.0.1", port });
   try {
     const id = await tempClient.clientID();
     tempClient.brpop(0, "key1"); // Block.
@@ -184,7 +191,7 @@ suite.test("client unblock with timeout", async () => {
 });
 
 suite.test("client unblock with error", async () => {
-  const tempClient = await newClient({ hostname: "127.0.0.1", port: 7016 });
+  const tempClient = await newClient({ hostname: "127.0.0.1", port });
   try {
     const id = await tempClient.clientID();
     assertThrowsAsync(
