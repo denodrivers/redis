@@ -3,16 +3,24 @@ import {
   assertEquals,
   assertStringIncludes,
 } from "../vendor/https/deno.land/std/testing/asserts.ts";
-import { newClient, startRedis, stopRedis, TestSuite } from "./test_util.ts";
+import {
+  newClient,
+  nextPort,
+  startRedis,
+  stopRedis,
+  TestSuite,
+} from "./test_util.ts";
 
 const suite = new TestSuite("cluster");
-const s7001 = await startRedis({ port: 7001, clusterEnabled: true });
-const s7002 = await startRedis({ port: 7002, clusterEnabled: true });
-const client = await newClient({ hostname: "127.0.0.1", port: 7001 });
+const port1 = nextPort();
+const port2 = nextPort();
+const s1 = await startRedis({ port: port1, clusterEnabled: true });
+const s2 = await startRedis({ port: port2, clusterEnabled: true });
+const client = await newClient({ hostname: "127.0.0.1", port: port2 });
 
 suite.afterAll(() => {
-  stopRedis(s7001);
-  stopRedis(s7002);
+  stopRedis(s1);
+  stopRedis(s2);
   client.close();
 });
 
@@ -55,7 +63,7 @@ suite.test("keyslot", async () => {
 });
 
 suite.test("meet", async () => {
-  assertEquals(await client.clusterMeet("127.0.0.1", 7002), "OK");
+  assertEquals(await client.clusterMeet("127.0.0.1", port2), "OK");
 });
 
 suite.test("nodes", async () => {

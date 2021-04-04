@@ -2,11 +2,18 @@ import {
   assert,
   assertEquals,
 } from "../vendor/https/deno.land/std/testing/asserts.ts";
-import { newClient, startRedis, stopRedis, TestSuite } from "./test_util.ts";
+import {
+  newClient,
+  nextPort,
+  startRedis,
+  stopRedis,
+  TestSuite,
+} from "./test_util.ts";
 
 const suite = new TestSuite("key");
-const server = await startRedis({ port: 7008 });
-const client = await newClient({ hostname: "127.0.0.1", port: 7008 });
+const port = nextPort();
+const server = await startRedis({ port });
+const client = await newClient({ hostname: "127.0.0.1", port });
 
 suite.beforeEach(async () => {
   await client.flushdb();
@@ -63,7 +70,7 @@ suite.test("keys", async () => {
 });
 
 suite.test("migrate", async () => {
-  const v = await client.migrate("127.0.0.1", 7008, "nosuchkey", "0", 0);
+  const v = await client.migrate("127.0.0.1", port, "nosuchkey", "0", 0);
   assertEquals(v, "NOKEY");
 });
 

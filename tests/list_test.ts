@@ -1,9 +1,16 @@
 import { assertEquals } from "../vendor/https/deno.land/std/testing/asserts.ts";
-import { newClient, startRedis, stopRedis, TestSuite } from "./test_util.ts";
+import {
+  newClient,
+  nextPort,
+  startRedis,
+  stopRedis,
+  TestSuite,
+} from "./test_util.ts";
 
 const suite = new TestSuite("list");
-const server = await startRedis({ port: 7009 });
-const client = await newClient({ hostname: "127.0.0.1", port: 7009 });
+const port = nextPort();
+const server = await startRedis({ port });
+const client = await newClient({ hostname: "127.0.0.1", port });
 
 suite.beforeEach(async () => {
   await client.flushdb();

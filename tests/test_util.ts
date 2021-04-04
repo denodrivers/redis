@@ -110,3 +110,8 @@ async function exists(path: string): Promise<boolean> {
     throw err;
   }
 }
+
+let currentPort = 7000;
+export function nextPort(): number {
+  return currentPort++;
+}

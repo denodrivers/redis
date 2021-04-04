@@ -1,11 +1,18 @@
 import { connect, Redis } from "../mod.ts";
 import { delay } from "../vendor/https/deno.land/std/async/mod.ts";
 import { assertEquals } from "../vendor/https/deno.land/std/testing/asserts.ts";
-import { newClient, startRedis, stopRedis, TestSuite } from "./test_util.ts";
+import {
+  newClient,
+  nextPort,
+  startRedis,
+  stopRedis,
+  TestSuite,
+} from "./test_util.ts";
 
 const suite = new TestSuite("connection");
-const server = await startRedis({ port: 7003 });
-const client = await newClient({ hostname: "127.0.0.1", port: 7003 });
+const port = nextPort();
+const server = await startRedis({ port });
+const client = await newClient({ hostname: "127.0.0.1", port });
 
 suite.afterAll(() => {
   stopRedis(server);
@@ -22,7 +29,7 @@ suite.test("ping", async () => {
 });
 
 suite.test("quit", async () => {
-  const tempClient = await connect({ hostname: "127.0.0.1", port: 7003 });
+  const tempClient = await connect({ hostname: "127.0.0.1", port });
   assertEquals(tempClient.isConnected, true);
   assertEquals(tempClient.isClosed, false);
   assertEquals(await tempClient.quit(), "OK");
