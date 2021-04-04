@@ -26,7 +26,7 @@ export function createRedisPipeline(
   return Object.assign(client, { flush });
 }
 
-export class PipelineExecutor extends CommandExecutor {
+export class PipelineExecutor implements CommandExecutor {
   private commands: {
     command: string;
     args: RedisValue[];
@@ -39,8 +39,10 @@ export class PipelineExecutor extends CommandExecutor {
     d: Deferred<RedisReplyOrError[]>;
   }[] = [];
 
-  constructor(connection: Connection, private tx: boolean) {
-    super(connection);
+  constructor(
+    readonly connection: Connection,
+    private tx: boolean,
+  ) {
   }
 
   exec(

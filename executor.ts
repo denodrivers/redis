@@ -4,20 +4,17 @@ import { Deferred, deferred } from "./vendor/https/deno.land/std/async/mod.ts";
 import { sendCommand } from "./protocol/mod.ts";
 import type { RedisReply, RedisValue } from "./protocol/mod.ts";
 
-export abstract class CommandExecutor {
-  connection: Connection;
-
-  constructor(connection: Connection) {
-    this.connection = connection;
-  }
-
-  abstract exec(
+export interface CommandExecutor {
+  readonly connection: Connection;
+  exec(
     command: string,
     ...args: RedisValue[]
   ): Promise<RedisReply>;
 }
 
-export class MuxExecutor extends CommandExecutor {
+export class MuxExecutor implements CommandExecutor {
+  constructor(readonly connection: Connection) {}
+
   private queue: {
     command: string;
     args: RedisValue[];
