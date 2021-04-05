@@ -26,3 +26,5 @@ suite.test("hello", async () => {
   const reply = await client.hello(3);
   assert(Array.isArray(reply));
 });
+
+suite.runTests();
