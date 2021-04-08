@@ -209,7 +209,7 @@ class MapReply implements types.MapReply {
     return this.#fields;
   }
 
-  map(): Map<types.Raw, types.Raw> {
+  map(): types.ConditionalMap {
     const map = new Map<types.Raw, types.Raw>();
     for (let i = 0; i < this.#fields.length; i += 2) {
       const key = this.#fields[i];

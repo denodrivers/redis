@@ -1,20 +1,20 @@
-import { assert } from "../vendor/https/deno.land/std/testing/asserts.ts";
 import {
-  newClient,
-  nextPort,
-  startRedis,
-  stopRedis,
-  TestSuite,
-} from "./test_util.ts";
+  assert,
+  assertEquals,
+} from "../vendor/https/deno.land/std/testing/asserts.ts";
+import { nextPort, startRedis, stopRedis, TestSuite } from "./test_util.ts";
+import { connect } from "../experimental/resp3/mod.ts";
 
 const suite = new TestSuite("RESP3");
 const port = nextPort();
 const server = await startRedis({ port });
-const client = await newClient({ hostname: "127.0.0.1", port });
+const client = await connect({
+  hostname: "127.0.0.1",
+  port,
+});
 
 suite.beforeEach(async () => {
   await client.flushdb();
-  await client.hello(2);
 });
 
 suite.afterAll(() => {
@@ -22,9 +22,14 @@ suite.afterAll(() => {
   client.close();
 });
 
-suite.test("hello", async () => {
-  const reply = await client.hello(3);
-  assert(Array.isArray(reply));
+suite.test("hgetallMap", async () => {
+  await client.hset("hash", "foo", "bar");
+  await client.hset("hash", "hoge", "piyo");
+  const map = await client.hgetallMap("hash");
+  assert(map);
+  assertEquals(map.size, 2);
+  assertEquals(map.get("foo"), "bar");
+  assertEquals(map.get("hoge"), "piyo");
 });
 
 suite.runTests();

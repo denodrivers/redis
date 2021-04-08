@@ -34,7 +34,12 @@ export type BulkNil = undefined;
 /**
  * @description Represents the some type in the RESP2/RESP3 protocol.
  */
-export type Raw = SimpleString | Integer | Bulk | ConditionalArray;
+export type Raw =
+  | SimpleString
+  | Integer
+  | Bulk
+  | ConditionalArray
+  | ConditionalMap;
 
 export type Binary = Uint8Array;
 
@@ -42,6 +47,11 @@ export type Binary = Uint8Array;
  * @description Represents the type of the value returned by `ArrayReply#value()`.
  */
 export type ConditionalArray = Raw[];
+
+/**
+ * @description Represents the type of the value returned by `MapReply#map()`.
+ */
+export type ConditionalMap = Map<Raw, Raw>;
 
 export type RedisReply =
   | IntegerReply
@@ -98,5 +108,5 @@ export interface ArrayReply extends Reply<ConditionalArray> {
 export interface MapReply extends Reply<ConditionalArray> {
   type: "map";
   value(): ConditionalArray;
-  map(): Map<Raw, Raw>;
+  map(): ConditionalMap;
 }
