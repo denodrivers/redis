@@ -63,6 +63,7 @@ export type {
   BulkString,
   ConditionalArray,
   ConditionalMap,
+  ConditionalSet,
   Integer,
   IntegerReply,
   MapReply,
@@ -71,6 +72,7 @@ export type {
   RedisReplyOrError,
   RedisValue,
   Reply,
+  SetReply,
   SimpleString,
   SimpleStringReply,
 } from "./protocol/mod.ts";

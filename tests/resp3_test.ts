@@ -32,4 +32,14 @@ suite.test("hgetallMap", async () => {
   assertEquals(map.get("hoge"), "piyo");
 });
 
+suite.test("smembersSet", async () => {
+  await client.sadd("set", "a", "b", "c");
+  const members = await client.smembersSet("set");
+  assert(members instanceof Set);
+  assertEquals(members.size, 3);
+  assert(members.has("a"));
+  assert(members.has("b"));
+  assert(members.has("c"));
+});
+
 suite.runTests();

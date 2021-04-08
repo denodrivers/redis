@@ -10,6 +10,7 @@ const ArrayReplyCode = "*".charCodeAt(0);
 const ErrorReplyCode = "-".charCodeAt(0);
 
 const MapReplyCode = "%".charCodeAt(0);
+const SetReplyCode = "~".charCodeAt(0);
 
 export const replyTypes = {
   Integer: "integer",
@@ -17,6 +18,7 @@ export const replyTypes = {
   Array: "array",
   BulkString: "bulk string",
   Map: "map",
+  Set: "set",
 } as const;
 
 export function unwrapReply(
@@ -57,6 +59,8 @@ export async function readReply(
     /* Start of RESP3 part */
     case MapReplyCode:
       return await MapReply.decode(reader);
+    case SetReplyCode:
+      return await SetReply.decode(reader);
     /* End of RESP3 part */
     case ErrorReplyCode:
       tryParseErrorReply(await readLine(reader));
@@ -220,6 +224,37 @@ class MapReply implements types.MapReply {
   }
 }
 
+class SetReply implements types.SetReply {
+  #members: types.ConditionalArray;
+
+  constructor(members: types.ConditionalArray) {
+    this.#members = members;
+  }
+
+  static async decode(reader: BufReader): Promise<types.SetReply> {
+    const line = await readLine(reader);
+    const memberCount = parseInt(line.substr(1, line.length - 3));
+    const members = [] as types.ConditionalArray;
+    for (let i = 0; i < memberCount; i++) {
+      const member = await decodeReply(reader);
+      members.push(member.value());
+    }
+    return new SetReply(members);
+  }
+
+  value() {
+    return this.#members;
+  }
+
+  set() {
+    return new Set(this.#members);
+  }
+
+  get type() {
+    return replyTypes.Set;
+  }
+}
+
 function tryParseErrorReply(line: string): never {
   const code = line[0];
   if (code === "-") {
@@ -263,6 +298,8 @@ async function decodeReply(reader: BufReader): Promise<types.RedisReply> {
       return ArrayReply.decode(reader);
     case MapReplyCode:
       return MapReply.decode(reader);
+    case SetReplyCode:
+      return SetReply.decode(reader);
     case ErrorReplyCode:
       tryParseErrorReply(await readLine(reader));
   }

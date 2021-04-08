@@ -39,7 +39,8 @@ export type Raw =
   | Integer
   | Bulk
   | ConditionalArray
-  | ConditionalMap;
+  | ConditionalMap
+  | ConditionalSet;
 
 export type Binary = Uint8Array;
 
@@ -53,13 +54,19 @@ export type ConditionalArray = Raw[];
  */
 export type ConditionalMap = Map<Raw, Raw>;
 
+/**
+ * @description Represents the type of the value returned by `SetReply#set()`.
+ */
+export type ConditionalSet = Set<Raw>;
+
 export type RedisReply =
   | IntegerReply
   | BulkReply
   | SimpleStringReply
   | ArrayReply
   // RESP3
-  | MapReply;
+  | MapReply
+  | SetReply;
 
 export type RedisReplyOrError = RedisReply | ErrorReplyError;
 
@@ -109,4 +116,10 @@ export interface MapReply extends Reply<ConditionalArray> {
   type: "map";
   value(): ConditionalArray;
   map(): ConditionalMap;
+}
+
+export interface SetReply extends Reply<ConditionalArray> {
+  type: "set";
+  value(): ConditionalArray;
+  set(): ConditionalSet;
 }
