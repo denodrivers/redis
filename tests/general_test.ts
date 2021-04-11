@@ -98,16 +98,6 @@ suite.test("exists", async () => {
   });
 });
 
-suite.test("eval", async () => {
-  const raw = await client.eval(
-    "return {KEYS[1],KEYS[2],ARGV[1],ARGV[2]}",
-    ["1", "2"],
-    ["3", "4"],
-  );
-  assert(Array.isArray(raw));
-  assertEquals(raw, ["1", "2", "3", "4"]);
-});
-
 suite.test("parse basic URL", () => {
   const options = parseURL("redis://127.0.0.1:7003");
   assertEquals(options.hostname, "127.0.0.1");
