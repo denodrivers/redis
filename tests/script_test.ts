@@ -44,7 +44,6 @@ suite.test("evalsha", async () => {
     assertEquals(
       await client.scriptExists(hash),
       [1],
-      "The script should be loaded.",
     );
 
     const result = await client.evalsha(hash, ["a", "b"], ["1", "2"]);
