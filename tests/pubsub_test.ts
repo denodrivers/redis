@@ -1,4 +1,4 @@
-import { delay } from "../vendor/https/deno.land/std/async/mod.ts";
+import { delay } from "../vendor/https/deno.land/std/async/delay.ts";
 import {
   assert,
   assertEquals,

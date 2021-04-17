@@ -1,6 +1,9 @@
 import type { Connection } from "./connection.ts";
 import { EOFError } from "./errors.ts";
-import { Deferred, deferred } from "./vendor/https/deno.land/std/async/mod.ts";
+import {
+  Deferred,
+  deferred,
+} from "./vendor/https/deno.land/std/async/deferred.ts";
 import { sendCommand } from "./protocol/mod.ts";
 import type { RedisReply, RedisValue } from "./protocol/mod.ts";
 
