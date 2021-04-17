@@ -1,1 +1,1 @@
-export * from "https://deno.land/std@0.91.0/io/bufio.ts";
+export * from "https://deno.land/std@0.93.0/io/bufio.ts";
