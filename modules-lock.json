@@ -5,6 +5,7 @@
       "/async/mod.ts",
       "/testing/bench.ts",
       "/testing/asserts.ts",
+      "/io/buffer.ts",
       "/io/bufio.ts",
       "/fmt/colors.ts"
     ]
