@@ -1,4 +1,5 @@
 import { BufReader } from "../vendor/https/deno.land/std/io/bufio.ts";
+import { Buffer } from "../vendor/https/deno.land/std/io/buffer.ts";
 import type * as types from "./types.ts";
 import { EOFError, ErrorReplyError, InvalidStateError } from "../errors.ts";
 import { decoder } from "./_util.ts";
@@ -218,7 +219,7 @@ async function readLine(reader: BufReader): Promise<string> {
       if (d1 === "\n".charCodeAt(0)) {
         buf[loc++] = d;
         buf[loc++] = d1;
-        return decoder.decode(new Deno.Buffer(buf.subarray(0, loc)).bytes());
+        return decoder.decode(new Buffer(buf.subarray(0, loc)).bytes());
       }
     }
     buf[loc++] = d;

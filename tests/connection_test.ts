@@ -1,5 +1,4 @@
-import { connect, Redis } from "../mod.ts";
-import { delay } from "../vendor/https/deno.land/std/async/mod.ts";
+import { connect } from "../mod.ts";
 import { assertEquals } from "../vendor/https/deno.land/std/testing/asserts.ts";
 import {
   newClient,

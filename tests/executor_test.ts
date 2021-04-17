@@ -1,9 +1,5 @@
-import { BulkReply, ErrorReplyError, parseURL, replyTypes } from "../mod.ts";
-import {
-  assert,
-  assertEquals,
-  assertThrowsAsync,
-} from "../vendor/https/deno.land/std/testing/asserts.ts";
+import { BulkReply, replyTypes } from "../mod.ts";
+import { assertEquals } from "../vendor/https/deno.land/std/testing/asserts.ts";
 import {
   newClient,
   nextPort,

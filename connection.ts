@@ -140,13 +140,13 @@ export class RedisConnection implements Connection {
     try {
       await sendCommand(this.writer, this.reader, "PING");
       this._isConnected = true;
-    } catch (error) {
+    } catch (_error) { // TODO: Maybe we should log this error.
       this._isConnected = false;
       return new Promise((resolve, reject) => {
-        const interval = setInterval(async () => {
+        const _interval = setInterval(async () => {
           if (this.retryCount > this.maxRetryCount) {
             this.close();
-            clearInterval(interval);
+            clearInterval(_interval);
             reject(new Error("Could not reconnect"));
           }
           try {
@@ -155,9 +155,9 @@ export class RedisConnection implements Connection {
             await sendCommand(this.writer, this.reader, "PING");
             this._isConnected = true;
             this.retryCount = 0;
-            clearInterval(interval);
+            clearInterval(_interval);
             resolve();
-          } catch (err) {
+          } catch (_err) {
             // retrying
           } finally {
             this.retryCount++;
