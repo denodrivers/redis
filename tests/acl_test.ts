@@ -133,7 +133,7 @@ suite.test("log", async () => {
   const randString = "balh";
   try {
     await client.auth(randString, randString);
-  } catch (error) {
+  } catch (_error) {
     // skip invalid username-password pair error
   }
   assertEquals((await client.aclLog(1))[0][9], randString);

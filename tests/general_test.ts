@@ -1,6 +1,5 @@
 import { ErrorReplyError, parseURL } from "../mod.ts";
 import {
-  assert,
   assertEquals,
   assertThrowsAsync,
 } from "../vendor/https/deno.land/std/testing/asserts.ts";

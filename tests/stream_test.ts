@@ -123,7 +123,7 @@ suite.test("xread", async () => {
   assert(a != null);
   const key2 = randomStream();
 
-  const b = await client.xadd(
+  await client.xadd(
     key2,
     [1000, 0], // You may enter the ID as a numeric pair
     { air: "ball", friend: "table" },

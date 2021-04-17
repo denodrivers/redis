@@ -1,5 +1,7 @@
 #!/usr/bin/env deno run --allow-read --allow-write --allow-run
 
+import { readAll, writeAll } from "../vendor/https/deno.land/std/io/util.ts";
+
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
 
@@ -14,7 +16,7 @@ async function doc(fileName: string): Promise<Array<Node>> {
     stdout: "piped",
   });
   try {
-    const out = await Deno.readAll(deno.stdout);
+    const out = await readAll(deno.stdout);
     return JSON.parse(decoder.decode(out));
   } finally {
     deno.stdout.close();
@@ -29,9 +31,9 @@ async function fmt(content: string): Promise<string> {
     stdout: "piped",
   });
   try {
-    await Deno.writeAll(deno.stdin, encoder.encode(content));
+    await writeAll(deno.stdin, encoder.encode(content));
     deno.stdin.close();
-    const formattedContent = decoder.decode(await Deno.readAll(deno.stdout));
+    const formattedContent = decoder.decode(await readAll(deno.stdout));
     return formattedContent;
   } finally {
     deno.stdout.close();

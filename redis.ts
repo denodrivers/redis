@@ -45,7 +45,6 @@ import type { RedisConnectionOptions } from "./connection.ts";
 import { CommandExecutor, MuxExecutor } from "./executor.ts";
 import { unwrapReply } from "./protocol/mod.ts";
 import type {
-  ArrayReply,
   Binary,
   Bulk,
   BulkNil,
@@ -53,11 +52,9 @@ import type {
   BulkString,
   ConditionalArray,
   Integer,
-  IntegerReply,
   Raw,
   RedisValue,
   SimpleString,
-  SimpleStringReply,
 } from "./protocol/mod.ts";
 import { createRedisPipeline } from "./pipeline.ts";
 import { psubscribe, subscribe } from "./pubsub.ts";
@@ -1465,7 +1462,7 @@ export class RedisImpl implements Redis {
       args.push("MINMATCHLEN");
       args.push(opts.minmatchlen);
     }
-    return this.execBulkReply("STRALGO", "LCS", target, a, b, ...args);
+    return this.execBulkReply("STRALGO", algorithm, target, a, b, ...args);
   }
 
   strlen(key: string) {

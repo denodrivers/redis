@@ -7,6 +7,7 @@
       "/testing/asserts.ts",
       "/io/buffer.ts",
       "/io/bufio.ts",
+      "/io/util.ts",
       "/fmt/colors.ts"
     ]
   }
