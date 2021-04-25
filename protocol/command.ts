@@ -5,7 +5,7 @@ import {
 import { readReply, unwrapReply } from "./reply.ts";
 import { ErrorReplyError } from "../errors.ts";
 import { encoder } from "./_util.ts";
-import type { RedisReply, RawOrError, RedisValue } from "./types.ts";
+import type { RawOrError, RedisReply, RedisValue } from "./types.ts";
 
 const CRLF = encoder.encode("\r\n");
 const ArrayCode = encoder.encode("*");
