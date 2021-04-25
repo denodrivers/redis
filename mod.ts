@@ -67,6 +67,7 @@ export type {
   Raw,
   RawOrError,
   RedisReply,
+  RedisReplyOrError,
   RedisValue,
   Reply,
   SimpleString,
