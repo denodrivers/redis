@@ -119,7 +119,7 @@ suite.test("pipeline in concurrent", async () => {
     assertEquals(res[2], "OK"); // set(c)
 
     // flush()
-    assertEquals(res[0], ["OK", "OK", "OK"]);
+    assertEquals(res[3], ["OK", "OK", "OK"]);
 
     assertEquals(res[4], "OK"); // get(a)
     assertEquals(res[5], "OK"); // get(b)
