@@ -549,27 +549,27 @@ export interface RedisCommands {
 
   // Stream
   /**
-   * The XACK command removes one or multiple messages 
+   * The XACK command removes one or multiple messages
    * from the pending entries list (PEL) of a stream
    *  consumer group. A message is pending, and as such
-   *  stored inside the PEL, when it was delivered to 
+   *  stored inside the PEL, when it was delivered to
    * some consumer, normally as a side effect of calling
    *  XREADGROUP, or when a consumer took ownership of a
-   *  message calling XCLAIM. The pending message was 
+   *  message calling XCLAIM. The pending message was
    * delivered to some consumer but the server is yet not
    *  sure it was processed at least once. So new calls
-   *  to XREADGROUP to grab the messages history for a 
-   * consumer (for instance using an XId of 0), will 
-   * return such message. Similarly the pending message 
-   * will be listed by the XPENDING command, that 
+   *  to XREADGROUP to grab the messages history for a
+   * consumer (for instance using an XId of 0), will
+   * return such message. Similarly the pending message
+   * will be listed by the XPENDING command, that
    * inspects the PEL.
-   * 
-   * Once a consumer successfully processes a message, 
-   * it should call XACK so that such message does not 
+   *
+   * Once a consumer successfully processes a message,
+   * it should call XACK so that such message does not
    * get processed again, and as a side effect, the PEL
-   * entry about this message is also purged, releasing 
+   * entry about this message is also purged, releasing
    * memory from the Redis server.
-   * 
+   *
    * @param key the stream key
    * @param group the group name
    * @param xids the ids to acknowledge
@@ -577,10 +577,10 @@ export interface RedisCommands {
   xack(key: string, group: string, ...xids: XIdInput[]): Promise<Integer>;
   /**
    * Write a message to a stream.
-   * 
+   *
    * Returns bulk string reply, specifically:
-   * The command returns the XId of the added entry. 
-   * The XId is the one auto-generated if * is passed 
+   * The command returns the XId of the added entry.
+   * The XId is the one auto-generated if * is passed
    * as XId argument, otherwise the command just returns
    *  the same XId specified by the user during insertion.
    * @param key  write to this stream
@@ -594,10 +594,10 @@ export interface RedisCommands {
   ): Promise<XId>;
   /**
    * Write a message to a stream.
-   * 
+   *
    * Returns bulk string reply, specifically:
-   * The command returns the XId of the added entry. 
-   * The XId is the one auto-generated if * is passed 
+   * The command returns the XId of the added entry.
+   * The XId is the one auto-generated if * is passed
    * as XId argument, otherwise the command just returns
    *  the same XId specified by the user during insertion.
    * @param key  write to this stream
@@ -614,10 +614,10 @@ export interface RedisCommands {
   /**
    * In the context of a stream consumer group, this command changes the ownership of a pending message, so that the new owner is the
    * consumer specified as the command argument.
-   * 
+   *
    * It returns the claimed messages unless called with the JUSTIDs
    * option, in which case it returns only their XIds.
-   * 
+   *
    * This is a complex command!  Read more at https://redis.io/commands/xclaim
    *
 <pre>
@@ -632,7 +632,7 @@ XCLAIM mystream mygroup Alice 3600000 1526569498055-0
    *    GROUP: the name of the consumer group which will claim the messages
    *    CONSUMER: the specific consumer which will claim the message
    *    MIN-IDLE-TIME:  claim messages whose idle time is greater than this number (milliseconds)
-   * 
+   *
    * The command has multiple options which can be omitted, however
    * most are mainly for internal use in order to transfer the
    * effects of XCLAIM or other commands to the AOF file and to
@@ -651,12 +651,12 @@ XCLAIM mystream mygroup Alice 3600000 1526569498055-0
     ...xids: XIdInput[]
   ): Promise<XClaimReply>;
   /**
-   * Removes the specified entries from a stream, 
+   * Removes the specified entries from a stream,
    * and returns the number of entries deleted,
    * that may be different from the number of
-   * XIds passed to the command in case certain 
+   * XIds passed to the command in case certain
    * XIds do not exist.
-   * 
+   *
    * @param key the stream key
    * @param xids ids to delete
    */
@@ -664,12 +664,12 @@ XCLAIM mystream mygroup Alice 3600000 1526569498055-0
   /**
    * This command is used to create a new consumer group associated
    * with a stream.
-   * 
+   *
    * <pre>
    XGROUP CREATE test-man-000 test-group $ MKSTREAM
    OK
    </pre>
-   * 
+   *
    * See https://redis.io/commands/xgroup
    * @param key stream key
    * @param groupName the name of the consumer group
@@ -695,7 +695,7 @@ XCLAIM mystream mygroup Alice 3600000 1526569498055-0
   /**
    * Delete a specific consumer from a group, leaving
    * the group itself intact.
-   * 
+   *
    * <pre>
 XGROUP DELCONSUMER test-man-000 hellogroup 4
 (integer) 0
@@ -710,11 +710,11 @@ XGROUP DELCONSUMER test-man-000 hellogroup 4
     consumerName: string,
   ): Promise<Integer>;
   /**
-   * Destroy a consumer group completely.  The consumer 
-   * group will be destroyed even if there are active 
+   * Destroy a consumer group completely.  The consumer
+   * group will be destroyed even if there are active
    * consumers and pending messages, so make sure to
    * call this command only when really needed.
-   * 
+   *
 <pre>
 XGROUP DESTROY test-man-000 test-group
 (integer) 1
@@ -723,7 +723,7 @@ XGROUP DESTROY test-man-000 test-group
    * @param groupName the consumer group to destroy
    */
   xgroupDestroy(key: string, groupName: string): Promise<Integer>;
-  /** A support command which displays text about the 
+  /** A support command which displays text about the
    * various subcommands in XGROUP. */
   xgroupHelp(): Promise<BulkString>;
   /**
@@ -756,16 +756,16 @@ XGROUP SETID mystream consumer-group-name 0
    */
   xinfoStreamFull(key: string, count?: number): Promise<XInfoStreamFullReply>;
   /**
-   * Get as output all the consumer groups associated 
+   * Get as output all the consumer groups associated
    * with the stream.
-   * 
+   *
    * @param key the stream key
    */
   xinfoGroups(key: string): Promise<XInfoGroupsReply>;
   /**
-   * Get the list of every consumer in a specific 
+   * Get the list of every consumer in a specific
    * consumer group.
-   * 
+   *
    * @param key the stream key
    * @param group list consumers for this group
    */
@@ -776,8 +776,8 @@ XGROUP SETID mystream consumer-group-name 0
    */
   xlen(key: string): Promise<Integer>;
   /** Complex command to obtain info on messages in the Pending Entries List.
-   * 
-   * Outputs a summary about the pending messages in a given consumer group. 
+   *
+   * Outputs a summary about the pending messages in a given consumer group.
    *
    * @param key get pending messages on this stream key
    * @param group get pending messages for this group
@@ -788,12 +788,12 @@ XGROUP SETID mystream consumer-group-name 0
   ): Promise<XPendingReply>;
   /**
    * Output more detailed info about pending messages:
-   * 
+   *
    *    - The ID of the message.
    *    - The name of the consumer that fetched the message and has still to acknowledge it. We call it the current owner of the message.
    *    - The number of milliseconds that elapsed since the last time this message was delivered to this consumer.
    *    - The number of times this message was delivered.
-   * 
+   *
    * If you pass the consumer argument to the command, it will efficiently filter for messages owned by that consumer.
    * @param key get pending messages on this stream key
    * @param group get pending messages for this group
@@ -807,16 +807,16 @@ XGROUP SETID mystream consumer-group-name 0
     consumer?: string,
   ): Promise<XPendingCount[]>;
   /**
-   * The command returns the stream entries matching a given 
+   * The command returns the stream entries matching a given
    * range of XIds. The range is specified by a minimum and
    * maximum ID. All the entries having an XId between the
    * two specified or exactly one of the two XIds specified
    * (closed interval) are returned.
-   * 
-   * The command also has a reciprocal command returning 
-   * items in the reverse order, called XREVRANGE, which 
+   *
+   * The command also has a reciprocal command returning
+   * items in the reverse order, called XREVRANGE, which
    * is otherwise identical.
-   * 
+   *
    * The - and + special XIds mean respectively the minimum
    * XId possible and the maximum XId possible inside a stream,
    * so the following command will just return every
@@ -837,14 +837,14 @@ XRANGE somestream - +
     count?: number,
   ): Promise<XMessage[]>;
   /**
-   * This command is exactly like XRANGE, but with the 
-   * notable difference of returning the entries in 
-   * reverse order, and also taking the start-end range 
+   * This command is exactly like XRANGE, but with the
+   * notable difference of returning the entries in
+   * reverse order, and also taking the start-end range
    * in reverse order: in XREVRANGE you need to state the
    *  end XId and later the start ID, and the command will
-   *  produce all the element between (or exactly like) 
+   *  produce all the element between (or exactly like)
    * the two XIds, starting from the end side.
-   * 
+   *
    * @param key  the stream key
    * @param start   reading backwards, start from this XId.  for the maximum, specify "+"
    * @param end  stop at this XId.  for the minimum, specify "-"
@@ -857,13 +857,13 @@ XRANGE somestream - +
     count?: number,
   ): Promise<XMessage[]>;
   /**
-   * Read data from one or multiple streams, only returning 
-   * entries with an XId greater than the last received XId 
+   * Read data from one or multiple streams, only returning
+   * entries with an XId greater than the last received XId
    * reported by the caller.
-   * @param key_xids pairs containing the stream key, and 
+   * @param key_xids pairs containing the stream key, and
    *                    the XId from which to read
-   * @param opts optional max count of entries to return 
-   *                    for each stream, and number of 
+   * @param opts optional max count of entries to return
+   *                    for each stream, and number of
    *                    milliseconds for which to block
    */
   xread(
@@ -871,10 +871,10 @@ XRANGE somestream - +
     opts?: XReadOpts,
   ): Promise<XReadReply>;
   /**
-   * The XREADGROUP command is a special version of the XREAD command with support for consumer groups. 
-   *  
+   * The XREADGROUP command is a special version of the XREAD command with support for consumer groups.
+   *
    * @param key_ids { key, id } pairs to read
-   * @param opts you must specify group name and consumer name.  
+   * @param opts you must specify group name and consumer name.
    *              those must be created using the XGROUP command,
    *              prior to invoking this command.  you may optionally
    *              include a count of records to read, and the number
@@ -887,10 +887,10 @@ XRANGE somestream - +
 
   /**
    * Trims the stream to the indicated number
-   * of elements.  
+   * of elements.
 <pre>XTRIM mystream MAXLEN 1000</pre>
-   * @param key 
-   * @param maxlen 
+   * @param key
+   * @param maxlen
    */
   xtrim(key: string, maxlen: XMaxlen): Promise<Integer>;
 
