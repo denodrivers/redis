@@ -35,10 +35,10 @@ export type XReadReplyRaw = XReadStreamRaw[];
 /** Flexible input type for commands which require message
  * ID to be passed (represented in lower-level Redis API as
  * "1000-0" etc).
- * 
+ *
  * We also include an array format for ease of use, where
  * the first element is the epochMillis, second is seqNo.
- * 
+ *
  * We also allow passing a single number,
  * which will represent the the epoch Millis with
  * seqNo of zero.  (Especially useful is to pass 0.)
@@ -117,12 +117,12 @@ export interface XPendingConsumer {
 
 /**
  * Represents a pending message parsed from xpending.
- * 
+ *
  * @param id The ID of the message
  * @param consumer The name of the consumer that fetched the message
  *  and has still to acknowledge it. We call it the
  *  current owner of the message.
- * @param lastDeliveredMs The number of milliseconds that elapsed since the 
+ * @param lastDeliveredMs The number of milliseconds that elapsed since the
  *  last time this message was delivered to this consumer.
  * @param timesDelivered The number of times this message was delivered.
  */
@@ -181,7 +181,7 @@ export interface XConsumerDetail {
 export type XInfoConsumersReply = XInfoConsumer[];
 /**
  * A consumer parsed from xinfo command.
- * 
+ *
  * @param name Name of the consumer group.
  * @param pending Number of pending messages for this specific consumer.
  * @param idle This consumer's idle time in milliseconds.
