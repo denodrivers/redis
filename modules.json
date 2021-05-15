@@ -4,6 +4,7 @@
     "modules": [
       "/async/deferred.ts",
       "/async/delay.ts",
+      "/bytes/bytes_list.ts",
       "/testing/bench.ts",
       "/testing/asserts.ts",
       "/io/buffer.ts",
