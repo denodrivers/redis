@@ -44,7 +44,7 @@ export async function sendCommand(
   ...args: RedisValue[]
 ): Promise<RedisReply> {
   const bytesList = new BytesList();
-  await packRequest(bytesList, command, args);
+  packRequest(bytesList, command, args);
   await writer.write(bytesList.concat());
   await writer.flush();
   return readReply(reader);
