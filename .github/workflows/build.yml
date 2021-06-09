@@ -40,7 +40,7 @@ jobs:
       - name: Run lint
         run: |
           deno fmt --check --ignore=./benchmark/node_modules
-          deno lint --unstable --ignore=./benchmark/node_modules
+          deno lint --ignore=./benchmark/node_modules
 
       - name: Set up Redis ${{ matrix.redis }}
         uses: shogo82148/actions-setup-redis@v1
