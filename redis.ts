@@ -94,7 +94,6 @@ import {
 } from "./stream.ts";
 
 export interface Redis extends RedisCommands {
-  readonly connection: Connection;
   readonly executor: CommandExecutor;
   readonly isClosed: boolean;
   readonly isConnected: boolean;
@@ -102,24 +101,24 @@ export interface Redis extends RedisCommands {
 }
 
 export class RedisImpl implements Redis {
-  readonly connection: Connection;
+  readonly #connection: Connection;
   readonly executor: CommandExecutor;
 
   get isClosed() {
-    return this.connection.isClosed;
+    return this.#connection.isClosed;
   }
 
   get isConnected() {
-    return this.connection.isConnected;
+    return this.#connection.isConnected;
   }
 
   constructor(connection: Connection, executor: CommandExecutor) {
-    this.connection = connection;
+    this.#connection = connection;
     this.executor = executor;
   }
 
   close(): void {
-    this.connection.close();
+    this.#connection.close();
   }
 
   async execReply(command: string, ...args: RedisValue[]): Promise<Raw> {
@@ -1144,13 +1143,13 @@ export class RedisImpl implements Redis {
   subscribe<TMessage extends string | string[] = string>(
     ...channels: string[]
   ) {
-    return subscribe<TMessage>(this.connection, ...channels);
+    return subscribe<TMessage>(this.#connection, ...channels);
   }
 
   psubscribe<TMessage extends string | string[] = string>(
     ...patterns: string[]
   ) {
-    return psubscribe<TMessage>(this.connection, ...patterns);
+    return psubscribe<TMessage>(this.#connection, ...patterns);
   }
 
   pubsubChannels(pattern?: string) {
@@ -2245,11 +2244,11 @@ export class RedisImpl implements Redis {
   }
 
   tx() {
-    return createRedisPipeline(this.connection, true);
+    return createRedisPipeline(this.#connection, true);
   }
 
   pipeline() {
-    return createRedisPipeline(this.connection);
+    return createRedisPipeline(this.#connection);
   }
 }
 
