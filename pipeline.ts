@@ -25,7 +25,7 @@ export function createRedisPipeline(
   function flush(): Promise<RedisReplyOrError[]> {
     return executor.flush();
   }
-  const client = new RedisImpl(connection, executor);
+  const client = new RedisImpl(executor);
   return Object.assign(client, { flush });
 }
 
