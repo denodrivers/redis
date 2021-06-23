@@ -40,7 +40,7 @@ import type {
   ZScanOpts,
   ZUnionstoreOpts,
 } from "./command.ts";
-import { Connection, RedisConnection } from "./connection.ts";
+import { RedisConnection } from "./connection.ts";
 import type { RedisConnectionOptions } from "./connection.ts";
 import { CommandExecutor, MuxExecutor } from "./executor.ts";
 import { unwrapReply } from "./protocol/mod.ts";
