@@ -215,7 +215,7 @@ class ClusterExecutor {
           }
         }
       } catch {
-        // Just try with the nest node.
+        // Just try with the next node.
       }
     }
     throw new ClusterError("Can't reach a single startup node.");
