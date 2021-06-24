@@ -1101,6 +1101,7 @@ XRANGE somestream - +
   clientUnpause(): Promise<SimpleString>;
 
   // Cluster
+  asking(): Promise<SimpleString>;
   clusterAddSlots(...slots: number[]): Promise<SimpleString>;
   clusterCountFailureReports(node_id: string): Promise<Integer>;
   clusterCountKeysInSlot(slot: number): Promise<Integer>;
