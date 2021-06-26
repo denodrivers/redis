@@ -1,5 +1,5 @@
 /**
- * Base on https://github.com/antirez/redis-rb-cluster which is licensed as follows:
+ * Based on https://github.com/antirez/redis-rb-cluster which is licensed as follows:
  *
  * Copyright (C) 2013 Salvatore Sanfilippo <antirez@gmail.com>
  *
@@ -24,7 +24,8 @@
  */
 
 import { connect, RedisImpl } from "../../redis.ts";
-import { Connection } from "../../connection.ts";
+import type { CommandExecutor } from "../../executor.ts";
+import type { Connection } from "../../connection.ts";
 import type { Redis } from "../../redis.ts";
 import uniqBy from "https://cdn.skypack.dev/lodash.uniqby@4.5.0"; // TODO: Import `lodash.uniqby` from `vendor` directory
 import type { RedisReply, RedisValue } from "../../protocol/mod.ts";
@@ -32,6 +33,7 @@ import calculateSlot from "https://cdn.skypack.dev/cluster-key-slot@1.1.0";
 import shuffle from "https://cdn.skypack.dev/lodash.shuffle@4.2.0";
 import sample from "https://cdn.skypack.dev/lodash.sample@4.2.1";
 import { ErrorReplyError } from "../../errors.ts";
+import { delay } from "../../vendor/https/deno.land/std/async/delay.ts";
 
 export interface ClusterConnectOptions {
   nodes: Array<NodeOptions>;
@@ -60,7 +62,7 @@ const kRedisClusterRequestTTL = 16;
 class ClusterError extends Error {}
 
 // TODO: This class should implement CommandExecutor interface.
-class ClusterExecutor {
+class ClusterExecutor implements CommandExecutor {
   #nodes!: ClusterNode[];
   #slots!: SlotMap;
   #startupNodes: ClusterNode[];
@@ -115,6 +117,9 @@ class ClusterExecutor {
         lastError = err;
         if (err instanceof Deno.errors.BadResource) {
           tryRandomNode = true;
+          if (ttl < kRedisClusterRequestTTL / 2) {
+            await delay(100);
+          }
           continue;
         } else if (err instanceof ErrorReplyError) {
           const [code, newSlot, ipAndPort] = err.message.split(/\s+/);
@@ -226,11 +231,12 @@ class ClusterExecutor {
     if (!node) {
       return this.#getRandomConnection();
     }
-    const conn = this.#connectionByNodeName[node.name];
+    let conn = this.#connectionByNodeName[node.name];
     if (!conn) {
       try {
         await this.#closeExistingConnection();
-        this.#connectionByNodeName[node.name] = await getRedisLink(node);
+        conn = await getRedisLink(node);
+        this.#connectionByNodeName[node.name] = conn;
       } catch {
         return this.#getRandomConnection();
       }
