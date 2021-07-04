@@ -256,8 +256,8 @@ class ClusterExecutor implements CommandExecutor {
       delete this.#connectionByNodeName[nodeName];
       try {
         await conn.quit();
-      } catch {
-        // deno-lint-ignore no-empty
+      } catch (err) {
+        console.error(err); // TODO: Improve logging
       }
     }
   }
