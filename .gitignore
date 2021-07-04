@@ -4,3 +4,4 @@ commands
 testdata/*/
 benchmark/node_modules
 benchmark/benchmark.js
+tests/server
