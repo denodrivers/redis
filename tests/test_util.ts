@@ -91,7 +91,7 @@ export async function startRedis({
 }
 
 export function stopRedis(server: TestServer): void {
-  Deno.remove(server.path, { recursive: true });
+  Deno.removeSync(server.path, { recursive: true });
   server.process.close();
 }
 
