@@ -13,7 +13,7 @@ export async function startRedisCluster(ports: number[]): Promise<TestCluster> {
       port,
       clusterEnabled: true,
       additionalConfigurations: [
-        `cluster-config-file tests/server/cluster/${port}_nodes.conf`,
+        `cluster-config-file tests/server/${port}/nodes.conf`,
       ],
       debug: true,
     })
