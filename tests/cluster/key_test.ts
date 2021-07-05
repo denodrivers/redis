@@ -4,7 +4,7 @@ import { connect } from "../../experimental/cluster/mod.ts";
 import { assertEquals } from "../../vendor/https/deno.land/std/testing/asserts.ts";
 
 const suite = new TestSuite("cluster/key");
-const ports = nextPorts(5);
+const ports = nextPorts(6);
 const cluster = await startRedisCluster(ports);
 const client = await connect({
   nodes: ports.map((port) => ({

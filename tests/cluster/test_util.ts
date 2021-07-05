@@ -1,7 +1,6 @@
 import { nextPort, startRedis, stopRedis } from "../test_util.ts";
 import type { TestServer } from "../test_util.ts";
 import { readAll } from "../../vendor/https/deno.land/std/io/util.ts";
-import { delay } from "../../vendor/https/deno.land/std/async/delay.ts";
 
 export interface TestCluster {
   servers: TestServer[];
@@ -13,12 +12,11 @@ export async function startRedisCluster(ports: number[]): Promise<TestCluster> {
       port,
       clusterEnabled: true,
       additionalConfigurations: [
-        `cluster-config-file tests/server/redis_cluster_${port}.conf`,
+        `cluster-config-file tests/server/cluster/${port}_nodes.conf`,
       ],
     })
   ));
-
-  await delay(5000);
+  const cluster = { servers };
 
   const redisCLI = Deno.run({
     cmd: [
@@ -34,12 +32,13 @@ export async function startRedisCluster(ports: number[]): Promise<TestCluster> {
   try {
     const status = await redisCLI.status();
     if (!status.success) {
+      stopRedisCluster(cluster);
       const output = await readAll(redisCLI.stderr);
       const decoder = new TextDecoder();
       throw new Error(decoder.decode(output));
     }
 
-    return { servers };
+    return cluster;
   } finally {
     redisCLI.stderr.close();
     redisCLI.close();
