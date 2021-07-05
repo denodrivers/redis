@@ -45,7 +45,7 @@ await redis.xadd(
   { elements: 10 },
 );
 
-const [stream] = await client.xread(
+const [stream] = await redis.xread(
   [{ key: "somestream", xid: 0 }], // read from beginning
   { block: 5000 },
 );
