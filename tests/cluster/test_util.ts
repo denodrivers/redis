@@ -1,5 +1,6 @@
 import { nextPort, startRedis, stopRedis } from "../test_util.ts";
 import type { TestServer } from "../test_util.ts";
+import { readAll } from "../../vendor/https/deno.land/std/io/util.ts";
 
 export interface TestCluster {
   servers: TestServer[];
@@ -25,15 +26,19 @@ export async function startRedisCluster(ports: number[]): Promise<TestCluster> {
       "--cluster-replicas",
       "1",
     ],
+    stderr: "piped",
   });
   try {
     const status = await redisCLI.status();
     if (!status.success) {
-      throw new Error("Failed to create the cluster");
+      const output = await readAll(redisCLI.stderr);
+      const decoder = new TextDecoder();
+      throw new Error(decoder.decode(output));
     }
 
     return { servers };
   } finally {
+    redisCLI.stderr.close();
     redisCLI.close();
   }
 }
