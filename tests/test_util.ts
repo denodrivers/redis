@@ -74,7 +74,9 @@ export async function startRedis({
 
     let config = `dir ${path}\nport ${port}\n`;
     config += clusterEnabled ? "cluster-enabled yes" : "";
-    config += additionalConfigurations.join("\n");
+    if (additionalConfigurations.length > 0) {
+      config += "\n" + additionalConfigurations.join("\n");
+    }
 
     await Deno.writeFile(`${path}/redis.conf`, encoder.encode(config), {
       append: true,
