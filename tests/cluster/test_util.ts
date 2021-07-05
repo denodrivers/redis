@@ -1,7 +1,6 @@
 import { nextPort, startRedis, stopRedis } from "../test_util.ts";
 import type { TestServer } from "../test_util.ts";
 import { readAll } from "../../vendor/https/deno.land/std/io/util.ts";
-import { connect } from "../../redis.ts";
 
 export interface TestCluster {
   servers: TestServer[];
