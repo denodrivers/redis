@@ -1,6 +1,7 @@
 import { nextPort, startRedis, stopRedis } from "../test_util.ts";
 import type { TestServer } from "../test_util.ts";
 import { readAll } from "../../vendor/https/deno.land/std/io/util.ts";
+import { connect } from "../../redis.ts";
 
 export interface TestCluster {
   servers: TestServer[];
@@ -17,6 +18,12 @@ export async function startRedisCluster(ports: number[]): Promise<TestCluster> {
     })
   ));
   const cluster = { servers };
+
+  {
+    const redis = await connect({ hostname: "127.0.0.1", port: ports[0] });
+    await redis.ping();
+    await redis.quit();
+  }
 
   const redisCLI = Deno.run({
     cmd: [
