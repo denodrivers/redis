@@ -1,6 +1,5 @@
 import { nextPort, startRedis, stopRedis } from "../test_util.ts";
 import type { TestServer } from "../test_util.ts";
-import { connect } from "../../redis.ts";
 
 export interface TestCluster {
   servers: TestServer[];
