@@ -65,6 +65,7 @@ export async function startRedis({
   port = 6379,
   clusterEnabled = false,
   additionalConfigurations = [] as string[],
+  debug = false,
 }): Promise<TestServer> {
   const path = `tests/server/${port}`;
 
@@ -86,7 +87,7 @@ export async function startRedis({
   const process = Deno.run({
     cmd: ["redis-server", `${path}/redis.conf`],
     stdin: "null",
-    stdout: "null",
+    stdout: debug ? "inherit" : "null",
   });
 
   // Ample time for server to finish startup

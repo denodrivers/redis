@@ -15,6 +15,7 @@ export async function startRedisCluster(ports: number[]): Promise<TestCluster> {
       additionalConfigurations: [
         `cluster-config-file tests/server/cluster/${port}_nodes.conf`,
       ],
+      debug: true,
     })
   ));
   const cluster = { servers };
