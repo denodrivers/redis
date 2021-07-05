@@ -65,6 +65,7 @@ export async function startRedis({
   port = 6379,
   clusterEnabled = false,
   additionalConfigurations = [] as string[],
+  // deno-lint-ignore no-unused-vars
   debug = false,
 }): Promise<TestServer> {
   const path = `tests/server/${port}`;
