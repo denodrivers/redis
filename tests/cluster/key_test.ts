@@ -1,26 +1,17 @@
 import { nextPorts, startRedisCluster, stopRedisCluster } from "./test_util.ts";
-import type { TestCluster } from "./test_util.ts";
 import { TestSuite } from "../test_util.ts";
 import { connect } from "../../experimental/cluster/mod.ts";
-import type { Redis } from "../../redis.ts";
 import { assertEquals } from "../../vendor/https/deno.land/std/testing/asserts.ts";
 
 const suite = new TestSuite("cluster/key");
-let cluster!: TestCluster;
-let client!: Redis;
-const ports = nextPorts(3);
-
-suite.beforeEach(async () => {
-  if (cluster == null) {
-    cluster = await startRedisCluster(ports);
-    client = await connect({
-      nodes: ports.map((port) => ({
-        hostname: "127.0.0.1",
-        port,
-      })),
-      maxConnections: ports.length,
-    });
-  }
+const ports = nextPorts(5);
+const cluster = await startRedisCluster(ports);
+const client = await connect({
+  nodes: ports.map((port) => ({
+    hostname: "127.0.0.1",
+    port,
+  })),
+  maxConnections: ports.length,
 });
 
 suite.afterAll(() => {

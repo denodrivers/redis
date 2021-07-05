@@ -64,6 +64,7 @@ const encoder = new TextEncoder();
 export async function startRedis({
   port = 6379,
   clusterEnabled = false,
+  additionalConfigurations = [] as string[],
 }): Promise<TestServer> {
   const path = `tests/server/${port}`;
 
@@ -73,6 +74,7 @@ export async function startRedis({
 
     let config = `dir ${path}\nport ${port}\n`;
     config += clusterEnabled ? "cluster-enabled yes" : "";
+    config += additionalConfigurations.join("\n");
 
     await Deno.writeFile(`${path}/redis.conf`, encoder.encode(config), {
       append: true,
