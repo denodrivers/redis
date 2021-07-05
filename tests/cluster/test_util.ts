@@ -13,20 +13,12 @@ export async function startRedisCluster(ports: number[]): Promise<TestCluster> {
       port,
       clusterEnabled: true,
       additionalConfigurations: [
-        // `cluster-config-file tests/server/${port}/nodes.conf`,
+        // TODO: The configuration file should be created in `test/server/<port>` directory.
         `cluster-config-file ${port}_nodes.conf`,
       ],
-      debug: true,
     })
   ));
   const cluster = { servers };
-
-  {
-    const redis = await connect({ hostname: "127.0.0.1", port: ports[0] });
-    await redis.ping();
-    await redis.quit();
-  }
-
   const redisCLI = Deno.run({
     cmd: [
       "redis-cli",

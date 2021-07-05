@@ -65,8 +65,6 @@ export async function startRedis({
   port = 6379,
   clusterEnabled = false,
   additionalConfigurations = [] as string[],
-  // deno-lint-ignore no-unused-vars
-  debug = false,
 }): Promise<TestServer> {
   const path = `tests/server/${port}`;
 
@@ -88,7 +86,7 @@ export async function startRedis({
   const process = Deno.run({
     cmd: ["redis-server", `${path}/redis.conf`],
     stdin: "null",
-    stdout: debug ? "inherit" : "null",
+    stdout: "null",
   });
 
   // Ample time for server to finish startup
