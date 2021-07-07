@@ -63,6 +63,11 @@ const kRedisClusterRequestTTL = 16;
 
 class ClusterError extends Error {}
 
+// TODO: Remove this!
+function debug(x: unknown): void {
+  console.log(x);
+}
+
 // TODO: This class should implement CommandExecutor interface.
 class ClusterExecutor implements CommandExecutor {
   #nodes!: ClusterNode[];
@@ -89,19 +94,20 @@ class ClusterExecutor implements CommandExecutor {
     if (this.#refreshTableASAP) {
       await this.initializeSlotsCache();
     }
-    const key = getKeyFromCommand(command, args);
-    if (key == null) {
-      throw new ClusterError(
-        "No way to dispatch this command to Redis Cluster.",
-      );
-    }
-    const slot = calculateSlot(key);
     let asking = false;
     let tryRandomNode = false;
     let ttl = kRedisClusterRequestTTL;
     let lastError: null | Error;
     while (ttl > 0) {
       ttl -= 1;
+      const key = getKeyFromCommand(command, args);
+      if (key == null) {
+        throw new ClusterError(
+          "No way to dispatch this command to Redis Cluster.",
+        );
+      }
+      const slot = calculateSlot(key);
+      debug(`Slot is ${slot}`);
       let r: Redis;
       if (tryRandomNode) {
         r = await this.#getRandomConnection();
@@ -127,7 +133,7 @@ class ClusterExecutor implements CommandExecutor {
           continue;
         } else if (err instanceof ErrorReplyError) {
           const [code, newSlot, ipAndPort] = err.message.split(/\s+/);
-          console.log([code, newSlot, ipAndPort]);
+          debug([code, newSlot, ipAndPort]);
           if (code === "-MOVED" || code === "-ASK") {
             if (code === "-ASK") {
               asking = true;
