@@ -27,6 +27,7 @@ export async function startRedisCluster(ports: number[]): Promise<TestCluster> {
       ...ports.map((port) => `127.0.0.1:${port}`),
       "--cluster-replicas",
       "1",
+      "--cluster-yes",
     ],
     stderr: "piped",
   });
@@ -38,8 +39,6 @@ export async function startRedisCluster(ports: number[]): Promise<TestCluster> {
       const decoder = new TextDecoder();
       throw new Error(decoder.decode(output));
     }
-
-    await delay(5000);
 
     return cluster;
   } finally {
