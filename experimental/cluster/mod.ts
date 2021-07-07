@@ -226,6 +226,8 @@ class ClusterExecutor implements CommandExecutor {
               await this.#closeExistingConnection();
               this.#connectionByNodeName[node.name] = conn;
               return conn;
+            } else {
+              await conn.quit();
             }
           } catch {
             conn.close();
@@ -296,7 +298,7 @@ function getKeyFromCommand(command: string, args: RedisValue[]): string | null {
     case "shutdown":
       return null;
     default:
-      return args[1] as string;
+      return args[0] as string;
   }
 }
 
