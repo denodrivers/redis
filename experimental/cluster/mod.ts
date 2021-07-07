@@ -164,6 +164,18 @@ class ClusterExecutor implements CommandExecutor {
     );
   }
 
+  close(): void {
+    const nodeNames = Object.keys(this.#connectionByNodeName);
+    for (const nodeName of nodeNames) {
+      const conn = this.#connectionByNodeName[nodeName];
+      if (conn) {
+        conn.close();
+        delete this.#connectionByNodeName[nodeName];
+      }
+    }
+    this.#refreshTableASAP = true;
+  }
+
   async initializeSlotsCache(): Promise<void> {
     for (const node of this.#startupNodes) {
       try {
@@ -309,7 +321,14 @@ function getKeyFromCommand(command: string, args: RedisValue[]): string | null {
 async function connectCluster(opts: ClusterConnectOptions) {
   const executor = new ClusterExecutor(opts);
   await executor.initializeSlotsCache();
-  return new RedisImpl(executor);
+  const redis = new RedisImpl(executor);
+
+  // TODO: This is not ideal. We should refactor this!
+  function close(): void {
+    executor.close();
+  }
+
+  return Object.assign(redis, { close });
 }
 
 export { connectCluster as connect };

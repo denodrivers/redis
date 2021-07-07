@@ -18,6 +18,10 @@ suite.afterAll(() => {
   stopRedisCluster(cluster);
 });
 
+suite.afterEach(() => {
+  client.close();
+});
+
 suite.test("del", async () => {
   await client.set("{hoge}foo", "a");
   await client.set("{hoge}bar", "b");
