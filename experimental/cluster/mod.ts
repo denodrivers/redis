@@ -151,6 +151,7 @@ class ClusterExecutor implements CommandExecutor {
               );
             }
           } else {
+            debug(err);
             throw err;
           }
         } else {
