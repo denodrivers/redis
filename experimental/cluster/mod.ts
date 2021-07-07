@@ -127,8 +127,8 @@ class ClusterExecutor implements CommandExecutor {
           continue;
         } else if (err instanceof ErrorReplyError) {
           const [code, newSlot, ipAndPort] = err.message.split(/\s+/);
-          if (code === "MOVED" || code === "ASK") {
-            if (code === "ASK") {
+          if (code === "-MOVED" || code === "-ASK") {
+            if (code === "-ASK") {
               asking = true;
             } else {
               // Serve replied with MOVED. It's better for us to

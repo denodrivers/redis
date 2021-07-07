@@ -40,6 +40,7 @@ export async function startRedisCluster(ports: number[]): Promise<TestCluster> {
       throw new Error(decoder.decode(output));
     }
 
+    // Ample time for cluster to finish startup
     await delay(5000);
 
     return cluster;
