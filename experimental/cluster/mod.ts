@@ -132,6 +132,7 @@ class ClusterExecutor implements CommandExecutor {
           }
           continue;
         } else if (err instanceof ErrorReplyError) {
+          debug(err);
           const [code, newSlot, ipAndPort] = err.message.split(/\s+/);
           debug([code, newSlot, ipAndPort]);
           if (code === "-MOVED" || code === "-ASK") {
