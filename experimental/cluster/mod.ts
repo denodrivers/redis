@@ -28,13 +28,10 @@ import type { RedisConnectOptions } from "../../redis.ts";
 import type { CommandExecutor } from "../../executor.ts";
 import type { Connection } from "../../connection.ts";
 import type { Redis } from "../../redis.ts";
-import uniqBy from "https://cdn.skypack.dev/lodash-es@4.17.21/uniqBy.js";
 import type { RedisReply, RedisValue } from "../../protocol/mod.ts";
-import calculateSlot from "https://cdn.skypack.dev/cluster-key-slot@1.1.0";
-import shuffle from "https://cdn.skypack.dev/lodash-es@4.17.21/shuffle.js";
-import sample from "https://cdn.skypack.dev/lodash-es@4.17.21/sample.js";
 import { ErrorReplyError } from "../../errors.ts";
 import { delay } from "../../vendor/https/deno.land/std/async/delay.ts";
+import { calculateSlot, sample, shuffle, uniqBy } from "./deps.ts";
 
 export interface ClusterConnectOptions {
   nodes: Array<NodeOptions>;
