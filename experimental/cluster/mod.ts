@@ -181,29 +181,33 @@ class ClusterExecutor implements CommandExecutor {
     for (const node of this.#startupNodes) {
       try {
         const redis = await getRedisLink(node, this.#redisOpts);
-        const clusterSlots = await redis.clusterSlots() as Array<
-          [number, number, [string, number]]
-        >;
-        const nodes = [] as ClusterNode[];
-        const slotMap = {} as SlotMap;
-        for (const [from, to, master] of clusterSlots) {
-          for (let slot = from; slot <= to; slot++) {
-            const [ip, port] = master;
-            const name = `${ip}:${port}`;
-            const node = {
-              name,
-              hostname: ip,
-              port,
-            };
-            nodes.push(node);
-            slotMap[slot] = node;
+        try {
+          const clusterSlots = await redis.clusterSlots() as Array<
+            [number, number, [string, number]]
+          >;
+          const nodes = [] as ClusterNode[];
+          const slotMap = {} as SlotMap;
+          for (const [from, to, master] of clusterSlots) {
+            for (let slot = from; slot <= to; slot++) {
+              const [ip, port] = master;
+              const name = `${ip}:${port}`;
+              const node = {
+                name,
+                hostname: ip,
+                port,
+              };
+              nodes.push(node);
+              slotMap[slot] = node;
+            }
           }
+          this.#nodes = nodes;
+          this.#slots = slotMap;
+          await this.#populateStartupNodes();
+          this.#refreshTableASAP = false;
+          return;
+        } finally {
+          await redis.quit();
         }
-        this.#nodes = nodes;
-        this.#slots = slotMap;
-        await this.#populateStartupNodes();
-        this.#refreshTableASAP = false;
-        return;
       } catch (_err) {
         // TODO: Consider logging `_err` here
         continue;
