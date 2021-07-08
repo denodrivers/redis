@@ -5,6 +5,7 @@ import {
   assertEquals,
   assertThrowsAsync,
 } from "../../vendor/https/deno.land/std/testing/asserts.ts";
+import { ErrorReplyError } from "../../errors.ts";
 
 const suite = new TestSuite("cluster/key");
 const ports = nextPorts(6);
@@ -35,9 +36,13 @@ suite.test("del multiple keys in the same hash slot", async () => {
 suite.test("del multiple keys in different hash slots", async () => {
   await client.set("foo", "a");
   await client.set("bar", "b");
-  await assertThrowsAsync(async () => {
-    await client.del("foo", "bar");
-  });
+  await assertThrowsAsync(
+    async () => {
+      await client.del("foo", "bar");
+    },
+    ErrorReplyError,
+    "-CROSSSLOT Keys in request don't hash to the same slot",
+  );
 });
 
 suite.runTests();
