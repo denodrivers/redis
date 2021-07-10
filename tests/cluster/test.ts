@@ -3,6 +3,7 @@ import { TestSuite } from "../test_util.ts";
 import { connect as connectToCluster } from "../../experimental/cluster/mod.ts";
 import {
   assert,
+  assertArrayIncludes,
   assertEquals,
   assertThrowsAsync,
 } from "../../vendor/https/deno.land/std/testing/asserts.ts";
@@ -54,12 +55,15 @@ suite.test("del multiple keys in different hash slots", async () => {
 
 suite.test("handle a -MOVED redirection error", async () => {
   let redirected = false;
+  let manuallyRedirectedPort!: number;
+  const portsSent = new Set<number>();
   const client = await connectToCluster({
     nodes,
     maxConnections,
     async newRedis(opts) {
       const redis = await connect(opts);
       const { hostname, port } = opts;
+      assert(port != null);
       const proxyExecutor = {
         get connection() {
           return redis.executor.connection;
@@ -70,13 +74,14 @@ suite.test("handle a -MOVED redirection error", async () => {
             const [key] = args;
             assert(typeof key === "string");
             const slot = calculateSlot(key);
-            const randomPort = sample(ports.filter((x) => x !== port));
+            manuallyRedirectedPort = sample(ports.filter((x) => x !== port));
             const error = new ErrorReplyError(
-              `-MOVED ${slot} ${hostname}:${randomPort}`,
+              `-MOVED ${slot} ${hostname}:${manuallyRedirectedPort}`,
             );
             redirected = true;
             throw error;
           } else {
+            portsSent.add(Number(port));
             const reply = await redis.executor.exec(cmd, ...args);
             return reply;
           }
@@ -91,6 +96,8 @@ suite.test("handle a -MOVED redirection error", async () => {
     const r = await client.get("foo");
     assertEquals(r, "bar");
     assert(redirected);
+    // Check if a cluster client correctly handles a -MOVED error
+    assertArrayIncludes(Array.from(portsSent), [manuallyRedirectedPort]);
   } finally {
     client.close();
   }
