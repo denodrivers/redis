@@ -316,7 +316,7 @@ function getKeyFromCommand(command: string, args: RedisValue[]): string | null {
 
 /**
  * Connects to the Redis Cluster.
- * 
+ *
  * @see https://redis.io/topics/cluster-tutorial
  * @see https://redis.io/topics/cluster-spec
  */
