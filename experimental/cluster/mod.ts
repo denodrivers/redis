@@ -65,7 +65,7 @@ class ClusterError extends Error {}
 
 class ClusterExecutor implements CommandExecutor {
   #nodes!: ClusterNode[];
-  #slots!: SlotMap;
+  #nodeBySlot!: SlotMap;
   #startupNodes: ClusterNode[];
   #refreshTableASAP?: boolean;
   #maxConnections: number;
@@ -89,6 +89,7 @@ class ClusterExecutor implements CommandExecutor {
       await this.initializeSlotsCache();
     }
     let asking = false;
+    let askingNode: ClusterNode | null = null;
     let tryRandomNode = false;
     let ttl = kRedisClusterRequestTTL;
     let lastError: null | Error;
@@ -102,7 +103,10 @@ class ClusterExecutor implements CommandExecutor {
       }
       const slot = calculateSlot(key);
       let r: Redis;
-      if (tryRandomNode) {
+      if (asking && askingNode) {
+        r = await this.#getConnectionByNode(askingNode);
+        askingNode = null;
+      } else if (tryRandomNode) {
         r = await this.#getRandomConnection();
         tryRandomNode = false;
       } else {
@@ -134,12 +138,16 @@ class ClusterExecutor implements CommandExecutor {
               // ask for CLUSTER NODES the next time.
               this.#refreshTableASAP = true;
             }
-            if (!asking) {
-              const [ip, port] = ipAndPort.split(":");
-              this.#slots[parseInt(newSlot)] = new ClusterNode(
-                ip,
-                parseInt(port),
-              );
+            const [ip, port] = ipAndPort.split(":");
+            const node = new ClusterNode(
+              ip,
+              parseInt(port),
+            );
+            if (asking) {
+              // Server replied with -ASK. We should send the next query to the redirected node.
+              askingNode = node;
+            } else {
+              this.#nodeBySlot[parseInt(newSlot)] = node;
             }
           } else {
             throw err;
@@ -186,7 +194,7 @@ class ClusterExecutor implements CommandExecutor {
             }
           }
           this.#nodes = nodes;
-          this.#slots = slotMap;
+          this.#nodeBySlot = slotMap;
           await this.#populateStartupNodes();
           this.#refreshTableASAP = false;
           return;
@@ -243,21 +251,27 @@ class ClusterExecutor implements CommandExecutor {
   }
 
   async #getConnectionBySlot(slot: number): Promise<Redis> {
-    const node = this.#slots[slot];
+    const node = this.#nodeBySlot[slot];
     if (!node) {
       return this.#getRandomConnection();
     }
+    return this.#getConnectionByNode(node);
+  }
+
+  async #getConnectionByNode(node: ClusterNode): Promise<Redis> {
     let conn = this.#connectionByNodeName[node.name];
-    if (!conn) {
+    if (conn) {
+      return conn;
+    } else {
       try {
         await this.#closeExistingConnection();
         conn = await this.#getRedisLink(node);
         this.#connectionByNodeName[node.name] = conn;
+        return conn;
       } catch {
         return this.#getRandomConnection();
       }
     }
-    return conn;
   }
 
   async #closeExistingConnection() {
