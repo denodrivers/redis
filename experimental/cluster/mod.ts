@@ -38,7 +38,7 @@ import uniqBy from "../../vendor/https/cdn.skypack.dev/lodash-es/uniqBy.js";
 
 export interface ClusterConnectOptions {
   nodes: Array<NodeOptions>;
-  maxConnections: number;
+  maxConnections?: number;
   newRedis?: (opts: RedisConnectOptions) => Promise<Redis>;
 }
 
@@ -76,7 +76,7 @@ class ClusterExecutor implements CommandExecutor {
     this.#startupNodes = opts.nodes.map((node) =>
       new ClusterNode(node.hostname, node.port ?? 6379)
     );
-    this.#maxConnections = opts.maxConnections;
+    this.#maxConnections = opts.maxConnections ?? 50; // TODO(uki00a): To be honest, I'm not sure if this default value is appropriate...
     this.#newRedis = opts.newRedis ?? connect;
   }
 
