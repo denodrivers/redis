@@ -7,7 +7,7 @@ import {
 } from "../../vendor/https/deno.land/std/testing/asserts.ts";
 import { ErrorReplyError } from "../../errors.ts";
 
-const suite = new TestSuite("cluster/key");
+const suite = new TestSuite("cluster/client");
 const ports = nextPorts(6);
 const cluster = await startRedisCluster(ports);
 const client = await connect({

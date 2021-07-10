@@ -39,7 +39,7 @@ import uniqBy from "../../vendor/https/cdn.skypack.dev/lodash-es/uniqBy.js";
 export interface ClusterConnectOptions {
   nodes: Array<NodeOptions>;
   maxConnections: number;
-  redisOptions?: RedisConnectOptions;
+  newRedis?: (opts: RedisConnectOptions) => Promise<Redis>;
 }
 
 export interface NodeOptions {
@@ -75,14 +75,14 @@ class ClusterExecutor implements CommandExecutor {
   #refreshTableASAP?: boolean;
   #maxConnections: number;
   #connectionByNodeName: { [name: string]: Redis } = {};
-  #redisOpts: RedisConnectOptions | undefined;
+  #newRedis: (opts: RedisConnectOptions) => Promise<Redis>;
 
   constructor(opts: ClusterConnectOptions) {
     this.#startupNodes = opts.nodes.map((node) =>
       new ClusterNode(node.hostname, node.port ?? 6379)
     );
     this.#maxConnections = opts.maxConnections;
-    this.#redisOpts = opts.redisOptions;
+    this.#newRedis = opts.newRedis ?? connect;
   }
 
   get connection(): Connection {
@@ -179,7 +179,7 @@ class ClusterExecutor implements CommandExecutor {
   async initializeSlotsCache(): Promise<void> {
     for (const node of this.#startupNodes) {
       try {
-        const redis = await getRedisLink(node, this.#redisOpts);
+        const redis = await this.#newRedis(node);
         try {
           const clusterSlots = await redis.clusterSlots() as Array<
             [number, number, [string, number]]
@@ -235,7 +235,7 @@ class ClusterExecutor implements CommandExecutor {
             return conn;
           }
         } else {
-          conn = await getRedisLink(node, this.#redisOpts);
+          conn = await this.#newRedis(node);
           try {
             const message = await conn.ping();
             if (message === "PONG") {
@@ -265,7 +265,7 @@ class ClusterExecutor implements CommandExecutor {
     if (!conn) {
       try {
         await this.#closeExistingConnection();
-        conn = await getRedisLink(node, this.#redisOpts);
+        conn = await this.#newRedis(node);
         this.#connectionByNodeName[node.name] = conn;
       } catch {
         return this.#getRandomConnection();
@@ -286,21 +286,6 @@ class ClusterExecutor implements CommandExecutor {
         console.error(err); // TODO: Improve logging
       }
     }
-  }
-}
-
-function getRedisLink(
-  node: ClusterNode,
-  opts: RedisConnectOptions | undefined,
-): Promise<Redis> {
-  if (opts) {
-    return connect({
-      ...opts,
-      hostname: node.hostname,
-      port: node.port,
-    });
-  } else {
-    return connect(node);
   }
 }
 
