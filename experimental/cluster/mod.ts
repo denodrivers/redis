@@ -170,7 +170,7 @@ class ClusterExecutor implements CommandExecutor {
   async initializeSlotsCache(): Promise<void> {
     for (const node of this.#startupNodes) {
       try {
-        const redis = await this.#newRedis(node);
+        const redis = await this.#getRedisLink(node);
         try {
           const clusterSlots = await redis.clusterSlots() as Array<
             [number, number, [string, number]]
@@ -221,7 +221,7 @@ class ClusterExecutor implements CommandExecutor {
             return conn;
           }
         } else {
-          conn = await this.#newRedis(node);
+          conn = await this.#getRedisLink(node);
           try {
             const message = await conn.ping();
             if (message === "PONG") {
@@ -251,7 +251,7 @@ class ClusterExecutor implements CommandExecutor {
     if (!conn) {
       try {
         await this.#closeExistingConnection();
-        conn = await this.#newRedis(node);
+        conn = await this.#getRedisLink(node);
         this.#connectionByNodeName[node.name] = conn;
       } catch {
         return this.#getRandomConnection();
@@ -272,6 +272,11 @@ class ClusterExecutor implements CommandExecutor {
         console.error(err); // TODO: Improve logging
       }
     }
+  }
+
+  #getRedisLink(node: ClusterNode): Promise<Redis> {
+    const { hostname, port } = node;
+    return this.#newRedis({ hostname, port });
   }
 }
 
