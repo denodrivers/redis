@@ -57,6 +57,15 @@ class ClusterNode {
   constructor(readonly hostname: string, readonly port: number) {
     this.name = `${hostname}:${port}`;
   }
+
+  static parseIPAndPort(ipAndPort: string): ClusterNode {
+    const [ip, port] = ipAndPort.split(":");
+    const node = new ClusterNode(
+      ip,
+      parseInt(port),
+    );
+    return node;
+  }
 }
 
 const kRedisClusterRequestTTL = 16;
@@ -138,11 +147,7 @@ class ClusterExecutor implements CommandExecutor {
               // ask for CLUSTER NODES the next time.
               this.#refreshTableASAP = true;
             }
-            const [ip, port] = ipAndPort.split(":");
-            const node = new ClusterNode(
-              ip,
-              parseInt(port),
-            );
+            const node = ClusterNode.parseIPAndPort(ipAndPort);
             if (asking) {
               // Server replied with -ASK. We should send the next query to the redirected node.
               askingNode = node;
