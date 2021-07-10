@@ -70,7 +70,7 @@ export async function startRedis({
 
   if (!(await exists(path))) {
     Deno.mkdirSync(path);
-    Deno.copyFileSync(`tests/tmp/redis.conf`, `${path}/redis.conf`);
+    Deno.copyFileSync(`tests/server/redis.conf`, `${path}/redis.conf`);
 
     let config = `dir ${path}\nport ${port}\n`;
     config += clusterEnabled ? "cluster-enabled yes" : "";
