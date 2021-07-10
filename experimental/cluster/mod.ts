@@ -250,12 +250,13 @@ class ClusterExecutor implements CommandExecutor {
     throw new ClusterError("Can't reach a single startup node.");
   }
 
-  async #getConnectionBySlot(slot: number): Promise<Redis> {
+  #getConnectionBySlot(slot: number): Promise<Redis> {
     const node = this.#nodeBySlot[slot];
-    if (!node) {
+    if (node) {
+      return this.#getConnectionByNode(node);
+    } else {
       return this.#getRandomConnection();
     }
-    return this.#getConnectionByNode(node);
   }
 
   async #getConnectionByNode(node: ClusterNode): Promise<Redis> {
