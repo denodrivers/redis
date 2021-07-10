@@ -143,7 +143,7 @@ class ClusterExecutor implements CommandExecutor {
             if (code === "-ASK") {
               asking = true;
             } else {
-              // Serve replied with MOVED. It's better for us to
+              // Server replied with MOVED. It's better for us to
               // ask for CLUSTER NODES the next time.
               this.#refreshTableASAP = true;
             }

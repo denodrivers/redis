@@ -144,7 +144,7 @@ suite.test("handle a -ASK redirection error", async () => {
     await client.set("hoge", "piyo");
     const r = await client.get("hoge");
     assertEquals(r, "piyo");
-    // Check if a cluster client correctly handles a -MOVED error
+    // Check if a cluster client correctly handles a -ASK error
     assert(redirected);
     assertArrayIncludes<number>([...portsSent], [manuallyRedirectedPort]);
     assertArrayIncludes<string>([...commandsSent], ["ASKING"]);
