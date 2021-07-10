@@ -7,7 +7,7 @@ import {
   assertEquals,
   assertThrowsAsync,
 } from "../../vendor/https/deno.land/std/testing/asserts.ts";
-import sample from "../../vendor/https/cdn.skypack.dev/lodash-es/shuffle.js";
+import sample from "../../vendor/https/cdn.skypack.dev/lodash-es/sample.js";
 import calculateSlot from "../../vendor/https/cdn.skypack.dev/cluster-key-slot/lib/index.js";
 import { ErrorReplyError } from "../../errors.ts";
 import { connect, RedisImpl } from "../../redis.ts";
