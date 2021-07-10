@@ -1101,6 +1101,9 @@ XRANGE somestream - +
   clientUnpause(): Promise<SimpleString>;
 
   // Cluster
+  /**
+   * @see https://redis.io/topics/cluster-spec
+   */
   asking(): Promise<SimpleString>;
   clusterAddSlots(...slots: number[]): Promise<SimpleString>;
   clusterCountFailureReports(node_id: string): Promise<Integer>;

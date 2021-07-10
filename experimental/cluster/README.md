@@ -2,7 +2,7 @@
 
 [![deno doc](https://doc.deno.land/badge.svg)](https://doc.deno.land/https/deno.land/x/redis/experimental/cluster/mod.ts)
 
-This module implements a client impelementation for
+This module provides a client impelementation for
 [the Redis Cluster](https://redis.io/topics/cluster-tutorial).
 
 The implementation is based on the
