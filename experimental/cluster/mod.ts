@@ -180,12 +180,7 @@ class ClusterExecutor implements CommandExecutor {
           for (const [from, to, master] of clusterSlots) {
             for (let slot = from; slot <= to; slot++) {
               const [ip, port] = master;
-              const name = `${ip}:${port}`;
-              const node = {
-                name,
-                hostname: ip,
-                port,
-              };
+              const node = new ClusterNode(ip, port);
               nodes.push(node);
               slotMap[slot] = node;
             }
