@@ -62,8 +62,7 @@ suite.test("handle a -MOVED redirection error", async () => {
     maxConnections,
     async newRedis(opts) {
       const redis = await connect(opts);
-      const { hostname, port } = opts;
-      assert(port != null);
+      assert(opts.port != null);
       const proxyExecutor = {
         get connection() {
           return redis.executor.connection;
@@ -74,14 +73,17 @@ suite.test("handle a -MOVED redirection error", async () => {
             const [key] = args;
             assert(typeof key === "string");
             const slot = calculateSlot(key);
-            manuallyRedirectedPort = sample(ports.filter((x) => x !== port));
+            manuallyRedirectedPort = sample(
+              ports.filter((x) => x !== opts.port),
+            );
             const error = new ErrorReplyError(
-              `-MOVED ${slot} ${hostname}:${manuallyRedirectedPort}`,
+              `-MOVED ${slot} ${opts.hostname}:${manuallyRedirectedPort}`,
             );
             redirected = true;
             throw error;
           } else {
-            portsSent.add(Number(port));
+            assert(opts.port);
+            portsSent.add(Number(opts.port));
             const reply = await redis.executor.exec(cmd, ...args);
             return reply;
           }
@@ -97,7 +99,7 @@ suite.test("handle a -MOVED redirection error", async () => {
     assertEquals(r, "bar");
     assert(redirected);
     // Check if a cluster client correctly handles a -MOVED error
-    assertArrayIncludes(Array.from(portsSent), [manuallyRedirectedPort]);
+    assertArrayIncludes<number>([...portsSent], [manuallyRedirectedPort]);
   } finally {
     client.close();
   }
