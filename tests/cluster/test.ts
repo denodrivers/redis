@@ -20,11 +20,7 @@ const nodes = ports.map((port) => ({
   hostname: "127.0.0.1",
   port,
 }));
-const maxConnections = nodes.length;
-const client = await connectToCluster({
-  nodes,
-  maxConnections,
-});
+const client = await connectToCluster({ nodes });
 
 suite.afterAll(() => {
   stopRedisCluster(cluster);
@@ -59,7 +55,6 @@ suite.test("handle a -MOVED redirection error", async () => {
   const portsSent = new Set<number>();
   const client = await connectToCluster({
     nodes,
-    maxConnections,
     async newRedis(opts) {
       const redis = await connect(opts);
       assert(opts.port != null);
@@ -97,9 +92,62 @@ suite.test("handle a -MOVED redirection error", async () => {
     await client.set("foo", "bar");
     const r = await client.get("foo");
     assertEquals(r, "bar");
-    assert(redirected);
     // Check if a cluster client correctly handles a -MOVED error
+    assert(redirected);
     assertArrayIncludes<number>([...portsSent], [manuallyRedirectedPort]);
+  } finally {
+    client.close();
+  }
+});
+
+suite.test("handle a -ASK redirection error", async () => {
+  let redirected = false;
+  let manuallyRedirectedPort!: number;
+  const portsSent = new Set<number>();
+  const commandsSent = new Set<string>();
+  const client = await connectToCluster({
+    nodes,
+    async newRedis(opts) {
+      const redis = await connect(opts);
+      assert(opts.port != null);
+      const proxyExecutor = {
+        get connection() {
+          return redis.executor.connection;
+        },
+        async exec(cmd, ...args) {
+          commandsSent.add(cmd);
+          if (cmd === "GET" && !redirected) {
+            // Manually cause a -ASK redirection error
+            const [key] = args;
+            assert(typeof key === "string");
+            const slot = calculateSlot(key);
+            manuallyRedirectedPort = sample(
+              ports.filter((x) => x !== opts.port),
+            );
+            const error = new ErrorReplyError(
+              `-ASK ${slot} ${opts.hostname}:${manuallyRedirectedPort}`,
+            );
+            redirected = true;
+            throw error;
+          } else {
+            assert(opts.port);
+            portsSent.add(Number(opts.port));
+            const reply = await redis.executor.exec(cmd, ...args);
+            return reply;
+          }
+        },
+      } as CommandExecutor;
+      return new RedisImpl(proxyExecutor);
+    },
+  });
+  try {
+    await client.set("hoge", "piyo");
+    const r = await client.get("hoge");
+    assertEquals(r, "piyo");
+    // Check if a cluster client correctly handles a -MOVED error
+    assert(redirected);
+    assertArrayIncludes<number>([...portsSent], [manuallyRedirectedPort]);
+    assertArrayIncludes<string>([...commandsSent], ["ASKING"]);
   } finally {
     client.close();
   }
