@@ -66,11 +66,11 @@ export async function startRedis({
   clusterEnabled = false,
   additionalConfigurations = [] as string[],
 }): Promise<TestServer> {
-  const path = `tests/server/${port}`;
+  const path = `tests/tmp/${port}`;
 
   if (!(await exists(path))) {
     Deno.mkdirSync(path);
-    Deno.copyFileSync(`tests/server/redis.conf`, `${path}/redis.conf`);
+    Deno.copyFileSync(`tests/tmp/redis.conf`, `${path}/redis.conf`);
 
     let config = `dir ${path}\nport ${port}\n`;
     config += clusterEnabled ? "cluster-enabled yes" : "";
