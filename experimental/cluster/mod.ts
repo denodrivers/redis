@@ -63,11 +63,6 @@ const kRedisClusterRequestTTL = 16;
 
 class ClusterError extends Error {}
 
-// TODO: Remove this!
-function debug(x: unknown): void {
-  console.log(x);
-}
-
 class ClusterExecutor implements CommandExecutor {
   #nodes!: ClusterNode[];
   #slots!: SlotMap;
@@ -106,7 +101,6 @@ class ClusterExecutor implements CommandExecutor {
         );
       }
       const slot = calculateSlot(key);
-      debug(`Slot is ${slot}`);
       let r: Redis;
       if (tryRandomNode) {
         r = await this.#getRandomConnection();
@@ -131,9 +125,7 @@ class ClusterExecutor implements CommandExecutor {
           }
           continue;
         } else if (err instanceof ErrorReplyError) {
-          debug(err);
           const [code, newSlot, ipAndPort] = err.message.split(/\s+/);
-          debug([code, newSlot, ipAndPort]);
           if (code === "-MOVED" || code === "-ASK") {
             if (code === "-ASK") {
               asking = true;
@@ -150,7 +142,6 @@ class ClusterExecutor implements CommandExecutor {
               );
             }
           } else {
-            debug(err);
             throw err;
           }
         } else {
