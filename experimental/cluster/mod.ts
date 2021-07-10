@@ -307,7 +307,7 @@ function getKeyFromCommand(command: string, args: RedisValue[]): string | null {
  * @see https://redis.io/topics/cluster-tutorial
  * @see https://redis.io/topics/cluster-spec
  */
-async function connectCluster(opts: ClusterConnectOptions) {
+async function connectToCluster(opts: ClusterConnectOptions) {
   const executor = new ClusterExecutor(opts);
   await executor.initializeSlotsCache();
   const redis = new RedisImpl(executor);
@@ -320,4 +320,4 @@ async function connectCluster(opts: ClusterConnectOptions) {
   return Object.assign(redis, { close });
 }
 
-export { connectCluster as connect };
+export { connectToCluster as connect };
