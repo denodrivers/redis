@@ -448,6 +448,10 @@ export class RedisImpl implements Redis {
     return this.execStatusReply("CLIENT", "UNPAUSE");
   }
 
+  asking() {
+    return this.execStatusReply("ASKING");
+  }
+
   clusterAddSlots(...slots: number[]) {
     return this.execStatusReply("CLUSTER", "ADDSLOTS", ...slots);
   }

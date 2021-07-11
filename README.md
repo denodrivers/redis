@@ -176,6 +176,12 @@ const sub = await cacheClient.subscribe<string[]>("__redis__:invalidate");
 })();
 ```
 
+### Experimental features
+
+deno-redis provides some experimental features.
+
+See [experimental/README.md](experimental/README.md) for details.
+
 ## Roadmap for v1
 
 - See https://github.com/denodrivers/redis/issues/78

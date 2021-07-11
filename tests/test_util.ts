@@ -2,10 +2,10 @@ import { connect, Redis, RedisConnectOptions } from "../mod.ts";
 import { delay } from "../vendor/https/deno.land/std/async/delay.ts";
 
 type TestFunc = () => void | Promise<void>;
-type TestServer = {
+export interface TestServer {
   path: string;
   process: Deno.Process;
-};
+}
 
 export class TestSuite {
   private tests: { name: string; func: TestFunc }[] = [];
@@ -64,8 +64,9 @@ const encoder = new TextEncoder();
 export async function startRedis({
   port = 6379,
   clusterEnabled = false,
+  additionalConfigurations = [] as string[],
 }): Promise<TestServer> {
-  const path = `tests/server/${port}`;
+  const path = `tests/tmp/${port}`;
 
   if (!(await exists(path))) {
     Deno.mkdirSync(path);
@@ -73,8 +74,11 @@ export async function startRedis({
 
     let config = `dir ${path}\nport ${port}\n`;
     config += clusterEnabled ? "cluster-enabled yes" : "";
+    if (additionalConfigurations.length > 0) {
+      config += "\n" + additionalConfigurations.join("\n");
+    }
 
-    Deno.writeFileSync(`${path}/redis.conf`, encoder.encode(config), {
+    await Deno.writeFile(`${path}/redis.conf`, encoder.encode(config), {
       append: true,
     });
   }
