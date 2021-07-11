@@ -23,7 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import { connect, RedisImpl } from "../../redis.ts";
+import { connect, create } from "../../redis.ts";
 import type { RedisConnectOptions } from "../../redis.ts";
 import type { CommandExecutor } from "../../executor.ts";
 import type { Connection } from "../../connection.ts";
@@ -323,7 +323,7 @@ function getKeyFromCommand(command: string, args: RedisValue[]): string | null {
 async function connectToCluster(opts: ClusterConnectOptions): Promise<Redis> {
   const executor = new ClusterExecutor(opts);
   await executor.initializeSlotsCache();
-  const redis = new RedisImpl(executor);
+  const redis = create(executor);
 
   // TODO: This is not ideal. We should refactor this!
   function close(): void {

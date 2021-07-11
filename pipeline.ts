@@ -7,7 +7,7 @@ import {
   RedisValue,
   sendCommands,
 } from "./protocol/mod.ts";
-import { Redis, RedisImpl } from "./redis.ts";
+import { create, Redis } from "./redis.ts";
 import {
   Deferred,
   deferred,
@@ -25,7 +25,7 @@ export function createRedisPipeline(
   function flush(): Promise<RedisReplyOrError[]> {
     return executor.flush();
   }
-  const client = new RedisImpl(executor);
+  const client = create(executor);
   return Object.assign(client, { flush });
 }
 

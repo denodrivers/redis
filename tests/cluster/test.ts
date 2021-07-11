@@ -10,7 +10,7 @@ import {
 import sample from "../../vendor/https/cdn.skypack.dev/lodash-es/sample.js";
 import calculateSlot from "../../vendor/https/cdn.skypack.dev/cluster-key-slot/lib/index.js";
 import { ErrorReplyError } from "../../errors.ts";
-import { connect, RedisImpl } from "../../redis.ts";
+import { connect, create } from "../../redis.ts";
 import type { CommandExecutor } from "../../executor.ts";
 
 const suite = new TestSuite("cluster/client");
@@ -84,7 +84,7 @@ suite.test("handle a -MOVED redirection error", async () => {
           }
         },
       } as CommandExecutor;
-      return new RedisImpl(proxyExecutor);
+      return create(proxyExecutor);
     },
   });
 
@@ -137,7 +137,7 @@ suite.test("handle a -ASK redirection error", async () => {
           }
         },
       } as CommandExecutor;
-      return new RedisImpl(proxyExecutor);
+      return create(proxyExecutor);
     },
   });
   try {
