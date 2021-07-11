@@ -100,7 +100,7 @@ export interface Redis extends RedisCommands {
   close(): void;
 }
 
-export class RedisImpl implements Redis {
+class RedisImpl implements Redis {
   readonly executor: CommandExecutor;
 
   get isClosed() {
@@ -2271,6 +2271,13 @@ export async function connect(options: RedisConnectOptions): Promise<Redis> {
   const connection = new RedisConnection(hostname, port, opts);
   await connection.connect();
   const executor = new MuxExecutor(connection);
+  return create(executor);
+}
+
+/**
+ * Create a redis client from `CommandExecutor`
+ */
+export function create(executor: CommandExecutor): Redis {
   return new RedisImpl(executor);
 }
 
