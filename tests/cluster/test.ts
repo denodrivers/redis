@@ -153,4 +153,47 @@ suite.test("handle a -ASK redirection error", async () => {
   }
 });
 
+suite.test("properly handle too many redirections", async () => {
+  const client = await connectToCluster({
+    nodes,
+    async newRedis(opts) {
+      const redis = await connect(opts);
+      assert(opts.port != null);
+      const proxyExecutor = {
+        get connection() {
+          return redis.executor.connection;
+        },
+        async exec(cmd, ...args) {
+          if (cmd === "GET") {
+            // Manually cause a -MOVED redirection error
+            const [key] = args;
+            assert(typeof key === "string");
+            const slot = calculateSlot(key);
+            const randomPort = sample(
+              ports.filter((x) => x !== opts.port),
+            );
+            const error = new ErrorReplyError(
+              `-MOVED ${slot} ${opts.hostname}:${randomPort}`,
+            );
+            throw error;
+          } else {
+            const reply = await redis.executor.exec(cmd, ...args);
+            return reply;
+          }
+        },
+      } as CommandExecutor;
+      return create(proxyExecutor);
+    },
+  });
+  try {
+    await assertThrowsAsync(
+      () => client.get("foo"),
+      Error,
+      "Too many Cluster redirections?",
+    );
+  } finally {
+    client.close();
+  }
+});
+
 suite.runTests();
