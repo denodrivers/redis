@@ -73,7 +73,6 @@ const kRedisClusterRequestTTL = 16;
 class ClusterError extends Error {}
 
 class ClusterExecutor implements CommandExecutor {
-  #nodes!: ClusterNode[];
   #nodeBySlot!: SlotMap;
   #startupNodes: ClusterNode[];
   #refreshTableASAP?: boolean;
@@ -198,9 +197,8 @@ class ClusterExecutor implements CommandExecutor {
               slotMap[slot] = node;
             }
           }
-          this.#nodes = nodes;
           this.#nodeBySlot = slotMap;
-          await this.#populateStartupNodes();
+          await this.#populateStartupNodes(nodes);
           this.#refreshTableASAP = false;
           return;
         } finally {
@@ -213,8 +211,8 @@ class ClusterExecutor implements CommandExecutor {
     }
   }
 
-  #populateStartupNodes() {
-    for (const node of this.#nodes) {
+  #populateStartupNodes(nodes: ClusterNode[]) {
+    for (const node of nodes) {
       this.#startupNodes.push(node);
     }
 
