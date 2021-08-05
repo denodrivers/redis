@@ -36,6 +36,7 @@ jobs:
         run: |
           deno run --allow-read --allow-write --allow-run tools/make_mod.ts
           git diff --exit-code
+          deno cache mod.ts # Ensure that mod.ts works without --unstable
 
       - name: Run lint
         run: |
