@@ -234,6 +234,7 @@ class ClusterExecutor implements CommandExecutor {
             for (const slave of slaves) {
               const [ip, port] = slave;
               const node = new ClusterNode(ip, port);
+              nodes.push(node);
               slaveNodes.push(node);
             }
           }
