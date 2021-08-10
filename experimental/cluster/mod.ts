@@ -244,6 +244,9 @@ class ClusterExecutor implements CommandExecutor {
           this.#masterNodes = uniqNodes(masterNodes);
           this.#slaveNodes = uniqNodes(slaveNodes);
           this.#refreshTableASAP = false;
+          console.log(this.#nodes);
+          console.log(this.#masterNodes);
+          console.log(this.#slaveNodes);
           return;
         } finally {
           await redis.quit();
