@@ -54,7 +54,10 @@ interface SlotMap {
 class ClusterNode {
   readonly name: string;
 
-  constructor(readonly hostname: string, readonly port: number) {
+  constructor(
+    readonly hostname: string,
+    readonly port: number,
+  ) {
     this.name = `${hostname}:${port}`;
   }
 
@@ -74,16 +77,17 @@ class ClusterError extends Error {}
 
 class ClusterExecutor implements CommandExecutor {
   #nodeBySlot!: SlotMap;
-  #startupNodes: ClusterNode[];
+  #nodes: ClusterNode[] = [];
+  #masterNodes: ClusterNode[] = [];
+  #slaveNodes: ClusterNode[] = [];
+  #startupNodes: Array<NodeOptions>;
   #refreshTableASAP?: boolean;
   #maxConnections: number;
   #connectionByNodeName: { [name: string]: Redis } = {};
   #newRedis: (opts: RedisConnectOptions) => Promise<Redis>;
 
   constructor(opts: ClusterConnectOptions) {
-    this.#startupNodes = opts.nodes.map((node) =>
-      new ClusterNode(node.hostname, node.port ?? 6379)
-    );
+    this.#startupNodes = opts.nodes;
     this.#maxConnections = opts.maxConnections ?? 50; // TODO(uki00a): To be honest, I'm not sure if this default value is appropriate...
     this.#newRedis = opts.newRedis ?? connect;
   }
@@ -94,7 +98,7 @@ class ClusterExecutor implements CommandExecutor {
 
   async exec(command: string, ...args: RedisValue[]): Promise<RedisReply> {
     if (this.#refreshTableASAP) {
-      await this.initializeSlotsCache();
+      await this.#refreshSlotsCache();
     }
     let asking = false;
     let askingNode: ClusterNode | null = null;
@@ -180,26 +184,69 @@ class ClusterExecutor implements CommandExecutor {
   }
 
   async initializeSlotsCache(): Promise<void> {
-    for (const node of this.#startupNodes) {
+    const startupNodes = this.#startupNodes.map((node) =>
+      new ClusterNode(node.hostname, node.port ?? 6379)
+    );
+    await this.#refreshSlotsCache(startupNodes);
+  }
+
+  getAllNodes(): Promise<Redis[]> {
+    return Promise.all(
+      this.#nodes.map((node) => this.#getConnectionByNode(node)),
+    );
+  }
+
+  getMasterNodes(): Promise<Redis[]> {
+    return Promise.all(
+      this.#masterNodes.map((node) => this.#getConnectionByNode(node)),
+    );
+  }
+
+  getSlaveNodes(): Promise<Redis[]> {
+    return Promise.all(
+      this.#slaveNodes.map((node) => this.#getConnectionByNode(node)),
+    );
+  }
+
+  async #refreshSlotsCache(
+    knownNodes: ClusterNode[] = this.#nodes,
+  ): Promise<void> {
+    for (const node of knownNodes) {
       try {
         const redis = await this.#getRedisLink(node);
         try {
           const clusterSlots = await redis.clusterSlots() as Array<
-            [number, number, [string, number]]
+            [number, number, [string, number], ...Array<[string, number]>]
           >;
           const nodes = [] as ClusterNode[];
+          const masterNodes = [] as ClusterNode[];
+          const slaveNodes = [] as ClusterNode[];
           const slotMap = {} as SlotMap;
-          for (const [from, to, master] of clusterSlots) {
+          console.log(clusterSlots);
+          for (const [from, to, master, ...slaves] of clusterSlots) {
+            masterNodes.push(node);
             for (let slot = from; slot <= to; slot++) {
               const [ip, port] = master;
               const node = new ClusterNode(ip, port);
               nodes.push(node);
               slotMap[slot] = node;
             }
+
+            for (const slave of slaves) {
+              const [ip, port] = slave;
+              const node = new ClusterNode(ip, port);
+              nodes.push(node);
+              slaveNodes.push(node);
+            }
           }
           this.#nodeBySlot = slotMap;
-          await this.#populateStartupNodes(nodes);
+          this.#nodes = uniqNodes(nodes);
+          this.#masterNodes = uniqNodes(masterNodes);
+          this.#slaveNodes = uniqNodes(slaveNodes);
           this.#refreshTableASAP = false;
+          console.log(this.#nodes);
+          console.log(this.#masterNodes);
+          console.log(this.#slaveNodes);
           return;
         } finally {
           await redis.quit();
@@ -211,19 +258,8 @@ class ClusterExecutor implements CommandExecutor {
     }
   }
 
-  #populateStartupNodes(nodes: ClusterNode[]) {
-    for (const node of nodes) {
-      this.#startupNodes.push(node);
-    }
-
-    this.#startupNodes = uniqBy(
-      this.#startupNodes,
-      (node: ClusterNode) => node.name,
-    );
-  }
-
   async #getRandomConnection(): Promise<Redis> {
-    for (const node of shuffle(this.#startupNodes)) {
+    for (const node of shuffle(this.#nodes)) {
       try {
         let conn = this.#connectionByNodeName[node.name];
         if (conn) {
@@ -312,13 +348,28 @@ function getKeyFromCommand(command: string, args: RedisValue[]): string | null {
   }
 }
 
+function uniqNodes(nodes: ClusterNode[]): ClusterNode[] {
+  return uniqBy(
+    nodes,
+    (node: ClusterNode) => node.name,
+  );
+}
+
+export interface RedisCluster extends Redis {
+  getAllNodes(): Promise<Redis[]>;
+  getMasterNodes(): Promise<Redis[]>;
+  getSlaveNodes(): Promise<Redis[]>;
+}
+
 /**
  * Connects to the Redis Cluster.
  *
  * @see https://redis.io/topics/cluster-tutorial
  * @see https://redis.io/topics/cluster-spec
  */
-async function connectToCluster(opts: ClusterConnectOptions): Promise<Redis> {
+async function connectToCluster(
+  opts: ClusterConnectOptions,
+): Promise<RedisCluster> {
   const executor = new ClusterExecutor(opts);
   await executor.initializeSlotsCache();
   const redis = create(executor);
@@ -328,7 +379,24 @@ async function connectToCluster(opts: ClusterConnectOptions): Promise<Redis> {
     executor.close();
   }
 
-  return Object.assign(redis, { close });
+  function getAllNodes(): Promise<Redis[]> {
+    return executor.getAllNodes();
+  }
+
+  function getMasterNodes(): Promise<Redis[]> {
+    return executor.getMasterNodes();
+  }
+
+  function getSlaveNodes(): Promise<Redis[]> {
+    return executor.getSlaveNodes();
+  }
+
+  return Object.assign(redis, {
+    close,
+    getAllNodes,
+    getMasterNodes,
+    getSlaveNodes,
+  });
 }
 
 export { connectToCluster as connect };

@@ -5,6 +5,7 @@ import {
   assert,
   assertArrayIncludes,
   assertEquals,
+  assertNotEquals,
   assertThrowsAsync,
 } from "../../vendor/https/deno.land/std/testing/asserts.ts";
 import sample from "../../vendor/https/cdn.skypack.dev/lodash-es/sample.js";
@@ -194,6 +195,16 @@ suite.test("properly handle too many redirections", async () => {
   } finally {
     client.close();
   }
+});
+
+suite.test("node accessors", async () => {
+  const allNodes = await client.getAllNodes();
+  const masterNodes = await client.getMasterNodes();
+  const slaveNodes = await client.getSlaveNodes();
+  assertNotEquals(allNodes.length, 0);
+  assertNotEquals(masterNodes.length, 0);
+  assertNotEquals(slaveNodes.length, 0);
+  assertEquals(allNodes.length, masterNodes.length + slaveNodes.length);
 });
 
 suite.runTests();
