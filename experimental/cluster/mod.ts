@@ -222,6 +222,7 @@ class ClusterExecutor implements CommandExecutor {
           const masterNodes = [] as ClusterNode[];
           const slaveNodes = [] as ClusterNode[];
           const slotMap = {} as SlotMap;
+          console.log(clusterSlots);
           for (const [from, to, master, ...slaves] of clusterSlots) {
             masterNodes.push(node);
             for (let slot = from; slot <= to; slot++) {
