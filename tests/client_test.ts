@@ -194,13 +194,14 @@ suite.test("client unblock with error", async () => {
   const tempClient = await newClient({ hostname: "127.0.0.1", port });
   try {
     const id = await tempClient.clientID();
-    await assertRejects(
+    const promise = assertRejects(
       () => tempClient.brpop(0, "key1"),
       Error,
       "-UNBLOCKED",
     );
     await delay(5); // Give some leeway for brpop to reach redis.
     assertEquals(await client.clientUnblock(id, "ERROR"), 1);
+    await promise;
   } finally {
     tempClient.close();
   }
