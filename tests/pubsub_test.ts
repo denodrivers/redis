@@ -2,7 +2,7 @@ import { delay } from "../vendor/https/deno.land/std/async/delay.ts";
 import {
   assert,
   assertEquals,
-  assertThrowsAsync,
+  assertRejects,
 } from "../vendor/https/deno.land/std/testing/asserts.ts";
 import {
   newClient,
@@ -48,7 +48,7 @@ suite.test("testSubscribe2", async () => {
   assertEquals(sub.isClosed, true);
   assertEquals(client.isClosed, true);
   pub.close();
-  await assertThrowsAsync(async () => {
+  await assertRejects(async () => {
     await client.get("aaa");
   }, Deno.errors.BadResource);
 });

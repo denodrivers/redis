@@ -1,7 +1,7 @@
 import { ErrorReplyError, parseURL } from "../mod.ts";
 import {
   assertEquals,
-  assertThrowsAsync,
+  assertRejects,
 } from "../vendor/https/deno.land/std/testing/asserts.ts";
 import {
   newClient,
@@ -52,7 +52,7 @@ suite.test("db0", async () => {
 });
 
 suite.test("connect with wrong password", async () => {
-  await assertThrowsAsync(async () => {
+  await assertRejects(async () => {
     await newClient({
       hostname: "127.0.0.1",
       port,
@@ -63,7 +63,7 @@ suite.test("connect with wrong password", async () => {
 
 suite.test("connect with empty password", async () => {
   // In Redis, authentication with an empty password will always fail.
-  await assertThrowsAsync(async () => {
+  await assertRejects(async () => {
     await newClient({
       hostname: "127.0.0.1",
       port,
@@ -87,7 +87,7 @@ suite.test("exists", async () => {
 
 [Infinity, NaN, "", "port"].forEach((v) => {
   suite.test(`invalid port: ${v}`, async () => {
-    await assertThrowsAsync(
+    await assertRejects(
       async () => {
         await newClient({ hostname: "127.0.0.1", port: v });
       },
