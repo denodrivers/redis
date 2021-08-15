@@ -5,7 +5,7 @@ import {
   assert,
   assertArrayIncludes,
   assertEquals,
-  assertThrowsAsync,
+  assertRejects,
 } from "../../vendor/https/deno.land/std/testing/asserts.ts";
 import sample from "../../vendor/https/cdn.skypack.dev/lodash-es/sample.js";
 import calculateSlot from "../../vendor/https/cdn.skypack.dev/cluster-key-slot/lib/index.js";
@@ -40,7 +40,7 @@ suite.test("del multiple keys in the same hash slot", async () => {
 suite.test("del multiple keys in different hash slots", async () => {
   await client.set("foo", "a");
   await client.set("bar", "b");
-  await assertThrowsAsync(
+  await assertRejects(
     async () => {
       await client.del("foo", "bar");
     },
@@ -186,7 +186,7 @@ suite.test("properly handle too many redirections", async () => {
     },
   });
   try {
-    await assertThrowsAsync(
+    await assertRejects(
       () => client.get("foo"),
       Error,
       "Too many Cluster redirections?",

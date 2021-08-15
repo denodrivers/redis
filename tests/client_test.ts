@@ -3,7 +3,7 @@ import { delay } from "../vendor/https/deno.land/std/async/delay.ts";
 import {
   assert,
   assertEquals,
-  assertThrowsAsync,
+  assertRejects,
 } from "../vendor/https/deno.land/std/testing/asserts.ts";
 import {
   newClient,
@@ -42,7 +42,7 @@ suite.test("client caching with opt out", async () => {
 });
 
 suite.test("client caching without opt in or opt out", async () => {
-  await assertThrowsAsync(
+  await assertRejects(
     () => {
       return client.clientCaching("YES");
     },
@@ -130,7 +130,7 @@ suite.test("client list", async () => {
   list = await client.clientList({ ids: [id] });
   assert(list!.includes(`id=${id}`));
 
-  await assertThrowsAsync(
+  await assertRejects(
     () => {
       return client.clientList({ type: "MASTER", ids: [id] });
     },
@@ -157,7 +157,7 @@ suite.test("client tracking", async () => {
     }),
     "OK",
   );
-  await assertThrowsAsync(
+  await assertRejects(
     () => {
       return client.clientTracking({ mode: "ON", bcast: true, optIn: true });
     },
@@ -194,13 +194,14 @@ suite.test("client unblock with error", async () => {
   const tempClient = await newClient({ hostname: "127.0.0.1", port });
   try {
     const id = await tempClient.clientID();
-    assertThrowsAsync(
+    const promise = assertRejects(
       () => tempClient.brpop(0, "key1"),
       Error,
       "-UNBLOCKED",
     );
     await delay(5); // Give some leeway for brpop to reach redis.
     assertEquals(await client.clientUnblock(id, "ERROR"), 1);
+    await promise;
   } finally {
     tempClient.close();
   }

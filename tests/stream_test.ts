@@ -5,7 +5,7 @@ import {
   assert,
   assertEquals,
   assertNotEquals,
-  assertThrowsAsync,
+  assertRejects,
 } from "../vendor/https/deno.land/std/testing/asserts.ts";
 import {
   newClient,
@@ -196,7 +196,7 @@ suite.test("xgroup create and destroy", async () => {
 
   const created = await client.xgroupCreate(key, groupName, "$", true);
   assertEquals(created, "OK");
-  await assertThrowsAsync(
+  await assertRejects(
     async () => {
       await client.xgroupCreate(key, groupName, 0, true);
     },
