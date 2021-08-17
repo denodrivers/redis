@@ -1,6 +1,8 @@
-import { ErrorReplyError, parseURL } from "../mod.ts";
+import { createLazyClient, ErrorReplyError, parseURL } from "../mod.ts";
 import {
+  assert,
   assertEquals,
+  assertNotEquals,
   assertRejects,
 } from "../vendor/https/deno.land/std/testing/asserts.ts";
 import {
@@ -95,6 +97,20 @@ suite.test("exists", async () => {
       "invalid",
     );
   });
+});
+
+suite.test("lazy client", async () => {
+  const resources = Deno.resources();
+  const client = createLazyClient(opts);
+  assert(!client.isConnected);
+  assertEquals(resources, Deno.resources());
+  try {
+    await client.get("foo");
+    assert(client.isConnected);
+    assertNotEquals(resources, Deno.resources());
+  } finally {
+    client.close();
+  }
 });
 
 suite.test("parse basic URL", () => {

@@ -41,6 +41,7 @@ import type {
   ZUnionstoreOpts,
 } from "./command.ts";
 import { RedisConnection } from "./connection.ts";
+import type { Connection } from "./connection.ts";
 import type { RedisConnectionOptions } from "./connection.ts";
 import { CommandExecutor, MuxExecutor } from "./executor.ts";
 import { unwrapReply } from "./protocol/mod.ts";
@@ -2267,10 +2268,27 @@ export interface RedisConnectOptions extends RedisConnectionOptions {
  *  const conn = connect({hostname: "redis.proxy", port: 443, tls: true}) // -> TLS, redis.proxy:443
  */
 export async function connect(options: RedisConnectOptions): Promise<Redis> {
-  const { hostname, port = 6379, ...opts } = options;
-  const connection = new RedisConnection(hostname, port, opts);
+  const connection = createRedisConnection(options);
   await connection.connect();
   const executor = new MuxExecutor(connection);
+  return create(executor);
+}
+
+/**
+ * Create a lazy Redis client that will not establish a connection until a command is actually executed.
+ *
+ * ```ts
+ * import { createLazyClient } from "./mod.ts";
+ *
+ * const client = createLazyClient({ hostname: "127.0.0.1", port: 6379 });
+ * console.assert(!client.isConnected);
+ * await client.get("foo");
+ * console.assert(client.isConnected);
+ * ```
+ */
+export function createLazyClient(options: RedisConnectOptions): Redis {
+  const connection = createRedisConnection(options);
+  const executor = createLazyExecutor(connection);
   return create(executor);
 }
 
@@ -2310,5 +2328,26 @@ export function parseURL(url: string): RedisConnectOptions {
     password: password !== ""
       ? password
       : searchParams.get("password") ?? undefined,
+  };
+}
+
+function createRedisConnection(options: RedisConnectOptions): Connection {
+  const { hostname, port = 6379, ...opts } = options;
+  return new RedisConnection(hostname, port, opts);
+}
+
+function createLazyExecutor(connection: Connection): CommandExecutor {
+  let executor: CommandExecutor | null = null;
+  return {
+    get connection() {
+      return connection;
+    },
+    async exec(command, ...args) {
+      if (!executor) {
+        executor = new MuxExecutor(connection);
+        await connection.connect();
+      }
+      return executor.exec(command, ...args);
+    },
   };
 }
