@@ -2,6 +2,7 @@ import { createLazyClient, ErrorReplyError, parseURL } from "../mod.ts";
 import {
   assert,
   assertEquals,
+  assertNotEquals,
   assertRejects,
 } from "../vendor/https/deno.land/std/testing/asserts.ts";
 import {
@@ -106,6 +107,7 @@ suite.test("lazy client", async () => {
   try {
     await client.get("foo");
     assert(client.isConnected);
+    assertNotEquals(resources, Deno.resources());
   } finally {
     client.close();
   }

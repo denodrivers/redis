@@ -2274,6 +2274,18 @@ export async function connect(options: RedisConnectOptions): Promise<Redis> {
   return create(executor);
 }
 
+/**
+ * Create a lazy Redis client that will not establish a connection until a command is actually executed.
+ *
+ * ```ts
+ * import { createLazyClient } from "./mod.ts";
+ *
+ * const client = createLazyClient({ hostname: "127.0.0.1", port: 6379 });
+ * console.assert(!client.isConnected);
+ * await client.get("foo");
+ * console.assert(client.isConnected);
+ * ```
+ */
 export function createLazyClient(options: RedisConnectOptions): Redis {
   const connection = createRedisConnection(options);
   const executor = createLazyExecutor(connection);
