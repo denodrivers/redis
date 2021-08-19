@@ -2263,8 +2263,11 @@ export interface RedisConnectOptions extends RedisConnectionOptions {
  * Connect to Redis server
  * @param options
  * @example
- *  const conn = connect({hostname: "127.0.0.1", port: 6379}) // -> TCP, 127.0.0.1:6379
- *  const conn = connect({hostname: "redis.proxy", port: 443, tls: true}) // -> TLS, redis.proxy:443
+ * ```ts
+ * import { connect } from "./mod.ts";
+ * const conn1 = await connect({hostname: "127.0.0.1", port: 6379}); // -> TCP, 127.0.0.1:6379
+ * const conn2 = await connect({hostname: "redis.proxy", port: 443, tls: true}); // -> TLS, redis.proxy:443
+ * ```
  */
 export async function connect(options: RedisConnectOptions): Promise<Redis> {
   const { hostname, port = 6379, ...opts } = options;
@@ -2285,8 +2288,12 @@ export function create(executor: CommandExecutor): Redis {
  * Extract RedisConnectOptions from redis URL
  * @param url
  * @example
- *  `const options = parseURL("redis://foo:bar@localhost:6379/1")` // -> {hostname: "localhost", port: "6379", tls: false, db: 1, name: foo, password: bar}
- *  `const options = parseURL("rediss://127.0.0.1:443/?db=2&password=bar")` // -> {hostname: "127.0.0.1", port: "443", tls: true, db: 2, name: undefined, password: bar}
+ * ```ts
+ * import { parseURL } from "./mod.ts";
+ *
+ * parseURL("redis://foo:bar@localhost:6379/1"); // -> {hostname: "localhost", port: "6379", tls: false, db: 1, name: foo, password: bar}
+ * parseURL("rediss://127.0.0.1:443/?db=2&password=bar"); // -> {hostname: "127.0.0.1", port: "443", tls: true, db: 2, name: undefined, password: bar}
+ * ```
  */
 export function parseURL(url: string): RedisConnectOptions {
   const {

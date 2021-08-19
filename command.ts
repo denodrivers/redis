@@ -775,7 +775,8 @@ XGROUP SETID mystream consumer-group-name 0
    * @param key  the stream key to inspect
    */
   xlen(key: string): Promise<Integer>;
-  /** Complex command to obtain info on messages in the Pending Entries List.
+  /**
+   * Complex command to obtain info on messages in the Pending Entries List.
    *
    * Outputs a summary about the pending messages in a given consumer group.
    *
