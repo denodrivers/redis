@@ -51,7 +51,8 @@ jobs:
 
       - name: Run tests
         run: |
-          deno test --allow-net --allow-read=tests --allow-write=tests/tmp --allow-run=redis-server,redis-cli --doc redis_test.ts
+          deno test --allow-net --allow-read=tests --allow-write=tests/tmp --allow-run=redis-server,redis-cli redis_test.ts
+          deno test --doc --no-run
       - uses: bahmutov/npm-install@v1
         with:
           working-directory: benchmark
