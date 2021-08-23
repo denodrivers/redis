@@ -84,7 +84,7 @@ value `maxRetryCount` when connecting a new client.
 ```ts
 import { connect } from "https://deno.land/x/redis/mod.ts";
 
-const redis = await connect({ ...options, maxRetryCount: 10 });
+const redis = await connect({ hostname: "127.0.0.1", maxRetryCount: 10 });
 
 // The client will try to connect to the server 10 times if the server dies or the network becomes unavailable.
 ```
@@ -116,14 +116,14 @@ const redis = await connect(options);
 
 {
   const reply = await redis.executor.exec("SET", "redis", "nice");
-  assert(reply.type === replyTypes.SimpleString);
-  assert(reply.value() === "OK");
+  console.assert(reply.type === replyTypes.SimpleString);
+  console.assert(reply.value() === "OK");
 }
 
 {
   const reply = await redis.executor.exec("GET", "redis");
-  assert(reply.type === replyTypes.BulkString);
-  assert(reply.value() === "nice");
+  console.assert(reply.type === replyTypes.BulkString);
+  console.assert(reply.value() === "nice");
 }
 ```
 
