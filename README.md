@@ -112,7 +112,7 @@ executor. You can send raw redis commands and receive replies.
 ```ts
 import { connect, replyTypes } from "https://deno.land/x/redis/mod.ts";
 
-const redis = await connect(options);
+const redis = await connect({ hostname: "127.0.0.1" });
 
 {
   const reply = await redis.executor.exec("SET", "redis", "nice");
