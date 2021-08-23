@@ -27,6 +27,9 @@ const fuga = await redis.get("hoge");
 **PubSub**
 
 ```ts
+import { connect } from "https://deno.land/x/redis/mod.ts";
+
+const redis = await connect({ hostname: "127.0.0.1" });
 const sub = await redis.subscribe("channel");
 (async function () {
   for await (const { channel, message } of sub.receive()) {
@@ -38,6 +41,9 @@ const sub = await redis.subscribe("channel");
 **Streams**
 
 ```ts
+import { connect } from "https://deno.land/x/redis/mod.ts";
+
+const redis = await connect({ hostname: "127.0.0.1" });
 await redis.xadd(
   "somestream",
   "*", // let redis assign message ID
@@ -58,6 +64,9 @@ const thx = msgFV["no"];
 **Cluster**
 
 ```ts
+import { connect } from "https://deno.land/x/redis/mod.ts";
+
+const redis = await connect({ hostname: "127.0.0.1" });
 await redis.clusterMeet("127.0.0.1", 6380);
 await redis.clusterNodes();
 // ... 127.0.0.1:6379@16379 myself,master - 0 1593978765000 0 connected
@@ -73,6 +82,8 @@ network becomes unavailable. A connection can be made "retriable" by setting the
 value `maxRetryCount` when connecting a new client.
 
 ```ts
+import { connect } from "https://deno.land/x/redis/mod.ts";
+
 const redis = await connect({ ...options, maxRetryCount: 10 });
 
 // The client will try to connect to the server 10 times if the server dies or the network becomes unavailable.
@@ -83,6 +94,9 @@ After a reconnection succeeds, the client will subscribe again to all the
 channels and patterns.
 
 ```ts
+import { connect } from "https://deno.land/x/redis/mod.ts";
+
+const options = { hostname: "127.0.0.1" };
 const redis = await connect(options);
 const subscriberClient = await redis.subscribe("channel");
 
@@ -96,6 +110,10 @@ const subscriberClient = await redis.subscribe("channel");
 executor. You can send raw redis commands and receive replies.
 
 ```ts
+import { connect, replyTypes } from "https://deno.land/x/redis/mod.ts";
+
+const redis = await connect(options);
+
 {
   const reply = await redis.executor.exec("SET", "redis", "nice");
   assert(reply.type === replyTypes.SimpleString);
@@ -114,10 +132,9 @@ executor. You can send raw redis commands and receive replies.
 https://redis.io/topics/pipelining
 
 ```ts
-const redis = await connect({
-  hostname: "127.0.0.1",
-  port: 6379,
-});
+import { connect } from "https://deno.land/x/redis/mod.ts";
+
+const redis = await connect({ hostname: "127.0.0.1" });
 const pl = redis.pipeline();
 pl.ping();
 pl.ping();
@@ -142,6 +159,9 @@ and no changes will happen during execution.
 See detail https://redis.io/topics/transactions
 
 ```ts
+import { connect } from "https://deno.land/x/redis/mod.ts";
+
+const redis = await connect({ hostname: "127.0.0.1" });
 const tx = redis.tx();
 tx.set("a", "aa");
 tx.set("b", "bb");
@@ -159,6 +179,8 @@ await tx.flush();
 https://redis.io/topics/client-side-caching
 
 ```typescript
+import { connect } from "https://deno.land/x/redis/mod.ts";
+
 const mainClient = await connect({ hostname: "127.0.0.1" });
 const cacheClient = await connect({ hostname: "127.0.0.1" });
 
