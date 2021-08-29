@@ -1146,13 +1146,13 @@ class RedisImpl implements Redis {
   subscribe<TMessage extends string | string[] = string>(
     ...channels: string[]
   ) {
-    return subscribe<TMessage>(this.executor.connection, ...channels);
+    return subscribe<TMessage>(this.executor, ...channels);
   }
 
   psubscribe<TMessage extends string | string[] = string>(
     ...patterns: string[]
   ) {
-    return psubscribe<TMessage>(this.executor.connection, ...patterns);
+    return psubscribe<TMessage>(this.executor, ...patterns);
   }
 
   pubsubChannels(pattern?: string) {
