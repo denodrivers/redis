@@ -27,11 +27,11 @@ class RedisSubscriptionImpl<
   TMessage extends ValidMessageType = DefaultMessageType,
 > implements RedisSubscription<TMessage> {
   get isConnected(): boolean {
-    return this.connection.isConnected;
+    return this.executor.connection.isConnected;
   }
 
   get isClosed(): boolean {
-    return this.connection.isClosed;
+    return this.executor.connection.isClosed;
   }
 
   private channels = Object.create(null);
