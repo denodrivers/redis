@@ -25,4 +25,4 @@ export {
   unwrapReply,
 } from "./reply.ts";
 
-export { sendCommand, sendCommands } from "./command.ts";
+export { RedisCommand, sendCommand, sendCommands } from "./command.ts";
