@@ -2247,11 +2247,11 @@ class RedisImpl implements Redis {
   }
 
   tx() {
-    return createRedisPipeline(this.executor.connection, true);
+    return createRedisPipeline(this.client, true);
   }
 
   pipeline() {
-    return createRedisPipeline(this.executor.connection);
+    return createRedisPipeline(this.client);
   }
 }
 

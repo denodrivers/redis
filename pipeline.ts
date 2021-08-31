@@ -91,8 +91,8 @@ export class PipelineClient implements Client {
 
   flush(): Promise<RedisReplyOrError[]> {
     if (this.#tx) {
-      this.#commands.unshift({ command: "MULTI", args: [] });
-      this.#commands.push({ command: "EXEC", args: [] });
+      this.#commands.unshift({ name: "MULTI", args: [] });
+      this.#commands.push({ name: "EXEC", args: [] });
     }
     const d = deferred<RedisReplyOrError[]>();
     this.#queue.push({ commands: [...this.#commands], d });

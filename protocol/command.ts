@@ -55,7 +55,7 @@ export interface RedisCommand {
 export async function sendCommands(
   writer: BufWriter,
   reader: BufReader,
-  commands: Command[],
+  commands: RedisCommand[],
 ): Promise<RedisReplyOrError[]> {
   for (const { name, args } of commands) {
     await writeRequest(writer, name, args);
