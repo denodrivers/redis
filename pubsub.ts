@@ -1,6 +1,5 @@
-import type { CommandExecutor } from "./executor.ts";
+import type { Client } from "./client.ts";
 import { InvalidStateError } from "./errors.ts";
-import { readArrayReply } from "./protocol/mod.ts";
 
 type DefaultMessageType = string;
 type ValidMessageType = string | string[];
@@ -26,53 +25,55 @@ export interface RedisPubSubMessage<TMessage = DefaultMessageType> {
 class RedisSubscriptionImpl<
   TMessage extends ValidMessageType = DefaultMessageType,
 > implements RedisSubscription<TMessage> {
+  readonly #client: Client;
+
   get isConnected(): boolean {
-    return this.executor.connection.isConnected;
+    return this.#client.isConnected;
   }
 
   get isClosed(): boolean {
-    return this.executor.connection.isClosed;
+    return this.#client.isClosed;
   }
 
-  private channels = Object.create(null);
-  private patterns = Object.create(null);
+  #channels = Object.create(null);
+  #patterns = Object.create(null);
 
-  constructor(private executor: CommandExecutor) {
+  constructor(client: Client) {
     // Force retriable connection for connection shared for pub/sub.
-    if (!executor.connection.isRetriable) executor.connection.forceRetry();
+    if (!client.isRetriable) client._forceRetry();
+    this.#client = client;
   }
 
   async psubscribe(...patterns: string[]) {
-    await this.executor.exec("PSUBSCRIBE", ...patterns);
+    await this.#client.exec("PSUBSCRIBE", ...patterns);
     for (const pat of patterns) {
-      this.patterns[pat] = true;
+      this.#patterns[pat] = true;
     }
   }
 
   async punsubscribe(...patterns: string[]) {
-    await this.executor.exec("PUNSUBSCRIBE", ...patterns);
+    await this.#client.exec("PUNSUBSCRIBE", ...patterns);
     for (const pat of patterns) {
-      delete this.patterns[pat];
+      delete this.#patterns[pat];
     }
   }
 
   async subscribe(...channels: string[]) {
-    await this.executor.exec("SUBSCRIBE", ...channels);
+    await this.#client.exec("SUBSCRIBE", ...channels);
     for (const chan of channels) {
-      this.channels[chan] = true;
+      this.#channels[chan] = true;
     }
   }
 
   async unsubscribe(...channels: string[]) {
-    await this.executor.exec("UNSUBSCRIBE", ...channels);
+    await this.#client.exec("UNSUBSCRIBE", ...channels);
     for (const chan of channels) {
-      delete this.channels[chan];
+      delete this.#channels[chan];
     }
   }
 
   async *receive(): AsyncIterableIterator<RedisPubSubMessage<TMessage>> {
     let forceReconnect = false;
-    const connection = this.executor.connection;
     while (this.isConnected) {
       try {
         let rep: [string, string, TMessage] | [
@@ -82,7 +83,7 @@ class RedisSubscriptionImpl<
           TMessage,
         ];
         try {
-          rep = (await readArrayReply(connection.reader)).value() as [
+          rep = (await this.#client.readNextReply()).value() as [
             string,
             string,
             TMessage,
@@ -90,7 +91,7 @@ class RedisSubscriptionImpl<
         } catch (err) {
           if (err instanceof Deno.errors.BadResource) {
             // Connection already closed.
-            connection.close();
+            this.#client.close();
             break;
           }
           throw err;
@@ -118,14 +119,14 @@ class RedisSubscriptionImpl<
         } else throw error;
       } finally {
         if ((!this.isClosed && !this.isConnected) || forceReconnect) {
-          await connection.reconnect();
+          await this.#client.reconnect();
           forceReconnect = false;
 
-          if (Object.keys(this.channels).length > 0) {
-            await this.subscribe(...Object.keys(this.channels));
+          if (Object.keys(this.#channels).length > 0) {
+            await this.subscribe(...Object.keys(this.#channels));
           }
-          if (Object.keys(this.patterns).length > 0) {
-            await this.psubscribe(...Object.keys(this.patterns));
+          if (Object.keys(this.#patterns).length > 0) {
+            await this.psubscribe(...Object.keys(this.#patterns));
           }
         }
       }
@@ -134,10 +135,10 @@ class RedisSubscriptionImpl<
 
   async close() {
     try {
-      await this.unsubscribe(...Object.keys(this.channels));
-      await this.punsubscribe(...Object.keys(this.patterns));
+      await this.unsubscribe(...Object.keys(this.#channels));
+      await this.punsubscribe(...Object.keys(this.#patterns));
     } finally {
-      this.executor.connection.close();
+      this.#client.close();
     }
   }
 }
@@ -145,10 +146,10 @@ class RedisSubscriptionImpl<
 export async function subscribe<
   TMessage extends ValidMessageType = DefaultMessageType,
 >(
-  executor: CommandExecutor,
+  client: Client,
   ...channels: string[]
 ): Promise<RedisSubscription<TMessage>> {
-  const sub = new RedisSubscriptionImpl<TMessage>(executor);
+  const sub = new RedisSubscriptionImpl<TMessage>(client);
   await sub.subscribe(...channels);
   return sub;
 }
@@ -156,10 +157,10 @@ export async function subscribe<
 export async function psubscribe<
   TMessage extends ValidMessageType = DefaultMessageType,
 >(
-  executor: CommandExecutor,
+  client: Client,
   ...patterns: string[]
 ): Promise<RedisSubscription<TMessage>> {
-  const sub = new RedisSubscriptionImpl<TMessage>(executor);
+  const sub = new RedisSubscriptionImpl<TMessage>(client);
   await sub.psubscribe(...patterns);
   return sub;
 }

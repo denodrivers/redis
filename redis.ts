@@ -40,10 +40,8 @@ import type {
   ZScanOpts,
   ZUnionstoreOpts,
 } from "./command.ts";
-import { RedisConnection } from "./connection.ts";
-import type { Connection } from "./connection.ts";
 import type { RedisConnectionOptions } from "./connection.ts";
-import { CommandExecutor, MuxExecutor } from "./executor.ts";
+import { connect as connectClient, create as createClient, Client } from "./client.ts";
 import { unwrapReply } from "./protocol/mod.ts";
 import type {
   Binary,
@@ -94,34 +92,36 @@ import {
   XReadStreamRaw,
 } from "./stream.ts";
 
+const kDefaultPort = 6379;
+
 export interface Redis extends RedisCommands {
-  readonly executor: CommandExecutor;
+  readonly client: Client;
   readonly isClosed: boolean;
   readonly isConnected: boolean;
   close(): void;
 }
 
 class RedisImpl implements Redis {
-  readonly executor: CommandExecutor;
+  readonly client: Client;
 
   get isClosed() {
-    return this.executor.connection.isClosed;
+    return this.client.isClosed;
   }
 
   get isConnected() {
-    return this.executor.connection.isConnected;
+    return this.client.isConnected;
   }
 
-  constructor(executor: CommandExecutor) {
-    this.executor = executor;
+  constructor(client: Client) {
+    this.client = client;
   }
 
   close(): void {
-    this.executor.connection.close();
+    this.client.close();
   }
 
   async execReply(command: string, ...args: RedisValue[]): Promise<Raw> {
-    const reply = await this.executor.exec(
+    const reply = await this.client.exec(
       command,
       ...args,
     );
@@ -132,7 +132,7 @@ class RedisImpl implements Redis {
     command: string,
     ...args: RedisValue[]
   ): Promise<SimpleString> {
-    const reply = await this.executor.exec(command, ...args);
+    const reply = await this.client.exec(command, ...args);
     return reply.value() as SimpleString;
   }
 
@@ -140,7 +140,7 @@ class RedisImpl implements Redis {
     command: string,
     ...args: RedisValue[]
   ): Promise<Integer> {
-    const reply = await this.executor.exec(command, ...args);
+    const reply = await this.client.exec(command, ...args);
     return reply.value() as Integer;
   }
 
@@ -148,7 +148,7 @@ class RedisImpl implements Redis {
     command: string,
     ...args: RedisValue[]
   ): Promise<Binary | BulkNil> {
-    const reply = await this.executor.exec(command, ...args) as BulkReply;
+    const reply = await this.client.exec(command, ...args) as BulkReply;
     return reply.buffer();
   }
 
@@ -156,7 +156,7 @@ class RedisImpl implements Redis {
     command: string,
     ...args: RedisValue[]
   ): Promise<T> {
-    const reply = await this.executor.exec(command, ...args);
+    const reply = await this.client.exec(command, ...args);
     return reply.value() as T;
   }
 
@@ -164,7 +164,7 @@ class RedisImpl implements Redis {
     command: string,
     ...args: RedisValue[]
   ): Promise<T[]> {
-    const reply = await this.executor.exec(command, ...args);
+    const reply = await this.client.exec(command, ...args);
     return reply.value() as T[];
   }
 
@@ -172,7 +172,7 @@ class RedisImpl implements Redis {
     command: string,
     ...args: RedisValue[]
   ): Promise<Integer | BulkNil> {
-    const reply = await this.executor.exec(command, ...args);
+    const reply = await this.client.exec(command, ...args);
     return reply.value() as Integer | BulkNil;
   }
 
@@ -180,7 +180,7 @@ class RedisImpl implements Redis {
     command: string,
     ...args: RedisValue[]
   ): Promise<SimpleString | BulkNil> {
-    const reply = await this.executor.exec(command, ...args);
+    const reply = await this.client.exec(command, ...args);
     return reply.value() as SimpleString | BulkNil;
   }
 
@@ -1146,13 +1146,13 @@ class RedisImpl implements Redis {
   subscribe<TMessage extends string | string[] = string>(
     ...channels: string[]
   ) {
-    return subscribe<TMessage>(this.executor, ...channels);
+    return subscribe<TMessage>(this.client, ...channels);
   }
 
   psubscribe<TMessage extends string | string[] = string>(
     ...patterns: string[]
   ) {
-    return psubscribe<TMessage>(this.executor, ...patterns);
+    return psubscribe<TMessage>(this.client, ...patterns);
   }
 
   pubsubChannels(pattern?: string) {
@@ -2247,11 +2247,11 @@ class RedisImpl implements Redis {
   }
 
   tx() {
-    return createRedisPipeline(this.executor.connection, true);
+    return createRedisPipeline(this.client, true);
   }
 
   pipeline() {
-    return createRedisPipeline(this.executor.connection);
+    return createRedisPipeline(this.client);
   }
 }
 
@@ -2271,10 +2271,9 @@ export interface RedisConnectOptions extends RedisConnectionOptions {
  * ```
  */
 export async function connect(options: RedisConnectOptions): Promise<Redis> {
-  const connection = createRedisConnection(options);
-  await connection.connect();
-  const executor = new MuxExecutor(connection);
-  return create(executor);
+  const { hostname, port = kDefaultPort, ...opts } = options;
+  const client = await connectClient(hostname, port, opts);
+  return create(client);
 }
 
 /**
@@ -2290,16 +2289,16 @@ export async function connect(options: RedisConnectOptions): Promise<Redis> {
  * ```
  */
 export function createLazyClient(options: RedisConnectOptions): Redis {
-  const connection = createRedisConnection(options);
-  const executor = createLazyExecutor(connection);
-  return create(executor);
+  const { hostname, port = kDefaultPort, ...opts } = options;
+  const client = createClient(hostname, port, opts);
+  return create(client);
 }
 
 /**
- * Create a redis client from `CommandExecutor`
+ * Create a redis client from `Client`
  */
-export function create(executor: CommandExecutor): Redis {
-  return new RedisImpl(executor);
+export function create(client: Client): Redis {
+  return new RedisImpl(client);
 }
 
 /**
@@ -2328,7 +2327,7 @@ export function parseURL(url: string): RedisConnectOptions {
     : searchParams.get("db") ?? undefined;
   return {
     hostname: hostname !== "" ? hostname : "localhost",
-    port: port !== "" ? parseInt(port, 10) : 6379,
+    port: port !== "" ? parseInt(port, 10) : kDefaultPort,
     tls: protocol == "rediss:" ? true : searchParams.get("ssl") === "true",
     db: db ? parseInt(db, 10) : undefined,
     name: username !== "" ? username : undefined,
@@ -2338,23 +2337,3 @@ export function parseURL(url: string): RedisConnectOptions {
   };
 }
 
-function createRedisConnection(options: RedisConnectOptions): Connection {
-  const { hostname, port = 6379, ...opts } = options;
-  return new RedisConnection(hostname, port, opts);
-}
-
-function createLazyExecutor(connection: Connection): CommandExecutor {
-  let executor: CommandExecutor | null = null;
-  return {
-    get connection() {
-      return connection;
-    },
-    async exec(command, ...args) {
-      if (!executor) {
-        executor = new MuxExecutor(connection);
-        await connection.connect();
-      }
-      return executor.exec(command, ...args);
-    },
-  };
-}
