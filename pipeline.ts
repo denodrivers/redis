@@ -65,8 +65,8 @@ export class PipelineClient implements Client {
     return Promise.resolve(createSimpleStringReply("OK"));
   }
 
-  execBatch(commands: RedisCommand[]) {
-    return this.#client.execBatch(commands);
+  batch(commands: RedisCommand[]) {
+    return this.#client.batch(commands);
   }
 
   readNextReply() {
@@ -106,7 +106,7 @@ export class PipelineClient implements Client {
   private dequeue(): void {
     const [e] = this.#queue;
     if (!e) return;
-    this.#client.execBatch(e.commands)
+    this.#client.batch(e.commands)
       .then(e.d.resolve)
       .catch(e.d.reject)
       .finally(() => {

@@ -21,7 +21,7 @@ export interface Client {
     ...args: RedisValue[]
   ): Promise<RedisReply>;
 
-  execBatch(
+  batch(
     commands: Array<RedisCommand>,
   ): Promise<RedisReplyOrError[]>;
 
@@ -199,7 +199,7 @@ class BasicClient implements Client {
     return d;
   }
 
-  execBatch(
+  batch(
     commands: Array<RedisCommand>,
   ): Promise<RedisReplyOrError[]> {
     return sendCommands(this.#writer, this.#reader, commands);
