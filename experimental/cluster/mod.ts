@@ -28,7 +28,12 @@ import type { RedisConnectOptions } from "../../redis.ts";
 import type { CommandExecutor } from "../../executor.ts";
 import type { Connection } from "../../connection.ts";
 import type { Redis } from "../../redis.ts";
-import type { RedisReply, RedisValue } from "../../protocol/mod.ts";
+import type {
+  RedisCommand,
+  RedisReply,
+  RedisReplyOrError,
+  RedisValue,
+} from "../../protocol/mod.ts";
 import { ErrorReplyError } from "../../errors.ts";
 import { delay } from "../../vendor/https/deno.land/std/async/delay.ts";
 import calculateSlot from "../../vendor/https/cdn.skypack.dev/cluster-key-slot/lib/index.js";
@@ -93,6 +98,52 @@ class ClusterExecutor implements CommandExecutor {
   }
 
   async exec(command: string, ...args: RedisValue[]): Promise<RedisReply> {
+    const slot = this.#calculateSlot(command, args);
+    const reply = await this.#withExecutor(
+      slot,
+      (executor) => executor.exec(command, ...args),
+    );
+    return reply;
+  }
+
+  async batch(
+    commands: Array<RedisCommand>,
+  ): Promise<Array<RedisReplyOrError>> {
+    const slots = new Set<number>();
+    for (const command of commands) {
+      slots.add(this.#calculateSlot(command.name, command.args));
+    }
+
+    if (slots.size !== 1) {
+      // TODO(uki00a): I'm not sure if this behavior is correct or not...
+      throw new ClusterError(
+        "Currently, ClusterExecutor#batch does not allow operations on keys in different hash slots.",
+      );
+    }
+
+    const [slot] = slots;
+    const replies = await this.#withExecutor(
+      slot,
+      (executor) => executor.batch(commands),
+    );
+    return replies;
+  }
+
+  #calculateSlot(command: string, args: RedisValue[]): number {
+    const key = getKeyFromCommand(command, args);
+    if (key == null) {
+      throw new ClusterError(
+        "No way to dispatch this command to Redis Cluster.",
+      );
+    }
+    const slot = calculateSlot(key);
+    return slot;
+  }
+
+  async #withExecutor<T>(
+    slot: number,
+    thunk: (executor: CommandExecutor) => Promise<T>,
+  ): Promise<T> {
     if (this.#refreshTableASAP) {
       await this.initializeSlotsCache();
     }
@@ -103,13 +154,6 @@ class ClusterExecutor implements CommandExecutor {
     let lastError: null | Error;
     while (ttl > 0) {
       ttl -= 1;
-      const key = getKeyFromCommand(command, args);
-      if (key == null) {
-        throw new ClusterError(
-          "No way to dispatch this command to Redis Cluster.",
-        );
-      }
-      const slot = calculateSlot(key);
       let r: Redis;
       if (asking && askingNode) {
         r = await this.#getConnectionByNode(askingNode);
@@ -126,7 +170,7 @@ class ClusterExecutor implements CommandExecutor {
           await r.asking();
         }
         asking = false;
-        const reply = await r.executor.exec(command, ...args);
+        const reply = await thunk(r.executor);
         return reply;
       } catch (err) {
         lastError = err;
@@ -198,7 +242,7 @@ class ClusterExecutor implements CommandExecutor {
             }
           }
           this.#nodeBySlot = slotMap;
-          await this.#populateStartupNodes(nodes);
+          this.#populateStartupNodes(nodes);
           this.#refreshTableASAP = false;
           return;
         } finally {
