@@ -65,6 +65,7 @@ export type {
   Integer,
   IntegerReply,
   Raw,
+  RedisCommand,
   RedisReply,
   RedisReplyOrError,
   RedisValue,

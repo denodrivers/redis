@@ -2247,11 +2247,11 @@ class RedisImpl implements Redis {
   }
 
   tx() {
-    return createRedisPipeline(this.executor.connection, true);
+    return createRedisPipeline(this.executor, true);
   }
 
   pipeline() {
-    return createRedisPipeline(this.executor.connection);
+    return createRedisPipeline(this.executor);
   }
 }
 
@@ -2345,16 +2345,25 @@ function createRedisConnection(options: RedisConnectOptions): Connection {
 
 function createLazyExecutor(connection: Connection): CommandExecutor {
   let executor: CommandExecutor | null = null;
+  async function ensureExecutor(): Promise<CommandExecutor> {
+    if (!executor) {
+      executor = new MuxExecutor(connection);
+      await connection.connect();
+    }
+    return executor;
+  }
+
   return {
     get connection() {
       return connection;
     },
     async exec(command, ...args) {
-      if (!executor) {
-        executor = new MuxExecutor(connection);
-        await connection.connect();
-      }
+      const executor = await ensureExecutor();
       return executor.exec(command, ...args);
+    },
+    async batch(commands) {
+      const executor = await ensureExecutor();
+      return executor.batch(commands);
     },
   };
 }
