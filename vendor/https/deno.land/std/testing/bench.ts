@@ -1,1 +1,1 @@
-export * from "https://deno.land/std@0.104.0/testing/bench.ts";
+export * from "https://deno.land/std@0.107.0/testing/bench.ts";

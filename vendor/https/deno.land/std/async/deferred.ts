@@ -1,1 +1,1 @@
-export * from "https://deno.land/std@0.104.0/async/deferred.ts";
+export * from "https://deno.land/std@0.107.0/async/deferred.ts";
