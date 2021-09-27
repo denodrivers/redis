@@ -59,6 +59,10 @@ export class PipelineExecutor implements CommandExecutor {
     return this.#executor.batch(commands);
   }
 
+  read(): Promise<RedisReply> {
+    return this.#executor.read();
+  }
+
   flush(): Promise<RedisReplyOrError[]> {
     if (this.tx) {
       this.#commands.unshift({ name: "MULTI", args: [] });

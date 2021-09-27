@@ -1,6 +1,5 @@
 import type { CommandExecutor } from "./executor.ts";
 import { InvalidStateError } from "./errors.ts";
-import { readArrayReply } from "./protocol/mod.ts";
 
 type DefaultMessageType = string;
 type ValidMessageType = string | string[];
@@ -82,7 +81,7 @@ class RedisSubscriptionImpl<
           TMessage,
         ];
         try {
-          rep = (await readArrayReply(connection.reader)).value() as [
+          rep = (await this.executor.read()).value() as [
             string,
             string,
             TMessage,
