@@ -1,5 +1,5 @@
 import type { CommandExecutor } from "./executor.ts";
-import { InvalidStateError } from "./errors.ts";
+import { EOFError, InvalidStateError } from "./errors.ts";
 
 type DefaultMessageType = string;
 type ValidMessageType = string | string[];
@@ -87,7 +87,9 @@ class RedisSubscriptionImpl<
             TMessage,
           ] | [string, string, string, TMessage];
         } catch (err) {
-          if (err instanceof Deno.errors.BadResource) {
+          if (
+            err instanceof Deno.errors.BadResource || err instanceof EOFError
+          ) {
             // Connection already closed.
             connection.close();
             break;
