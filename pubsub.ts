@@ -87,8 +87,12 @@ class RedisSubscriptionImpl<
             TMessage,
           ] | [string, string, string, TMessage];
         } catch (err) {
+          if (err instanceof EOFError) {
+            continue;
+          }
+
           if (
-            err instanceof Deno.errors.BadResource || err instanceof EOFError
+            err instanceof Deno.errors.BadResource
           ) {
             // Connection already closed.
             connection.close();
