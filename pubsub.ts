@@ -88,7 +88,8 @@ class RedisSubscriptionImpl<
           ] | [string, string, string, TMessage];
         } catch (err) {
           if (
-            err instanceof Deno.errors.BadResource
+            err instanceof Deno.errors.BadResource ||
+            err instanceof EOFError
           ) {
             // Connection already closed.
             connection.close();
@@ -113,10 +114,11 @@ class RedisSubscriptionImpl<
       } catch (error) {
         if (
           error instanceof InvalidStateError ||
-          error instanceof Deno.errors.BadResource
+          error instanceof Deno.errors.BadResource ||
+          error instanceof EOFError
         ) {
           forceReconnect = true;
-        } else if (!(error instanceof EOFError)) throw error;
+        } else throw error;
       } finally {
         if ((!this.isClosed && !this.isConnected) || forceReconnect) {
           await connection.reconnect();
