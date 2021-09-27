@@ -87,10 +87,6 @@ class RedisSubscriptionImpl<
             TMessage,
           ] | [string, string, string, TMessage];
         } catch (err) {
-          if (err instanceof EOFError) {
-            continue;
-          }
-
           if (
             err instanceof Deno.errors.BadResource
           ) {
@@ -120,7 +116,7 @@ class RedisSubscriptionImpl<
           error instanceof Deno.errors.BadResource
         ) {
           forceReconnect = true;
-        } else throw error;
+        } else if (!(error instanceof EOFError)) throw error;
       } finally {
         if ((!this.isClosed && !this.isConnected) || forceReconnect) {
           await connection.reconnect();
