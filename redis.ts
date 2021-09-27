@@ -2365,5 +2365,9 @@ function createLazyExecutor(connection: Connection): CommandExecutor {
       const executor = await ensureExecutor();
       return executor.batch(commands);
     },
+    async read() {
+      const executor = await ensureExecutor();
+      return executor.read();
+    },
   };
 }

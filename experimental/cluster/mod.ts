@@ -129,6 +129,10 @@ class ClusterExecutor implements CommandExecutor {
     return replies;
   }
 
+  read(): Promise<RedisReply> {
+    return Promise.reject(new ClusterError("Not implemented"));
+  }
+
   #calculateSlot(command: string, args: RedisValue[]): number {
     const key = getKeyFromCommand(command, args);
     if (key == null) {

@@ -1,6 +1,5 @@
 import type { CommandExecutor } from "./executor.ts";
-import { InvalidStateError } from "./errors.ts";
-import { readArrayReply } from "./protocol/mod.ts";
+import { EOFError, InvalidStateError } from "./errors.ts";
 
 type DefaultMessageType = string;
 type ValidMessageType = string | string[];
@@ -82,13 +81,16 @@ class RedisSubscriptionImpl<
           TMessage,
         ];
         try {
-          rep = (await readArrayReply(connection.reader)).value() as [
+          rep = (await this.executor.read()).value() as [
             string,
             string,
             TMessage,
           ] | [string, string, string, TMessage];
         } catch (err) {
-          if (err instanceof Deno.errors.BadResource) {
+          if (
+            err instanceof Deno.errors.BadResource ||
+            err instanceof EOFError
+          ) {
             // Connection already closed.
             connection.close();
             break;
@@ -112,7 +114,8 @@ class RedisSubscriptionImpl<
       } catch (error) {
         if (
           error instanceof InvalidStateError ||
-          error instanceof Deno.errors.BadResource
+          error instanceof Deno.errors.BadResource ||
+          error instanceof EOFError
         ) {
           forceReconnect = true;
         } else throw error;

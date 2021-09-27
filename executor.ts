@@ -4,7 +4,7 @@ import {
   Deferred,
   deferred,
 } from "./vendor/https/deno.land/std/async/deferred.ts";
-import { sendCommand, sendCommands } from "./protocol/mod.ts";
+import { readReply, sendCommand, sendCommands } from "./protocol/mod.ts";
 import type { RedisCommand, RedisReplyOrError } from "./protocol/mod.ts";
 import type { RedisReply, RedisValue } from "./protocol/mod.ts";
 
@@ -16,6 +16,11 @@ export interface CommandExecutor {
   ): Promise<RedisReply>;
 
   batch(commands: Array<RedisCommand>): Promise<Array<RedisReplyOrError>>;
+
+  /**
+   * Reads the next reply
+   */
+  read(): Promise<RedisReply>;
 }
 
 export class MuxExecutor implements CommandExecutor {
@@ -45,6 +50,10 @@ export class MuxExecutor implements CommandExecutor {
       this.connection.reader,
       commands,
     );
+  }
+
+  read(): Promise<RedisReply> {
+    return readReply(this.connection.reader);
   }
 
   private dequeue(): void {
