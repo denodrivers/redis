@@ -106,8 +106,9 @@ const subscriberClient = await redis.subscribe("channel");
 
 ### Execute raw commands
 
-`redis.executor` is raw level [redis protocol](https://redis.io/topics/protocol)
-executor. You can send raw redis commands and receive replies.
+`Redis.sendCommand` is law level interface for
+[redis protocol](https://redis.io/topics/protocol). You can send raw redis
+commands and receive replies.
 
 ```ts
 import { connect, replyTypes } from "https://deno.land/x/redis/mod.ts";
@@ -115,13 +116,13 @@ import { connect, replyTypes } from "https://deno.land/x/redis/mod.ts";
 const redis = await connect({ hostname: "127.0.0.1" });
 
 {
-  const reply = await redis.executor.exec("SET", "redis", "nice");
+  const reply = await redis.sendCommand("SET", "redis", "nice");
   console.assert(reply.type === replyTypes.SimpleString);
   console.assert(reply.value() === "OK");
 }
 
 {
-  const reply = await redis.executor.exec("GET", "redis");
+  const reply = await redis.sendCommand("GET", "redis");
   console.assert(reply.type === replyTypes.BulkString);
   console.assert(reply.value() === "nice");
 }

@@ -54,6 +54,7 @@ import type {
   ConditionalArray,
   Integer,
   Raw,
+  RedisReply,
   RedisValue,
   SimpleString,
 } from "./protocol/mod.ts";
@@ -98,6 +99,11 @@ export interface Redis extends RedisCommands {
   readonly executor: CommandExecutor;
   readonly isClosed: boolean;
   readonly isConnected: boolean;
+
+  /**
+   * Low level interface for Redis server
+   */
+  sendCommand(command: string, ...args: RedisValue[]): Promise<RedisReply>;
   close(): void;
 }
 
@@ -114,6 +120,10 @@ class RedisImpl implements Redis {
 
   constructor(executor: CommandExecutor) {
     this.executor = executor;
+  }
+
+  sendCommand(command: string, ...args: RedisValue[]) {
+    return this.executor.exec(command, ...args);
   }
 
   close(): void {
