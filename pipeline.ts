@@ -1,10 +1,11 @@
+import type { Connection } from "./connection.ts";
 import { CommandExecutor } from "./executor.ts";
 import {
   createSimpleStringReply,
-  RedisCommand,
   RedisReply,
   RedisReplyOrError,
   RedisValue,
+  sendCommands,
 } from "./protocol/mod.ts";
 import { create, Redis } from "./redis.ts";
 import {
@@ -17,71 +18,67 @@ export interface RedisPipeline extends Redis {
 }
 
 export function createRedisPipeline(
-  executor: CommandExecutor,
+  connection: Connection,
   tx = false,
 ): RedisPipeline {
-  const pipelineExecutor = new PipelineExecutor(executor, tx);
+  const executor = new PipelineExecutor(connection, tx);
   function flush(): Promise<RedisReplyOrError[]> {
-    return pipelineExecutor.flush();
+    return executor.flush();
   }
-  const client = create(pipelineExecutor);
+  const client = create(executor);
   return Object.assign(client, { flush });
 }
 
 export class PipelineExecutor implements CommandExecutor {
-  #commands: RedisCommand[] = [];
-  #queue: {
-    commands: RedisCommand[];
+  private commands: {
+    command: string;
+    args: RedisValue[];
+  }[] = [];
+  private queue: {
+    commands: {
+      command: string;
+      args: RedisValue[];
+    }[];
     d: Deferred<RedisReplyOrError[]>;
   }[] = [];
-  #executor: CommandExecutor;
 
   constructor(
-    executor: CommandExecutor,
+    readonly connection: Connection,
     private tx: boolean,
   ) {
-    this.#executor = executor;
-  }
-
-  get connection() {
-    return this.#executor.connection;
   }
 
   exec(
     command: string,
     ...args: RedisValue[]
   ): Promise<RedisReply> {
-    this.#commands.push({ name: command, args });
+    this.commands.push({ command, args });
     return Promise.resolve(createSimpleStringReply("OK"));
-  }
-
-  batch(commands: Array<RedisCommand>): Promise<Array<RedisReplyOrError>> {
-    return this.#executor.batch(commands);
   }
 
   flush(): Promise<RedisReplyOrError[]> {
     if (this.tx) {
-      this.#commands.unshift({ name: "MULTI", args: [] });
-      this.#commands.push({ name: "EXEC", args: [] });
+      this.commands.unshift({ command: "MULTI", args: [] });
+      this.commands.push({ command: "EXEC", args: [] });
     }
     const d = deferred<RedisReplyOrError[]>();
-    this.#queue.push({ commands: [...this.#commands], d });
-    if (this.#queue.length === 1) {
-      this.#dequeue();
+    this.queue.push({ commands: [...this.commands], d });
+    if (this.queue.length === 1) {
+      this.dequeue();
     }
-    this.#commands = [];
+    this.commands = [];
     return d;
   }
 
-  #dequeue(): void {
-    const [e] = this.#queue;
+  private dequeue(): void {
+    const [e] = this.queue;
     if (!e) return;
-    this.#executor.batch(e.commands)
+    sendCommands(this.connection.writer, this.connection.reader, e.commands)
       .then(e.d.resolve)
       .catch(e.d.reject)
       .finally(() => {
-        this.#queue.shift();
-        this.#dequeue();
+        this.queue.shift();
+        this.dequeue();
       });
   }
 }

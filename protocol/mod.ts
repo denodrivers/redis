@@ -26,4 +26,3 @@ export {
 } from "./reply.ts";
 
 export { sendCommand, sendCommands } from "./command.ts";
-export type { RedisCommand } from "./command.ts";

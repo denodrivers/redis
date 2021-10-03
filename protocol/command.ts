@@ -47,18 +47,16 @@ export async function sendCommand(
   return readReply(reader);
 }
 
-export interface RedisCommand {
-  name: string;
-  args: RedisValue[];
-}
-
 export async function sendCommands(
   writer: BufWriter,
   reader: BufReader,
-  commands: RedisCommand[],
+  commands: {
+    command: string;
+    args: RedisValue[];
+  }[],
 ): Promise<RedisReplyOrError[]> {
-  for (const { name, args } of commands) {
-    await writeRequest(writer, name, args);
+  for (const { command, args } of commands) {
+    await writeRequest(writer, command, args);
   }
   await writer.flush();
   const ret: RedisReplyOrError[] = [];
