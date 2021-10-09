@@ -321,14 +321,7 @@ function getKeyFromCommand(command: string, args: RedisValue[]): string | null {
 async function connectToCluster(opts: ClusterConnectOptions): Promise<Redis> {
   const executor = new ClusterExecutor(opts);
   await executor.initializeSlotsCache();
-  const redis = create(executor);
-
-  // TODO: This is not ideal. We should refactor this!
-  function close(): void {
-    executor.close();
-  }
-
-  return Object.assign(redis, { close });
+  return create(executor);
 }
 
 export { connectToCluster as connect };
