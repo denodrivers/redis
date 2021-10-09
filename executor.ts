@@ -13,6 +13,11 @@ export interface CommandExecutor {
     command: string,
     ...args: RedisValue[]
   ): Promise<RedisReply>;
+
+  /**
+   * Closes a redis connection.
+   */
+  close(): void;
 }
 
 export class MuxExecutor implements CommandExecutor {
@@ -34,6 +39,10 @@ export class MuxExecutor implements CommandExecutor {
       this.dequeue();
     }
     return d;
+  }
+
+  close(): void {
+    this.connection.close();
   }
 
   private dequeue(): void {

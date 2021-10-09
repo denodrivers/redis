@@ -62,6 +62,9 @@ suite.test("handle a -MOVED redirection error", async () => {
         get connection() {
           return redis.executor.connection;
         },
+        close() {
+          return redis.close();
+        },
         async exec(cmd, ...args) {
           if (cmd === "GET" && !redirected) {
             // Manually cause a -MOVED redirection error
@@ -114,6 +117,9 @@ suite.test("handle a -ASK redirection error", async () => {
         get connection() {
           return redis.executor.connection;
         },
+        close() {
+          return redis.close();
+        },
         async exec(cmd, ...args) {
           commandsSent.add(cmd);
           if (cmd === "GET" && !redirected) {
@@ -162,6 +168,9 @@ suite.test("properly handle too many redirections", async () => {
       const proxyExecutor = {
         get connection() {
           return redis.executor.connection;
+        },
+        close() {
+          return redis.close();
         },
         async exec(cmd, ...args) {
           if (cmd === "GET") {
