@@ -127,7 +127,7 @@ class RedisImpl implements Redis {
   }
 
   close(): void {
-    this.executor.connection.close();
+    this.executor.close();
   }
 
   async execReply(command: string, ...args: RedisValue[]): Promise<Raw> {

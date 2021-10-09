@@ -56,6 +56,10 @@ export class PipelineExecutor implements CommandExecutor {
     return Promise.resolve(createSimpleStringReply("OK"));
   }
 
+  close(): void {
+    return this.connection.close();
+  }
+
   flush(): Promise<RedisReplyOrError[]> {
     if (this.tx) {
       this.commands.unshift({ command: "MULTI", args: [] });
