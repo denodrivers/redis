@@ -54,7 +54,6 @@ suite.test("handle a -MOVED redirection error", async () => {
   let redirected = false;
   let manuallyRedirectedPort!: number;
   const portsSent = new Set<number>();
-  console.log("Connecting to cluster...");
   const client = await connectToCluster({
     nodes,
     async newRedis(opts) {
@@ -92,12 +91,9 @@ suite.test("handle a -MOVED redirection error", async () => {
       return create(proxyExecutor);
     },
   });
-  console.log("Successfully connected!");
 
   try {
-    console.log("Sending SET command...");
     await client.set("foo", "bar");
-    console.log("Sending GET command...");
     const r = await client.get("foo");
     assertEquals(r, "bar");
     // Check if a cluster client correctly handles a -MOVED error
