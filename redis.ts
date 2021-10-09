@@ -96,7 +96,6 @@ import {
 } from "./stream.ts";
 
 export interface Redis extends RedisCommands {
-  readonly executor: CommandExecutor;
   readonly isClosed: boolean;
   readonly isConnected: boolean;
 
@@ -108,7 +107,7 @@ export interface Redis extends RedisCommands {
 }
 
 class RedisImpl implements Redis {
-  readonly executor: CommandExecutor;
+  private readonly executor: CommandExecutor;
 
   get isClosed() {
     return this.executor.connection.isClosed;
@@ -127,7 +126,7 @@ class RedisImpl implements Redis {
   }
 
   close(): void {
-    this.executor.connection.close();
+    this.executor.close();
   }
 
   async execReply(command: string, ...args: RedisValue[]): Promise<Raw> {
@@ -2365,6 +2364,11 @@ function createLazyExecutor(connection: Connection): CommandExecutor {
         await connection.connect();
       }
       return executor.exec(command, ...args);
+    },
+    close() {
+      if (executor) {
+        return executor.close();
+      }
     },
   };
 }
