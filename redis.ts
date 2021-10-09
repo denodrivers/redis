@@ -2366,5 +2366,10 @@ function createLazyExecutor(connection: Connection): CommandExecutor {
       }
       return executor.exec(command, ...args);
     },
+    close() {
+      if (executor) {
+        return executor.close();
+      }
+    },
   };
 }
