@@ -12,6 +12,7 @@ import calculateSlot from "../../vendor/https/cdn.skypack.dev/cluster-key-slot/l
 import { ErrorReplyError } from "../../errors.ts";
 import { connect, create } from "../../redis.ts";
 import type { CommandExecutor } from "../../executor.ts";
+import type { Connection } from "../../connection.ts";
 
 const suite = new TestSuite("cluster/client");
 const ports = nextPorts(6);
@@ -59,8 +60,8 @@ suite.test("handle a -MOVED redirection error", async () => {
       const redis = await connect(opts);
       assert(opts.port != null);
       const proxyExecutor = {
-        get connection() {
-          return redis.executor.connection;
+        get connection(): Connection {
+          throw new Error("Not supported");
         },
         close() {
           return redis.close();
@@ -82,7 +83,7 @@ suite.test("handle a -MOVED redirection error", async () => {
           } else {
             assert(opts.port);
             portsSent.add(Number(opts.port));
-            const reply = await redis.executor.exec(cmd, ...args);
+            const reply = await redis.sendCommand(cmd, ...args);
             return reply;
           }
         },
@@ -114,8 +115,8 @@ suite.test("handle a -ASK redirection error", async () => {
       const redis = await connect(opts);
       assert(opts.port != null);
       const proxyExecutor = {
-        get connection() {
-          return redis.executor.connection;
+        get connection(): Connection {
+          throw new Error("Not supported");
         },
         close() {
           return redis.close();
@@ -138,7 +139,7 @@ suite.test("handle a -ASK redirection error", async () => {
           } else {
             assert(opts.port);
             portsSent.add(Number(opts.port));
-            const reply = await redis.executor.exec(cmd, ...args);
+            const reply = await redis.sendCommand(cmd, ...args);
             return reply;
           }
         },
@@ -166,8 +167,8 @@ suite.test("properly handle too many redirections", async () => {
       const redis = await connect(opts);
       assert(opts.port != null);
       const proxyExecutor = {
-        get connection() {
-          return redis.executor.connection;
+        get connection(): Connection {
+          throw new Error("Not supported");
         },
         close() {
           return redis.close();
@@ -186,7 +187,7 @@ suite.test("properly handle too many redirections", async () => {
             );
             throw error;
           } else {
-            const reply = await redis.executor.exec(cmd, ...args);
+            const reply = await redis.sendCommand(cmd, ...args);
             return reply;
           }
         },

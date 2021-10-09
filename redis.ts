@@ -96,7 +96,6 @@ import {
 } from "./stream.ts";
 
 export interface Redis extends RedisCommands {
-  readonly executor: CommandExecutor;
   readonly isClosed: boolean;
   readonly isConnected: boolean;
 
@@ -108,7 +107,7 @@ export interface Redis extends RedisCommands {
 }
 
 class RedisImpl implements Redis {
-  readonly executor: CommandExecutor;
+  private readonly executor: CommandExecutor;
 
   get isClosed() {
     return this.executor.connection.isClosed;

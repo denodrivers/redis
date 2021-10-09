@@ -126,7 +126,7 @@ class ClusterExecutor implements CommandExecutor {
           await r.asking();
         }
         asking = false;
-        const reply = await r.executor.exec(command, ...args);
+        const reply = await r.sendCommand(command, ...args);
         return reply;
       } catch (err) {
         lastError = err;
