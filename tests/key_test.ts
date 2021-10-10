@@ -195,7 +195,7 @@ suite.test("scan", async () => {
   assertEquals(v.length, 2);
   assertEquals(v[0], "0");
   assertEquals(v[1].length, 2);
-  assertArrayIncludes(v[1], ["foo", "bar"]);
+  assertArrayIncludes(v[1], ["key1", "key2"]);
 });
 
 suite.test("scan with pattern", async () => {
