@@ -1,5 +1,6 @@
 import {
   assert,
+  assertArrayIncludes,
   assertEquals,
 } from "../vendor/https/deno.land/std/testing/asserts.ts";
 import {
@@ -190,7 +191,11 @@ suite.test("wait", async () => {
 suite.test("scan", async () => {
   await client.set("key1", "foo");
   await client.set("key2", "bar");
-  assert(Array.isArray(await client.scan(0)));
+  const v = await client.scan(0, { pattern: "*", count: 2 });
+  assertEquals(v.length, 2);
+  assertEquals(v[0], "0");
+  assertEquals(v[1].length, 2);
+  assertArrayIncludes(v[1], ["foo", "bar"]);
 });
 
 suite.runTests();
