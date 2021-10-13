@@ -7,7 +7,6 @@
       "/testing/bench.ts",
       "/testing/asserts.ts",
       "/io/buffer.ts",
-      "/io/bufio.ts",
       "/io/util.ts"
     ]
   },
