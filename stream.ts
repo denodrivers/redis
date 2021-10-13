@@ -320,7 +320,7 @@ export function parseXGroupDetail(rawGroups: ConditionalArray): XGroupDetail[] {
           lastDeliveredId: parseXId(rawstr(data.get("last-delivered-id"))),
           pelCount: rawnum(data.get("pel-count")),
           pending: parseXPendingCounts(
-            (data.get("pending") as ConditionalArray),
+            data.get("pending") as ConditionalArray,
           ),
           consumers: parseXConsumerDetail(
             consDeets,

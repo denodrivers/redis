@@ -162,8 +162,10 @@ class ClusterExecutor implements CommandExecutor {
       }
     }
     throw new ClusterError(
-      `Too many Cluster redirections? (last error: ${lastError!.message ??
-        ""})`,
+      `Too many Cluster redirections? (last error: ${
+        lastError!.message ??
+          ""
+      })`,
     );
   }
 
