@@ -1,5 +1,8 @@
 import { RedisReply, sendCommand } from "./protocol/mod.ts";
-import { BufReader, BufWriter } from "./vendor/https/deno.land/std/io/bufio.ts";
+import {
+  BufReader,
+  BufWriter,
+} from "./vendor/https/deno.land/std/io/buffer.ts";
 type Closer = Deno.Closer;
 
 export interface Connection {
