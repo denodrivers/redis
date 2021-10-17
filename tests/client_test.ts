@@ -1,3 +1,4 @@
+import type { Redis } from "../redis.ts";
 import { delay } from "../vendor/https/deno.land/std/async/delay.ts";
 import {
   assert,
@@ -9,11 +10,19 @@ import { newClient, nextPort, startRedis, stopRedis } from "./test_util.ts";
 Deno.test("client", async (t) => {
   const port = nextPort();
   const server = await startRedis({ port });
-  const client = await newClient({ hostname: "127.0.0.1", port });
+  let client!: Redis;
 
   function cleanup(): void {
     stopRedis(server);
-    client.close();
+  }
+
+  async function run(name: string, fn: () => Promise<void>): Promise<void> {
+    try {
+      client = await newClient({ hostname: "127.0.0.1", port });
+      await fn();
+    } finally {
+      client.close();
+    }
   }
 
   await t.step("client caching with opt in", async () => {
