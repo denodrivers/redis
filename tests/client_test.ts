@@ -17,25 +17,27 @@ Deno.test("client", async (t) => {
   }
 
   async function run(name: string, fn: () => Promise<void>): Promise<void> {
-    try {
-      client = await newClient({ hostname: "127.0.0.1", port });
-      await fn();
-    } finally {
-      client.close();
-    }
+    await t.step(name, async () => {
+      try {
+        client = await newClient({ hostname: "127.0.0.1", port });
+        await fn();
+      } finally {
+        client.close();
+      }
+    });
   }
 
-  await t.step("client caching with opt in", async () => {
+  await run("client caching with opt in", async () => {
     await client.clientTracking({ mode: "ON", optIn: true });
     assertEquals(await client.clientCaching("YES"), "OK");
   });
 
-  await t.step("client caching with opt out", async () => {
+  await run("client caching with opt out", async () => {
     await client.clientTracking({ mode: "ON", optOut: true });
     assertEquals(await client.clientCaching("NO"), "OK");
   });
 
-  await t.step("client caching without opt in or opt out", async () => {
+  await run("client caching without opt in or opt out", async () => {
     await assertRejects(
       () => {
         return client.clientCaching("YES");
@@ -45,27 +47,27 @@ Deno.test("client", async (t) => {
     );
   });
 
-  await t.step("client id", async () => {
+  await run("client id", async () => {
     const id = await client.clientID();
     assertEquals(typeof id, "number");
   });
 
-  await t.step("client info", async () => {
+  await run("client info", async () => {
     const id = await client.clientID();
     const info = await client.clientInfo();
     assert(info!.includes(`id=${id}`));
   });
 
-  await t.step("client setname & getname", async () => {
+  await run("client setname & getname", async () => {
     assertEquals(await client.clientSetName("deno-redis"), "OK");
     assertEquals(await client.clientGetName(), "deno-redis");
   });
 
-  await t.step("client getredir with no redirect", async () => {
+  await run("client getredir with no redirect", async () => {
     assertEquals(await client.clientGetRedir(), -1);
   });
 
-  await t.step("client getredir with redirect", async () => {
+  await run("client getredir with redirect", async () => {
     const tempClient = await newClient({ hostname: "127.0.0.1", port });
     try {
       const id = await tempClient.clientID();
@@ -76,14 +78,14 @@ Deno.test("client", async (t) => {
     }
   });
 
-  await t.step("client pause & unpause", async () => {
+  await run("client pause & unpause", async () => {
     assertEquals(await client.clientPause(5), "OK");
     assertEquals(await client.clientPause(5, "ALL"), "OK");
     assertEquals(await client.clientPause(5, "WRITE"), "OK");
     assertEquals(await client.clientUnpause(), "OK");
   });
 
-  await t.step("client kill by addr", async () => {
+  await run("client kill by addr", async () => {
     const tempClient = await newClient({ hostname: "127.0.0.1", port });
     try {
       const info = await client.clientInfo() as string;
@@ -96,7 +98,7 @@ Deno.test("client", async (t) => {
     }
   });
 
-  await t.step("client kill by id", async () => {
+  await run("client kill by id", async () => {
     const tempClient = await newClient({ hostname: "127.0.0.1", port });
     try {
       const id = await client.clientID();
@@ -106,7 +108,7 @@ Deno.test("client", async (t) => {
     }
   });
 
-  await t.step("client list", async () => {
+  await run("client list", async () => {
     const id = await client.clientID();
     let list = await client.clientList();
     assert(list!.includes(`id=${id}`));
@@ -129,7 +131,7 @@ Deno.test("client", async (t) => {
     );
   });
 
-  await t.step("client tracking", async () => {
+  await run("client tracking", async () => {
     assertEquals(
       await client.clientTracking({
         mode: "ON",
@@ -156,19 +158,19 @@ Deno.test("client", async (t) => {
     );
   });
 
-  await t.step("client trackinginfo", async () => {
+  await run("client trackinginfo", async () => {
     const info = await client.clientTrackingInfo();
     assert(info.includes("flags"));
     assert(info.includes("redirect"));
     assert(info.includes("prefixes"));
   });
 
-  await t.step("client unblock nothing", async () => {
+  await run("client unblock nothing", async () => {
     const id = await client.clientID();
     assertEquals(await client.clientUnblock(id), 0);
   });
 
-  await t.step("client unblock with timeout", async () => {
+  await run("client unblock with timeout", async () => {
     const tempClient = await newClient({ hostname: "127.0.0.1", port });
     try {
       const id = await tempClient.clientID();
@@ -180,7 +182,7 @@ Deno.test("client", async (t) => {
     }
   });
 
-  await t.step("client unblock with error", async () => {
+  await run("client unblock with error", async () => {
     const tempClient = await newClient({ hostname: "127.0.0.1", port });
     try {
       const id = await tempClient.clientID();
@@ -197,7 +199,7 @@ Deno.test("client", async (t) => {
     }
   });
 
-  await t.step("client kill by type and don't skip ourselves", async () => {
+  await run("client kill by type and don't skip ourselves", async () => {
     assertEquals(await client.clientKill({ type: "NORMAL", skipme: "NO" }), 1);
   });
 
