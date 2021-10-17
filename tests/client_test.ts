@@ -1,4 +1,3 @@
-import { Redis } from "../mod.ts";
 import { delay } from "../vendor/https/deno.land/std/async/delay.ts";
 import {
   assert,
@@ -8,7 +7,6 @@ import {
 import { newClient, nextPort, startRedis, stopRedis } from "./test_util.ts";
 
 Deno.test("client", async (t) => {
-  const suite = new TestSuite("client");
   const port = nextPort();
   const server = await startRedis({ port });
   const client = await newClient({ hostname: "127.0.0.1", port });

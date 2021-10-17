@@ -1,12 +1,6 @@
 import { connect } from "../mod.ts";
 import { assertEquals } from "../vendor/https/deno.land/std/testing/asserts.ts";
-import {
-  newClient,
-  nextPort,
-  startRedis,
-  stopRedis,
-  TestSuite,
-} from "./test_util.ts";
+import { newClient, nextPort, startRedis, stopRedis } from "./test_util.ts";
 
 Deno.test("connection", async (t) => {
   const port = nextPort();

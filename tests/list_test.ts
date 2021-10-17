@@ -1,7 +1,6 @@
 import { assertEquals } from "../vendor/https/deno.land/std/testing/asserts.ts";
 import { newClient, nextPort, startRedis, stopRedis } from "./test_util.ts";
 
-const suite = new TestSuite("list");
 Deno.test("list", async (t) => {
   const port = nextPort();
   const server = await startRedis({ port });

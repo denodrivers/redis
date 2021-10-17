@@ -27,11 +27,13 @@ Deno.test("experimental/cluster", async (t) => {
   }
 
   async function run(name: string, fn: () => Promise<void>): Promise<void> {
-    try {
-      await fn();
-    } finally {
-      client.close();
-    }
+    await t.step(name, async () => {
+      try {
+        await fn();
+      } finally {
+        client.close();
+      }
+    });
   }
 
   await run("del multiple keys in the same hash slot", async () => {
