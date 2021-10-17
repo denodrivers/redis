@@ -144,7 +144,7 @@ Deno.test("general", async (t) => {
     }
   });
 
-  t.step("parse basic URL", () => {
+  await t.step("parse basic URL", () => {
     const options = parseURL("redis://127.0.0.1:7003");
     assertEquals(options.hostname, "127.0.0.1");
     assertEquals(options.port, 7003);
@@ -154,7 +154,7 @@ Deno.test("general", async (t) => {
     assertEquals(options.password, undefined);
   });
 
-  t.step("parse complex URL", () => {
+  await t.step("parse complex URL", () => {
     const options = parseURL("rediss://username:password@127.0.0.1:7003/1");
     assertEquals(options.hostname, "127.0.0.1");
     assertEquals(options.port, 7003);
@@ -164,7 +164,7 @@ Deno.test("general", async (t) => {
     assertEquals(options.password, "password");
   });
 
-  t.step("parse URL with search options", () => {
+  await t.step("parse URL with search options", () => {
     const options = parseURL(
       "redis://127.0.0.1:7003/?db=2&password=password&ssl=true",
     );
@@ -176,7 +176,7 @@ Deno.test("general", async (t) => {
     assertEquals(options.password, "password");
   });
 
-  t.step("Check parameter parsing priority", () => {
+  await t.step("Check parameter parsing priority", () => {
     const options = parseURL(
       "rediss://username:password@127.0.0.1:7003/1?db=2&password=password2&ssl=false",
     );
