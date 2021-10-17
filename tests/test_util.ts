@@ -7,58 +7,6 @@ export interface TestServer {
   process: Deno.Process;
 }
 
-export class TestSuite {
-  private tests: { name: string; func: TestFunc }[] = [];
-  private beforeEachs: TestFunc[] = [];
-  private afterEachs: TestFunc[] = [];
-  private afterAlls: TestFunc[] = [];
-
-  constructor(private prefix: string) {}
-
-  beforeEach(func: TestFunc): void {
-    this.beforeEachs.push(func);
-  }
-
-  afterEach(func: TestFunc): void {
-    this.afterEachs.push(func);
-  }
-
-  afterAll(func: TestFunc): void {
-    this.afterAlls.push(func);
-  }
-
-  test(name: string, func: TestFunc): void {
-    this.tests.push({ name, func });
-  }
-
-  runTests(): void {
-    for (const test of this.tests) {
-      Deno.test(`[${this.prefix}] ${test.name}`, async () => {
-        for (const f of this.beforeEachs) {
-          await f();
-        }
-        try {
-          await test.func();
-        } finally {
-          for (const f of this.afterEachs) {
-            await f();
-          }
-        }
-      });
-    }
-    Deno.test({
-      name: `[${this.prefix}] afterAll`,
-      fn: async () => {
-        for (const f of this.afterAlls) {
-          await f();
-        }
-      },
-      sanitizeOps: false,
-      sanitizeResources: false,
-    });
-  }
-}
-
 const encoder = new TextEncoder();
 
 export async function startRedis({
