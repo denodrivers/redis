@@ -208,4 +208,6 @@ Deno.test("experimental/cluster", async (t) => {
       client.close();
     }
   });
+
+  cleanup();
 });
