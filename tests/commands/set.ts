@@ -116,4 +116,6 @@ export async function setTests(
     const v = await client.sscan("key", 0);
     assert(Array.isArray(v));
   });
+
+  cleanup();
 }
