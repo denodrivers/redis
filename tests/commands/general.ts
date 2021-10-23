@@ -4,23 +4,25 @@ import {
   ErrorReplyError,
   parseURL,
   replyTypes,
-} from "../mod.ts";
+} from "../../mod.ts";
 import {
   assert,
   assertEquals,
   assertNotEquals,
   assertRejects,
-} from "../vendor/https/deno.land/std/testing/asserts.ts";
-import { newClient, nextPort, startRedis, stopRedis } from "./test_util.ts";
+} from "../../vendor/https/deno.land/std/testing/asserts.ts";
+import { newClient } from "../test_util.ts";
+import type { TestServer } from "../test_util.ts";
 
-Deno.test("general", async (t) => {
-  const port = nextPort();
-  const server = await startRedis({ port });
+export async function generalTests(
+  t: Deno.TestContext,
+  server: TestServer,
+): Promise<void> {
+  const { port } = server;
   const opts = { hostname: "127.0.0.1", port };
   const client = await newClient(opts);
 
   function cleanup(): void {
-    stopRedis(server);
     client.close();
   }
 
@@ -189,4 +191,4 @@ Deno.test("general", async (t) => {
   });
 
   cleanup();
-});
+}

@@ -1,24 +1,22 @@
-import { ErrorReplyError } from "../mod.ts";
+import { ErrorReplyError } from "../../mod.ts";
 import type {
   ArrayReply,
   BulkReply,
   IntegerReply,
   SimpleStringReply,
-} from "../protocol/mod.ts";
+} from "../../protocol/mod.ts";
 import {
   assert,
   assertEquals,
-} from "../vendor/https/deno.land/std/testing/asserts.ts";
-import { newClient, nextPort, startRedis, stopRedis } from "./test_util.ts";
+} from "../../vendor/https/deno.land/std/testing/asserts.ts";
+import { newClient } from "../test_util.ts";
+import type { TestServer } from "../test_util.ts";
 
-Deno.test("pipeline", async (t) => {
-  const port = nextPort();
-  const server = await startRedis({ port });
-  const opts = { hostname: "127.0.0.1", port };
-
-  function cleanup(): void {
-    stopRedis(server);
-  }
+export async function pipelineTests(
+  t: Deno.TestContext,
+  server: TestServer,
+): Promise<void> {
+  const opts = { hostname: "127.0.0.1", port: server.port };
 
   await t.step("testPipeline", async () => {
     const client = await newClient(opts);
@@ -183,6 +181,4 @@ Deno.test("pipeline", async (t) => {
     assertEquals((resp[2] as BulkReply).value(), "a");
     client.close();
   });
-
-  cleanup();
-});
+}

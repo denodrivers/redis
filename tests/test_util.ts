@@ -4,6 +4,7 @@ import { delay } from "../vendor/https/deno.land/std/async/delay.ts";
 type TestFunc = () => void | Promise<void>;
 export interface TestServer {
   path: string;
+  port: number;
   process: Deno.Process;
 }
 
@@ -39,7 +40,7 @@ export async function startRedis({
 
   // Ample time for server to finish startup
   await delay(500);
-  return { path, process };
+  return { path, port, process };
 }
 
 export function stopRedis(server: TestServer): void {

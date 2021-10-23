@@ -1,19 +1,17 @@
-import { delay } from "../vendor/https/deno.land/std/async/delay.ts";
+import { delay } from "../../vendor/https/deno.land/std/async/delay.ts";
 import {
   assert,
   assertEquals,
   assertRejects,
-} from "../vendor/https/deno.land/std/testing/asserts.ts";
-import { newClient, nextPort, startRedis, stopRedis } from "./test_util.ts";
+} from "../../vendor/https/deno.land/std/testing/asserts.ts";
+import { newClient, nextPort, startRedis, stopRedis } from "../test_util.ts";
+import type { TestServer } from "../test_util.ts";
 
-Deno.test("pubsub", async (t) => {
-  const port = nextPort();
-  const server = await startRedis({ port });
-  const opts = { hostname: "127.0.0.1", port };
-
-  function cleanup(): void {
-    stopRedis(server);
-  }
+export async function pubsubTests(
+  t: Deno.TestContext,
+  server: TestServer,
+): Promise<void> {
+  const opts = { hostname: "127.0.0.1", port: server.port };
 
   await t.step("testSubscribe", async () => {
     const client = await newClient(opts);
@@ -143,6 +141,4 @@ Deno.test("pubsub", async (t) => {
       assert(sub.isClosed);
     },
   );
-
-  cleanup();
-});
+}

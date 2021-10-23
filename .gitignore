@@ -1,6 +1,5 @@
 deno.d.ts
 .idea
-commands
 testdata/*/
 benchmark/node_modules
 benchmark/benchmark.js
