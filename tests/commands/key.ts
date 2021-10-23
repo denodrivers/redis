@@ -2,16 +2,17 @@ import {
   assert,
   assertArrayIncludes,
   assertEquals,
-} from "../vendor/https/deno.land/std/testing/asserts.ts";
-import { newClient, nextPort, startRedis, stopRedis } from "./test_util.ts";
+} from "../../vendor/https/deno.land/std/testing/asserts.ts";
+import { newClient } from "../test_util.ts";
+import type { TestServer } from "../test_util.ts";
 
-Deno.test("key", async (t) => {
-  const port = nextPort();
-  const server = await startRedis({ port });
+export async function keyTests(
+  t: Deno.TestContext,
+  server: TestServer,
+): Promise<void> {
+  const { port } = server;
   const client = await newClient({ hostname: "127.0.0.1", port });
-
   function cleanup(): void {
-    stopRedis(server);
     client.close();
   }
 
@@ -203,4 +204,4 @@ Deno.test("key", async (t) => {
   });
 
   cleanup();
-});
+}

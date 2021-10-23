@@ -1,21 +1,21 @@
-import { ErrorReplyError, Redis } from "../mod.ts";
-import { parseXId } from "../stream.ts";
-import { delay } from "../vendor/https/deno.land/std/async/delay.ts";
+import { ErrorReplyError, Redis } from "../../mod.ts";
+import { parseXId } from "../../stream.ts";
+import { delay } from "../../vendor/https/deno.land/std/async/delay.ts";
 import {
   assert,
   assertEquals,
   assertNotEquals,
   assertRejects,
-} from "../vendor/https/deno.land/std/testing/asserts.ts";
-import { newClient, nextPort, startRedis, stopRedis } from "./test_util.ts";
+} from "../../vendor/https/deno.land/std/testing/asserts.ts";
+import { newClient } from "../test_util.ts";
+import type { TestServer } from "../test_util.ts";
 
-Deno.test("stream", async (t) => {
-  const port = nextPort();
-  const server = await startRedis({ port });
-  const client = await newClient({ hostname: "127.0.0.1", port });
-
+export async function streamTests(
+  t: Deno.TestContext,
+  server: TestServer,
+): Promise<void> {
+  const client = await newClient({ hostname: "127.0.0.1", port: server.port });
   function cleanup(): void {
-    stopRedis(server);
     client.close();
   }
 
@@ -758,6 +758,5 @@ Deno.test("stream", async (t) => {
       assertEquals(await client.xgroupDestroy(key, "newgroup"), 1);
     });
   });
-
   cleanup();
-});
+}

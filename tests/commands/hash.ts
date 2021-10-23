@@ -1,13 +1,14 @@
-import { assertEquals } from "../vendor/https/deno.land/std/testing/asserts.ts";
-import { newClient, nextPort, startRedis, stopRedis } from "./test_util.ts";
+import { assertEquals } from "../../vendor/https/deno.land/std/testing/asserts.ts";
+import { newClient } from "../test_util.ts";
+import type { TestServer } from "../test_util.ts";
 
-Deno.test("hash", async (t) => {
-  const port = nextPort();
-  const server = await startRedis({ port });
-  const client = await newClient({ hostname: "127.0.0.1", port });
+export async function hashTests(
+  t: Deno.TestContext,
+  server: TestServer,
+): Promise<void> {
+  const client = await newClient({ hostname: "127.0.0.1", port: server.port });
 
   function cleanup(): void {
-    stopRedis(server);
     client.close();
   }
 
@@ -108,4 +109,4 @@ Deno.test("hash", async (t) => {
   });
 
   cleanup();
-});
+}
