@@ -127,11 +127,9 @@ export async function pubsubTests(
     stopRedis(tempServer);
   });
 
-  await t.step({
-    ignore: true,
-    name:
-      "SubscriptionShouldNotThrowBadResourceErrorWhenConnectionIsClosed (#89)",
-    fn: async () => {
+  await t.step(
+    "SubscriptionShouldNotThrowBadResourceErrorWhenConnectionIsClosed (#89)",
+    async () => {
       const redis = await newClient(opts);
       const sub = await redis.subscribe("test");
       const subscriptionPromise = (async () => {
@@ -142,5 +140,5 @@ export async function pubsubTests(
       await subscriptionPromise;
       assert(sub.isClosed);
     },
-  });
+  );
 }
