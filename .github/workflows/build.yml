@@ -44,7 +44,7 @@ jobs:
           deno lint --ignore=./benchmark/node_modules
 
       - name: Set up Redis ${{ matrix.redis }}
-        uses: shogo82148/actions-setup-redis@v1
+        uses: shogo82148/actions-setup-redis@v1.13.1
         with:
           redis-version: ${{ matrix.redis }}
           auto-start: "true"
