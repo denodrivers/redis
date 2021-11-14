@@ -8,7 +8,6 @@ export interface TestCluster {
 }
 
 export async function startRedisCluster(ports: number[]): Promise<TestCluster> {
-  console.log(ports);
   const servers = await Promise.all(ports.map((port) =>
     startRedis({
       port,

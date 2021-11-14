@@ -22,7 +22,7 @@ export async function startRedis({
 
     let config = `dir ${path}\nport ${port}\n`;
     if (clusterEnabled) {
-      const clusterConfigFile = tempPath(`${port}_nodes.conf`);
+      const clusterConfigFile = tempPath(`cluster_node_${port}.conf`);
       config += "cluster-enabled yes\n";
       config += `cluster-config-file ${clusterConfigFile}`;
     }
