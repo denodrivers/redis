@@ -32,7 +32,9 @@ export async function startRedisCluster(ports: number[]): Promise<TestCluster> {
     stderr: "piped",
   });
   try {
+    console.log("Starting redis-cli...");
     const status = await redisCLI.status();
+    console.log("redis-cli was done");
     if (!status.success) {
       stopRedisCluster(cluster);
       const output = await readAll(redisCLI.stderr);
