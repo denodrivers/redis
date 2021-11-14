@@ -1,4 +1,4 @@
-import { nextPort, startRedis, stopRedis } from "../test_util.ts";
+import { nextPort, startRedis, stopRedis, tempPath } from "../test_util.ts";
 import type { TestServer } from "../test_util.ts";
 import { readAll } from "../../vendor/https/deno.land/std/io/util.ts";
 import { delay } from "../../vendor/https/deno.land/std/async/delay.ts";
@@ -12,10 +12,6 @@ export async function startRedisCluster(ports: number[]): Promise<TestCluster> {
     startRedis({
       port,
       clusterEnabled: true,
-      additionalConfigurations: [
-        // TODO: The configuration file should be created in `test/tmp/<port>` directory.
-        `cluster-config-file ${port}_nodes.conf`,
-      ],
     })
   ));
   const cluster = { servers };
@@ -32,9 +28,7 @@ export async function startRedisCluster(ports: number[]): Promise<TestCluster> {
     stderr: "piped",
   });
   try {
-    console.log("Starting redis-cli...");
     const status = await redisCLI.status();
-    console.log("redis-cli was done");
     if (!status.success) {
       stopRedisCluster(cluster);
       const output = await readAll(redisCLI.stderr);
