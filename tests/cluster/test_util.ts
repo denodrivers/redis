@@ -12,6 +12,7 @@ export async function startRedisCluster(ports: number[]): Promise<TestCluster> {
     startRedis({
       port,
       clusterEnabled: true,
+      makeClusterConfigFile: true,
     })
   ));
   const cluster = { servers };

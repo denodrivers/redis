@@ -13,6 +13,7 @@ const encoder = new TextEncoder();
 export async function startRedis({
   port = 6379,
   clusterEnabled = false,
+  makeClusterConfigFile = false,
 }): Promise<TestServer> {
   const path = tempPath(String(port));
 
