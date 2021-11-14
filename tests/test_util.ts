@@ -25,7 +25,9 @@ export async function startRedis({
     if (clusterEnabled) {
       const clusterConfigFile = tempPath(`cluster_node_${port}.conf`);
       config += "cluster-enabled yes\n";
-      config += `cluster-config-file ${clusterConfigFile}`;
+      if (makeClusterConfigFile) {
+        config += `cluster-config-file ${clusterConfigFile}`;
+      }
     }
 
     await Deno.writeFile(`${path}/redis.conf`, encoder.encode(config), {
