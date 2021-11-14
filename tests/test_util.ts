@@ -21,7 +21,6 @@ export async function startRedis({
     Deno.copyFileSync(`tests/server/redis.conf`, `${path}/redis.conf`);
 
     let config = `dir ${path}\nport ${port}\n`;
-    config += clusterEnabled ? "cluster-enabled yes" : "";
     if (clusterEnabled) {
       const clusterConfigFile = tempPath(`${port}_nodes.conf`);
       config += "cluster-enabled yes\n";
