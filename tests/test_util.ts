@@ -13,21 +13,25 @@ const encoder = new TextEncoder();
 export async function startRedis({
   port = 6379,
   clusterEnabled = false,
-  additionalConfigurations = [] as string[],
+  makeClusterConfigFile = false,
 }): Promise<TestServer> {
-  const path = `tests/tmp/${port}`;
+  const path = tempPath(String(port));
 
   if (!(await exists(path))) {
+    const destPath = `${path}/redis.conf`;
     Deno.mkdirSync(path);
-    Deno.copyFileSync(`tests/server/redis.conf`, `${path}/redis.conf`);
+    Deno.copyFileSync(`tests/server/redis.conf`, destPath);
 
     let config = `dir ${path}\nport ${port}\n`;
-    config += clusterEnabled ? "cluster-enabled yes" : "";
-    if (additionalConfigurations.length > 0) {
-      config += "\n" + additionalConfigurations.join("\n");
+    if (clusterEnabled) {
+      config += "cluster-enabled yes\n";
+      if (makeClusterConfigFile) {
+        const clusterConfigFile = `${path}/cluster.conf`;
+        config += `cluster-config-file ${clusterConfigFile}`;
+      }
     }
 
-    await Deno.writeFile(`${path}/redis.conf`, encoder.encode(config), {
+    await Deno.writeFile(destPath, encoder.encode(config), {
       append: true,
     });
   }
@@ -67,4 +71,9 @@ async function exists(path: string): Promise<boolean> {
 let currentPort = 7000;
 export function nextPort(): number {
   return currentPort++;
+}
+
+function tempPath(fileName: string): string {
+  const url = new URL(`./tmp/${fileName}`, import.meta.url);
+  return url.pathname;
 }
