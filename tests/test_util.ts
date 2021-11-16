@@ -39,7 +39,7 @@ export async function startRedis({
   });
 
   // Ample time for server to finish startup
-  await delay(500);
+  await delay(1000);
   return { path, port, process };
 }
 
