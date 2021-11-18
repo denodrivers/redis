@@ -29,6 +29,7 @@ export async function startRedisCluster(ports: number[]): Promise<TestCluster> {
       "1",
       "--cluster-yes",
     ],
+    stdout: "piped",
     stderr: "piped",
   });
   try {
@@ -39,14 +40,24 @@ export async function startRedisCluster(ports: number[]): Promise<TestCluster> {
       const decoder = new TextDecoder();
       throw new Error(`Failed to setup a cluster: ${decoder.decode(output)}`);
     }
-
-    // Ample time for cluster to finish startup
-    await delay(10000);
+    // Wait for cluster setup to complete...
+    await redisCLI.output();
 
     return cluster;
   } finally {
-    redisCLI.stderr.close();
-    redisCLI.close();
+    tryClose(redisCLI.stdout);
+    tryClose(redisCLI.stderr);
+    tryClose(redisCLI);
+  }
+}
+
+function tryClose(closer: Deno.Closer): void {
+  try {
+    closer.close();
+  } catch (error) {
+    if (!(error instanceof Deno.errors.BadResource)) {
+      throw error;
+    }
   }
 }
 
