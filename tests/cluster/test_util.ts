@@ -29,16 +29,16 @@ export async function startRedisCluster(ports: number[]): Promise<TestCluster> {
     stderr: "piped",
   });
   try {
-    // Wait for cluster setup to complete...
-    await redisCLI.output();
-
     const status = await redisCLI.status();
     if (!status.success) {
       stopRedisCluster(cluster);
       const output = await readAll(redisCLI.stderr);
       const decoder = new TextDecoder();
-      throw new Error(`Failed to setup cluster: ${decoder.decode(output)}`);
+      throw new Error(decoder.decode(output));
     }
+
+    // Wait for cluster setup to complete...
+    await redisCLI.output();
 
     return cluster;
   } finally {
