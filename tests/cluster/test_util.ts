@@ -45,6 +45,9 @@ export async function startRedisCluster(ports: number[]): Promise<TestCluster> {
       ].join("\n"));
     }
 
+    // Ample time for cluster to finish startup
+    await delay(5000);
+
     return cluster;
   } finally {
     tryClose(redisCLI.stdout);
