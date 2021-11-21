@@ -38,8 +38,7 @@ export async function startRedis({
     stdout: "null",
   });
 
-  // Ample time for server to finish startup
-  await delay(500);
+  await waitForPort(port);
   return { path, port, process };
 }
 
@@ -67,4 +66,22 @@ async function exists(path: string): Promise<boolean> {
 let currentPort = 7000;
 export function nextPort(): number {
   return currentPort++;
+}
+
+async function waitForPort(port: number): Promise<void> {
+  let retries = 0;
+  const maxRetries = 5;
+  while (true) {
+    try {
+      const conn = await Deno.connect({ port });
+      conn.close();
+      break;
+    } catch (e) {
+      retries++;
+      if (retries === maxRetries) {
+        throw e;
+      }
+      await delay(200);
+    }
+  }
 }
