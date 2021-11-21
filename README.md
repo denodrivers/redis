@@ -63,15 +63,25 @@ const thx = msgFV["no"];
 
 **Cluster**
 
+First, if you need to set up nodes into a working redis cluster:
+
 ```ts
 import { connect } from "https://deno.land/x/redis/mod.ts";
 
-const redis = await connect({ hostname: "127.0.0.1" });
+const redis = await connect({ hostname: "127.0.0.1", port: 6379 });
+
+// connect each node to form a cluster (see https://redis.io/commands/cluster-meet)
 await redis.clusterMeet("127.0.0.1", 6380);
+...
+
+// List the nodes in the cluster
 await redis.clusterNodes();
 // ... 127.0.0.1:6379@16379 myself,master - 0 1593978765000 0 connected
 // ... 127.0.0.1:6380@16380 master - 0 1593978766503 1 connected
 ```
+
+To consume a redis cluster, you can use
+[experimental/cluster module](experimental/cluster/README.md).
 
 ## Advanced Usage
 
