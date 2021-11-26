@@ -116,7 +116,7 @@ const subscriberClient = await redis.subscribe("channel");
 
 ### Execute raw commands
 
-`Redis.sendCommand` is law level interface for
+`Redis.sendCommand` is low level interface for
 [redis protocol](https://redis.io/topics/protocol). You can send raw redis
 commands and receive replies.
 
