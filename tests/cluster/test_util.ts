@@ -37,6 +37,9 @@ export async function startRedisCluster(ports: number[]): Promise<TestCluster> {
       throw new Error(`Failed to setup cluster: ${decoder.decode(errOutput)}`);
     }
 
+    // Ample time for cluster to finish startup
+    await delay(5000);
+
     return cluster;
   } finally {
     tryClose(redisCLI.stderr);
