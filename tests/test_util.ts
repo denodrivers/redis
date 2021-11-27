@@ -16,25 +16,24 @@ export async function startRedis({
   makeClusterConfigFile = false,
 }): Promise<TestServer> {
   const path = tempPath(String(port));
-
   if (!(await exists(path))) {
-    const destPath = `${path}/redis.conf`;
-    Deno.mkdirSync(path);
-
-    let config = Deno.readTextFileSync("tests/server/redis.conf");
-    config += `dir ${path}\nport ${port}\n`;
-    if (clusterEnabled) {
-      config += "cluster-enabled yes\n";
-      if (makeClusterConfigFile) {
-        const clusterConfigFile = `${path}/cluster.conf`;
-        config += `cluster-config-file ${clusterConfigFile}`;
-      }
-    }
-
-    await Deno.writeFile(destPath, encoder.encode(config));
-    console.log(config);
+    await Deno.mkdir(path);
   }
 
+  // Setup redis.conf
+  const destPath = `${path}/redis.conf`;
+  let config = await Deno.readTextFile("tests/server/redis.conf");
+  config += `dir ${path}\nport ${port}\n`;
+  if (clusterEnabled) {
+    config += "cluster-enabled yes\n";
+    if (makeClusterConfigFile) {
+      const clusterConfigFile = `${path}/cluster.conf`;
+      config += `cluster-config-file ${clusterConfigFile}`;
+    }
+  }
+  await Deno.writeFile(destPath, encoder.encode(config));
+
+  // Start redis server
   const process = Deno.run({
     cmd: ["redis-server", `${path}/redis.conf`],
     stdin: "null",
