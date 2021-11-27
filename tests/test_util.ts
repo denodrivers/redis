@@ -20,9 +20,9 @@ export async function startRedis({
   if (!(await exists(path))) {
     const destPath = `${path}/redis.conf`;
     Deno.mkdirSync(path);
-    Deno.copyFileSync(`tests/server/redis.conf`, destPath);
 
-    let config = `dir ${path}\nport ${port}\n`;
+    let config = Deno.readTextFileSync("tests/server/redis.conf");
+    config += `dir ${path}\nport ${port}\n`;
     if (clusterEnabled) {
       config += "cluster-enabled yes\n";
       if (makeClusterConfigFile) {
@@ -31,9 +31,8 @@ export async function startRedis({
       }
     }
 
-    await Deno.writeFile(destPath, encoder.encode(config), {
-      append: true,
-    });
+    await Deno.writeFile(destPath, encoder.encode(config));
+    console.log(config);
   }
 
   const process = Deno.run({
