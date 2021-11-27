@@ -16,6 +16,7 @@ export async function startRedisCluster(ports: number[]): Promise<TestCluster> {
     })
   ));
   const cluster = { servers };
+  await delay(20000);
   const redisCLI = Deno.run({
     cmd: [
       "redis-cli",
