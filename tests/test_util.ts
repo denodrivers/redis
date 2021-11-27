@@ -43,7 +43,6 @@ export async function startRedis({
   });
 
   await waitForPort(port);
-  await delay(500);
   return { path, port, process };
 }
 
