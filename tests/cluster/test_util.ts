@@ -26,24 +26,16 @@ export async function startRedisCluster(ports: number[]): Promise<TestCluster> {
       "1",
       "--cluster-yes",
     ],
-    stdout: "piped",
     stderr: "piped",
   });
   try {
     // Wait for cluster setup to complete...
-    const output = await redisCLI.output();
     const status = await redisCLI.status();
     if (!status.success) {
       stopRedisCluster(cluster);
       const errOutput = await readAll(redisCLI.stderr);
       const decoder = new TextDecoder();
-      throw new Error([
-        "Failed to setup cluster:",
-        "[stdout]",
-        decoder.decode(output),
-        "[stderr]",
-        decoder.decode(errOutput),
-      ].join("\n"));
+      throw new Error(`Failed to setup cluster: ${decoder.decode(errOutput)}`);
     }
 
     // Ample time for cluster to finish startup
@@ -51,7 +43,6 @@ export async function startRedisCluster(ports: number[]): Promise<TestCluster> {
 
     return cluster;
   } finally {
-    tryClose(redisCLI.stdout);
     tryClose(redisCLI.stderr);
     tryClose(redisCLI);
   }
