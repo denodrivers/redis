@@ -1,6 +1,7 @@
 import { nextPort, startRedis, stopRedis } from "../test_util.ts";
 import type { TestServer } from "../test_util.ts";
 import { readAll } from "../../vendor/https/deno.land/std/io/util.ts";
+import { delay } from "../../vendor/https/deno.land/std/async/delay.ts";
 
 export interface TestCluster {
   servers: TestServer[];
@@ -36,6 +37,9 @@ export async function startRedisCluster(ports: number[]): Promise<TestCluster> {
       const decoder = new TextDecoder();
       throw new Error(`Failed to setup cluster: ${decoder.decode(errOutput)}`);
     }
+
+    // Ample time for cluster to finish startup
+    await delay(5000);
 
     return cluster;
   } finally {
