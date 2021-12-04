@@ -1,6 +1,6 @@
 {
   "https://deno.land/std": {
-    "version": "@0.114.0",
+    "version": "@0.117.0",
     "modules": [
       "/async/deferred.ts",
       "/async/delay.ts",
