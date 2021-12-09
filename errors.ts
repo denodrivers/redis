@@ -12,7 +12,7 @@ export class InvalidStateError extends Error {
   }
 }
 
-export function isAlreadyClosed(error: unknown): boolea {
+export function isAlreadyClosed(error: unknown): boolean {
   return error instanceof Deno.errors.BadResource || // `BadResource` is thrown when an attempt is made to write to a closed connection,
     error instanceof Deno.errors.Interrupted;
 }
