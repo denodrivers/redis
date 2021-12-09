@@ -1,5 +1,5 @@
 import type { Connection } from "./connection.ts";
-import { EOFError } from "./errors.ts";
+import { EOFError, isAlreadyClosed } from "./errors.ts";
 import {
   Deferred,
   deferred,
@@ -58,9 +58,8 @@ export class MuxExecutor implements CommandExecutor {
       .catch(async (error) => {
         if (
           this.connection.maxRetryCount > 0 &&
-          // Error `BadResource` is thrown when an attempt is made to write to a closed connection,
           //  Make sure that the connection wasn't explicitly closed by the user before trying to reconnect.
-          ((error instanceof Deno.errors.BadResource &&
+          ((isAlreadyClosed(error) &&
             !this.connection.isClosed) ||
             error instanceof Deno.errors.BrokenPipe ||
             error instanceof Deno.errors.ConnectionAborted ||

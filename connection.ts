@@ -1,3 +1,4 @@
+import { isAlreadyClosed } from "./errors.ts";
 import { RedisReply, sendCommand } from "./protocol/mod.ts";
 import {
   BufReader,
@@ -132,7 +133,7 @@ export class RedisConnection implements Connection {
     try {
       this.closer!.close();
     } catch (error) {
-      if (!(error instanceof Deno.errors.BadResource)) throw error;
+      if (!isAlreadyClosed(error)) throw error;
     }
   }
 

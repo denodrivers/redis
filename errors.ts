@@ -11,3 +11,8 @@ export class InvalidStateError extends Error {
     super("Invalid state");
   }
 }
+
+export function isAlreadyClosed(error: unknown): boolea {
+  return error instanceof Deno.errors.BadResource || // `BadResource` is thrown when an attempt is made to write to a closed connection,
+    error instanceof Deno.errors.Interrupted;
+}

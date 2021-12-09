@@ -1,3 +1,4 @@
+import { isAlreadyClosed } from "../../errors.ts";
 import { nextPort, startRedis, stopRedis } from "../test_util.ts";
 import type { TestServer } from "../test_util.ts";
 import { readAll } from "../../vendor/https/deno.land/std/io/util.ts";
@@ -52,7 +53,7 @@ function tryClose(closer: Deno.Closer): void {
   try {
     closer.close();
   } catch (error) {
-    if (!(error instanceof Deno.errors.BadResource)) {
+    if (!isAlreadyClosed(error)) {
       throw error;
     }
   }
