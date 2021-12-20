@@ -51,7 +51,7 @@ jobs:
 
       - name: Run tests
         run: |
-          deno test --allow-net --allow-read=tests --allow-write=tests/tmp --allow-run=redis-server,redis-cli --unstable ./tests
+          deno test --allow-net --allow-read=tests --allow-write=tests/tmp --allow-run=redis-server,redis-cli --unstable ./tests --filter pubsub
           deno test --doc --no-run --import-map=import_map.test.json --unstable
       - uses: bahmutov/npm-install@v1
         with:
