@@ -16,7 +16,7 @@ import { streamTests } from "./commands/stream.ts";
 import { stringTests } from "./commands/string.ts";
 
 // deno-lint-ignore no-explicit-any
-(Deno.core as any).setPromiseRejectCallback((error) => {
+((Deno as any).core as any).setPromiseRejectCallback((error: any) => {
   console.error(error);
 });
 
