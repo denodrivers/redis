@@ -15,6 +15,11 @@ import { scriptTests } from "./commands/script.ts";
 import { streamTests } from "./commands/stream.ts";
 import { stringTests } from "./commands/string.ts";
 
+// deno-lint-ignore no-explicit-any
+(Deno.core as any).setPromiseRejectCallback((error) => {
+  console.error(error);
+});
+
 Deno.test("commands", async (t) => {
   const port = nextPort();
   const server = await startRedis({ port });
