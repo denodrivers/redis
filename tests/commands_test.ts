@@ -16,8 +16,8 @@ import { streamTests } from "./commands/stream.ts";
 import { stringTests } from "./commands/string.ts";
 
 // deno-lint-ignore no-explicit-any
-((Deno as any).core as any).setPromiseRejectCallback((error: any) => {
-  console.error(["unhandled rejection", error]);
+((Deno as any).core as any).setPromiseRejectCallback((...args: any[]) => {
+  console.error(["unhandled rejection", ...args]);
 });
 
 Deno.test("commands", async (t) => {
