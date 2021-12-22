@@ -4,6 +4,8 @@ import {
   assertEquals,
   assertRejects,
 } from "../../vendor/https/deno.land/std/testing/asserts.ts";
+import type { RedisSubscription } from "../../pubsub.ts";
+import { isAlreadyClosed } from "../../errors.ts";
 import {
   newClient,
   nextPort,
@@ -18,6 +20,18 @@ export async function pubsubTests(
   server: TestServer,
 ): Promise<void> {
   const opts = { hostname: "127.0.0.1", port: server.port };
+
+  async function tryCloseSub<T extends string>(
+    sub: RedisSubscription<T>,
+  ): Promise<void> {
+    try {
+      await sub.close();
+    } catch (err) {
+      if (!isAlreadyClosed(err)) {
+        throw err;
+      }
+    }
+  }
 
   await t.step("testSubscribe", async () => {
     const client = await newClient(opts);
@@ -127,7 +141,7 @@ export async function pubsubTests(
 
     // Cleanup
     clearInterval(interval);
-    await sub.close();
+    await tryCloseSub(sub);
     tryClose(pub);
     tryClose(client);
     stopRedis(tempServer);
