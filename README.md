@@ -72,7 +72,7 @@ const redis = await connect({ hostname: "127.0.0.1", port: 6379 });
 
 // connect each node to form a cluster (see https://redis.io/commands/cluster-meet)
 await redis.clusterMeet("127.0.0.1", 6380);
-...
+// ...
 
 // List the nodes in the cluster
 await redis.clusterNodes();
