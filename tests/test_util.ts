@@ -1,3 +1,4 @@
+import { isAlreadyClosed } from "../errors.ts";
 import { connect, Redis, RedisConnectOptions } from "../mod.ts";
 import { delay } from "../vendor/https/deno.land/std/async/delay.ts";
 
@@ -91,4 +92,14 @@ async function waitForPort(port: number): Promise<void> {
 function tempPath(fileName: string): string {
   const url = new URL(`./tmp/${fileName}`, import.meta.url);
   return url.pathname;
+}
+
+export function tryClose(closer: Deno.Closer): void {
+  try {
+    closer.close();
+  } catch (error) {
+    if (!isAlreadyClosed(error)) {
+      throw error;
+    }
+  }
 }

@@ -1,5 +1,4 @@
-import { isAlreadyClosed } from "../../errors.ts";
-import { nextPort, startRedis, stopRedis } from "../test_util.ts";
+import { nextPort, startRedis, stopRedis, tryClose } from "../test_util.ts";
 import type { TestServer } from "../test_util.ts";
 import { readAll } from "../../vendor/https/deno.land/std/io/util.ts";
 import { delay } from "../../vendor/https/deno.land/std/async/delay.ts";
@@ -46,16 +45,6 @@ export async function startRedisCluster(ports: number[]): Promise<TestCluster> {
   } finally {
     tryClose(redisCLI.stderr);
     tryClose(redisCLI);
-  }
-}
-
-function tryClose(closer: Deno.Closer): void {
-  try {
-    closer.close();
-  } catch (error) {
-    if (!isAlreadyClosed(error)) {
-      throw error;
-    }
   }
 }
 

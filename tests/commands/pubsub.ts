@@ -4,7 +4,13 @@ import {
   assertEquals,
   assertRejects,
 } from "../../vendor/https/deno.land/std/testing/asserts.ts";
-import { newClient, nextPort, startRedis, stopRedis } from "../test_util.ts";
+import {
+  newClient,
+  nextPort,
+  startRedis,
+  stopRedis,
+  tryClose,
+} from "../test_util.ts";
 import type { TestServer } from "../test_util.ts";
 
 export async function pubsubTests(
@@ -19,7 +25,7 @@ export async function pubsubTests(
     await sub.unsubscribe("subsc");
     await sub.close();
     assertEquals(sub.isClosed, true);
-    client.close();
+    tryClose(client);
   });
 
   await t.step("testSubscribe2", async () => {
@@ -70,8 +76,8 @@ export async function pubsubTests(
       message: "heyhey",
     });
     await sub.close();
-    pub.close();
-    client.close();
+    tryClose(pub);
+    tryClose(client);
   });
 
   await t.step("testSubscribe4", async () => {
@@ -108,7 +114,7 @@ export async function pubsubTests(
 
       const tempClient = await newClient({ ...opts, port });
       await tempClient.ping();
-      tempClient.close();
+      tryClose(tempClient);
 
       await delay(1000);
 
@@ -122,8 +128,8 @@ export async function pubsubTests(
     // Cleanup
     clearInterval(interval);
     await sub.close();
-    pub.close();
-    client.close();
+    tryClose(pub);
+    tryClose(client);
     stopRedis(tempServer);
   });
 
@@ -138,7 +144,7 @@ export async function pubsubTests(
         // deno-lint-ignore no-empty
         for await (const _ of sub.receive()) {}
       })();
-      redis.close();
+      tryClose(redis);
       await subscriptionPromise;
       assert(sub.isClosed);
     },
