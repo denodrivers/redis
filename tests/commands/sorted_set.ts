@@ -53,6 +53,23 @@ export async function zsetTests(
     );
   });
 
+  await run("zaddWithMode", async () => {
+    assertEquals(await client.zadd("key", 1, "1", { mode: "NX" }), 1);
+    assertEquals(await client.zadd("key", { "1": 1 }, { mode: "XX" }), 0);
+    assertEquals(
+      await client.zadd("key", [[1, "1"], [2, "2"]], { mode: "NX" }),
+      1,
+    );
+  });
+
+  await run("zaddWithCH", async () => {
+    assertEquals(await client.zadd("key", [[1, "foo"], [2, "bar"]]), 2);
+    assertEquals(
+      await client.zadd("key", { "foo": 1, "bar": 3, "baz": 4 }, { ch: true }),
+      2,
+    );
+  });
+
   await run("zcount", async () => {
     await client.zadd("key", { "1": 1, "2": 2 });
     assertEquals(await client.zcount("key", 0, 1), 1);
