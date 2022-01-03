@@ -1980,23 +1980,31 @@ class RedisImpl implements Redis {
   ) {
     const args: (string | number)[] = [key];
     if (Array.isArray(param1)) {
+      this.pushZAddOpts(args, param2 as ZAddOpts);
       args.push(...param1.flatMap((e) => e));
       opts = param2 as ZAddOpts;
     } else if (typeof param1 === "object") {
+      this.pushZAddOpts(args, param2 as ZAddOpts);
       for (const [member, score] of Object.entries(param1)) {
         args.push(score as number, member);
       }
-      opts = param2 as ZAddOpts;
     } else {
+      this.pushZAddOpts(args, opts);
       args.push(param1, param2 as string);
     }
+    return this.execIntegerReply("ZADD", ...args);
+  }
+
+  private pushZAddOpts(
+    args: (string | number)[],
+    opts?: ZAddOpts,
+  ): void {
     if (opts?.mode) {
       args.push(opts.mode);
     }
     if (opts?.ch) {
       args.push("CH");
     }
-    return this.execIntegerReply("ZADD", ...args);
   }
 
   zaddIncr(
