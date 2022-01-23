@@ -2013,14 +2013,9 @@ class RedisImpl implements Redis {
     member: string,
     opts?: ZAddOpts,
   ) {
-    const args: (string | number)[] = [key, score, member];
-    if (opts?.mode) {
-      args.push(opts.mode);
-    }
-    if (opts?.ch) {
-      args.push("CH");
-    }
-    args.push("INCR");
+    const args: (string | number)[] = [key];
+    this.pushZAddOpts(args, opts);
+    args.push("INCR", score, member);
     return this.execBulkReply("ZADD", ...args);
   }
 

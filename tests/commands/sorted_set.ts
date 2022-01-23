@@ -70,6 +70,34 @@ export async function zsetTests(
     );
   });
 
+  await run("zaddIncr", async () => {
+    await client.zadd("key", 1, "a");
+    await client.zaddIncr("key", 2, "a");
+    assertEquals(await client.zscore("key", "a"), "3");
+  });
+
+  await run("zaddIncrWithMode", async () => {
+    assertEquals(
+      await client.zaddIncr("key", 1, "one", { mode: "XX" }),
+      undefined,
+      "no member should be added",
+    );
+    assertEquals(
+      await client.zaddIncr("key", 2, "two", { mode: "NX" }),
+      "2",
+    );
+  });
+
+  await run("zaddIncrWithCH", async () => {
+    await client.zadd("key", 1, "foo");
+    assertEquals(
+      await client.zaddIncr("key", 3, "foo", { ch: true }),
+      "4",
+      "`ZADD` with `INCR` should return the new score of member",
+    );
+    assertEquals(await client.zscore("key", "foo"), "4");
+  });
+
   await run("zcount", async () => {
     await client.zadd("key", { "1": 1, "2": 2 });
     assertEquals(await client.zcount("key", 0, 1), 1);
