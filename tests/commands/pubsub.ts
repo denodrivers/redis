@@ -74,57 +74,67 @@ export async function pubsubTests(
     client.close();
   });
 
-  await t.step("testSubscribe4", async () => {
-    const port = nextPort();
-    let tempServer = await startRedis({ port });
-    const client = await newClient({ ...opts, port });
-    const pub = await newClient({ ...opts, maxRetryCount: 10, port });
-    const sub = await client.psubscribe("ps*");
-    const it = sub.receive();
+  await t.step({
+    ignore: true, // TODO: This test seems flaky...
+    name: "testSubscribe4",
+    fn: async () => {
+      const port = nextPort();
+      let tempServer = await startRedis({ port });
+      const client = await newClient({ ...opts, port });
+      const pub = await newClient({ ...opts, maxRetryCount: 10, port });
+      const sub = await client.psubscribe("ps*");
+      const it = sub.receive();
 
-    let messages = 0;
+      let messages = 0;
 
-    const interval = setInterval(async () => {
-      await pub.publish("psub", "wayway");
-      messages++;
-    }, 900);
+      const interval = setInterval(async () => {
+        await pub.publish("psub", "wayway");
+        messages++;
+      }, 900);
 
-    setTimeout(() => stopRedis(tempServer), 1000);
+      setTimeout(() => stopRedis(tempServer), 1000);
 
-    setTimeout(async () => {
-      assertEquals(
-        client.isConnected,
-        false,
-        "The main client still thinks it is connected.",
-      );
-      assertEquals(
-        pub.isConnected,
-        false,
-        "The publisher client still thinks it is connected.",
-      );
-      assert(messages < 5, "Too many messages were published.");
+      setTimeout(async () => {
+        assertEquals(
+          client.isConnected,
+          false,
+          "The main client still thinks it is connected.",
+        );
+        assertEquals(
+          pub.isConnected,
+          false,
+          "The publisher client still thinks it is connected.",
+        );
+        assert(messages < 5, "Too many messages were published.");
 
-      tempServer = await startRedis({ port });
+        tempServer = await startRedis({ port });
 
-      const tempClient = await newClient({ ...opts, port });
-      await tempClient.ping();
-      tempClient.close();
+        const tempClient = await newClient({ ...opts, port });
+        await tempClient.ping();
+        tempClient.close();
 
-      await delay(1000);
+        await delay(1000);
 
-      assert(client.isConnected, "The main client is not connected.");
-      assert(pub.isConnected, "The publisher client is not connected.");
-    }, 2000);
+        assert(client.isConnected, "The main client is not connected.");
+        assert(pub.isConnected, "The publisher client is not connected.");
+      }, 2000);
 
-    // Block until all resolve
-    await Promise.all([it.next(), it.next(), it.next(), it.next(), it.next()]);
+      // Block until all resolve
+      await Promise.all([
+        it.next(),
+        it.next(),
+        it.next(),
+        it.next(),
+        it.next(),
+      ]);
 
-    // Cleanup
-    clearInterval(interval);
-    await sub.close();
-    pub.close();
-    client.close();
-    stopRedis(tempServer);
+      // Cleanup
+      clearInterval(interval);
+      await sub.close();
+      pub.close();
+      client.close();
+      stopRedis(tempServer);
+    },
   });
 
   await t.step({
