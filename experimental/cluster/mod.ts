@@ -29,7 +29,7 @@ import type { CommandExecutor } from "../../executor.ts";
 import type { Connection } from "../../connection.ts";
 import type { Redis } from "../../redis.ts";
 import type { RedisReply, RedisValue } from "../../protocol/mod.ts";
-import { ErrorReplyError } from "../../errors.ts";
+import { ErrorReplyError, isAlreadyClosed } from "../../errors.ts";
 import { delay } from "../../vendor/https/deno.land/std/async/delay.ts";
 import calculateSlot from "../../vendor/https/cdn.skypack.dev/cluster-key-slot/lib/index.js";
 import sample from "../../vendor/https/cdn.skypack.dev/lodash-es/sample.js";
@@ -130,7 +130,7 @@ class ClusterExecutor implements CommandExecutor {
         return reply;
       } catch (err) {
         lastError = err;
-        if (err instanceof Deno.errors.BadResource) {
+        if (isAlreadyClosed(err)) {
           tryRandomNode = true;
           if (ttl < kRedisClusterRequestTTL / 2) {
             await delay(100);

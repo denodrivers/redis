@@ -1,5 +1,5 @@
 import type { CommandExecutor } from "./executor.ts";
-import { InvalidStateError } from "./errors.ts";
+import { InvalidStateError, isAlreadyClosed } from "./errors.ts";
 import { readArrayReply } from "./protocol/mod.ts";
 
 type DefaultMessageType = string;
@@ -88,7 +88,7 @@ class RedisSubscriptionImpl<
             TMessage,
           ] | [string, string, string, TMessage];
         } catch (err) {
-          if (err instanceof Deno.errors.BadResource) {
+          if (isAlreadyClosed(err)) {
             // Connection already closed.
             connection.close();
             break;
@@ -112,7 +112,7 @@ class RedisSubscriptionImpl<
       } catch (error) {
         if (
           error instanceof InvalidStateError ||
-          error instanceof Deno.errors.BadResource
+          isAlreadyClosed(error)
         ) {
           forceReconnect = true;
         } else throw error;
