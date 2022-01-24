@@ -138,9 +138,16 @@ export class RedisConnection implements Connection {
   }
 
   async reconnect(): Promise<void> {
-    if (!this.reader.peek(1)) {
-      throw new Error("Client is closed.");
+    try {
+      if (!this.reader.peek(1)) {
+        throw new Error("Client is closed.");
+      }
+    } catch (error) {
+      if (!isAlreadyClosed(error)) {
+        throw error;
+      }
     }
+
     try {
       await sendCommand(this.writer, this.reader, "PING");
       this._isConnected = true;

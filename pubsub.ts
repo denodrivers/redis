@@ -136,6 +136,10 @@ class RedisSubscriptionImpl<
     try {
       await this.unsubscribe(...Object.keys(this.channels));
       await this.punsubscribe(...Object.keys(this.patterns));
+    } catch (error) {
+      if (!isAlreadyClosed(error)) {
+        throw error;
+      }
     } finally {
       this.executor.connection.close();
     }
