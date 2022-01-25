@@ -58,9 +58,9 @@ export async function readReply(
   } catch (e) {
     if (e instanceof Deno.errors.Interrupted) {
       // Resource is gone
-      Deno.exit() 
+      Deno.exit();
     } else {
-      throw e
+      throw e;
     }
   }
   throw new InvalidStateError();
