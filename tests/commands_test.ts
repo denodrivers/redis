@@ -8,7 +8,7 @@ import { hyperloglogTests } from "./commands/hyper_loglog.ts";
 import { keyTests } from "./commands/key.ts";
 import { listTests } from "./commands/list.ts";
 import { pipelineTests } from "./commands/pipeline.ts";
-import { pubsubTests } from "./commands/pubsub.ts";
+// import { pubsubTests } from "./commands/pubsub.ts";
 import { setTests } from "./commands/set.ts";
 import { zsetTests } from "./commands/sorted_set.ts";
 import { scriptTests } from "./commands/script.ts";
@@ -27,7 +27,7 @@ Deno.test("commands", async (t) => {
   await t.step("key", (t) => keyTests(t, server));
   await t.step("list", (t) => listTests(t, server));
   await t.step("pipeline", (t) => pipelineTests(t, server));
-  await t.step("pubsub", (t) => pubsubTests(t, server));
+  // await t.step("pubsub", (t) => pubsubTests(t, server));
   await t.step("set", (t) => setTests(t, server));
   await t.step("zset", (t) => zsetTests(t, server));
   await t.step("script", (t) => scriptTests(t, server));
