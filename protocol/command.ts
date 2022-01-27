@@ -67,6 +67,8 @@ export async function sendCommands(
     } catch (e) {
       if (e instanceof ErrorReplyError) {
         ret.push(e);
+      } else if (e instanceof Deno.errors.Interrupted) {
+        // do nothing
       } else {
         throw e;
       }

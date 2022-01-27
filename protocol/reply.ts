@@ -38,30 +38,21 @@ export function readArrayReply(reader: BufReader): Promise<types.ArrayReply> {
 export async function readReply(
   reader: BufReader,
 ): Promise<types.RedisReply> {
-  try {
-    const res = await reader.peek(1);
-    if (res === null) {
-      throw new EOFError();
-    }
-    switch (res[0]) {
-      case IntegerReplyCode:
-        return await IntegerReply.decode(reader);
-      case SimpleStringCode:
-        return await SimpleStringReply.decode(reader);
-      case BulkReplyCode:
-        return await BulkReply.decode(reader);
-      case ArrayReplyCode:
-        return await ArrayReply.decode(reader);
-      case ErrorReplyCode:
-        tryParseErrorReply(await readLine(reader));
-    }
-  } catch (e) {
-    if (e instanceof Deno.errors.Interrupted) {
-      // Resource is gone
-      Deno.exit();
-    } else {
-      throw e;
-    }
+  const res = await reader.peek(1);
+  if (res === null) {
+    throw new EOFError();
+  }
+  switch (res[0]) {
+    case IntegerReplyCode:
+      return await IntegerReply.decode(reader);
+    case SimpleStringCode:
+      return await SimpleStringReply.decode(reader);
+    case BulkReplyCode:
+      return await BulkReply.decode(reader);
+    case ArrayReplyCode:
+      return await ArrayReply.decode(reader);
+    case ErrorReplyCode:
+      tryParseErrorReply(await readLine(reader));
   }
   throw new InvalidStateError();
 }
