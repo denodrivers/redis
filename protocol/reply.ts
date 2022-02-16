@@ -38,23 +38,30 @@ export function readArrayReply(reader: BufReader): Promise<types.ArrayReply> {
 export async function readReply(
   reader: BufReader,
 ): Promise<types.RedisReply> {
-  const res = await reader.peek(1);
-  if (res === null) {
-    throw new EOFError();
+  try {
+    const res = await reader.peek(1);
+    if (res === null) {
+      throw new EOFError();
+    }
+    switch (res[0]) {
+      case IntegerReplyCode:
+        return await IntegerReply.decode(reader);
+      case SimpleStringCode:
+        return await SimpleStringReply.decode(reader);
+      case BulkReplyCode:
+        return await BulkReply.decode(reader);
+      case ArrayReplyCode:
+        return await ArrayReply.decode(reader);
+      case ErrorReplyCode:
+        tryParseErrorReply(await readLine(reader));
+    }
+    throw new InvalidStateError();
+  } catch (e) {
+    if (e instanceof Deno.errors.Interrupted) {
+      console.error(e);
+    }
+    throw e;
   }
-  switch (res[0]) {
-    case IntegerReplyCode:
-      return await IntegerReply.decode(reader);
-    case SimpleStringCode:
-      return await SimpleStringReply.decode(reader);
-    case BulkReplyCode:
-      return await BulkReply.decode(reader);
-    case ArrayReplyCode:
-      return await ArrayReply.decode(reader);
-    case ErrorReplyCode:
-      tryParseErrorReply(await readLine(reader));
-  }
-  throw new InvalidStateError();
 }
 
 class IntegerReply implements types.IntegerReply {
