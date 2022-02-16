@@ -58,7 +58,7 @@ export async function readReply(
   } catch (e) {
     if (e instanceof Deno.errors.Interrupted) {
       // Resource is gone
-      Deno.exit();
+      console.error(`Unable to read, the connection has been closed.`)
     } else {
       throw e;
     }
