@@ -54,6 +54,8 @@ export async function readReply(
         return await ArrayReply.decode(reader);
       case ErrorReplyCode:
         tryParseErrorReply(await readLine(reader));
+      default:
+        throw new InvalidStateError();
     }
   } catch (e) {
     if (e instanceof Deno.errors.Interrupted) {
@@ -63,7 +65,6 @@ export async function readReply(
       throw e;
     }
   }
-  throw new InvalidStateError();
 }
 
 class IntegerReply implements types.IntegerReply {
