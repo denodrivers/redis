@@ -174,9 +174,10 @@ Deno.test("client", async (t) => {
     const tempClient = await newClient({ hostname: "127.0.0.1", port });
     try {
       const id = await tempClient.clientID();
-      tempClient.brpop(0, "key1"); // Block.
+      const promise = tempClient.brpop(0, "key1"); // Block.
       await delay(5); // Give some leeway for brpop to reach redis.
       assertEquals(await client.clientUnblock(id, "TIMEOUT"), 1);
+      await promise;
     } finally {
       tempClient.close();
     }
