@@ -7,7 +7,7 @@ type ValidMessageType = string | string[];
 
 export interface RedisSubscription<
   TMessage extends ValidMessageType = DefaultMessageType,
-  > {
+> {
   readonly isClosed: boolean;
   readonly readable: ReadableStream<RedisPubSubMessage<TMessage>>;
   receive(): AsyncIterableIterator<RedisPubSubMessage<TMessage>>;
@@ -26,7 +26,7 @@ export interface RedisPubSubMessage<TMessage = DefaultMessageType> {
 
 class RedisSubscriptionImpl<
   TMessage extends ValidMessageType = DefaultMessageType,
-  > implements RedisSubscription<TMessage> {
+> implements RedisSubscription<TMessage> {
   get isConnected(): boolean {
     return this.executor.connection.isConnected;
   }
@@ -106,13 +106,13 @@ class RedisSubscriptionImpl<
                 controller.enqueue({
                   channel: rep[1],
                   message: rep[2],
-                })
+                });
               } else if (ev === "pmessage" && rep.length === 4) {
                 controller.enqueue({
                   pattern: rep[1],
                   channel: rep[2],
                   message: rep[3],
-                })
+                });
               }
             } catch (error) {
               if (
@@ -157,10 +157,10 @@ class RedisSubscriptionImpl<
 
 export async function subscribe<
   TMessage extends ValidMessageType = DefaultMessageType,
-  >(
-    executor: CommandExecutor,
-    ...channels: string[]
-  ): Promise<RedisSubscription<TMessage>> {
+>(
+  executor: CommandExecutor,
+  ...channels: string[]
+): Promise<RedisSubscription<TMessage>> {
   const sub = new RedisSubscriptionImpl<TMessage>(executor);
   await sub.subscribe(...channels);
   return sub;
@@ -168,10 +168,10 @@ export async function subscribe<
 
 export async function psubscribe<
   TMessage extends ValidMessageType = DefaultMessageType,
-  >(
-    executor: CommandExecutor,
-    ...patterns: string[]
-  ): Promise<RedisSubscription<TMessage>> {
+>(
+  executor: CommandExecutor,
+  ...patterns: string[]
+): Promise<RedisSubscription<TMessage>> {
   const sub = new RedisSubscriptionImpl<TMessage>(executor);
   await sub.psubscribe(...patterns);
   return sub;
