@@ -135,6 +135,7 @@ class RedisSubscriptionImpl<
               }
             }
           }
+          controller.close();
         },
       });
     }
@@ -149,6 +150,7 @@ class RedisSubscriptionImpl<
     try {
       await this.unsubscribe(...Object.keys(this.channels));
       await this.punsubscribe(...Object.keys(this.patterns));
+      if (this.#readable) this.#readable.cancel();
     } finally {
       this.executor.connection.close();
     }
