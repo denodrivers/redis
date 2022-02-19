@@ -7,8 +7,9 @@ type ValidMessageType = string | string[];
 
 export interface RedisSubscription<
   TMessage extends ValidMessageType = DefaultMessageType,
-> {
+  > {
   readonly isClosed: boolean;
+  readonly readable: ReadableStream<RedisPubSubMessage<TMessage>>;
   receive(): AsyncIterableIterator<RedisPubSubMessage<TMessage>>;
   psubscribe(...patterns: string[]): Promise<void>;
   subscribe(...channels: string[]): Promise<void>;
@@ -25,7 +26,7 @@ export interface RedisPubSubMessage<TMessage = DefaultMessageType> {
 
 class RedisSubscriptionImpl<
   TMessage extends ValidMessageType = DefaultMessageType,
-> implements RedisSubscription<TMessage> {
+  > implements RedisSubscription<TMessage> {
   get isConnected(): boolean {
     return this.executor.connection.isConnected;
   }
@@ -70,66 +71,78 @@ class RedisSubscriptionImpl<
     }
   }
 
-  async *receive(): AsyncIterableIterator<RedisPubSubMessage<TMessage>> {
-    let forceReconnect = false;
-    const connection = this.executor.connection;
-    while (this.isConnected) {
-      try {
-        let rep: [string, string, TMessage] | [
-          string,
-          string,
-          string,
-          TMessage,
-        ];
-        try {
-          rep = (await readArrayReply(connection.reader)).value() as [
-            string,
-            string,
-            TMessage,
-          ] | [string, string, string, TMessage];
-        } catch (err) {
-          if (err instanceof Deno.errors.BadResource) {
-            // Connection already closed.
-            connection.close();
-            break;
-          }
-          throw err;
-        }
-        const ev = rep[0];
+  #readable: ReadableStream<RedisPubSubMessage<TMessage>> | undefined;
+  get readable(): ReadableStream<RedisPubSubMessage<TMessage>> {
+    if (this.#readable === undefined) {
+      this.#readable = new ReadableStream({
+        pull: async (controller) => {
+          let forceReconnect = false;
+          const connection = this.executor.connection;
+          while (this.isConnected) {
+            try {
+              let rep: [string, string, TMessage] | [
+                string,
+                string,
+                string,
+                TMessage,
+              ];
+              try {
+                rep = (await readArrayReply(connection.reader)).value() as [
+                  string,
+                  string,
+                  TMessage,
+                ] | [string, string, string, TMessage];
+              } catch (err) {
+                if (err instanceof Deno.errors.BadResource) {
+                  // Connection already closed.
+                  connection.close();
+                  break;
+                }
+                throw err;
+              }
+              const ev = rep[0];
 
-        if (ev === "message" && rep.length === 3) {
-          yield {
-            channel: rep[1],
-            message: rep[2],
-          };
-        } else if (ev === "pmessage" && rep.length === 4) {
-          yield {
-            pattern: rep[1],
-            channel: rep[2],
-            message: rep[3],
-          };
-        }
-      } catch (error) {
-        if (
-          error instanceof InvalidStateError ||
-          error instanceof Deno.errors.BadResource
-        ) {
-          forceReconnect = true;
-        } else throw error;
-      } finally {
-        if ((!this.isClosed && !this.isConnected) || forceReconnect) {
-          await connection.reconnect();
-          forceReconnect = false;
+              if (ev === "message" && rep.length === 3) {
+                controller.enqueue({
+                  channel: rep[1],
+                  message: rep[2],
+                })
+              } else if (ev === "pmessage" && rep.length === 4) {
+                controller.enqueue({
+                  pattern: rep[1],
+                  channel: rep[2],
+                  message: rep[3],
+                })
+              }
+            } catch (error) {
+              if (
+                error instanceof InvalidStateError ||
+                error instanceof Deno.errors.BadResource
+              ) {
+                forceReconnect = true;
+              } else throw error;
+            } finally {
+              if ((!this.isClosed && !this.isConnected) || forceReconnect) {
+                await connection.reconnect();
+                forceReconnect = false;
 
-          if (Object.keys(this.channels).length > 0) {
-            await this.subscribe(...Object.keys(this.channels));
+                if (Object.keys(this.channels).length > 0) {
+                  await this.subscribe(...Object.keys(this.channels));
+                }
+                if (Object.keys(this.patterns).length > 0) {
+                  await this.psubscribe(...Object.keys(this.patterns));
+                }
+              }
+            }
           }
-          if (Object.keys(this.patterns).length > 0) {
-            await this.psubscribe(...Object.keys(this.patterns));
-          }
-        }
-      }
+        },
+      });
     }
+    return this.#readable;
+  }
+
+  async *receive(): AsyncIterableIterator<RedisPubSubMessage<TMessage>> {
+    return this.readable;
   }
 
   async close() {
@@ -144,10 +157,10 @@ class RedisSubscriptionImpl<
 
 export async function subscribe<
   TMessage extends ValidMessageType = DefaultMessageType,
->(
-  executor: CommandExecutor,
-  ...channels: string[]
-): Promise<RedisSubscription<TMessage>> {
+  >(
+    executor: CommandExecutor,
+    ...channels: string[]
+  ): Promise<RedisSubscription<TMessage>> {
   const sub = new RedisSubscriptionImpl<TMessage>(executor);
   await sub.subscribe(...channels);
   return sub;
@@ -155,10 +168,10 @@ export async function subscribe<
 
 export async function psubscribe<
   TMessage extends ValidMessageType = DefaultMessageType,
->(
-  executor: CommandExecutor,
-  ...patterns: string[]
-): Promise<RedisSubscription<TMessage>> {
+  >(
+    executor: CommandExecutor,
+    ...patterns: string[]
+  ): Promise<RedisSubscription<TMessage>> {
   const sub = new RedisSubscriptionImpl<TMessage>(executor);
   await sub.psubscribe(...patterns);
   return sub;
