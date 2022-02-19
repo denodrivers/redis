@@ -141,8 +141,8 @@ class RedisSubscriptionImpl<
     return this.#readable;
   }
 
-  async *receive(): AsyncIterableIterator<RedisPubSubMessage<TMessage>> {
-    return this.readable;
+  receive(): AsyncIterableIterator<RedisPubSubMessage<TMessage>> {
+    return this.readable[Symbol.asyncIterator]();
   }
 
   async close() {
