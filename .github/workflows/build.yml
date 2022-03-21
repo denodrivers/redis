@@ -34,14 +34,14 @@ jobs:
 
       - name: Check mod.ts
         run: |
-          deno run --allow-read --allow-write --allow-run tools/make_mod.ts
+          deno task make_mod
           git diff --exit-code
           deno cache mod.ts # Ensure that mod.ts works without --unstable
 
       - name: Run lint
         run: |
-          deno fmt --check --ignore=./benchmark/node_modules
-          deno lint --ignore=./benchmark/node_modules
+          deno fmt --check
+          deno lint
 
       - name: Set up Redis ${{ matrix.redis }}
         uses: shogo82148/actions-setup-redis@v1
@@ -51,11 +51,10 @@ jobs:
 
       - name: Run tests
         run: |
-          deno test --allow-net --allow-read=tests --allow-write=tests/tmp --allow-run=redis-server,redis-cli ./tests
+          deno task test
       - name: Run doc tests
         run: |
-          deno test --doc --no-run --import-map=import_map.test.json
-
+          deno task test:doc
       - uses: bahmutov/npm-install@v1
         with:
           working-directory: benchmark
