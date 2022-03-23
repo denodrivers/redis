@@ -13,7 +13,7 @@ export async function pubsubTests(
 ): Promise<void> {
   const opts = { hostname: "127.0.0.1", port: server.port };
 
-  await t.step("testSubscribe", async () => {
+  await t.step("subscribe() & unsubscribe()", async () => {
     const client = await newClient(opts);
     const sub = await client.subscribe("subsc");
     await sub.unsubscribe("subsc");
@@ -22,7 +22,7 @@ export async function pubsubTests(
     client.close();
   });
 
-  await t.step("testSubscribe2", async () => {
+  await t.step("receive()", async () => {
     const client = await newClient(opts);
     const pub = await newClient(opts);
     const sub = await client.subscribe("subsc2");
@@ -45,7 +45,7 @@ export async function pubsubTests(
     }, Deno.errors.BadResource);
   });
 
-  await t.step("testSubscribe3", async () => {
+  await t.step("psubscribe()", async () => {
     const client = await newClient(opts);
     const pub = await newClient(opts);
     const sub = await client.psubscribe("ps*");
@@ -74,7 +74,7 @@ export async function pubsubTests(
     client.close();
   });
 
-  await t.step("testSubscribe4", async () => {
+  await t.step("retry", async () => {
     const port = nextPort();
     let tempServer = await startRedis({ port });
     const client = await newClient({ ...opts, port });
