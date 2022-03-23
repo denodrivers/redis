@@ -37,6 +37,7 @@ class RedisSubscriptionImpl<
 
   private channels = Object.create(null);
   private patterns = Object.create(null);
+  private isClosing: boolean | undefined;
 
   constructor(private executor: CommandExecutor) {
     // Force retriable connection for connection shared for pub/sub.
@@ -75,10 +76,14 @@ class RedisSubscriptionImpl<
   get readable(): ReadableStream<RedisPubSubMessage<TMessage>> {
     if (this.#readable === undefined) {
       this.#readable = new ReadableStream({
-        pull: async (controller) => {
-          let forceReconnect = false;
+        pull: (controller) => {
+          if (!this.isConnected || this.isClosing) {
+            return controller.close();
+          }
+
           const connection = this.executor.connection;
-          while (this.isConnected) {
+          const pull = async (): Promise<void> => {
+            let forceReconnect = false;
             try {
               let rep: [string, string, TMessage] | [
                 string,
@@ -96,12 +101,12 @@ class RedisSubscriptionImpl<
                 if (err instanceof Deno.errors.BadResource) {
                   // Connection already closed.
                   connection.close();
-                  break;
+                  controller.close();
                 }
                 throw err;
               }
-              const ev = rep[0];
 
+              const ev = rep[0];
               if (ev === "message" && rep.length === 3) {
                 controller.enqueue({
                   channel: rep[1],
@@ -122,9 +127,12 @@ class RedisSubscriptionImpl<
                 forceReconnect = true;
               } else throw error;
             } finally {
-              if ((!this.isClosed && !this.isConnected) || forceReconnect) {
+              if (this.isClosing) {
+                controller.close();
+              } else if (
+                (!this.isClosed && !this.isConnected) || forceReconnect
+              ) {
                 await connection.reconnect();
-                forceReconnect = false;
 
                 if (Object.keys(this.channels).length > 0) {
                   await this.subscribe(...Object.keys(this.channels));
@@ -132,10 +140,15 @@ class RedisSubscriptionImpl<
                 if (Object.keys(this.patterns).length > 0) {
                   await this.psubscribe(...Object.keys(this.patterns));
                 }
+
+                if (forceReconnect) {
+                  await pull();
+                }
               }
             }
-          }
-          controller.close();
+          };
+
+          return pull();
         },
       });
     }
@@ -147,12 +160,14 @@ class RedisSubscriptionImpl<
   }
 
   async close() {
+    if (this.isClosing) return;
     try {
+      this.isClosing = true;
       await this.unsubscribe(...Object.keys(this.channels));
       await this.punsubscribe(...Object.keys(this.patterns));
-      if (this.#readable) this.#readable.cancel();
     } finally {
       this.executor.connection.close();
+      this.isClosing = false;
     }
   }
 }
