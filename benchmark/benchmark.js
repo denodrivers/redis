@@ -1,4 +1,5 @@
-import { add, complete, configure, cycle, suite } from "benny";
+import { add, complete, configure, cycle, save, suite } from "benny";
+import { dirname, join } from "node:path";
 
 export function run({
   driver,
@@ -10,11 +11,13 @@ export function run({
     add("ping", async () => {
       await client.ping("HELLO");
     }),
-    add("set & get", async () => {
-      const key = "foo";
+    add("set & get", () => {
       const value = "bar".repeat(10);
-      await client.set(key, value);
-      await client.get(key);
+      return async () => {
+        const key = "foo";
+        await client.set(key, value);
+        await client.get(key);
+      };
     }),
     add("mset & mget", async () => {
       await client.mset({ a: "foo", b: "bar" });
@@ -54,6 +57,11 @@ export function run({
     }),
     complete(async () => {
       await client.flushdb();
+    }),
+    save({
+      file: `${driver}-bench`,
+      format: "chart.html",
+      folder: join(dirname(dirname(new URL(import.meta.url).pathname)), "tmp"),
     }),
   );
 }

@@ -62,3 +62,7 @@ jobs:
         run: |
           deno task bench:ioredis
           deno task bench:deno-redis
+      - uses: actions/upload-artifact@v3
+        with:
+          name: benchmark
+          path: tmp/*.html
