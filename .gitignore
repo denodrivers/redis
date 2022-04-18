@@ -2,5 +2,4 @@ deno.d.ts
 .idea
 testdata/*/
 benchmark/node_modules
-benchmark/benchmark.js
 tests/tmp/*/

@@ -9,13 +9,17 @@
   "lint": {
     "files": {
       "exclude": [
-        "benchmark/node_modules"
+        "benchmark/node_modules",
+        "benchmark/benchmark.js",
+        "benchmark/ioredis.js"
       ]
     }
   },
   "tasks": {
     "test": "deno test --allow-net --allow-read=tests --allow-write=tests/tmp --allow-run=redis-server,redis-cli ./tests",
     "test:doc": "deno test --doc --no-run --import-map=import_map.test.json",
-    "make_mod": "deno run --allow-read --allow-write --allow-run tools/make_mod.ts"
+    "make_mod": "deno run --allow-read --allow-write --allow-run tools/make_mod.ts",
+    "bench:deno-redis": "deno run --compat --unstable --allow-net=127.0.0.1:6379 --allow-read --allow-env benchmark/deno-redis.ts",
+    "bench:ioredis": "node benchmark/ioredis.js"
   }
 }

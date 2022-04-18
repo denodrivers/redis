@@ -8,6 +8,7 @@
   "license": "MIT",
   "private": true,
   "devDependencies": {
+    "benny": "^3.7.1",
     "ioredis": "^4.22.0"
   }
 }
