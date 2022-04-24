@@ -1,4 +1,4 @@
-import { run } from "./benchmark.ts";
+import { run } from "./benchmark.js";
 import { connect } from "../mod.ts";
 
 const redis = await connect({ hostname: "127.0.0.1" });

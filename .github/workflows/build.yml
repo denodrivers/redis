@@ -59,8 +59,10 @@ jobs:
         with:
           working-directory: benchmark
       - name: Run benchmarks
-        working-directory: benchmark
         run: |
-          deno bundle benchmark.ts > benchmark.js
-          deno run -A deno-redis.ts
-          node ioredis.js
+          deno task bench:ioredis
+          deno task bench:deno-redis
+      - uses: actions/upload-artifact@v3
+        with:
+          name: benchmark
+          path: tmp/*.html
