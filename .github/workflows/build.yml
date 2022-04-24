@@ -36,7 +36,7 @@ jobs:
         run: |
           deno task make_mod
           git diff --exit-code
-          deno cache mod.ts # Ensure that mod.ts works without --unstable
+          deno check mod.ts
 
       - name: Run lint
         run: |
