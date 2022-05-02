@@ -9,6 +9,7 @@ export interface RedisSubscription<
   TMessage extends ValidMessageType = DefaultMessageType,
 > {
   readonly isClosed: boolean;
+  readonly readable: ReadableStream<RedisPubSubMessage<TMessage>>;
   receive(): AsyncIterableIterator<RedisPubSubMessage<TMessage>>;
   psubscribe(...patterns: string[]): Promise<void>;
   subscribe(...channels: string[]): Promise<void>;
@@ -36,6 +37,7 @@ class RedisSubscriptionImpl<
 
   private channels = Object.create(null);
   private patterns = Object.create(null);
+  private isClosing: boolean | undefined;
 
   constructor(private executor: CommandExecutor) {
     // Force retriable connection for connection shared for pub/sub.
@@ -70,74 +72,102 @@ class RedisSubscriptionImpl<
     }
   }
 
-  async *receive(): AsyncIterableIterator<RedisPubSubMessage<TMessage>> {
-    let forceReconnect = false;
-    const connection = this.executor.connection;
-    while (this.isConnected) {
-      try {
-        let rep: [string, string, TMessage] | [
-          string,
-          string,
-          string,
-          TMessage,
-        ];
-        try {
-          rep = (await readArrayReply(connection.reader)).value() as [
-            string,
-            string,
-            TMessage,
-          ] | [string, string, string, TMessage];
-        } catch (err) {
-          if (err instanceof Deno.errors.BadResource) {
-            // Connection already closed.
-            connection.close();
-            break;
+  #readable: ReadableStream<RedisPubSubMessage<TMessage>> | undefined;
+  get readable(): ReadableStream<RedisPubSubMessage<TMessage>> {
+    if (this.#readable === undefined) {
+      this.#readable = new ReadableStream({
+        pull: (controller) => {
+          if (!this.isConnected || this.isClosing) {
+            return controller.close();
           }
-          throw err;
-        }
-        const ev = rep[0];
 
-        if (ev === "message" && rep.length === 3) {
-          yield {
-            channel: rep[1],
-            message: rep[2],
-          };
-        } else if (ev === "pmessage" && rep.length === 4) {
-          yield {
-            pattern: rep[1],
-            channel: rep[2],
-            message: rep[3],
-          };
-        }
-      } catch (error) {
-        if (
-          error instanceof InvalidStateError ||
-          error instanceof Deno.errors.BadResource
-        ) {
-          forceReconnect = true;
-        } else throw error;
-      } finally {
-        if ((!this.isClosed && !this.isConnected) || forceReconnect) {
-          await connection.reconnect();
-          forceReconnect = false;
+          const connection = this.executor.connection;
+          const pull = async (): Promise<void> => {
+            let forceReconnect = false;
+            try {
+              let rep: [string, string, TMessage] | [
+                string,
+                string,
+                string,
+                TMessage,
+              ];
+              try {
+                rep = (await readArrayReply(connection.reader)).value() as [
+                  string,
+                  string,
+                  TMessage,
+                ] | [string, string, string, TMessage];
+              } catch (err) {
+                if (err instanceof Deno.errors.BadResource) {
+                  // Connection already closed.
+                  connection.close();
+                  controller.close();
+                }
+                throw err;
+              }
 
-          if (Object.keys(this.channels).length > 0) {
-            await this.subscribe(...Object.keys(this.channels));
-          }
-          if (Object.keys(this.patterns).length > 0) {
-            await this.psubscribe(...Object.keys(this.patterns));
-          }
-        }
-      }
+              const ev = rep[0];
+              if (ev === "message" && rep.length === 3) {
+                controller.enqueue({
+                  channel: rep[1],
+                  message: rep[2],
+                });
+              } else if (ev === "pmessage" && rep.length === 4) {
+                controller.enqueue({
+                  pattern: rep[1],
+                  channel: rep[2],
+                  message: rep[3],
+                });
+              }
+            } catch (error) {
+              if (
+                error instanceof InvalidStateError ||
+                error instanceof Deno.errors.BadResource
+              ) {
+                forceReconnect = true;
+              } else throw error;
+            } finally {
+              if (this.isClosing) {
+                controller.close();
+              } else if (
+                (!this.isClosed && !this.isConnected) || forceReconnect
+              ) {
+                await connection.reconnect();
+
+                if (Object.keys(this.channels).length > 0) {
+                  await this.subscribe(...Object.keys(this.channels));
+                }
+                if (Object.keys(this.patterns).length > 0) {
+                  await this.psubscribe(...Object.keys(this.patterns));
+                }
+
+                if (forceReconnect) {
+                  await pull();
+                }
+              }
+            }
+          };
+
+          return pull();
+        },
+      });
     }
+    return this.#readable;
+  }
+
+  receive(): AsyncIterableIterator<RedisPubSubMessage<TMessage>> {
+    return this.readable[Symbol.asyncIterator]();
   }
 
   async close() {
+    if (this.isClosing) return;
     try {
+      this.isClosing = true;
       await this.unsubscribe(...Object.keys(this.channels));
       await this.punsubscribe(...Object.keys(this.patterns));
     } finally {
       this.executor.connection.close();
+      this.isClosing = false;
     }
   }
 }
