@@ -44,7 +44,7 @@ class Reply implements types.RedisReply {
 
   async integer(): Promise<types.Integer> {
     if (this.#code !== IntegerReplyCode) {
-      throw new InvalidStateError();
+      throw createParseError(this.#code, "integer");
     }
     const buffer = await readIntegerReply(this.#reader);
     return parseInt(decoder.decode(buffer));
@@ -64,7 +64,7 @@ class Reply implements types.RedisReply {
         return decoder.decode(buffer);
       }
       default:
-        throw new InvalidStateError();
+        throw createParseError(this.#code, "string");
     }
   }
 
@@ -75,7 +75,7 @@ class Reply implements types.RedisReply {
         return buffer ? decoder.decode(buffer) : undefined;
       }
       default:
-        throw new InvalidStateError();
+        throw createParseError(this.#code, "bulk");
     }
   }
 
@@ -90,13 +90,13 @@ class Reply implements types.RedisReply {
         return buffer ?? new Uint8Array();
       }
       default:
-        throw new InvalidStateError();
+        throw createParseError(this.#code, "buffer");
     }
   }
 
   array(): Promise<types.ConditionalArray> {
     if (this.#code !== ArrayReplyCode) {
-      throw new InvalidStateError();
+      throw createParseError(this.#code, "array");
     }
     return readArrayReply(this.#reader);
   }
@@ -226,4 +226,12 @@ function parseSize(line: Uint8Array): number {
   const sizeStr = line.subarray(1);
   const size = parseInt(decoder.decode(sizeStr));
   return size;
+}
+
+function createParseError(code: number, expectedType: string): Error {
+  return new InvalidStateError(
+    `cannot read '${
+      String.fromCharCode(code)
+    }' type as \`${expectedType}\` value`,
+  );
 }
