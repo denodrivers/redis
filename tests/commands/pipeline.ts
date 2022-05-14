@@ -1,10 +1,4 @@
-import { ErrorReplyError } from "../../mod.ts";
-import type {
-  ArrayReply,
-  BulkReply,
-  IntegerReply,
-  SimpleStringReply,
-} from "../../protocol/mod.ts";
+import { ErrorReplyError, RedisReply } from "../../mod.ts";
 import {
   assert,
   assertEquals,
@@ -32,20 +26,13 @@ export async function pipelineTests(
     ]);
     const ret = await pl.flush();
     assertEquals(ret.length, 7);
-    assertEquals((ret[0] as SimpleStringReply).type, "simple string");
-    assertEquals((ret[0] as SimpleStringReply).value(), "PONG");
-    assertEquals((ret[1] as SimpleStringReply).type, "simple string");
-    assertEquals((ret[1] as SimpleStringReply).value(), "PONG");
-    assertEquals((ret[2] as SimpleStringReply).type, "simple string");
-    assertEquals((ret[2] as SimpleStringReply).value(), "OK");
-    assertEquals((ret[3] as SimpleStringReply).type, "simple string");
-    assertEquals((ret[3] as SimpleStringReply).value(), "OK");
-    assertEquals((ret[4] as ArrayReply).type, "array");
-    assertEquals((ret[4] as ArrayReply).value(), ["value1", "value2"]);
-    assertEquals((ret[5] as IntegerReply).type, "integer");
-    assertEquals((ret[5] as IntegerReply).value(), 1);
-    assertEquals((ret[6] as IntegerReply).type, "integer");
-    assertEquals((ret[6] as IntegerReply).value(), 1);
+    assertEquals(await (ret[0] as RedisReply).value(), "PONG");
+    assertEquals(await (ret[1] as RedisReply).value(), "PONG");
+    assertEquals(await (ret[2] as RedisReply).value(), "OK");
+    assertEquals(await (ret[3] as RedisReply).value(), "OK");
+    assertEquals(await (ret[4] as RedisReply).value(), ["value1", "value2"]);
+    assertEquals(await (ret[5] as RedisReply).value(), 1);
+    assertEquals(await (ret[6] as RedisReply).value(), 1);
     client.close();
   });
 
@@ -74,38 +61,20 @@ export async function pipelineTests(
       tx3.incr("key"),
       tx3.get("key"),
     ]);
-    const rep1 = await tx1.flush() as [
-      BulkReply,
-      IntegerReply,
-      IntegerReply,
-      IntegerReply,
-      BulkReply,
-    ];
-    const rep2 = await tx2.flush() as [
-      BulkReply,
-      IntegerReply,
-      IntegerReply,
-      IntegerReply,
-      BulkReply,
-    ];
-    const rep3 = await tx3.flush() as [
-      BulkReply,
-      IntegerReply,
-      IntegerReply,
-      IntegerReply,
-      BulkReply,
-    ];
+    const rep1 = await tx1.flush() as Array<RedisReply>;
+    const rep2 = await tx2.flush() as Array<RedisReply>;
+    const rep3 = await tx3.flush() as Array<RedisReply>;
     assertEquals(
-      parseInt(rep1[4].value()!),
-      parseInt(rep1[0].value()!) + 3,
+      parseInt(await rep1[4].string()),
+      parseInt(await rep1[0].string()) + 3,
     );
     assertEquals(
-      parseInt(rep2[4].value()!),
-      parseInt(rep2[0].value()!) + 3,
+      parseInt(await rep2[4].string()),
+      parseInt(await rep2[0].string()) + 3,
     );
     assertEquals(
-      parseInt(rep3[4].value()!),
-      parseInt(rep3[0].value()!) + 3,
+      parseInt(await rep3[4].string()),
+      parseInt(await rep3[0].string()) + 3,
     );
     client.close();
   });
@@ -128,11 +97,11 @@ export async function pipelineTests(
         string,
         string,
         string,
-        [SimpleStringReply, SimpleStringReply, SimpleStringReply],
+        [RedisReply, RedisReply, RedisReply],
         string,
         string,
         string,
-        [BulkReply, BulkReply, BulkReply],
+        [RedisReply, RedisReply, RedisReply],
       ];
 
       assertEquals(res.length, 8);
@@ -142,12 +111,9 @@ export async function pipelineTests(
 
       // flush()
       assertEquals(res[3].length, 3);
-      assertEquals(res[3][0].type, "simple string");
-      assertEquals(res[3][0].value(), "OK");
-      assertEquals(res[3][1].type, "simple string");
-      assertEquals(res[3][1].value(), "OK");
-      assertEquals(res[3][2].type, "simple string");
-      assertEquals(res[3][2].value(), "OK");
+      assertEquals(await res[3][0].value(), "OK");
+      assertEquals(await res[3][1].value(), "OK");
+      assertEquals(await res[3][2].value(), "OK");
 
       assertEquals(res[4], "OK"); // get(a)
       assertEquals(res[5], "OK"); // get(b)
@@ -155,12 +121,9 @@ export async function pipelineTests(
 
       // flush()
       assertEquals(res[7].length, 3);
-      assertEquals(res[7][0].type, "bulk string");
-      assertEquals(res[7][0].value(), "a");
-      assertEquals(res[7][1].type, "bulk string");
-      assertEquals(res[7][1].value(), "b");
-      assertEquals(res[7][2].type, "bulk string");
-      assertEquals(res[7][2].value(), "c");
+      assertEquals(await res[7][0].value(), "a");
+      assertEquals(await res[7][1].value(), "b");
+      assertEquals(await res[7][2].value(), "c");
 
       client.close();
     }
@@ -172,13 +135,11 @@ export async function pipelineTests(
     tx.set("a", "a");
     tx.eval("var", ["k"], ["v"]);
     tx.get("a");
-    const resp = await tx.flush();
+    const resp = await tx.flush() as Array<RedisReply>;
     assertEquals(resp.length, 3);
-    assertEquals((resp[0] as SimpleStringReply).type, "simple string");
-    assertEquals((resp[0] as SimpleStringReply).value(), "OK");
+    assertEquals(await (resp[0] as RedisReply).value(), "OK");
     assert(resp[1] instanceof ErrorReplyError);
-    assertEquals((resp[2] as BulkReply).type, "bulk string");
-    assertEquals((resp[2] as BulkReply).value(), "a");
+    assertEquals(await (resp[2] as RedisReply).value(), "a");
     client.close();
   });
 }
