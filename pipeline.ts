@@ -53,7 +53,7 @@ export class PipelineExecutor implements CommandExecutor {
     ...args: RedisValue[]
   ): Promise<RedisReply> {
     this.commands.push({ command, args });
-    return Promise.resolve(createSimpleStringReply("OK"));
+    return createSimpleStringReply("OK");
   }
 
   close(): void {
