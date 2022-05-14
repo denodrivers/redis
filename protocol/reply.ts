@@ -127,7 +127,7 @@ async function readIntegerReply(reader: BufReader): Promise<Uint8Array> {
   }
 
   const { line } = result;
-  return line.subarray(1, line.length - 3);
+  return line.subarray(1);
 }
 
 async function readBulkReply(reader: BufReader): Promise<Uint8Array | null> {
@@ -161,7 +161,7 @@ async function readSimpleStringReply(reader: BufReader): Promise<Uint8Array> {
   if (line[0] !== SimpleStringCode) {
     tryParseErrorReply(line);
   }
-  return line.subarray(1, line.length - 3);
+  return line.subarray(1);
 }
 
 export async function readArrayReply(
@@ -216,7 +216,7 @@ function tryParseErrorReply(line: Uint8Array): never {
 }
 
 function parseSize(line: Uint8Array): number {
-  const sizeStr = line.subarray(1, line.length - 3);
+  const sizeStr = line.subarray(1);
   const size = parseInt(decoder.decode(sizeStr));
   return size;
 }
