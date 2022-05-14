@@ -23,28 +23,24 @@ export function createReply(reader: BufReader): Promise<types.RedisReply> {
 class Reply implements types.RedisReply {
   #reader: BufReader;
   #code: number;
-  #bodyBuffer: Uint8Array | null = null;
-  #bodyArray: types.ConditionalArray | null = null;
+  #body: Promise<Uint8Array | types.ConditionalArray | null>;
 
   private constructor(reader: BufReader, code: number) {
     this.#reader = reader;
     this.#code = code;
+    this.#body = this.#readBody();
   }
 
-  async #fillBody(): Promise<void> {
+  async #readBody(): Promise<Uint8Array | types.ConditionalArray | null> {
     switch (this.#code) {
       case IntegerReplyCode:
-        this.#bodyBuffer = await readIntegerReplyBody(this.#reader);
-        break;
+        return readIntegerReplyBody(this.#reader);
       case SimpleStringCode:
-        this.#bodyBuffer = await readSimpleStringReplyBody(this.#reader);
-        break;
+        return readSimpleStringReplyBody(this.#reader);
       case BulkReplyCode:
-        this.#bodyBuffer = await readBulkReplyBody(this.#reader);
-        break;
+        return readBulkReplyBody(this.#reader);
       case ArrayReplyCode:
-        this.#bodyArray = await readArrayReplyBody(this.#reader);
-        break;
+        return readArrayReplyBody(this.#reader);
       default:
         throw new InvalidStateError();
     }
@@ -61,9 +57,7 @@ class Reply implements types.RedisReply {
       await tryReadErrorReply(reader);
     }
 
-    const reply = new Reply(reader, code);
-    await reply.#fillBody();
-    return reply;
+    return new Reply(reader, code);
   }
 
   async integer(): Promise<types.Integer> {
@@ -71,41 +65,45 @@ class Reply implements types.RedisReply {
       throw createParseError(this.#code, "integer");
     }
 
-    if (this.#bodyBuffer === null) {
-      throw new InvalidStateError("body is not initialized yet");
-    }
-
-    return parseInt(decoder.decode(this.#bodyBuffer));
+    const body = await this.#body as Uint8Array;
+    return parseInt(decoder.decode(body));
   }
 
   async string(): Promise<string> {
-    if (this.#bodyBuffer === null) {
-      throw new InvalidStateError("body is not initialized yet");
+    switch (this.#code) {
+      case SimpleStringCode:
+      case BulkReplyCode:
+      case IntegerReplyCode:
+        const body = await this.#body as Uint8Array;
+        return decoder.decode(body);
+      default:
+        throw createParseError(this.#code, "string");
     }
-
-    return decoder.decode(this.#bodyBuffer);
   }
 
   async bulk(): Promise<types.Bulk> {
     if (this.#code !== BulkReplyCode) {
       throw createParseError(this.#code, "bulk");
     }
-    return this.#bodyBuffer ? decoder.decode(this.#bodyBuffer) : undefined;
+    const body = await this.#body;
+    return body ? decoder.decode(body as Uint8Array) : undefined;
   }
 
   async buffer(): Promise<Uint8Array> {
-    if (this.#bodyBuffer === null) {
+    const body = await this.#body;
+    if (!(body instanceof Uint8Array)) {
       throw createParseError(this.#code, "buffer");
     }
-
-    return this.#bodyBuffer;
+    return body;
   }
 
-  array(): Promise<types.ConditionalArray> {
-    if (this.#code !== ArrayReplyCode || this.#bodyArray === null) {
+  async array(): Promise<types.ConditionalArray> {
+    if (this.#code !== ArrayReplyCode) {
       throw createParseError(this.#code, "array");
     }
-    return Promise.resolve(this.#bodyArray);
+
+    const body = await this.#body as types.ConditionalArray;
+    return body;
   }
 
   async value(): Promise<types.Raw> {
