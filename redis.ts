@@ -148,7 +148,7 @@ class RedisImpl implements Redis {
     ...args: RedisValue[]
   ): Promise<Integer> {
     const reply = await this.executor.exec(command, ...args);
-    return reply.integer();
+    return reply.value() as Promise<Integer>;
   }
 
   async execBinaryReply(
@@ -172,7 +172,7 @@ class RedisImpl implements Redis {
     ...args: RedisValue[]
   ): Promise<T[]> {
     const reply = await this.executor.exec(command, ...args);
-    return reply.array() as Promise<Array<T>>;
+    return reply.value() as Promise<Array<T>>;
   }
 
   async execIntegerOrNilReply(
