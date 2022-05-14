@@ -82,6 +82,10 @@ class SimpleStringReply extends BaseReply {
     this.#body = body;
   }
 
+  override bulk() {
+    return this.string();
+  }
+
   override buffer() {
     return this.#body;
   }
@@ -107,6 +111,10 @@ class BulkReply extends BaseReply {
     this.#body = body;
   }
 
+  override bulk() {
+    return this.#body ? decoder.decode(this.#body) : undefined;
+  }
+
   override buffer() {
     return this.#body ?? new Uint8Array();
   }
@@ -116,7 +124,7 @@ class BulkReply extends BaseReply {
   }
 
   override value() {
-    return this.string();
+    return this.bulk();
   }
 }
 
