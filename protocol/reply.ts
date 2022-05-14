@@ -146,7 +146,7 @@ async function readBulkReply(reader: BufReader): Promise<Uint8Array | null> {
     // nil bulk reply
     return null;
   }
-  const dest = new Uint8Array(size + 2);
+  const dest = new Uint8Array(size);
   await reader.readFull(dest);
   return dest;
 }
