@@ -164,7 +164,7 @@ class RedisImpl implements Redis {
     ...args: RedisValue[]
   ): Promise<T> {
     const reply = await this.executor.exec(command, ...args);
-    return reply.bulk() as Promise<T>;
+    return reply.value() as Promise<T>;
   }
 
   async execArrayReply<T extends Raw = Raw>(
