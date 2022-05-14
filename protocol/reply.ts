@@ -24,10 +24,6 @@ export async function readReply(reader: BufReader): Promise<types.RedisReply> {
   }
 
   const code = res[0];
-  if (code === ErrorReplyCode) {
-    await tryReadErrorReply(reader);
-  }
-
   switch (code) {
     case IntegerReplyCode:
       return await IntegerReply.decode(reader);
@@ -38,7 +34,7 @@ export async function readReply(reader: BufReader): Promise<types.RedisReply> {
     case ArrayReplyCode:
       return await ArrayReply.decode(reader);
     case ErrorReplyCode:
-      throw tryReadErrorReply(reader);
+      await tryReadErrorReply(reader);
     default:
       throw new InvalidStateError(
         `unknown code: '${String.fromCharCode(code)}' (${code})`,
@@ -272,7 +268,6 @@ async function tryReadErrorReply(reader: BufReader): Promise<never> {
   tryParseErrorReply(line);
 }
 
-// TODO Consider using `std/io/bufio.ts` instead
 async function readLine(reader: BufReader): Promise<Uint8Array> {
   const result = await reader.readLine();
   if (result == null) {
