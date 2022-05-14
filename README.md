@@ -121,20 +121,18 @@ const subscriberClient = await redis.subscribe("channel");
 commands and receive replies.
 
 ```ts
-import { connect, replyTypes } from "https://deno.land/x/redis/mod.ts";
+import { connect } from "https://deno.land/x/redis/mod.ts";
 
 const redis = await connect({ hostname: "127.0.0.1" });
 
 {
   const reply = await redis.sendCommand("SET", "redis", "nice");
-  console.assert(reply.type === replyTypes.SimpleString);
-  console.assert(reply.value() === "OK");
+  console.assert(await reply.value() === "OK");
 }
 
 {
   const reply = await redis.sendCommand("GET", "redis");
-  console.assert(reply.type === replyTypes.BulkString);
-  console.assert(reply.value() === "nice");
+  console.assert(await reply.value() === "nice");
 }
 ```
 
