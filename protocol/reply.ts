@@ -24,6 +24,10 @@ export async function readReply(reader: BufReader): Promise<types.RedisReply> {
   }
 
   const code = res[0];
+  if (code === ErrorReplyCode) {
+    await tryReadErrorReply(reader);
+  }
+
   switch (code) {
     case IntegerReplyCode:
       return await IntegerReply.decode(reader);
@@ -33,9 +37,6 @@ export async function readReply(reader: BufReader): Promise<types.RedisReply> {
       return await BulkReply.decode(reader);
     case ArrayReplyCode:
       return await ArrayReply.decode(reader);
-    case ErrorReplyCode:
-      await tryReadErrorReply(reader);
-      break;
     default:
       throw new InvalidStateError(
         `unknown code: '${String.fromCharCode(code)}' (${code})`,
