@@ -140,7 +140,7 @@ class RedisImpl implements Redis {
     ...args: RedisValue[]
   ): Promise<SimpleString> {
     const reply = await this.executor.exec(command, ...args);
-    return reply.string();
+    return reply.value() as SimpleString;
   }
 
   async execIntegerReply(
@@ -148,7 +148,7 @@ class RedisImpl implements Redis {
     ...args: RedisValue[]
   ): Promise<Integer> {
     const reply = await this.executor.exec(command, ...args);
-    return reply.value() as Promise<Integer>;
+    return reply.value() as Integer;
   }
 
   async execBinaryReply(
@@ -164,7 +164,7 @@ class RedisImpl implements Redis {
     ...args: RedisValue[]
   ): Promise<T> {
     const reply = await this.executor.exec(command, ...args);
-    return reply.value() as Promise<T>;
+    return reply.value() as T;
   }
 
   async execArrayReply<T extends Raw = Raw>(
@@ -172,7 +172,7 @@ class RedisImpl implements Redis {
     ...args: RedisValue[]
   ): Promise<T[]> {
     const reply = await this.executor.exec(command, ...args);
-    return reply.value() as Promise<Array<T>>;
+    return reply.value() as Array<T>;
   }
 
   async execIntegerOrNilReply(
@@ -180,7 +180,7 @@ class RedisImpl implements Redis {
     ...args: RedisValue[]
   ): Promise<Integer | BulkNil> {
     const reply = await this.executor.exec(command, ...args);
-    return reply.value() as Promise<Integer | BulkNil>;
+    return reply.value() as Integer | BulkNil;
   }
 
   async execStatusOrNilReply(
@@ -188,7 +188,7 @@ class RedisImpl implements Redis {
     ...args: RedisValue[]
   ): Promise<SimpleString | BulkNil> {
     const reply = await this.executor.exec(command, ...args);
-    return reply.string() as Promise<SimpleString | BulkNil>;
+    return reply.string() as SimpleString | BulkNil;
   }
 
   aclCat(categoryname?: string) {
