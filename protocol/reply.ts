@@ -1,4 +1,4 @@
-import { Buffer, BufReader } from "../vendor/https/deno.land/std/io/buffer.ts";
+import { BufReader } from "../vendor/https/deno.land/std/io/buffer.ts";
 import type * as types from "./types.ts";
 import { EOFError, ErrorReplyError, InvalidStateError } from "../errors.ts";
 import { decoder, encoder } from "./_util.ts";
