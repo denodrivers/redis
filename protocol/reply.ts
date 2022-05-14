@@ -36,6 +36,9 @@ class Reply implements types.RedisReply {
     }
 
     const code = res[0];
+    if (code === ErrorReplyCode) {
+      await tryReadErrorReply(reader);
+    }
     return new Reply(reader, code);
   }
 
@@ -109,11 +112,7 @@ class Reply implements types.RedisReply {
       case ArrayReplyCode:
         return await this.array();
       case ErrorReplyCode: {
-        const result = await this.#reader.readLine();
-        if (result == null) {
-          throw new InvalidStateError();
-        }
-        tryParseErrorReply(result.line);
+        await tryReadErrorReply(this.#reader);
       }
     }
     throw new InvalidStateError();
@@ -213,6 +212,14 @@ function tryParseErrorReply(line: Uint8Array): never {
     throw new ErrorReplyError(decoder.decode(line));
   }
   throw new Error(`invalid line: ${line}`);
+}
+
+async function tryReadErrorReply(reader: BufReader): Promise<never> {
+  const result = await reader.readLine();
+  if (result == null) {
+    throw new InvalidStateError();
+  }
+  tryParseErrorReply(result.line);
 }
 
 function parseSize(line: Uint8Array): number {
