@@ -180,7 +180,7 @@ class RedisImpl implements Redis {
     ...args: RedisValue[]
   ): Promise<Integer | BulkNil> {
     const reply = await this.executor.exec(command, ...args);
-    return reply.integer() as Promise<Integer | BulkNil>;
+    return reply.value() as Promise<Integer | BulkNil>;
   }
 
   async execStatusOrNilReply(
