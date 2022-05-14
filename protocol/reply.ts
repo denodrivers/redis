@@ -1,7 +1,7 @@
 import { Buffer, BufReader } from "../vendor/https/deno.land/std/io/buffer.ts";
 import type * as types from "./types.ts";
 import { EOFError, ErrorReplyError, InvalidStateError } from "../errors.ts";
-import { decoder } from "./_util.ts";
+import { decoder, encoder } from "./_util.ts";
 
 const IntegerReplyCode = ":".charCodeAt(0);
 const BulkReplyCode = "$".charCodeAt(0);
@@ -9,202 +9,233 @@ const SimpleStringCode = "+".charCodeAt(0);
 const ArrayReplyCode = "*".charCodeAt(0);
 const ErrorReplyCode = "-".charCodeAt(0);
 
-export const replyTypes = {
-  Integer: "integer",
-  SimpleString: "simple string",
-  Array: "array",
-  BulkString: "bulk string",
-} as const;
-
 export function unwrapReply(
   reply: types.RedisReplyOrError,
 ): types.Raw | ErrorReplyError {
   if (reply instanceof ErrorReplyError) {
     return reply;
   }
-  return reply.value();
 }
 
 export function createSimpleStringReply(
   status: string,
-): types.SimpleStringReply {
-  return new SimpleStringReply(status);
+): types.RedisReply {
+  const buffer = new Buffer(encoder.encode("+" + status));
+  return new Reply(BufReader.create(buffer), SimpleStringCode);
 }
 
-export function readArrayReply(reader: BufReader): Promise<types.ArrayReply> {
-  return ArrayReply.decode(reader);
+export function readReply(reader: BufReader): Promise<types.RedisReply> {
+  return Reply.create(reader);
 }
 
-export async function readReply(
+export async function parseReply(
   reader: BufReader,
-): Promise<types.RedisReply> {
+): Promise<types.Raw> {
   const res = await reader.peek(1);
   if (res === null) {
     throw new EOFError();
   }
-  switch (res[0]) {
+
+  const code = res[0];
+  const reply = new Reply(reader, code);
+  switch (code) {
     case IntegerReplyCode:
-      return await IntegerReply.decode(reader);
+      return await reply.integer();
     case SimpleStringCode:
-      return await SimpleStringReply.decode(reader);
+      return await reply.string();
     case BulkReplyCode:
-      return await BulkReply.decode(reader);
+      return await reply.bulk();
     case ArrayReplyCode:
-      return await ArrayReply.decode(reader);
-    case ErrorReplyCode:
-      tryParseErrorReply(await readLine(reader));
+      return await reply.array();
+    case ErrorReplyCode: {
+      const result = await reader.readLine();
+      if (result == null) {
+        throw new InvalidStateError();
+      }
+      tryParseErrorReply(result.line);
+    }
   }
   throw new InvalidStateError();
 }
 
-class IntegerReply implements types.IntegerReply {
-  #integer: types.Integer;
+class Reply implements types.RedisReply {
+  #reader: BufReader;
+  #code: number;
 
-  constructor(integer: types.Integer) {
-    this.#integer = integer;
+  constructor(reader: BufReader, code: number) {
+    this.#reader = reader;
+    this.#code = code;
   }
 
-  static async decode(reader: BufReader): Promise<types.IntegerReply> {
-    const line = await readLine(reader);
-    if (line[0] === ":") {
-      const str = line.substr(1, line.length - 3);
-      return new IntegerReply(parseInt(str));
+  static async create(reader: BufReader): Promise<types.RedisReply> {
+    const res = await reader.peek(1);
+    if (res == null) {
+      throw new EOFError();
     }
+
+    const code = res[0];
+    return new Reply(reader, code);
+  }
+
+  async integer(): Promise<types.Integer> {
+    if (this.#code !== IntegerReplyCode) {
+      throw new InvalidStateError();
+    }
+    const buffer = await readIntegerReply(this.#reader);
+    return parseInt(decoder.decode(buffer));
+  }
+
+  async string(): Promise<string> {
+    switch (this.#code) {
+      case BulkReplyCode: {
+        const buffer = await readBulkReply(this.#reader);
+        if (buffer == null) {
+          throw new InvalidStateError();
+        }
+        return decoder.decode(buffer);
+      }
+      case SimpleStringCode: {
+        const buffer = await readSimpleStringReply(this.#reader);
+        return decoder.decode(buffer);
+      }
+      default:
+        throw new InvalidStateError();
+    }
+  }
+
+  async bulk(): Promise<types.Bulk> {
+    switch (this.#code) {
+      case BulkReplyCode: {
+        const buffer = await readBulkReply(this.#reader);
+        return buffer ? decoder.decode(buffer) : undefined;
+      }
+      default:
+        throw new InvalidStateError();
+    }
+  }
+
+  async buffer(): Promise<Uint8Array> {
+    switch (this.#code) {
+      case IntegerReplyCode:
+        return readIntegerReply(this.#reader);
+      case SimpleStringCode:
+        return readSimpleStringReply(this.#reader);
+      case BulkReplyCode: {
+        const buffer = await readBulkReply(this.#reader);
+        return buffer ?? new Uint8Array();
+      }
+      default:
+        throw new InvalidStateError();
+    }
+  }
+
+  async array(): Promise<types.ConditionalArray> {
+    if (this.#code !== ArrayReplyCode) {
+      throw new InvalidStateError();
+    }
+    return readArrayReply(this.#reader);
+  }
+}
+
+async function readIntegerReply(reader: BufReader): Promise<Uint8Array> {
+  const result = await reader.readLine();
+  if (result == null) {
+    throw new InvalidStateError();
+  }
+
+  const { line } = result;
+  return line.subarray(1, line.length - 3);
+}
+
+async function readBulkReply(reader: BufReader): Promise<Uint8Array | null> {
+  const result = await reader.readLine();
+  if (result == null) {
+    throw new InvalidStateError();
+  }
+
+  const { line } = result;
+  if (line[0] !== BulkReplyCode) {
     tryParseErrorReply(line);
   }
 
-  get type(): "integer" {
-    return replyTypes.Integer;
+  const size = parseSize(line);
+  if (size < 0) {
+    // nil bulk reply
+    return null;
   }
-
-  value(): types.Integer {
-    return this.#integer;
-  }
+  const dest = new Uint8Array(size + 2);
+  await reader.readFull(dest);
+  return dest;
 }
 
-class BulkReply implements types.BulkReply {
-  #buffer?: Uint8Array;
-
-  constructor(buffer: Uint8Array | types.BulkNil) {
-    this.#buffer = buffer;
+async function readSimpleStringReply(reader: BufReader): Promise<Uint8Array> {
+  const result = await reader.readLine();
+  if (result == null) {
+    throw new InvalidStateError();
   }
 
-  static nil(): types.BulkReply {
-    return new BulkReply(undefined);
-  }
-
-  static async decode(reader: BufReader): Promise<types.BulkReply> {
-    const line = await readLine(reader);
-    if (line[0] !== "$") {
-      tryParseErrorReply(line);
-    }
-    const sizeStr = line.substr(1, line.length - 3);
-    const size = parseInt(sizeStr);
-    if (size < 0) {
-      // nil bulk reply
-      return BulkReply.nil();
-    }
-    const dest = new Uint8Array(size + 2);
-    await reader.readFull(dest);
-    return new BulkReply(dest);
-  }
-
-  get type(): "bulk string" {
-    return replyTypes.BulkString;
-  }
-
-  value(): types.Bulk {
-    return this.#buffer
-      ? decoder.decode(this.#buffer.subarray(0, this.#buffer.length - 2))
-      : undefined;
-  }
-
-  buffer(): Uint8Array | types.BulkNil {
-    return this.#buffer?.subarray(0, this.#buffer.length - 2);
-  }
-}
-
-class SimpleStringReply implements types.SimpleStringReply {
-  #status: string;
-
-  constructor(status: string) {
-    this.#status = status;
-  }
-
-  static async decode(reader: BufReader): Promise<types.SimpleStringReply> {
-    const line = await readLine(reader);
-    if (line[0] === "+") {
-      return new SimpleStringReply(line.substr(1, line.length - 3));
-    }
+  const { line } = result;
+  if (line[0] !== SimpleStringCode) {
     tryParseErrorReply(line);
   }
-
-  get type(): "simple string" {
-    return replyTypes.SimpleString;
-  }
-
-  value(): types.SimpleString {
-    return this.#status;
-  }
+  return line.subarray(1, line.length - 3);
 }
 
-class ArrayReply implements types.ArrayReply {
-  #array: types.ConditionalArray;
-
-  constructor(array: types.ConditionalArray) {
-    this.#array = array;
+export async function readArrayReply(
+  reader: BufReader,
+): Promise<types.ConditionalArray> {
+  const result = await reader.readLine();
+  if (result == null) {
+    throw new InvalidStateError();
   }
 
-  static async decode(reader: BufReader): Promise<types.ArrayReply> {
-    const line = await readLine(reader);
-    const argCount = parseInt(line.substr(1, line.length - 3));
-    const result: types.ConditionalArray = [];
-    for (let i = 0; i < argCount; i++) {
-      const res = await reader.peek(1);
-      if (res === null) {
-        throw new EOFError();
+  const { line } = result;
+  const argCount = parseSize(line);
+  const array: types.ConditionalArray = [];
+  for (let i = 0; i < argCount; i++) {
+    const res = await reader.peek(1);
+    if (res === null) {
+      throw new EOFError();
+    }
+    const code = res[0];
+    switch (res[0]) {
+      case SimpleStringCode: {
+        const reply = new Reply(reader, code);
+        array.push(await reply.string());
+        break;
       }
-      switch (res[0]) {
-        case SimpleStringCode: {
-          const reply = await SimpleStringReply.decode(reader);
-          result.push(reply.value());
-          break;
-        }
-        case BulkReplyCode: {
-          const reply = await BulkReply.decode(reader);
-          result.push(reply.value());
-          break;
-        }
-        case IntegerReplyCode: {
-          const reply = await IntegerReply.decode(reader);
-          result.push(reply.value());
-          break;
-        }
-        case ArrayReplyCode: {
-          const reply = await ArrayReply.decode(reader);
-          result.push(reply.value());
-          break;
-        }
+      case BulkReplyCode: {
+        const reply = new Reply(reader, code);
+        array.push(await reply.bulk());
+        break;
+      }
+      case IntegerReplyCode: {
+        const reply = new Reply(reader, code);
+        array.push(await reply.integer());
+        break;
+      }
+      case ArrayReplyCode: {
+        const reply = await readArrayReply(reader);
+        array.push(reply);
+        break;
       }
     }
-    return new ArrayReply(result);
   }
-
-  get type(): "array" {
-    return replyTypes.Array;
-  }
-
-  value() {
-    return this.#array;
-  }
+  return array;
 }
 
-function tryParseErrorReply(line: string): never {
+function tryParseErrorReply(line: Uint8Array): never {
   const code = line[0];
-  if (code === "-") {
-    throw new ErrorReplyError(line);
+  if (code === ErrorReplyCode) {
+    throw new ErrorReplyError(decoder.decode(line));
   }
   throw new Error(`invalid line: ${line}`);
+}
+
+function parseSize(line: Uint8Array): number {
+  const sizeStr = line.subarray(1, line.length - 3);
+  const size = parseInt(decoder.decode(sizeStr));
+  return size;
 }
 
 // TODO Consider using `std/io/bufio.ts` instead

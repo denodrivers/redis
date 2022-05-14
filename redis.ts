@@ -49,7 +49,6 @@ import type {
   Binary,
   Bulk,
   BulkNil,
-  BulkReply,
   BulkString,
   ConditionalArray,
   Integer,
@@ -142,7 +141,7 @@ class RedisImpl implements Redis {
     ...args: RedisValue[]
   ): Promise<SimpleString> {
     const reply = await this.executor.exec(command, ...args);
-    return reply.value() as SimpleString;
+    return reply.string();
   }
 
   async execIntegerReply(
@@ -150,14 +149,14 @@ class RedisImpl implements Redis {
     ...args: RedisValue[]
   ): Promise<Integer> {
     const reply = await this.executor.exec(command, ...args);
-    return reply.value() as Integer;
+    return reply.integer();
   }
 
   async execBinaryReply(
     command: string,
     ...args: RedisValue[]
   ): Promise<Binary | BulkNil> {
-    const reply = await this.executor.exec(command, ...args) as BulkReply;
+    const reply = await this.executor.exec(command, ...args);
     return reply.buffer();
   }
 
@@ -166,7 +165,7 @@ class RedisImpl implements Redis {
     ...args: RedisValue[]
   ): Promise<T> {
     const reply = await this.executor.exec(command, ...args);
-    return reply.value() as T;
+    return reply.bulk() as Promise<T>;
   }
 
   async execArrayReply<T extends Raw = Raw>(
@@ -174,7 +173,7 @@ class RedisImpl implements Redis {
     ...args: RedisValue[]
   ): Promise<T[]> {
     const reply = await this.executor.exec(command, ...args);
-    return reply.value() as T[];
+    return reply.array() as Promise<Array<T>>;
   }
 
   async execIntegerOrNilReply(
@@ -182,7 +181,7 @@ class RedisImpl implements Redis {
     ...args: RedisValue[]
   ): Promise<Integer | BulkNil> {
     const reply = await this.executor.exec(command, ...args);
-    return reply.value() as Integer | BulkNil;
+    return reply.integer() as Promise<Integer | BulkNil>;
   }
 
   async execStatusOrNilReply(
@@ -190,7 +189,7 @@ class RedisImpl implements Redis {
     ...args: RedisValue[]
   ): Promise<SimpleString | BulkNil> {
     const reply = await this.executor.exec(command, ...args);
-    return reply.value() as SimpleString | BulkNil;
+    return reply.string() as Promise<SimpleString | BulkNil>;
   }
 
   aclCat(categoryname?: string) {
