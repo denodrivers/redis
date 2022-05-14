@@ -2,7 +2,7 @@ import {
   BufReader,
   BufWriter,
 } from "../vendor/https/deno.land/std/io/buffer.ts";
-import { createReply } from "./reply.ts";
+import { readReply } from "./reply.ts";
 import { ErrorReplyError } from "../errors.ts";
 import { encoder } from "./_util.ts";
 import type { RedisReply, RedisReplyOrError, RedisValue } from "./types.ts";
@@ -44,7 +44,7 @@ export async function sendCommand(
 ): Promise<RedisReply> {
   await writeRequest(writer, command, args);
   await writer.flush();
-  return createReply(reader);
+  return readReply(reader);
 }
 
 export async function sendCommands(
@@ -62,7 +62,7 @@ export async function sendCommands(
   const ret: RedisReplyOrError[] = [];
   for (let i = 0; i < commands.length; i++) {
     try {
-      const rep = await createReply(reader);
+      const rep = await readReply(reader);
       ret.push(rep);
     } catch (e) {
       if (e instanceof ErrorReplyError) {
