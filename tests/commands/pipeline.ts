@@ -1,4 +1,4 @@
-import { ErrorReplyError, RedisReply } from "../../mod.ts";
+import { ErrorReplyError, Raw } from "../../mod.ts";
 import {
   assert,
   assertEquals,
@@ -25,14 +25,15 @@ export async function pipelineTests(
       pl.del("set2"),
     ]);
     const ret = await pl.flush();
-    assertEquals(ret.length, 7);
-    assertEquals(await (ret[0] as RedisReply).value(), "PONG");
-    assertEquals(await (ret[1] as RedisReply).value(), "PONG");
-    assertEquals(await (ret[2] as RedisReply).value(), "OK");
-    assertEquals(await (ret[3] as RedisReply).value(), "OK");
-    assertEquals(await (ret[4] as RedisReply).value(), ["value1", "value2"]);
-    assertEquals(await (ret[5] as RedisReply).value(), 1);
-    assertEquals(await (ret[6] as RedisReply).value(), 1);
+    assertEquals(ret, [
+      "PONG",
+      "PONG",
+      "OK",
+      "OK",
+      ["value1", "value2"],
+      1,
+      1,
+    ]);
     client.close();
   });
 
@@ -61,20 +62,20 @@ export async function pipelineTests(
       tx3.incr("key"),
       tx3.get("key"),
     ]);
-    const rep1 = await tx1.flush() as Array<RedisReply>;
-    const rep2 = await tx2.flush() as Array<RedisReply>;
-    const rep3 = await tx3.flush() as Array<RedisReply>;
+    const rep1 = await tx1.flush() as Array<Raw>;
+    const rep2 = await tx2.flush() as Array<Raw>;
+    const rep3 = await tx3.flush() as Array<Raw>;
     assertEquals(
-      parseInt(await rep1[4].string()),
-      parseInt(await rep1[0].string()) + 3,
+      parseInt(rep1[4] as string),
+      parseInt(rep1[0] as string) + 3,
     );
     assertEquals(
-      parseInt(await rep2[4].string()),
-      parseInt(await rep2[0].string()) + 3,
+      parseInt(rep2[4] as string),
+      parseInt(rep2[0] as string) + 3,
     );
     assertEquals(
-      parseInt(await rep3[4].string()),
-      parseInt(await rep3[0].string()) + 3,
+      parseInt(rep3[4] as string),
+      parseInt(rep3[0] as string) + 3,
     );
     client.close();
   });
@@ -93,37 +94,18 @@ export async function pipelineTests(
         promises.push(tx.get(key));
       }
       promises.push(tx.flush());
-      const res = await Promise.all(promises) as [
-        string,
-        string,
-        string,
-        [RedisReply, RedisReply, RedisReply],
-        string,
-        string,
-        string,
-        [RedisReply, RedisReply, RedisReply],
-      ];
+      const res = await Promise.all(promises);
 
-      assertEquals(res.length, 8);
-      assertEquals(res[0], "OK"); // set(a)
-      assertEquals(res[1], "OK"); // set(b)
-      assertEquals(res[2], "OK"); // set(c)
-
-      // flush()
-      assertEquals(res[3].length, 3);
-      assertEquals(await res[3][0].value(), "OK");
-      assertEquals(await res[3][1].value(), "OK");
-      assertEquals(await res[3][2].value(), "OK");
-
-      assertEquals(res[4], "OK"); // get(a)
-      assertEquals(res[5], "OK"); // get(b)
-      assertEquals(res[6], "OK"); // get(c)
-
-      // flush()
-      assertEquals(res[7].length, 3);
-      assertEquals(await res[7][0].value(), "a");
-      assertEquals(await res[7][1].value(), "b");
-      assertEquals(await res[7][2].value(), "c");
+      assertEquals(res, [
+        "OK", // set(a)
+        "OK", // set(b)
+        "OK", // set(c)
+        ["OK", "OK", "OK"], // flush()
+        "OK", // get(a)
+        "OK", // get(b)
+        "OK", // get(c)
+        ["a", "b", "c"], // flush()
+      ]);
 
       client.close();
     }
@@ -135,11 +117,11 @@ export async function pipelineTests(
     tx.set("a", "a");
     tx.eval("var", ["k"], ["v"]);
     tx.get("a");
-    const resp = await tx.flush() as Array<RedisReply>;
+    const resp = await tx.flush() as Array<Raw>;
     assertEquals(resp.length, 3);
-    assertEquals(await (resp[0] as RedisReply).value(), "OK");
+    assertEquals(resp[0], "OK");
     assert(resp[1] instanceof ErrorReplyError);
-    assertEquals(await (resp[2] as RedisReply).value(), "a");
+    assertEquals(resp[2], "a");
     client.close();
   });
 }

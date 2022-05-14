@@ -52,4 +52,4 @@ export interface RedisReply {
   value(): Raw;
 }
 
-export type RedisReplyOrError = RedisReply | ErrorReplyError;
+export type RawOrError = Raw | ErrorReplyError;

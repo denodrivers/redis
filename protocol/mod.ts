@@ -6,16 +6,12 @@ export type {
   ConditionalArray,
   Integer,
   Raw,
+  RawOrError,
   RedisReply,
-  RedisReplyOrError,
   RedisValue,
   SimpleString,
 } from "./types.ts";
 
-export {
-  createSimpleStringReply,
-  readArrayReplyBody,
-  readReply,
-} from "./reply.ts";
+export { okReply, readArrayReplyBody, readReply } from "./reply.ts";
 
 export { sendCommand, sendCommands } from "./command.ts";

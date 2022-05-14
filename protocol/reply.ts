@@ -9,14 +9,6 @@ const SimpleStringCode = "+".charCodeAt(0);
 const ArrayReplyCode = "*".charCodeAt(0);
 const ErrorReplyCode = "-".charCodeAt(0);
 
-// TODO: Remove this
-export function createSimpleStringReply(
-  status: string,
-): Promise<types.RedisReply> {
-  const buffer = new Buffer(encoder.encode("+" + status));
-  return readReply(BufReader.create(buffer));
-}
-
 export async function readReply(reader: BufReader): Promise<types.RedisReply> {
   const res = await reader.peek(1);
   if (res == null) {
@@ -30,13 +22,13 @@ export async function readReply(reader: BufReader): Promise<types.RedisReply> {
 
   switch (code) {
     case IntegerReplyCode:
-      return await IntegerReply.decode(reader);
+      return IntegerReply.decode(reader);
     case SimpleStringCode:
-      return await SimpleStringReply.decode(reader);
+      return SimpleStringReply.decode(reader);
     case BulkReplyCode:
-      return await BulkReply.decode(reader);
+      return BulkReply.decode(reader);
     case ArrayReplyCode:
-      return await ArrayReply.decode(reader);
+      return ArrayReply.decode(reader);
     default:
       throw new InvalidStateError(
         `unknown code: '${String.fromCharCode(code)}' (${code})`,
@@ -77,7 +69,7 @@ class SimpleStringReply extends BaseReply {
   }
 
   readonly #body: Uint8Array;
-  private constructor(body: Uint8Array) {
+  constructor(body: Uint8Array) {
     super(SimpleStringCode);
     this.#body = body;
   }
@@ -200,6 +192,7 @@ async function readBulkReplyBody(
     // nil bulk reply
     return null;
   }
+
   const dest = new Uint8Array(size + 2);
   await reader.readFull(dest);
   return dest.subarray(0, dest.length - 2); // Strip CR and LF
@@ -261,6 +254,8 @@ export async function readArrayReplyBody(
   }
   return array;
 }
+
+export const okReply = new SimpleStringReply(encoder.encode("OK"));
 
 function tryParseErrorReply(line: Uint8Array): never {
   const code = line[0];
