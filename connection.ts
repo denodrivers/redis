@@ -1,4 +1,5 @@
-import { RedisReply, sendCommand } from "./protocol/mod.ts";
+import { sendCommand } from "./protocol/mod.ts";
+import type { Raw, RedisValue } from "./protocol/mod.ts";
 import {
   BufReader,
   BufWriter,
@@ -108,15 +109,23 @@ export class RedisConnection implements Connection {
     };
   }
 
-  private authenticate(password: string): Promise<RedisReply> {
-    return sendCommand(this.writer, this.reader, "AUTH", password);
+  private async authenticate(password: string): Promise<void> {
+    await this.sendCommand("AUTH", password);
   }
 
-  private selectDb(
+  private async selectDb(
     db: number | undefined = this.options.db,
-  ): Promise<RedisReply> {
+  ): Promise<void> {
     if (!db) throw new Error("The database index is undefined.");
-    return sendCommand(this.writer, this.reader, "SELECT", db);
+    await this.sendCommand("SELECT", db);
+  }
+
+  private async sendCommand(
+    command: string,
+    ...args: Array<RedisValue>
+  ): Promise<Raw> {
+    const reply = await sendCommand(this.writer, this.reader, command, ...args);
+    return reply.value();
   }
 
   /**
@@ -141,7 +150,7 @@ export class RedisConnection implements Connection {
       throw new Error("Client is closed.");
     }
     try {
-      await sendCommand(this.writer, this.reader, "PING");
+      await this.sendCommand("PING");
       this._isConnected = true;
     } catch (_error) { // TODO: Maybe we should log this error.
       this._isConnected = false;
@@ -155,7 +164,7 @@ export class RedisConnection implements Connection {
           try {
             this.close();
             await this.connect();
-            await sendCommand(this.writer, this.reader, "PING");
+            await this.sendCommand("PING");
             this._isConnected = true;
             this.retryCount = 0;
             clearInterval(_interval);
