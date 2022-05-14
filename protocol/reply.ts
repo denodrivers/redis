@@ -220,22 +220,3 @@ function parseSize(line: Uint8Array): number {
   const size = parseInt(decoder.decode(sizeStr));
   return size;
 }
-
-// TODO Consider using `std/io/bufio.ts` instead
-async function readLine(reader: BufReader): Promise<string> {
-  const buf = new Uint8Array(1024);
-  let loc = 0;
-  let d: number | null = null;
-  while ((d = await reader.readByte()) && d !== null) {
-    if (d === "\r".charCodeAt(0)) {
-      const d1 = await reader.readByte();
-      if (d1 === "\n".charCodeAt(0)) {
-        buf[loc++] = d;
-        buf[loc++] = d1;
-        return decoder.decode(new Buffer(buf.subarray(0, loc)).bytes());
-      }
-    }
-    buf[loc++] = d;
-  }
-  throw new InvalidStateError();
-}
