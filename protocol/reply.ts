@@ -34,13 +34,13 @@ class Reply implements types.RedisReply {
   async #readBody(): Promise<Uint8Array | types.ConditionalArray | null> {
     switch (this.#code) {
       case IntegerReplyCode:
-        return readIntegerReplyBody(this.#reader);
+        return await readIntegerReplyBody(this.#reader);
       case SimpleStringCode:
-        return readSimpleStringReplyBody(this.#reader);
+        return await readSimpleStringReplyBody(this.#reader);
       case BulkReplyCode:
-        return readBulkReplyBody(this.#reader);
+        return await readBulkReplyBody(this.#reader);
       case ArrayReplyCode:
-        return readArrayReplyBody(this.#reader);
+        return await readArrayReplyBody(this.#reader);
       default:
         throw new InvalidStateError();
     }
@@ -73,9 +73,10 @@ class Reply implements types.RedisReply {
     switch (this.#code) {
       case SimpleStringCode:
       case BulkReplyCode:
-      case IntegerReplyCode:
+      case IntegerReplyCode: {
         const body = await this.#body as Uint8Array;
         return decoder.decode(body);
+      }
       default:
         throw createParseError(this.#code, "string");
     }
