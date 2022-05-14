@@ -74,8 +74,9 @@ class Reply implements types.RedisReply {
         const buffer = await readBulkReply(this.#reader);
         return buffer ? decoder.decode(buffer) : undefined;
       }
-      default:
+      default: {
         throw createParseError(this.#code, "bulk");
+      }
     }
   }
 
@@ -120,22 +121,20 @@ class Reply implements types.RedisReply {
 }
 
 async function readIntegerReply(reader: BufReader): Promise<Uint8Array> {
-  const result = await reader.readLine();
-  if (result == null) {
+  const line = await readLine(reader);
+  if (line == null) {
     throw new InvalidStateError();
   }
 
-  const { line } = result;
-  return line.subarray(1);
+  return line.subarray(1, line.length);
 }
 
 async function readBulkReply(reader: BufReader): Promise<Uint8Array | null> {
-  const result = await reader.readLine();
-  if (result == null) {
+  const line = await readLine(reader);
+  if (line == null) {
     throw new InvalidStateError();
   }
 
-  const { line } = result;
   if (line[0] !== BulkReplyCode) {
     tryParseErrorReply(line);
   }
@@ -145,33 +144,31 @@ async function readBulkReply(reader: BufReader): Promise<Uint8Array | null> {
     // nil bulk reply
     return null;
   }
-  const dest = new Uint8Array(size);
+  const dest = new Uint8Array(size + 2);
   await reader.readFull(dest);
-  return dest;
+  return dest.subarray(0, dest.length - 2); // Strip CR and LF
 }
 
 async function readSimpleStringReply(reader: BufReader): Promise<Uint8Array> {
-  const result = await reader.readLine();
-  if (result == null) {
+  const line = await readLine(reader);
+  if (line == null) {
     throw new InvalidStateError();
   }
 
-  const { line } = result;
   if (line[0] !== SimpleStringCode) {
     tryParseErrorReply(line);
   }
-  return line.subarray(1);
+  return line.subarray(1, line.length);
 }
 
 export async function readArrayReply(
   reader: BufReader,
 ): Promise<types.ConditionalArray> {
-  const result = await reader.readLine();
-  if (result == null) {
+  const line = await readLine(reader);
+  if (line == null) {
     throw new InvalidStateError();
   }
 
-  const { line } = result;
   const argCount = parseSize(line);
   const array: types.ConditionalArray = [];
   for (let i = 0; i < argCount; i++) {
@@ -215,15 +212,26 @@ function tryParseErrorReply(line: Uint8Array): never {
 }
 
 async function tryReadErrorReply(reader: BufReader): Promise<never> {
+  const line = await readLine(reader);
+  if (line == null) {
+    throw new InvalidStateError();
+  }
+  tryParseErrorReply(line);
+}
+
+// TODO Consider using `std/io/bufio.ts` instead
+async function readLine(reader: BufReader): Promise<Uint8Array> {
   const result = await reader.readLine();
   if (result == null) {
     throw new InvalidStateError();
   }
-  tryParseErrorReply(result.line);
+
+  const { line } = result;
+  return line;
 }
 
 function parseSize(line: Uint8Array): number {
-  const sizeStr = line.subarray(1);
+  const sizeStr = line.subarray(1, line.length);
   const size = parseInt(decoder.decode(sizeStr));
   return size;
 }
