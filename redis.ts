@@ -44,7 +44,6 @@ import { RedisConnection } from "./connection.ts";
 import type { Connection } from "./connection.ts";
 import type { RedisConnectionOptions } from "./connection.ts";
 import { CommandExecutor, MuxExecutor } from "./executor.ts";
-import { unwrapReply } from "./protocol/mod.ts";
 import type {
   Binary,
   Bulk,
@@ -133,7 +132,7 @@ class RedisImpl implements Redis {
       command,
       ...args,
     );
-    return unwrapReply(reply) as Raw;
+    return reply.value();
   }
 
   async execStatusReply(

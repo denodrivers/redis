@@ -13,10 +13,9 @@ export type {
 } from "./types.ts";
 
 export {
+  createReply,
   createSimpleStringReply,
   readArrayReply,
-  readReply,
-  unwrapReply,
 } from "./reply.ts";
 
 export { sendCommand, sendCommands } from "./command.ts";

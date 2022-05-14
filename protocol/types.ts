@@ -49,6 +49,7 @@ export interface RedisReply {
   bulk(): Promise<Bulk>;
   buffer(): Promise<Uint8Array>;
   array(): Promise<ConditionalArray>;
+  value(): Promise<Raw>;
 }
 
 export type RedisReplyOrError = RedisReply | ErrorReplyError;

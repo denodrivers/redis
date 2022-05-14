@@ -9,14 +9,6 @@ const SimpleStringCode = "+".charCodeAt(0);
 const ArrayReplyCode = "*".charCodeAt(0);
 const ErrorReplyCode = "-".charCodeAt(0);
 
-export function unwrapReply(
-  reply: types.RedisReplyOrError,
-): types.Raw | ErrorReplyError {
-  if (reply instanceof ErrorReplyError) {
-    return reply;
-  }
-}
-
 export function createSimpleStringReply(
   status: string,
 ): types.RedisReply {
@@ -24,38 +16,8 @@ export function createSimpleStringReply(
   return new Reply(BufReader.create(buffer), SimpleStringCode);
 }
 
-export function readReply(reader: BufReader): Promise<types.RedisReply> {
+export function createReply(reader: BufReader): Promise<types.RedisReply> {
   return Reply.create(reader);
-}
-
-export async function parseReply(
-  reader: BufReader,
-): Promise<types.Raw> {
-  const res = await reader.peek(1);
-  if (res === null) {
-    throw new EOFError();
-  }
-
-  const code = res[0];
-  const reply = new Reply(reader, code);
-  switch (code) {
-    case IntegerReplyCode:
-      return await reply.integer();
-    case SimpleStringCode:
-      return await reply.string();
-    case BulkReplyCode:
-      return await reply.bulk();
-    case ArrayReplyCode:
-      return await reply.array();
-    case ErrorReplyCode: {
-      const result = await reader.readLine();
-      if (result == null) {
-        throw new InvalidStateError();
-      }
-      tryParseErrorReply(result.line);
-    }
-  }
-  throw new InvalidStateError();
 }
 
 class Reply implements types.RedisReply {
@@ -129,11 +91,32 @@ class Reply implements types.RedisReply {
     }
   }
 
-  async array(): Promise<types.ConditionalArray> {
+  array(): Promise<types.ConditionalArray> {
     if (this.#code !== ArrayReplyCode) {
       throw new InvalidStateError();
     }
     return readArrayReply(this.#reader);
+  }
+
+  async value(): Promise<types.Raw> {
+    switch (this.#code) {
+      case IntegerReplyCode:
+        return await this.integer();
+      case SimpleStringCode:
+        return await this.string();
+      case BulkReplyCode:
+        return await this.bulk();
+      case ArrayReplyCode:
+        return await this.array();
+      case ErrorReplyCode: {
+        const result = await this.#reader.readLine();
+        if (result == null) {
+          throw new InvalidStateError();
+        }
+        tryParseErrorReply(result.line);
+      }
+    }
+    throw new InvalidStateError();
   }
 }
 
