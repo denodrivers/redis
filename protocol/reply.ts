@@ -35,6 +35,7 @@ export async function readReply(reader: BufReader): Promise<types.RedisReply> {
       return await ArrayReply.decode(reader);
     case ErrorReplyCode:
       await tryReadErrorReply(reader);
+      break;
     default:
       throw new InvalidStateError(
         `unknown code: '${String.fromCharCode(code)}' (${code})`,
