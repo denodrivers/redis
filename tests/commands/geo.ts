@@ -1,18 +1,24 @@
 import { assertEquals } from "../../vendor/https/deno.land/std/testing/asserts.ts";
+import {
+  afterAll,
+  beforeAll,
+  it,
+} from "../../vendor/https/deno.land/std/testing/bdd.ts";
 import { newClient } from "../test_util.ts";
 import type { TestServer } from "../test_util.ts";
+import type { Redis } from "../../mod.ts";
 
-export async function geoTests(
-  t: Deno.TestContext,
+export function geoTests(
   server: TestServer,
-): Promise<void> {
-  const client = await newClient({ hostname: "127.0.0.1", port: server.port });
+): void {
+  let client!: Redis;
+  beforeAll(async () => {
+    client = await newClient({ hostname: "127.0.0.1", port: server.port });
+  });
 
-  function cleanup(): void {
-    client.close();
-  }
+  afterAll(() => client.close());
 
-  await t.step("geoadd", async () => {
+  it("geoadd", async () => {
     assertEquals(
       await client.geoadd("Sicily", 13.361389, 38.115556, "Palermo"),
       1,
@@ -38,7 +44,7 @@ export async function geoTests(
     );
   });
 
-  await t.step("geohash", async () => {
+  it("geohash", async () => {
     await client.geoadd("Sicily", {
       Palermo: [13.361389, 38.115556],
       Catania: [15.087269, 37.502669],
@@ -47,7 +53,7 @@ export async function geoTests(
     assertEquals(resp, ["sqc8b49rny0", "sqdtr74hyu0", undefined]);
   });
 
-  await t.step("geopos", async () => {
+  it("geopos", async () => {
     await client.geoadd("Sicily", {
       Palermo: [13.361389, 38.115556],
       Catania: [15.087269, 37.502669],
@@ -60,7 +66,7 @@ export async function geoTests(
     ]);
   });
 
-  await t.step("geodist", async () => {
+  it("geodist", async () => {
     await client.geoadd("Sicily", {
       Palermo: [13.361389, 38.115556],
       Catania: [15.087269, 37.502669],
@@ -71,13 +77,11 @@ export async function geoTests(
     assertEquals(resp, undefined);
   });
 
-  await t.step("georadius", async () => {
+  it("georadius", async () => {
     await client.georadius("Test", 0, 1, 10, "km");
   });
 
-  await t.step("georadiusbymember", async () => {
+  it("georadiusbymember", async () => {
     await client.georadiusbymember("Sicily", "Palermo", 10, "km");
   });
-
-  cleanup();
 }

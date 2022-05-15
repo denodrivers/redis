@@ -4,16 +4,16 @@ import {
   assertEquals,
   assertRejects,
 } from "../../vendor/https/deno.land/std/testing/asserts.ts";
+import { it } from "../../vendor/https/deno.land/std/testing/bdd.ts";
 import { newClient, nextPort, startRedis, stopRedis } from "../test_util.ts";
 import type { TestServer } from "../test_util.ts";
 
-export async function pubsubTests(
-  t: Deno.TestContext,
+export function pubsubTests(
   server: TestServer,
-): Promise<void> {
+): void {
   const opts = { hostname: "127.0.0.1", port: server.port };
 
-  await t.step("subscribe() & unsubscribe()", async () => {
+  it("subscribe() & unsubscribe()", async () => {
     const client = await newClient(opts);
     const sub = await client.subscribe("subsc");
     await sub.unsubscribe("subsc");
@@ -22,7 +22,7 @@ export async function pubsubTests(
     client.close();
   });
 
-  await t.step("receive()", async () => {
+  it("receive()", async () => {
     const client = await newClient(opts);
     const pub = await newClient(opts);
     const sub = await client.subscribe("subsc2");
@@ -45,7 +45,7 @@ export async function pubsubTests(
     }, Deno.errors.BadResource);
   });
 
-  await t.step("psubscribe()", async () => {
+  it("psubscribe()", async () => {
     const client = await newClient(opts);
     const pub = await newClient(opts);
     const sub = await client.psubscribe("ps*");
@@ -74,7 +74,7 @@ export async function pubsubTests(
     client.close();
   });
 
-  await t.step("retry", async () => {
+  it("retry", async () => {
     const port = nextPort();
     let tempServer = await startRedis({ port });
     const client = await newClient({ ...opts, port });
@@ -127,7 +127,7 @@ export async function pubsubTests(
     stopRedis(tempServer);
   });
 
-  await t.step({
+  it({
     ignore: true,
     name:
       "SubscriptionShouldNotThrowBadResourceErrorWhenConnectionIsClosed (#89)",

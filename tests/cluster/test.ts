@@ -1,4 +1,5 @@
 import { nextPorts, startRedisCluster, stopRedisCluster } from "./test_util.ts";
+import type { TestCluster } from "./test_util.ts";
 import { connect as connectToCluster } from "../../experimental/cluster/mod.ts";
 import {
   assert,
@@ -6,44 +7,49 @@ import {
   assertEquals,
   assertRejects,
 } from "../../vendor/https/deno.land/std/testing/asserts.ts";
+import {
+  afterAll,
+  beforeAll,
+  beforeEach,
+  describe,
+  it,
+} from "../../vendor/https/deno.land/std/testing/bdd.ts";
 import sample from "../../vendor/https/cdn.skypack.dev/lodash-es/sample.js";
 import calculateSlot from "../../vendor/https/cdn.skypack.dev/cluster-key-slot/lib/index.js";
 import { ErrorReplyError } from "../../errors.ts";
 import { connect, create } from "../../redis.ts";
 import type { CommandExecutor } from "../../executor.ts";
 import type { Connection } from "../../connection.ts";
+import type { Redis } from "../../mod.ts";
 
-Deno.test("experimental/cluster", async (t) => {
-  const ports = nextPorts(6);
-  const cluster = await startRedisCluster(ports);
-  const nodes = ports.map((port) => ({
-    hostname: "127.0.0.1",
-    port,
-  }));
-  const client = await connectToCluster({ nodes });
+describe("experimental/cluster", () => {
+  let ports!: Array<number>;
+  let cluster!: TestCluster;
+  let nodes!: Array<{ hostname: string; port: number }>;
+  let client!: Redis;
 
-  function cleanup(): void {
-    stopRedisCluster(cluster);
-  }
+  beforeAll(async () => {
+    ports = nextPorts(6);
+    cluster = await startRedisCluster(ports);
+    nodes = ports.map((port) => ({
+      hostname: "127.0.0.1",
+      port,
+    }));
+    client = await connectToCluster({ nodes });
+  });
 
-  async function run(name: string, fn: () => Promise<void>): Promise<void> {
-    await t.step(name, async () => {
-      try {
-        await fn();
-      } finally {
-        client.close();
-      }
-    });
-  }
+  afterAll(() => stopRedisCluster(cluster));
 
-  await run("del multiple keys in the same hash slot", async () => {
+  beforeEach(() => client.close());
+
+  it("del multiple keys in the same hash slot", async () => {
     await client.set("{hoge}foo", "a");
     await client.set("{hoge}bar", "b");
     const r = await client.del("{hoge}foo", "{hoge}bar");
     assertEquals(r, 2);
   });
 
-  await run("del multiple keys in different hash slots", async () => {
+  it("del multiple keys in different hash slots", async () => {
     await client.set("foo", "a");
     await client.set("bar", "b");
     await assertRejects(
@@ -55,7 +61,7 @@ Deno.test("experimental/cluster", async (t) => {
     );
   });
 
-  await run("handle a -MOVED redirection error", async () => {
+  it("handle a -MOVED redirection error", async () => {
     let redirected = false;
     let manuallyRedirectedPort!: number;
     const portsSent = new Set<number>();
@@ -109,7 +115,7 @@ Deno.test("experimental/cluster", async (t) => {
     }
   });
 
-  await run("handle a -ASK redirection error", async () => {
+  it("handle a -ASK redirection error", async () => {
     let redirected = false;
     let manuallyRedirectedPort!: number;
     const portsSent = new Set<number>();
@@ -165,7 +171,7 @@ Deno.test("experimental/cluster", async (t) => {
     }
   });
 
-  await run("properly handle too many redirections", async () => {
+  it("properly handle too many redirections", async () => {
     const client = await connectToCluster({
       nodes,
       async newRedis(opts) {
@@ -210,6 +216,4 @@ Deno.test("experimental/cluster", async (t) => {
       client.close();
     }
   });
-
-  cleanup();
 });

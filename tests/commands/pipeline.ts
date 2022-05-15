@@ -3,16 +3,16 @@ import {
   assert,
   assertEquals,
 } from "../../vendor/https/deno.land/std/testing/asserts.ts";
+import { it } from "../../vendor/https/deno.land/std/testing/bdd.ts";
 import { newClient } from "../test_util.ts";
 import type { TestServer } from "../test_util.ts";
 
-export async function pipelineTests(
-  t: Deno.TestContext,
+export function pipelineTests(
   server: TestServer,
-): Promise<void> {
+): void {
   const opts = { hostname: "127.0.0.1", port: server.port };
 
-  await t.step("testPipeline", async () => {
+  it("testPipeline", async () => {
     const client = await newClient(opts);
     const pl = client.pipeline();
     await Promise.all([
@@ -37,7 +37,7 @@ export async function pipelineTests(
     client.close();
   });
 
-  await t.step("testTx", async () => {
+  it("testTx", async () => {
     const client = await newClient(opts);
     const tx1 = client.tx();
     const tx2 = client.tx();
@@ -80,7 +80,7 @@ export async function pipelineTests(
     client.close();
   });
 
-  await t.step("pipeline in concurrent", async () => {
+  it("pipeline in concurrent", async () => {
     {
       const client = await newClient(opts);
       const tx = client.pipeline();
@@ -111,7 +111,7 @@ export async function pipelineTests(
     }
   });
 
-  await t.step("error while pipeline", async () => {
+  it("error while pipeline", async () => {
     const client = await newClient(opts);
     const tx = client.pipeline();
     tx.set("a", "a");

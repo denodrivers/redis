@@ -3,119 +3,124 @@ import {
   assertArrayIncludes,
   assertEquals,
 } from "../../vendor/https/deno.land/std/testing/asserts.ts";
+import {
+  afterAll,
+  beforeAll,
+  beforeEach,
+  it,
+} from "../../vendor/https/deno.land/std/testing/bdd.ts";
 import { newClient } from "../test_util.ts";
 import type { TestServer } from "../test_util.ts";
+import type { Redis } from "../../mod.ts";
 
-export async function setTests(
-  t: Deno.TestContext,
+export function setTests(
   server: TestServer,
-): Promise<void> {
-  const client = await newClient({ hostname: "127.0.0.1", port: server.port });
+): void {
+  let client!: Redis;
+  beforeAll(async () => {
+    client = await newClient({ hostname: "127.0.0.1", port: server.port });
+  });
 
-  function cleanup(): void {
-    client.close();
-  }
+  afterAll(() => client.close());
 
-  async function run(name: string, fn: () => Promise<void>): Promise<void> {
-    await t.step(name, async () => {
-      await client.flushdb();
-      await fn();
-    });
-  }
+  beforeEach(async () => {
+    await client.flushdb();
+  });
 
-  await run("sadd", async () => {
+  it("sadd", async () => {
     assertEquals(await client.sadd("key", "1", "2", "1"), 2);
   });
 
-  await run("scard", async () => {
+  it("scard", async () => {
     await client.sadd("key", "1", "2");
     assertEquals(await client.scard("key"), 2);
   });
 
-  await run("sdiff", async () => {
+  it("sdiff", async () => {
     await client.sadd("key", "1", "2");
     await client.sadd("key2", "1", "3");
     assertArrayIncludes(await client.sdiff("key", "key2"), ["2"]);
   });
-  await run("sdiffstore", async () => {
+
+  it("sdiffstore", async () => {
     await client.sadd("key", "1", "2");
     await client.sadd("key2", "1", "3");
     assertEquals(await client.sdiffstore("dest", "key", "key2"), 1);
   });
-  await run("sinter", async () => {
+
+  it("sinter", async () => {
     await client.sadd("key", "1", "2");
     await client.sadd("key2", "1", "3");
     assertArrayIncludes(await client.sinter("key", "key2"), ["1"]);
   });
 
-  await run("sinterstore", async () => {
+  it("sinterstore", async () => {
     await client.sadd("key", "1", "2");
     await client.sadd("key2", "1", "3");
     assertEquals(await client.sinterstore("dest", "key", "key2"), 1);
   });
 
-  await run("sismember", async () => {
+  it("sismember", async () => {
     await client.sadd("key", "1", "2");
     assertEquals(await client.sismember("key", "1"), 1);
   });
 
-  await run("smembers", async () => {
+  it("smembers", async () => {
     await client.sadd("key", "1", "2");
     assertArrayIncludes(await client.smembers("key"), ["1", "2"]);
   });
 
-  await run("smove", async () => {
+  it("smove", async () => {
     await client.sadd("key", "1", "2");
     assertEquals(await client.smove("key", "dest", "1"), 1);
   });
-  await run("spop", async () => {
+
+  it("spop", async () => {
     await client.sadd("key", "a");
     const v = await client.spop("key");
     assertEquals(v, "a");
   });
 
-  await run("spop with count", async () => {
+  it("spop with count", async () => {
     await client.sadd("key", "a", "b");
     const v = await client.spop("key", 2);
     assertArrayIncludes(v, ["a", "b"]);
   });
 
-  await run("srandmember", async () => {
+  it("srandmember", async () => {
     await client.sadd("key", "a", "b");
     const v = await client.srandmember("key");
     assertArrayIncludes(["a", "b"], [v]);
   });
 
-  await run("srandmember with count", async () => {
+  it("srandmember with count", async () => {
     await client.sadd("key", "a", "b");
     const v = await client.srandmember("key", 3);
     assertArrayIncludes(["a", "b", undefined], v);
   });
 
-  await run("srem", async () => {
+  it("srem", async () => {
     await client.sadd("key", "a", "b");
     assertEquals(await client.srem("key", "a"), 1);
   });
 
-  await run("sunion", async () => {
+  it("sunion", async () => {
     await client.sadd("key", "a", "b");
     await client.sadd("key2", "b", "c");
     const v = await client.sunion("key", "key2");
     assertArrayIncludes(v, ["a", "b", "c"]);
   });
 
-  await run("sunionstore", async () => {
+  it("sunionstore", async () => {
     await client.sadd("key", "a", "b");
     await client.sadd("key2", "b", "c");
     const v = await client.sunionstore("dest", "key", "key2");
     assertEquals(v, 3);
   });
 
-  await run("sscan", async () => {
+  it("sscan", async () => {
     await client.sadd("key", "a", "b");
     const v = await client.sscan("key", 0);
     assert(Array.isArray(v));
   });
-
-  cleanup();
 }

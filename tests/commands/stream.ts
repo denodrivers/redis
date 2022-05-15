@@ -7,17 +7,23 @@ import {
   assertNotEquals,
   assertRejects,
 } from "../../vendor/https/deno.land/std/testing/asserts.ts";
+import {
+  afterAll,
+  beforeAll,
+  it,
+} from "../../vendor/https/deno.land/std/testing/bdd.ts";
 import { newClient } from "../test_util.ts";
 import type { TestServer } from "../test_util.ts";
 
-export async function streamTests(
-  t: Deno.TestContext,
+export function streamTests(
   server: TestServer,
-): Promise<void> {
-  const client = await newClient({ hostname: "127.0.0.1", port: server.port });
-  function cleanup(): void {
-    client.close();
-  }
+): void {
+  let client!: Redis;
+  beforeAll(async () => {
+    client = await newClient({ hostname: "127.0.0.1", port: server.port });
+  });
+
+  afterAll(() => client.close());
 
   const rnum = () => Math.floor(Math.random() * 1000);
   const randomStream = () =>
@@ -43,7 +49,7 @@ export async function streamTests(
     assertEquals(await client.xgroupDestroy(stream, group), 1);
   };
 
-  await t.step("xadd", async () => {
+  it("xadd", async () => {
     const key = randomStream();
     const v = await client.xadd(key, "*", {
       cat: "what",
@@ -55,7 +61,7 @@ export async function streamTests(
     await cleanupStream(client, key);
   });
 
-  await t.step("xadd maxlen", async () => {
+  it("xadd maxlen", async () => {
     const key = randomStream();
     const v = await client.xadd(
       key,
@@ -74,7 +80,7 @@ export async function streamTests(
     await cleanupStream(client, key);
   });
 
-  await t.step("xreadgroup multiple streams", async () => {
+  it("xreadgroup multiple streams", async () => {
     await withConsumerGroup(async (key, group) => {
       const key2 = randomStream();
 
@@ -106,7 +112,7 @@ export async function streamTests(
     });
   });
 
-  await t.step("xread", async () => {
+  it("xread", async () => {
     const key = randomStream();
     const a = await client.xadd(
       key,
@@ -177,13 +183,13 @@ export async function streamTests(
     await cleanupStream(client, key, key2);
   });
 
-  await t.step("xgrouphelp", async () => {
+  it("xgrouphelp", async () => {
     const helpText = await client.xgroupHelp();
     assert(helpText.length > 4);
     assert(helpText[0].length > 10);
   });
 
-  await t.step("xgroup create and destroy", async () => {
+  it("xgroup create and destroy", async () => {
     const groupName = "test-group";
 
     const key = randomStream();
@@ -201,7 +207,7 @@ export async function streamTests(
     assertEquals(await client.xgroupDestroy(key, groupName), 1);
   });
 
-  await t.step("xgroup setid and delconsumer", async () => {
+  it("xgroup setid and delconsumer", async () => {
     const key = randomStream();
     const group = "test-group";
     const consumer = "test-consumer";
@@ -227,7 +233,7 @@ export async function streamTests(
     await cleanupStream(client, key);
   });
 
-  await t.step("xreadgroup but no ack", async () => {
+  it("xreadgroup but no ack", async () => {
     const key = randomStream();
     const group = "test-group";
 
@@ -263,7 +269,7 @@ export async function streamTests(
     await cleanupStream(client, key);
   });
 
-  await t.step("xack", async () => {
+  it("xack", async () => {
     const key = randomStream();
     const group = "test-group";
 
@@ -290,7 +296,7 @@ export async function streamTests(
     await cleanupStream(client, key);
   });
 
-  await t.step("xadd with map then xread", async () => {
+  it("xadd with map then xread", async () => {
     const m = new Map<string, string>();
     m.set("zoo", "theorize");
     m.set("gable", "train");
@@ -325,7 +331,7 @@ export async function streamTests(
     await cleanupStream(client, key);
   });
 
-  await t.step("xadd with maxlen on map then xread", async () => {
+  it("xadd with maxlen on map then xread", async () => {
     const mmm = new Map<string, string>();
     mmm.set("hop", "4");
     mmm.set("blip", "5");
@@ -355,7 +361,7 @@ export async function streamTests(
     await cleanupStream(client, key);
   });
 
-  await t.step("xdel", async () => {
+  it("xdel", async () => {
     const key = randomStream();
     const id0 = await client.xadd(key, "*", { foo: "bar" }, { elements: 10 });
     const id1 = await client.xadd(key, "*", { foo: "baz" }, { elements: 10 });
@@ -366,7 +372,7 @@ export async function streamTests(
     await cleanupStream(client, key);
   });
 
-  await t.step("xlen", async () => {
+  it("xlen", async () => {
     const key = randomStream();
     await client.xadd(key, "*", { foo: "qux" }, { elements: 5 });
     await client.xadd(key, "*", { foo: "bux" }, { elements: 5 });
@@ -376,7 +382,7 @@ export async function streamTests(
     await cleanupStream(client, key);
   });
 
-  await t.step("unique message per consumer", async () => {
+  it("unique message per consumer", async () => {
     await withConsumerGroup(async (key, group) => {
       const addedIds = [];
       const c0 = "consumer-0";
@@ -406,7 +412,7 @@ export async function streamTests(
     });
   });
 
-  await t.step(
+  it(
     "broadcast pattern, all groups read their own version of the stream",
     async () => {
       const key = randomStream();
@@ -451,7 +457,7 @@ export async function streamTests(
     },
   );
 
-  await t.step("xrange and xrevrange", async () => {
+  it("xrange and xrevrange", async () => {
     const key = randomStream();
     const firstId = await client.xadd(key, "*", { f: "v0" });
     const basicResult = await client.xrange(key, "-", "+");
@@ -477,7 +483,7 @@ export async function streamTests(
     await cleanupStream(client, key);
   });
 
-  await t.step("xclaim and xpending, all options", async () => {
+  it("xclaim and xpending, all options", async () => {
     await withConsumerGroup(async (key, group) => {
       // xclaim test basic idea:
       // 1. add messages to a group
@@ -662,7 +668,7 @@ export async function streamTests(
     });
   });
 
-  await t.step("xinfo", async () => {
+  it("xinfo", async () => {
     await withConsumerGroup(async (key, group) => {
       await client.xadd(key, 1, { hello: "no" });
       await client.xadd(key, 2, { hello: "yes" });
@@ -758,5 +764,4 @@ export async function streamTests(
       assertEquals(await client.xgroupDestroy(key, "newgroup"), 1);
     });
   });
-  cleanup();
 }

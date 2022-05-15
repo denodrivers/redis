@@ -2,29 +2,30 @@ import {
   assert,
   assertEquals,
 } from "../../vendor/https/deno.land/std/testing/asserts.ts";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  it,
+} from "../../vendor/https/deno.land/std/testing/bdd.ts";
 import { newClient } from "../test_util.ts";
 import type { TestServer } from "../test_util.ts";
+import type { Redis } from "../../mod.ts";
 
-export async function scriptTests(
-  t: Deno.TestContext,
+export function scriptTests(
   server: TestServer,
-): Promise<void> {
-  const client = await newClient({ hostname: "127.0.0.1", port: server.port });
-  function cleanup(): void {
-    client.close();
-  }
+): void {
+  let client!: Redis;
+  beforeAll(async () => {
+    client = await newClient({ hostname: "127.0.0.1", port: server.port });
+  });
+  afterAll(() => client.close());
 
-  async function run(name: string, fn: () => Promise<void>): Promise<void> {
-    await t.step(name, async () => {
-      try {
-        await fn();
-      } finally {
-        await client.flushdb();
-      }
-    });
-  }
+  afterEach(async () => {
+    await client.flushdb();
+  });
 
-  await run("eval", async () => {
+  it("eval", async () => {
     const raw = await client.eval(
       "return {KEYS[1],KEYS[2],ARGV[1],ARGV[2]}",
       ["1", "2"],
@@ -34,7 +35,7 @@ export async function scriptTests(
     assertEquals(raw, ["1", "2", "3", "4"]);
   });
 
-  await run("evalsha", async () => {
+  it("evalsha", async () => {
     const hash = await client.scriptLoad(
       `return {KEYS[1],KEYS[2],ARGV[1],ARGV[2]}`,
     );
@@ -51,6 +52,4 @@ export async function scriptTests(
       await client.scriptFlush();
     }
   });
-
-  cleanup();
 }
