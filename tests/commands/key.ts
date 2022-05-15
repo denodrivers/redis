@@ -14,11 +14,11 @@ import type { TestServer } from "../test_util.ts";
 import type { Redis } from "../../mod.ts";
 
 export function keyTests(
-  server: TestServer,
+  getServer: () => TestServer,
 ): void {
-  const { port } = server;
   let client!: Redis;
   beforeAll(async () => {
+    const { port } = getServer();
     client = await newClient({ hostname: "127.0.0.1", port });
   });
   afterAll(() => client.close());
@@ -73,6 +73,7 @@ export function keyTests(
   });
 
   it("migrate", async () => {
+    const { port } = getServer();
     const v = await client.migrate("127.0.0.1", port, "nosuchkey", "0", 0);
     assertEquals(v, "NOKEY");
   });

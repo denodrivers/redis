@@ -8,11 +8,15 @@ import { newClient } from "../test_util.ts";
 import type { TestServer } from "../test_util.ts";
 
 export function pipelineTests(
-  server: TestServer,
+  getServer: () => TestServer,
 ): void {
-  const opts = { hostname: "127.0.0.1", port: server.port };
+  const getOpts = () => ({
+    hostname: "127.0.0.1",
+    port: getServer().port,
+  });
 
   it("testPipeline", async () => {
+    const opts = getOpts();
     const client = await newClient(opts);
     const pl = client.pipeline();
     await Promise.all([
@@ -38,6 +42,7 @@ export function pipelineTests(
   });
 
   it("testTx", async () => {
+    const opts = getOpts();
     const client = await newClient(opts);
     const tx1 = client.tx();
     const tx2 = client.tx();
@@ -82,6 +87,7 @@ export function pipelineTests(
 
   it("pipeline in concurrent", async () => {
     {
+      const opts = getOpts();
       const client = await newClient(opts);
       const tx = client.pipeline();
       const promises: Promise<unknown>[] = [];
@@ -112,6 +118,7 @@ export function pipelineTests(
   });
 
   it("error while pipeline", async () => {
+    const opts = getOpts();
     const client = await newClient(opts);
     const tx = client.pipeline();
     tx.set("a", "a");

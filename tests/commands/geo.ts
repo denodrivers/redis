@@ -9,11 +9,11 @@ import type { TestServer } from "../test_util.ts";
 import type { Redis } from "../../mod.ts";
 
 export function geoTests(
-  server: TestServer,
+  getServer: () => TestServer,
 ): void {
   let client!: Redis;
   beforeAll(async () => {
-    client = await newClient({ hostname: "127.0.0.1", port: server.port });
+    client = await newClient({ hostname: "127.0.0.1", port: getServer().port });
   });
 
   afterAll(() => client.close());

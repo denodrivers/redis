@@ -10,12 +10,11 @@ import type { TestServer } from "../test_util.ts";
 import type { Redis } from "../../mod.ts";
 
 export function connectionTests(
-  server: TestServer,
+  getServer: () => TestServer,
 ): void {
-  const { port } = server;
-
   let client!: Redis;
   beforeAll(async () => {
+    const { port } = getServer();
     client = await newClient({ hostname: "127.0.0.1", port });
   });
 
@@ -31,6 +30,7 @@ export function connectionTests(
   });
 
   it("quit", async () => {
+    const { port } = getServer();
     const tempClient = await connect({ hostname: "127.0.0.1", port });
     assertEquals(tempClient.isConnected, true);
     assertEquals(tempClient.isClosed, false);

@@ -31,19 +31,21 @@ describe("commands", () => {
   });
   afterAll(() => stopRedis(server));
 
-  describe("acl", () => aclTests(server));
-  describe("connection", () => connectionTests(server));
-  describe("general", () => generalTests(server));
-  describe("geo", () => geoTests(server));
-  describe("hash", () => hashTests(server));
-  describe("hyperloglog", () => hyperloglogTests(server));
-  describe("key", () => keyTests(server));
-  describe("list", () => listTests(server));
-  describe("pipeline", () => pipelineTests(server));
-  describe("pubsub", () => pubsubTests(server));
-  describe("set", () => setTests(server));
-  describe("zset", () => zsetTests(server));
-  describe("script", () => scriptTests(server));
-  describe("stream", () => streamTests(server));
-  describe("string", () => stringTests(server));
+  const getServer = () => server;
+
+  describe("acl", () => aclTests(getServer));
+  describe("connection", () => connectionTests(getServer));
+  describe("general", () => generalTests(getServer));
+  describe("geo", () => geoTests(getServer));
+  describe("hash", () => hashTests(getServer));
+  describe("hyperloglog", () => hyperloglogTests(getServer));
+  describe("key", () => keyTests(getServer));
+  describe("list", () => listTests(getServer));
+  describe("pipeline", () => pipelineTests(getServer));
+  describe("pubsub", () => pubsubTests(getServer));
+  describe("set", () => setTests(getServer));
+  describe("zset", () => zsetTests(getServer));
+  describe("script", () => scriptTests(getServer));
+  describe("stream", () => streamTests(getServer));
+  describe("string", () => stringTests(getServer));
 });

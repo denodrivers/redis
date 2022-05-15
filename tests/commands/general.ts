@@ -15,13 +15,15 @@ import { newClient } from "../test_util.ts";
 import type { TestServer } from "../test_util.ts";
 
 export function generalTests(
-  server: TestServer,
+  getServer: () => TestServer,
 ): void {
-  const { port } = server;
-  const opts = { hostname: "127.0.0.1", port };
+  const getOpts = () => ({
+    hostname: "127.0.0.1",
+    port: getServer().port,
+  });
   let client!: Redis;
   beforeAll(async () => {
-    client = await newClient(opts);
+    client = await newClient(getOpts());
   });
 
   afterAll(() => client.close());
@@ -43,6 +45,7 @@ export function generalTests(
   });
 
   it("db0", async () => {
+    const opts = getOpts();
     const key = "exists";
     const client1 = await newClient({ ...opts, db: 0 });
     await client1.set(key, "aaa");
@@ -56,6 +59,7 @@ export function generalTests(
   });
 
   it("connect with wrong password", async () => {
+    const { port } = getOpts();
     await assertRejects(async () => {
       await newClient({
         hostname: "127.0.0.1",
@@ -66,6 +70,7 @@ export function generalTests(
   });
 
   it("connect with empty password", async () => {
+    const { port } = getOpts();
     // In Redis, authentication with an empty password will always fail.
     await assertRejects(async () => {
       await newClient({
@@ -77,6 +82,7 @@ export function generalTests(
   });
 
   it("exists", async () => {
+    const opts = getOpts();
     const key = "exists";
     const client1 = await newClient({ ...opts, db: 0 });
     await client1.set(key, "aaa");
@@ -129,6 +135,7 @@ export function generalTests(
   });
 
   it("lazy client", async () => {
+    const opts = getOpts();
     const resources = Deno.resources();
     const client = createLazyClient(opts);
     assert(!client.isConnected);

@@ -9,11 +9,12 @@ import { newClient, nextPort, startRedis, stopRedis } from "../test_util.ts";
 import type { TestServer } from "../test_util.ts";
 
 export function pubsubTests(
-  server: TestServer,
+  getServer: () => TestServer,
 ): void {
-  const opts = { hostname: "127.0.0.1", port: server.port };
+  const getOpts = () => ({ hostname: "127.0.0.1", port: getServer().port });
 
   it("subscribe() & unsubscribe()", async () => {
+    const opts = getOpts();
     const client = await newClient(opts);
     const sub = await client.subscribe("subsc");
     await sub.unsubscribe("subsc");
@@ -23,6 +24,7 @@ export function pubsubTests(
   });
 
   it("receive()", async () => {
+    const opts = getOpts();
     const client = await newClient(opts);
     const pub = await newClient(opts);
     const sub = await client.subscribe("subsc2");
@@ -46,6 +48,7 @@ export function pubsubTests(
   });
 
   it("psubscribe()", async () => {
+    const opts = getOpts();
     const client = await newClient(opts);
     const pub = await newClient(opts);
     const sub = await client.psubscribe("ps*");
@@ -75,6 +78,7 @@ export function pubsubTests(
   });
 
   it("retry", async () => {
+    const opts = getOpts();
     const port = nextPort();
     let tempServer = await startRedis({ port });
     const client = await newClient({ ...opts, port });
@@ -132,6 +136,7 @@ export function pubsubTests(
     name:
       "SubscriptionShouldNotThrowBadResourceErrorWhenConnectionIsClosed (#89)",
     fn: async () => {
+      const opts = getOpts();
       const redis = await newClient(opts);
       const sub = await redis.subscribe("test");
       const subscriptionPromise = (async () => {
