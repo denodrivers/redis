@@ -5,7 +5,7 @@ import {
 import { readReply } from "./reply.ts";
 import { ErrorReplyError } from "../errors.ts";
 import { encoder } from "./_util.ts";
-import type { RedisReply, RedisReplyOrError, RedisValue } from "./types.ts";
+import type { RawOrError, RedisReply, RedisValue } from "./types.ts";
 
 const CRLF = encoder.encode("\r\n");
 const ArrayCode = encoder.encode("*");
@@ -54,16 +54,16 @@ export async function sendCommands(
     command: string;
     args: RedisValue[];
   }[],
-): Promise<RedisReplyOrError[]> {
+): Promise<RawOrError[]> {
   for (const { command, args } of commands) {
     await writeRequest(writer, command, args);
   }
   await writer.flush();
-  const ret: RedisReplyOrError[] = [];
+  const ret: RawOrError[] = [];
   for (let i = 0; i < commands.length; i++) {
     try {
       const rep = await readReply(reader);
-      ret.push(rep);
+      ret.push(rep.value());
     } catch (e) {
       if (e instanceof ErrorReplyError) {
         ret.push(e);

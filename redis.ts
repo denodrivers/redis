@@ -44,12 +44,10 @@ import { RedisConnection } from "./connection.ts";
 import type { Connection } from "./connection.ts";
 import type { RedisConnectionOptions } from "./connection.ts";
 import { CommandExecutor, MuxExecutor } from "./executor.ts";
-import { unwrapReply } from "./protocol/mod.ts";
 import type {
   Binary,
   Bulk,
   BulkNil,
-  BulkReply,
   BulkString,
   ConditionalArray,
   Integer,
@@ -134,7 +132,7 @@ class RedisImpl implements Redis {
       command,
       ...args,
     );
-    return unwrapReply(reply) as Raw;
+    return reply.value();
   }
 
   async execStatusReply(
@@ -157,7 +155,7 @@ class RedisImpl implements Redis {
     command: string,
     ...args: RedisValue[]
   ): Promise<Binary | BulkNil> {
-    const reply = await this.executor.exec(command, ...args) as BulkReply;
+    const reply = await this.executor.exec(command, ...args);
     return reply.buffer();
   }
 
@@ -174,7 +172,7 @@ class RedisImpl implements Redis {
     ...args: RedisValue[]
   ): Promise<T[]> {
     const reply = await this.executor.exec(command, ...args);
-    return reply.value() as T[];
+    return reply.value() as Array<T>;
   }
 
   async execIntegerOrNilReply(
@@ -190,7 +188,7 @@ class RedisImpl implements Redis {
     ...args: RedisValue[]
   ): Promise<SimpleString | BulkNil> {
     const reply = await this.executor.exec(command, ...args);
-    return reply.value() as SimpleString | BulkNil;
+    return reply.string() as SimpleString | BulkNil;
   }
 
   aclCat(categoryname?: string) {

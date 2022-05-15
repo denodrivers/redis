@@ -1,9 +1,4 @@
-import {
-  BulkReply,
-  createLazyClient,
-  ErrorReplyError,
-  replyTypes,
-} from "../../mod.ts";
+import { createLazyClient, ErrorReplyError } from "../../mod.ts";
 import {
   assert,
   assertEquals,
@@ -104,21 +99,18 @@ export async function generalTests(
     // simple string
     {
       const reply = await client.sendCommand("SET", "key", "a");
-      assertEquals(reply.type, replyTypes.SimpleString);
       assertEquals(reply.value(), "OK");
     }
 
     // bulk string
     {
       const reply = await client.sendCommand("GET", "key");
-      assertEquals(reply.type, replyTypes.BulkString);
       assertEquals(reply.value(), "a");
     }
 
     // integer
     {
       const reply = await client.sendCommand("EXISTS", "key");
-      assertEquals(reply.type, replyTypes.Integer);
       assertEquals(reply.value(), 1);
     }
   });
@@ -127,8 +119,7 @@ export async function generalTests(
     const encoder = new TextEncoder();
     await client.set("key", encoder.encode("hello"));
     const reply = await client.sendCommand("GET", "key");
-    assertEquals(reply.type, replyTypes.BulkString);
-    assertEquals((reply as BulkReply).buffer(), encoder.encode("hello"));
+    assertEquals(reply.buffer(), encoder.encode("hello"));
   });
 
   await t.step("lazy client", async () => {

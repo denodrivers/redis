@@ -43,49 +43,13 @@ export type Binary = Uint8Array;
  */
 export type ConditionalArray = Raw[];
 
-export type RedisReply =
-  | IntegerReply
-  | BulkReply
-  | SimpleStringReply
-  | ArrayReply;
-
-export type RedisReplyOrError = RedisReply | ErrorReplyError;
-
-// TODO(uki00a): Add `attributes()` methods when implementing RESP3
-export interface Reply<T> {
-  type: string;
-  value(): T;
+export interface RedisReply {
+  integer(): Integer;
+  string(): SimpleString;
+  bulk(): Bulk;
+  buffer(): Uint8Array;
+  array(): ConditionalArray;
+  value(): Raw;
 }
 
-/**
- * @description Represents the **integer** reply in the RESP2 protocol.
- */
-export interface IntegerReply extends Reply<Integer> {
-  type: "integer";
-  value(): Integer;
-}
-
-/**
- * @description Represents the **bulk string** or **null bulk string** reply in the RESP2 protocol.
- */
-export interface BulkReply extends Reply<Bulk> {
-  type: "bulk string";
-  value(): Bulk;
-  buffer(): Binary | BulkNil;
-}
-
-/**
- * @description Represents the **simple string** reply in the RESP2 protocol.
- */
-export interface SimpleStringReply extends Reply<SimpleString> {
-  type: "simple string";
-  value(): SimpleString;
-}
-
-/**
- * @description Represents the **array** reply in the RESP2 protocol.
- */
-export interface ArrayReply extends Reply<ConditionalArray> {
-  type: "array";
-  value(): ConditionalArray;
-}
+export type RawOrError = Raw | ErrorReplyError;
