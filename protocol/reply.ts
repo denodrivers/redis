@@ -40,23 +40,23 @@ abstract class BaseReply implements types.RedisReply {
   constructor(readonly code: number) {}
 
   buffer(): Uint8Array {
-    throw createParseError(this.code, "buffer");
+    throw createDecodeError(this.code, "buffer");
   }
 
   string(): string {
-    throw createParseError(this.code, "string");
+    throw createDecodeError(this.code, "string");
   }
 
   bulk(): types.Bulk {
-    throw createParseError(this.code, "bulk");
+    throw createDecodeError(this.code, "bulk");
   }
 
   integer(): types.Integer {
-    throw createParseError(this.code, "integer");
+    throw createDecodeError(this.code, "integer");
   }
 
   array(): types.ConditionalArray {
-    throw createParseError(this.code, "array");
+    throw createDecodeError(this.code, "array");
   }
 
   abstract value(): types.Raw;
@@ -289,9 +289,9 @@ function parseSize(line: Uint8Array): number {
   return size;
 }
 
-function createParseError(code: number, expectedType: string): Error {
+function createDecodeError(code: number, expectedType: string): Error {
   return new InvalidStateError(
-    `cannot read '${
+    `cannot decode '${
       String.fromCharCode(code)
     }' type as \`${expectedType}\` value`,
   );
