@@ -9,8 +9,8 @@ import {
 } from "../../vendor/https/deno.land/std/testing/asserts.ts";
 import {
   afterAll,
+  afterEach,
   beforeAll,
-  beforeEach,
   describe,
   it,
 } from "../../vendor/https/deno.land/std/testing/bdd.ts";
@@ -40,7 +40,7 @@ describe("experimental/cluster", () => {
 
   afterAll(() => stopRedisCluster(cluster));
 
-  beforeEach(() => client.close());
+  afterEach(() => client.close());
 
   it("del multiple keys in the same hash slot", async () => {
     await client.set("{hoge}foo", "a");
