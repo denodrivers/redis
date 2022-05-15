@@ -9,9 +9,9 @@ import { newClient } from "../test_util.ts";
 import type { TestServer } from "../test_util.ts";
 import type { Redis } from "../../mod.ts";
 
-export async function connectionTests(
+export function connectionTests(
   server: TestServer,
-): Promise<void> {
+): void {
   const { port } = server;
 
   let client!: Redis;

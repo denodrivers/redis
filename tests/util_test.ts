@@ -1,8 +1,6 @@
 import { parseURL } from "../mod.ts";
 import { assertEquals } from "../vendor/https/deno.land/std/testing/asserts.ts";
 import {
-  afterAll,
-  beforeAll,
   describe,
   it,
 } from "../vendor/https/deno.land/std/testing/bdd.ts";

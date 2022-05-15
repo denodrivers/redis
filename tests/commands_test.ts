@@ -20,7 +20,6 @@ import {
   afterAll,
   beforeAll,
   describe,
-  it,
 } from "../vendor/https/deno.land/std/testing/bdd.ts";
 
 describe("commands", () => {
