@@ -127,12 +127,12 @@ const redis = await connect({ hostname: "127.0.0.1" });
 
 {
   const reply = await redis.sendCommand("SET", "redis", "nice");
-  console.assert(await reply.value() === "OK");
+  console.assert(reply.value() === "OK");
 }
 
 {
   const reply = await redis.sendCommand("GET", "redis");
-  console.assert(await reply.value() === "nice");
+  console.assert(reply.value() === "nice");
 }
 ```
 
