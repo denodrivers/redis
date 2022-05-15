@@ -5,39 +5,46 @@ import {
   assertEquals,
   assertRejects,
 } from "../vendor/https/deno.land/std/testing/asserts.ts";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  it,
+} from "../vendor/https/deno.land/std/testing/bdd.ts";
 import { newClient, nextPort, startRedis, stopRedis } from "./test_util.ts";
+import type { TestServer } from "./test_util.ts";
 
-Deno.test("client", async (t) => {
-  const port = nextPort();
-  const server = await startRedis({ port });
+describe("client", () => {
+  let port!: number;
+  let server!: TestServer;
   let client!: Redis;
 
-  function cleanup(): void {
-    stopRedis(server);
-  }
+  beforeAll(async () => {
+    port = nextPort();
+    server = await startRedis({ port });
+  });
 
-  async function run(name: string, fn: () => Promise<void>): Promise<void> {
-    await t.step(name, async () => {
-      try {
-        client = await newClient({ hostname: "127.0.0.1", port });
-        await fn();
-      } finally {
-        client.close();
-      }
-    });
-  }
+  afterAll(() => stopRedis(server));
 
-  await run("client caching with opt in", async () => {
+  beforeEach(async () => {
+    client = await newClient({ hostname: "127.0.0.1", port });
+  });
+
+  afterEach(() => client.close());
+
+  it("client caching with opt in", async () => {
     await client.clientTracking({ mode: "ON", optIn: true });
     assertEquals(await client.clientCaching("YES"), "OK");
   });
 
-  await run("client caching with opt out", async () => {
+  it("client caching with opt out", async () => {
     await client.clientTracking({ mode: "ON", optOut: true });
     assertEquals(await client.clientCaching("NO"), "OK");
   });
 
-  await run("client caching without opt in or opt out", async () => {
+  it("client caching without opt in or opt out", async () => {
     await assertRejects(
       () => {
         return client.clientCaching("YES");
@@ -47,27 +54,27 @@ Deno.test("client", async (t) => {
     );
   });
 
-  await run("client id", async () => {
+  it("client id", async () => {
     const id = await client.clientID();
     assertEquals(typeof id, "number");
   });
 
-  await run("client info", async () => {
+  it("client info", async () => {
     const id = await client.clientID();
     const info = await client.clientInfo();
     assert(info!.includes(`id=${id}`));
   });
 
-  await run("client setname & getname", async () => {
+  it("client setname & getname", async () => {
     assertEquals(await client.clientSetName("deno-redis"), "OK");
     assertEquals(await client.clientGetName(), "deno-redis");
   });
 
-  await run("client getredir with no redirect", async () => {
+  it("client getredir with no redirect", async () => {
     assertEquals(await client.clientGetRedir(), -1);
   });
 
-  await run("client getredir with redirect", async () => {
+  it("client getredir with redirect", async () => {
     const tempClient = await newClient({ hostname: "127.0.0.1", port });
     try {
       const id = await tempClient.clientID();
@@ -78,14 +85,14 @@ Deno.test("client", async (t) => {
     }
   });
 
-  await run("client pause & unpause", async () => {
+  it("client pause & unpause", async () => {
     assertEquals(await client.clientPause(5), "OK");
     assertEquals(await client.clientPause(5, "ALL"), "OK");
     assertEquals(await client.clientPause(5, "WRITE"), "OK");
     assertEquals(await client.clientUnpause(), "OK");
   });
 
-  await run("client kill by addr", async () => {
+  it("client kill by addr", async () => {
     const tempClient = await newClient({ hostname: "127.0.0.1", port });
     try {
       const info = await client.clientInfo() as string;
@@ -98,7 +105,7 @@ Deno.test("client", async (t) => {
     }
   });
 
-  await run("client kill by id", async () => {
+  it("client kill by id", async () => {
     const tempClient = await newClient({ hostname: "127.0.0.1", port });
     try {
       const id = await client.clientID();
@@ -108,7 +115,7 @@ Deno.test("client", async (t) => {
     }
   });
 
-  await run("client list", async () => {
+  it("client list", async () => {
     const id = await client.clientID();
     let list = await client.clientList();
     assert(list!.includes(`id=${id}`));
@@ -131,7 +138,7 @@ Deno.test("client", async (t) => {
     );
   });
 
-  await run("client tracking", async () => {
+  it("client tracking", async () => {
     assertEquals(
       await client.clientTracking({
         mode: "ON",
@@ -158,19 +165,19 @@ Deno.test("client", async (t) => {
     );
   });
 
-  await run("client trackinginfo", async () => {
+  it("client trackinginfo", async () => {
     const info = await client.clientTrackingInfo();
     assert(info.includes("flags"));
     assert(info.includes("redirect"));
     assert(info.includes("prefixes"));
   });
 
-  await run("client unblock nothing", async () => {
+  it("client unblock nothing", async () => {
     const id = await client.clientID();
     assertEquals(await client.clientUnblock(id), 0);
   });
 
-  await run("client unblock with timeout", async () => {
+  it("client unblock with timeout", async () => {
     const tempClient = await newClient({ hostname: "127.0.0.1", port });
     try {
       const id = await tempClient.clientID();
@@ -183,7 +190,7 @@ Deno.test("client", async (t) => {
     }
   });
 
-  await run("client unblock with error", async () => {
+  it("client unblock with error", async () => {
     const tempClient = await newClient({ hostname: "127.0.0.1", port });
     try {
       const id = await tempClient.clientID();
@@ -200,9 +207,7 @@ Deno.test("client", async (t) => {
     }
   });
 
-  await run("client kill by type and don't skip ourselves", async () => {
+  it("client kill by type and don't skip ourselves", async () => {
     assertEquals(await client.clientKill({ type: "NORMAL", skipme: "NO" }), 1);
   });
-
-  cleanup();
 });

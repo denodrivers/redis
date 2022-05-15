@@ -2,46 +2,52 @@ import {
   assert,
   assertEquals,
 } from "../../vendor/https/deno.land/std/testing/asserts.ts";
+import {
+  afterAll,
+  beforeAll,
+  beforeEach,
+  it,
+} from "../../vendor/https/deno.land/std/testing/bdd.ts";
 import { newClient } from "../test_util.ts";
 import type { TestServer } from "../test_util.ts";
+import type { Redis } from "../../mod.ts";
 
-export async function zsetTests(
-  t: Deno.TestContext,
-  server: TestServer,
-): Promise<void> {
-  const client = await newClient({ hostname: "127.0.0.1", port: server.port });
-  function cleanup(): void {
-    client.close();
-  }
+export function zsetTests(
+  getServer: () => TestServer,
+): void {
+  let client!: Redis;
+  beforeAll(async () => {
+    const server = getServer();
+    client = await newClient({ hostname: "127.0.0.1", port: server.port });
+  });
 
-  async function run(name: string, fn: () => Promise<void>): Promise<void> {
-    await t.step(name, async () => {
-      await client.flushdb();
-      await fn();
-    });
-  }
+  afterAll(() => client.close());
 
-  await run("bzpopmin", async () => {
+  beforeEach(async () => {
+    await client.flushdb();
+  });
+
+  it("bzpopmin", async () => {
     await client.zadd("key", { "1": 1, "2": 2 });
     assertEquals(await client.bzpopmin(1, "key"), ["key", "1", "1"]);
   });
 
-  await run("bzpopmin timeout", async () => {
+  it("bzpopmin timeout", async () => {
     const arr = await client.bzpopmin(1, "key");
     assertEquals(arr.length, 0);
   });
 
-  await run("bzpopmax", async () => {
+  it("bzpopmax", async () => {
     await client.zadd("key", { "1": 1, "2": 2 });
     assertEquals(await client.bzpopmax(1, "key"), ["key", "2", "2"]);
   });
 
-  await run("bzpopmax timeout", async () => {
+  it("bzpopmax timeout", async () => {
     const arr = await client.bzpopmax(1, "key");
     assertEquals(arr.length, 0);
   });
 
-  await run("zadd", async () => {
+  it("zadd", async () => {
     assertEquals(await client.zadd("key", { "1": 1, "2": 2 }), 2);
     assertEquals(await client.zadd("key", 3, "3"), 1);
     assertEquals(
@@ -53,7 +59,7 @@ export async function zsetTests(
     );
   });
 
-  await run("zaddWithMode", async () => {
+  it("zaddWithMode", async () => {
     assertEquals(await client.zadd("key", 1, "1", { mode: "NX" }), 1);
     assertEquals(await client.zadd("key", { "1": 1 }, { mode: "XX" }), 0);
     assertEquals(
@@ -62,7 +68,7 @@ export async function zsetTests(
     );
   });
 
-  await run("zaddWithCH", async () => {
+  it("zaddWithCH", async () => {
     assertEquals(await client.zadd("key", [[1, "foo"], [2, "bar"]]), 2);
     assertEquals(
       await client.zadd("key", { "foo": 1, "bar": 3, "baz": 4 }, { ch: true }),
@@ -70,13 +76,13 @@ export async function zsetTests(
     );
   });
 
-  await run("zaddIncr", async () => {
+  it("zaddIncr", async () => {
     await client.zadd("key", 1, "a");
     await client.zaddIncr("key", 2, "a");
     assertEquals(await client.zscore("key", "a"), "3");
   });
 
-  await run("zaddIncrWithMode", async () => {
+  it("zaddIncrWithMode", async () => {
     assertEquals(
       await client.zaddIncr("key", 1, "one", { mode: "XX" }),
       undefined,
@@ -88,7 +94,7 @@ export async function zsetTests(
     );
   });
 
-  await run("zaddIncrWithCH", async () => {
+  it("zaddIncrWithCH", async () => {
     await client.zadd("key", 1, "foo");
     assertEquals(
       await client.zaddIncr("key", 3, "foo", { ch: true }),
@@ -98,111 +104,111 @@ export async function zsetTests(
     assertEquals(await client.zscore("key", "foo"), "4");
   });
 
-  await run("zcount", async () => {
+  it("zcount", async () => {
     await client.zadd("key", { "1": 1, "2": 2 });
     assertEquals(await client.zcount("key", 0, 1), 1);
   });
 
-  await run("zincrby", async () => {
+  it("zincrby", async () => {
     await client.zadd("key", { "1": 1, "2": 2 });
     const v = await client.zincrby("key", 2.0, "1");
     assert(v != null);
     assert(parseFloat(v) - 3.0 < Number.EPSILON);
   });
 
-  await run("zinterstore", async () => {
+  it("zinterstore", async () => {
     await client.zadd("key", { "1": 1, "2": 2 });
     await client.zadd("key2", { "1": 1, "3": 3 });
     assertEquals(await client.zinterstore("dest", ["key", "key2"]), 1);
   });
 
-  await run("zlexcount", async () => {
+  it("zlexcount", async () => {
     await client.zadd("key2", { "1": 1, "2": 2 });
     assertEquals(await client.zlexcount("key", "-", "(2"), 0);
   });
 
-  await run("zpopmax", async () => {
+  it("zpopmax", async () => {
     await client.zadd("key", { one: 1, two: 2 });
     assertEquals(await client.zpopmax("key", 1), ["two", "2"]);
   });
 
-  await run("zrange", async () => {
+  it("zrange", async () => {
     await client.zadd("key", { one: 1, two: 2 });
     assertEquals(await client.zrange("key", 1, 2), ["two"]);
   });
 
-  await run("zrangebylex", async () => {
+  it("zrangebylex", async () => {
     await client.zadd("key", { one: 1, two: 2 });
     assertEquals(await client.zrangebylex("key", "-", "(2"), []);
   });
 
-  await run("zrevrangebylex", async () => {
+  it("zrevrangebylex", async () => {
     await client.zadd("key", { one: 1, two: 2 });
     assertEquals(await client.zrevrangebylex("key", "(2", "-"), []);
   });
 
-  await run("zrangebyscore", async () => {
+  it("zrangebyscore", async () => {
     await client.zadd("key", { one: 1, two: 2 });
     assertEquals(await client.zrangebyscore("key", "1", "2"), ["one", "two"]);
   });
 
-  await run("zrank", async () => {
+  it("zrank", async () => {
     await client.zadd("key", { one: 1, two: 2 });
     assertEquals(await client.zrank("key", "two"), 1);
   });
 
-  await run("zrem", async () => {
+  it("zrem", async () => {
     client.zadd("key", { one: 1, two: 2 });
     assertEquals(await client.zrem("key", "one"), 1);
   });
 
-  await run("zremrangebylex", async () => {
+  it("zremrangebylex", async () => {
     client.zadd("key", { one: 1, two: 2 });
     assertEquals(await client.zremrangebylex("key", "[one", "[two"), 2);
   });
 
-  await run("zremrangebyrank", async () => {
+  it("zremrangebyrank", async () => {
     client.zadd("key", { one: 1, two: 2 });
     assertEquals(await client.zremrangebyrank("key", 1, 2), 1);
   });
 
-  await run("zremrangebyscore", async () => {
+  it("zremrangebyscore", async () => {
     client.zadd("key", { one: 1, two: 2 });
     assertEquals(await client.zremrangebyscore("key", 1, 2), 2);
   });
 
-  await run("zrevrange", async () => {
+  it("zrevrange", async () => {
     client.zadd("key", { one: 1, two: 2 });
     assertEquals(await client.zrevrange("key", 1, 2), ["one"]);
   });
 
-  await run("zrevrangebyscore", async () => {
+  it("zrevrangebyscore", async () => {
     client.zadd("key", { one: 1, two: 2 });
     assertEquals(await client.zrevrangebyscore("key", 2, 1), ["two", "one"]);
   });
 
-  await run("zrevrank", async () => {
+  it("zrevrank", async () => {
     client.zadd("key", { one: 1, two: 2 });
     assertEquals(await client.zrevrank("key", "one"), 1);
   });
 
-  await run("zscore", async () => {
+  it("zscore", async () => {
     client.zadd("key", { one: 1, two: 2 });
     assertEquals(await client.zscore("key", "one"), "1");
   });
 
-  await run("zunionstore", async () => {
+  it("zunionstore", async () => {
     client.zadd("key", { one: 1, two: 2 });
     client.zadd("key2", { one: 1, three: 3 });
     assertEquals(await client.zunionstore("dest", ["key", "key2"]), 3);
   });
 
-  await run("zscan", async () => {
+  it("zscan", async () => {
     client.zadd("key", { one: 1, two: 2 });
     assertEquals(await client.zscan("key", 1), ["0", ["one", "1", "two", "2"]]);
   });
 
-  await run("testZrange", async function testZrange() {
+  it("testZrange", async function testZrange() {
     client.zadd("zrange", 1, "one");
     client.zadd("zrange", 2, "two");
     client.zadd("zrange", 3, "three");
@@ -210,7 +216,7 @@ export async function zsetTests(
     assertEquals(v, ["one", "two"]);
   });
 
-  await run("testZrangeWithScores", async function testZrangeWithScores() {
+  it("testZrangeWithScores", async function testZrangeWithScores() {
     client.zadd("zrangeWithScores", 1, "one");
     client.zadd("zrangeWithScores", 2, "two");
     client.zadd("zrangeWithScores", 3, "three");
@@ -220,7 +226,7 @@ export async function zsetTests(
     assertEquals(v, ["one", "1", "two", "2"]);
   });
 
-  await run("testZrevrange", async function testZrevrange() {
+  it("testZrevrange", async function testZrevrange() {
     client.zadd("zrevrange", 1, "one");
     client.zadd("zrevrange", 2, "two");
     client.zadd("zrevrange", 3, "three");
@@ -228,7 +234,7 @@ export async function zsetTests(
     assertEquals(v, ["three", "two"]);
   });
 
-  await run(
+  it(
     "testZrevrangeWithScores",
     async function testZrevrangeWithScores() {
       client.zadd("zrevrangeWithScores", 1, "one");
@@ -241,7 +247,7 @@ export async function zsetTests(
     },
   );
 
-  await run("testZrangebyscore", async function testZrangebyscore() {
+  it("testZrangebyscore", async function testZrangebyscore() {
     client.zadd("zrangebyscore", 2, "m1");
     client.zadd("zrangebyscore", 5, "m2");
     client.zadd("zrangebyscore", 8, "m3");
@@ -250,7 +256,7 @@ export async function zsetTests(
     assertEquals(v, ["m2", "m3"]);
   });
 
-  await run(
+  it(
     "testZrangebyscoreWithScores",
     async function testZrangebyscoreWithScores() {
       client.zadd("zrangebyscoreWithScores", 2, "m1");
@@ -264,7 +270,7 @@ export async function zsetTests(
     },
   );
 
-  await run("testZrevrangebyscore", async function testZrevrangebyscore() {
+  it("testZrevrangebyscore", async function testZrevrangebyscore() {
     client.zadd("zrevrangebyscore", 2, "m1");
     client.zadd("zrevrangebyscore", 5, "m2");
     client.zadd("zrevrangebyscore", 8, "m3");
@@ -273,7 +279,7 @@ export async function zsetTests(
     assertEquals(v, ["m3", "m2"]);
   });
 
-  await run("testZrevrangebyscore", async function testZrevrangebyscore() {
+  it("testZrevrangebyscore", async function testZrevrangebyscore() {
     client.zadd("zrevrangebyscoreWithScores", 2, "m1");
     client.zadd("zrevrangebyscoreWithScores", 5, "m2");
     client.zadd("zrevrangebyscoreWithScores", 8, "m3");
@@ -288,6 +294,4 @@ export async function zsetTests(
     );
     assertEquals(v, ["m3", "8", "m2", "5"]);
   });
-
-  cleanup();
 }

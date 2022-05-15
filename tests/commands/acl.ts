@@ -1,27 +1,35 @@
 import { assertEquals } from "../../vendor/https/deno.land/std/testing/asserts.ts";
+import {
+  afterAll,
+  beforeAll,
+  it,
+} from "../../vendor/https/deno.land/std/testing/bdd.ts";
 import { newClient } from "../test_util.ts";
 import type { TestServer } from "../test_util.ts";
+import type { Redis } from "../../mod.ts";
 
-export async function aclTests(
-  t: Deno.TestContext,
-  server: TestServer,
-): Promise<void> {
-  const client = await newClient({ hostname: "127.0.0.1", port: server.port });
-  function cleanup(): void {
-    client.close();
-  }
+export function aclTests(
+  getServer: () => TestServer,
+): void {
+  let client!: Redis;
+  beforeAll(async () => {
+    const server = getServer();
+    client = await newClient({ hostname: "127.0.0.1", port: server.port });
+  });
 
-  await t.step("whoami", async () => {
+  afterAll(() => client.close());
+
+  it("whoami", async () => {
     assertEquals(await client.aclWhoami(), "default");
   });
 
-  await t.step("list", async () => {
+  it("list", async () => {
     assertEquals(await client.aclList(), [
       "user default on nopass ~* &* +@all",
     ]);
   });
 
-  await t.step("getuser", async () => {
+  it("getuser", async () => {
     assertEquals(await client.aclGetUser("default"), [
       "flags",
       ["on", "allkeys", "allchannels", "allcommands", "nopass"],
@@ -36,7 +44,7 @@ export async function aclTests(
     ]);
   });
 
-  await t.step("cat", async () => {
+  it("cat", async () => {
     assertEquals(
       (await client.aclCat()).sort(),
       [
@@ -102,30 +110,30 @@ export async function aclTests(
     );
   });
 
-  await t.step("users", async () => {
+  it("users", async () => {
     assertEquals(await client.aclUsers(), ["default"]);
   });
 
-  await t.step("acl_setuser", async () => {
+  it("acl_setuser", async () => {
     assertEquals(await client.aclSetUser("alan", "+get"), "OK");
     assertEquals(await client.aclDelUser("alan"), 1);
   });
 
-  await t.step("deluser", async () => {
+  it("deluser", async () => {
     assertEquals(await client.aclDelUser("alan"), 0);
   });
 
-  await t.step("genpass", async () => {
+  it("genpass", async () => {
     assertEquals((await client.aclGenPass()).length, 64);
     const testlen = 32;
     assertEquals((await client.aclGenPass(testlen)).length, testlen / 4);
   });
 
-  await t.step("aclauth", async () => {
+  it("aclauth", async () => {
     assertEquals(await client.auth("default", ""), "OK");
   });
 
-  await t.step("log", async () => {
+  it("log", async () => {
     const randString = "balh";
     try {
       await client.auth(randString, randString);
@@ -136,9 +144,7 @@ export async function aclTests(
     assertEquals(await client.aclLog("RESET"), "OK");
   });
 
-  await t.step("module_list", async () => {
+  it("module_list", async () => {
     assertEquals(await client.moduleList(), []);
   });
-
-  cleanup();
 }

@@ -1,26 +1,34 @@
 import { createLazyClient, ErrorReplyError } from "../../mod.ts";
+import type { Redis } from "../../mod.ts";
 import {
   assert,
   assertEquals,
   assertNotEquals,
   assertRejects,
 } from "../../vendor/https/deno.land/std/testing/asserts.ts";
+import {
+  afterAll,
+  beforeAll,
+  it,
+} from "../../vendor/https/deno.land/std/testing/bdd.ts";
 import { newClient } from "../test_util.ts";
 import type { TestServer } from "../test_util.ts";
 
-export async function generalTests(
-  t: Deno.TestContext,
-  server: TestServer,
-): Promise<void> {
-  const { port } = server;
-  const opts = { hostname: "127.0.0.1", port };
-  const client = await newClient(opts);
+export function generalTests(
+  getServer: () => TestServer,
+): void {
+  const getOpts = () => ({
+    hostname: "127.0.0.1",
+    port: getServer().port,
+  });
+  let client!: Redis;
+  beforeAll(async () => {
+    client = await newClient(getOpts());
+  });
 
-  function cleanup(): void {
-    client.close();
-  }
+  afterAll(() => client.close());
 
-  await t.step("conccurent", async () => {
+  it("conccurent", async () => {
     let promises: Promise<string | undefined>[] = [];
     for (const key of ["a", "b", "c"]) {
       promises.push(client.set(key, key));
@@ -36,7 +44,8 @@ export async function generalTests(
     assertEquals(c, "c");
   });
 
-  await t.step("db0", async () => {
+  it("db0", async () => {
+    const opts = getOpts();
     const key = "exists";
     const client1 = await newClient({ ...opts, db: 0 });
     await client1.set(key, "aaa");
@@ -49,7 +58,8 @@ export async function generalTests(
     client2.close();
   });
 
-  await t.step("connect with wrong password", async () => {
+  it("connect with wrong password", async () => {
+    const { port } = getOpts();
     await assertRejects(async () => {
       await newClient({
         hostname: "127.0.0.1",
@@ -59,7 +69,8 @@ export async function generalTests(
     }, ErrorReplyError);
   });
 
-  await t.step("connect with empty password", async () => {
+  it("connect with empty password", async () => {
+    const { port } = getOpts();
     // In Redis, authentication with an empty password will always fail.
     await assertRejects(async () => {
       await newClient({
@@ -70,7 +81,8 @@ export async function generalTests(
     }, ErrorReplyError);
   });
 
-  await t.step("exists", async () => {
+  it("exists", async () => {
+    const opts = getOpts();
     const key = "exists";
     const client1 = await newClient({ ...opts, db: 0 });
     await client1.set(key, "aaa");
@@ -84,7 +96,7 @@ export async function generalTests(
   });
 
   for (const v of [Infinity, NaN, "", "port"]) {
-    await t.step(`invalid port: ${v}`, async () => {
+    it(`invalid port: ${v}`, async () => {
       await assertRejects(
         async () => {
           await newClient({ hostname: "127.0.0.1", port: v });
@@ -95,7 +107,7 @@ export async function generalTests(
     });
   }
 
-  await t.step("sendCommand - simple types", async () => {
+  it("sendCommand - simple types", async () => {
     // simple string
     {
       const reply = await client.sendCommand("SET", "key", "a");
@@ -115,14 +127,15 @@ export async function generalTests(
     }
   });
 
-  await t.step("sendCommand - get the raw data as Uint8Array", async () => {
+  it("sendCommand - get the raw data as Uint8Array", async () => {
     const encoder = new TextEncoder();
     await client.set("key", encoder.encode("hello"));
     const reply = await client.sendCommand("GET", "key");
     assertEquals(reply.buffer(), encoder.encode("hello"));
   });
 
-  await t.step("lazy client", async () => {
+  it("lazy client", async () => {
+    const opts = getOpts();
     const resources = Deno.resources();
     const client = createLazyClient(opts);
     assert(!client.isConnected);
@@ -135,6 +148,4 @@ export async function generalTests(
       client.close();
     }
   });
-
-  cleanup();
 }

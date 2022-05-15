@@ -5,6 +5,7 @@
       "/async/deferred.ts",
       "/async/delay.ts",
       "/testing/asserts.ts",
+      "/testing/bdd.ts",
       "/io/buffer.ts",
       "/io/util.ts"
     ]
