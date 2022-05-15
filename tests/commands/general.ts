@@ -99,19 +99,19 @@ export async function generalTests(
     // simple string
     {
       const reply = await client.sendCommand("SET", "key", "a");
-      assertEquals(await reply.value(), "OK");
+      assertEquals(reply.value(), "OK");
     }
 
     // bulk string
     {
       const reply = await client.sendCommand("GET", "key");
-      assertEquals(await reply.value(), "a");
+      assertEquals(reply.value(), "a");
     }
 
     // integer
     {
       const reply = await client.sendCommand("EXISTS", "key");
-      assertEquals(await reply.value(), 1);
+      assertEquals(reply.value(), 1);
     }
   });
 
@@ -119,7 +119,7 @@ export async function generalTests(
     const encoder = new TextEncoder();
     await client.set("key", encoder.encode("hello"));
     const reply = await client.sendCommand("GET", "key");
-    assertEquals(await reply.buffer(), encoder.encode("hello"));
+    assertEquals(reply.buffer(), encoder.encode("hello"));
   });
 
   await t.step("lazy client", async () => {
