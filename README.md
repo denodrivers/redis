@@ -88,8 +88,8 @@ To consume a redis cluster, you can use
 ### Retriable connection
 
 By default, a client's connection will retry a command execution if the server
-dies or the network becomes unavailable. You can change change the maximum
-number of retries by setting `maxRetryCount`:
+dies or the network becomes unavailable. You can change the maximum number of
+retries by setting `maxRetryCount` (It's default to `10`):
 
 ```ts
 import { connect } from "https://deno.land/x/redis/mod.ts";
