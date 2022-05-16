@@ -18,7 +18,7 @@ export function pubsubTests(
     const client = await newClient(opts);
     const sub = await client.subscribe("subsc");
     await sub.unsubscribe("subsc");
-    await sub.close();
+    sub.close();
     assertEquals(sub.isClosed, true);
     client.close();
   });
@@ -38,7 +38,7 @@ export function pubsubTests(
       channel: "subsc2",
       message: "wayway",
     });
-    await sub.close();
+    sub.close();
     assertEquals(sub.isClosed, true);
     assertEquals(client.isClosed, true);
     pub.close();
@@ -72,7 +72,7 @@ export function pubsubTests(
       channel: "psubs",
       message: "heyhey",
     });
-    await sub.close();
+    sub.close();
     pub.close();
     client.close();
   });
@@ -125,7 +125,7 @@ export function pubsubTests(
 
     // Cleanup
     clearInterval(interval);
-    await sub.close();
+    sub.close();
     pub.close();
     client.close();
     stopRedis(tempServer);

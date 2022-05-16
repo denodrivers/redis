@@ -14,7 +14,7 @@ export interface RedisSubscription<
   subscribe(...channels: string[]): Promise<void>;
   punsubscribe(...patterns: string[]): Promise<void>;
   unsubscribe(...channels: string[]): Promise<void>;
-  close(): Promise<void>;
+  close(): void;
 }
 
 export interface RedisPubSubMessage<TMessage = DefaultMessageType> {
@@ -129,13 +129,8 @@ class RedisSubscriptionImpl<
     }
   }
 
-  async close() {
-    try {
-      await this.unsubscribe(...Object.keys(this.channels));
-      await this.punsubscribe(...Object.keys(this.patterns));
-    } finally {
-      this.executor.connection.close();
-    }
+  close() {
+    this.executor.connection.close();
   }
 }
 
