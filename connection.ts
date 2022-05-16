@@ -18,7 +18,6 @@ export interface Connection {
   close(): void;
   connect(): Promise<void>;
   reconnect(): Promise<void>;
-  forceRetry(): void;
 }
 
 export interface RedisConnectionOptions {
@@ -27,6 +26,7 @@ export interface RedisConnectionOptions {
   password?: string;
   name?: string;
   maxRetryCount?: number;
+  // TODO: Provide more flexible retry strategy
   retryInterval?: number;
 }
 
@@ -35,7 +35,7 @@ export class RedisConnection implements Connection {
   closer!: Closer;
   reader!: BufReader;
   writer!: BufWriter;
-  maxRetryCount = 0;
+  maxRetryCount = 10;
   retryInterval = 1200;
 
   private retryCount = 0;
@@ -177,10 +177,6 @@ export class RedisConnection implements Connection {
         }, this.retryInterval);
       });
     }
-  }
-
-  forceRetry(): void {
-    this.maxRetryCount = 10; // TODO Adjust this.
   }
 }
 
