@@ -87,31 +87,14 @@ To consume a redis cluster, you can use
 
 ### Retriable connection
 
-By default, a client's connection will throw an error if the server dies or the
-network becomes unavailable. A connection can be made "retriable" by setting the
-value `maxRetryCount` when connecting a new client.
+By default, a client's connection will retry a command execution if the server
+dies or the network becomes unavailable. You can change change the maximum
+number of retries by setting `maxRetryCount`:
 
 ```ts
 import { connect } from "https://deno.land/x/redis/mod.ts";
 
-const redis = await connect({ hostname: "127.0.0.1", maxRetryCount: 10 });
-
-// The client will try to connect to the server 10 times if the server dies or the network becomes unavailable.
-```
-
-The property is set automatically to `10` when creating a subscriber client.
-After a reconnection succeeds, the client will subscribe again to all the
-channels and patterns.
-
-```ts
-import { connect } from "https://deno.land/x/redis/mod.ts";
-
-const options = { hostname: "127.0.0.1" };
-const redis = await connect(options);
-const subscriberClient = await redis.subscribe("channel");
-
-// The client's connection will now be forced to try to connect to the server 10 times if the server dies or the network
-//   becomes unavailable.
+const redis = await connect({ hostname: "127.0.0.1", maxRetryCount: 0 }); // Disable retries
 ```
 
 ### Execute raw commands
