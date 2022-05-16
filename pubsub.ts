@@ -37,10 +37,7 @@ class RedisSubscriptionImpl<
   private channels = Object.create(null);
   private patterns = Object.create(null);
 
-  constructor(private executor: CommandExecutor) {
-    // Force retriable connection for connection shared for pub/sub.
-    if (!executor.connection.isRetriable) executor.connection.forceRetry();
-  }
+  constructor(private executor: CommandExecutor) {}
 
   async psubscribe(...patterns: string[]) {
     await this.executor.exec("PSUBSCRIBE", ...patterns);
