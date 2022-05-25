@@ -4,6 +4,7 @@ import {
   assert,
   assertEquals,
   assertRejects,
+  assertThrows,
 } from "../vendor/https/deno.land/std/testing/asserts.ts";
 import {
   afterAll,
@@ -129,7 +130,7 @@ describe("client", () => {
     list = await client.clientList({ ids: [id] });
     assert(list!.includes(`id=${id}`));
 
-    await assertRejects(
+    assertThrows(
       () => {
         return client.clientList({ type: "MASTER", ids: [id] });
       },
