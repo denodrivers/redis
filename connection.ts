@@ -24,6 +24,7 @@ export interface RedisConnectionOptions {
   tls?: boolean;
   db?: number;
   password?: string;
+  username?: string;
   name?: string;
   maxRetryCount?: number;
   // TODO: Provide more flexible retry strategy
@@ -95,7 +96,7 @@ export class RedisConnection implements Connection {
 
       try {
         if (options?.password != null) {
-          await this.authenticate(options.password);
+          await this.authenticate(options?.username, options?.password);
         }
         if (options?.db) {
           await this.selectDb(options.db);
@@ -109,8 +110,13 @@ export class RedisConnection implements Connection {
     };
   }
 
-  private async authenticate(password: string): Promise<void> {
-    await this.sendCommand("AUTH", password);
+  private async authenticate(
+    username: string | undefined,
+    password: string,
+  ): Promise<void> {
+    password && username
+      ? await this.sendCommand("AUTH", username, password)
+      : await this.sendCommand("AUTH", password);
   }
 
   private async selectDb(
