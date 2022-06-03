@@ -110,10 +110,13 @@ export class RedisConnection implements Connection {
     };
   }
 
-  private async authenticate(username: string | undefined, password: string): Promise<void> {
+  private async authenticate(
+    username: string | undefined,
+    password: string,
+  ): Promise<void> {
     password && username
       ? await this.sendCommand("AUTH", username, password)
-      : await this.sendCommand("AUTH", password)
+      : await this.sendCommand("AUTH", password);
   }
 
   private async selectDb(
