@@ -29,6 +29,9 @@ export interface RedisConnectionOptions {
   password?: string;
   username?: string;
   name?: string;
+  /**
+   * @default 10
+   */
   maxRetryCount?: number;
   backoff?: Backoff;
 }
