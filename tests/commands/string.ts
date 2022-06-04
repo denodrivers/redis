@@ -227,10 +227,12 @@ export function stringTests(
     assertEquals(await client.stralgo("LCS", "KEYS", "a", "b"), "eo");
     assertEquals(
       await client.stralgo("LCS", "KEYS", "a", "b", { len: true }),
+      // @ts-expect-error
       2,
     );
     assertEquals(
       await client.stralgo("LCS", "KEYS", "a", "b", { idx: true }),
+      // @ts-expect-error
       ["matches", matches, "len", 2],
     );
     assertEquals(
@@ -241,6 +243,7 @@ export function stringTests(
         "b",
         { idx: true, withmatchlen: true },
       ),
+      // @ts-expect-error
       ["matches", matchesWithLen, "len", 2],
     );
     assertEquals(
@@ -251,6 +254,7 @@ export function stringTests(
         "b",
         { idx: true, minmatchlen: 2 },
       ),
+      // @ts-expect-error
       ["matches", [], "len", 2],
     );
     assertEquals(
@@ -259,6 +263,7 @@ export function stringTests(
     );
     assertEquals(
       await client.stralgo("LCS", "STRINGS", "Hello", "Deno!", { len: true }),
+      // @ts-expect-error
       2,
     );
   });
