@@ -8,6 +8,7 @@ export {
   InvalidStateError,
   SubscriptionClosedError,
 } from "./errors.ts";
+export type { Backoff, ExponentialBackoffOptions } from "./backoff.ts";
 export type {
   ACLLogMode,
   BitfieldOpts,

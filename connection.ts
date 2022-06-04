@@ -1,9 +1,12 @@
 import { sendCommand } from "./protocol/mod.ts";
 import type { Raw, RedisValue } from "./protocol/mod.ts";
+import type { Backoff } from "./backoff.ts";
+import { exponentialBackoff } from "./backoff.ts";
 import {
   BufReader,
   BufWriter,
 } from "./vendor/https/deno.land/std/io/buffer.ts";
+import { delay } from "./vendor/https/deno.land/std/async/delay.ts";
 type Closer = Deno.Closer;
 
 export interface Connection {
@@ -11,7 +14,6 @@ export interface Connection {
   reader: BufReader;
   writer: BufWriter;
   maxRetryCount: number;
-  retryInterval: number;
   isClosed: boolean;
   isConnected: boolean;
   isRetriable: boolean;
@@ -27,8 +29,7 @@ export interface RedisConnectionOptions {
   username?: string;
   name?: string;
   maxRetryCount?: number;
-  // TODO: Provide more flexible retry strategy
-  retryInterval?: number;
+  backoff?: Backoff;
 }
 
 export class RedisConnection implements Connection {
@@ -37,12 +38,13 @@ export class RedisConnection implements Connection {
   reader!: BufReader;
   writer!: BufWriter;
   maxRetryCount = 10;
-  retryInterval = 1200;
 
+  private readonly hostname: string;
+  private readonly port: number | string;
   private retryCount = 0;
   private _isClosed = false;
   private _isConnected = false;
-  private connectThunkified: () => Promise<RedisConnection>;
+  private backoff: Backoff;
 
   get isClosed(): boolean {
     return this._isClosed;
@@ -61,7 +63,15 @@ export class RedisConnection implements Connection {
     port: number | string,
     private options: RedisConnectionOptions,
   ) {
-    this.connectThunkified = this.thunkifyConnect(hostname, port, options);
+    this.hostname = hostname;
+    this.port = port;
+    if (options.name) {
+      this.name = options.name;
+    }
+    if (options.maxRetryCount) {
+      this.maxRetryCount = options.maxRetryCount;
+    }
+    this.backoff = options.backoff ?? exponentialBackoff();
   }
 
   private thunkifyConnect(
@@ -77,16 +87,6 @@ export class RedisConnection implements Connection {
       const conn: Deno.Conn = options?.tls
         ? await Deno.connectTls(dialOpts)
         : await Deno.connect(dialOpts);
-
-      if (options.name) {
-        this.name = options.name;
-      }
-      if (options.maxRetryCount) {
-        this.maxRetryCount = options.maxRetryCount;
-      }
-      if (options.retryInterval) {
-        this.retryInterval = options.retryInterval;
-      }
 
       this.closer = conn;
       this.reader = new BufReader(conn);
@@ -138,7 +138,44 @@ export class RedisConnection implements Connection {
    * Connect to Redis server
    */
   async connect(): Promise<void> {
-    await this.connectThunkified();
+    try {
+      const dialOpts: Deno.ConnectOptions = {
+        hostname: this.hostname,
+        port: parsePortLike(this.port),
+      };
+      const conn: Deno.Conn = this.options?.tls
+        ? await Deno.connectTls(dialOpts)
+        : await Deno.connect(dialOpts);
+
+      this.closer = conn;
+      this.reader = new BufReader(conn);
+      this.writer = new BufWriter(conn);
+      this._isClosed = false;
+      this._isConnected = true;
+
+      try {
+        if (this.options.password != null) {
+          await this.authenticate(this.options.username, this.options.password);
+        }
+        if (this.options.db) {
+          await this.selectDb(this.options.db);
+        }
+      } catch (error) {
+        this.close();
+        throw error;
+      }
+      this.retryCount = 0;
+    } catch (error) {
+      // TODO: Gracefully handle authentication error
+      if (this.retryCount++ >= this.maxRetryCount) {
+        this.retryCount = 0;
+        throw error;
+      }
+
+      const backoff = this.backoff(this.retryCount);
+      await delay(backoff);
+      await this.connect();
+    }
   }
 
   close() {
@@ -159,29 +196,9 @@ export class RedisConnection implements Connection {
       await this.sendCommand("PING");
       this._isConnected = true;
     } catch (_error) { // TODO: Maybe we should log this error.
-      this._isConnected = false;
-      return new Promise((resolve, reject) => {
-        const _interval = setInterval(async () => {
-          if (this.retryCount > this.maxRetryCount) {
-            this.close();
-            clearInterval(_interval);
-            reject(new Error("Could not reconnect"));
-          }
-          try {
-            this.close();
-            await this.connect();
-            await this.sendCommand("PING");
-            this._isConnected = true;
-            this.retryCount = 0;
-            clearInterval(_interval);
-            resolve();
-          } catch (_err) {
-            // retrying
-          } finally {
-            this.retryCount++;
-          }
-        }, this.retryInterval);
-      });
+      this.close();
+      await this.connect();
+      await this.sendCommand("PING");
     }
   }
 }
