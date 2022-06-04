@@ -99,7 +99,7 @@ export function generalTests(
     it(`invalid port: ${v}`, async () => {
       await assertRejects(
         async () => {
-          await newClient({ hostname: "127.0.0.1", port: v });
+          await newClient({ hostname: "127.0.0.1", port: v, maxRetryCount: 0 });
         },
         Error,
         "invalid",

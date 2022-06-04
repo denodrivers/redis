@@ -2,6 +2,7 @@ import { sendCommand } from "./protocol/mod.ts";
 import type { Raw, RedisValue } from "./protocol/mod.ts";
 import type { Backoff } from "./backoff.ts";
 import { exponentialBackoff } from "./backoff.ts";
+import { ErrorReplyError } from "./errors.ts";
 import {
   BufReader,
   BufWriter,
@@ -74,49 +75,23 @@ export class RedisConnection implements Connection {
     this.backoff = options.backoff ?? exponentialBackoff();
   }
 
-  private thunkifyConnect(
-    hostname: string,
-    port: string | number,
-    options: RedisConnectionOptions,
-  ): () => Promise<RedisConnection> {
-    return async () => {
-      const dialOpts: Deno.ConnectOptions = {
-        hostname,
-        port: parsePortLike(port),
-      };
-      const conn: Deno.Conn = options?.tls
-        ? await Deno.connectTls(dialOpts)
-        : await Deno.connect(dialOpts);
-
-      this.closer = conn;
-      this.reader = new BufReader(conn);
-      this.writer = new BufWriter(conn);
-      this._isClosed = false;
-      this._isConnected = true;
-
-      try {
-        if (options?.password != null) {
-          await this.authenticate(options?.username, options?.password);
-        }
-        if (options?.db) {
-          await this.selectDb(options.db);
-        }
-      } catch (error) {
-        this.close();
-        throw error;
-      }
-
-      return this as RedisConnection;
-    };
-  }
-
   private async authenticate(
     username: string | undefined,
     password: string,
   ): Promise<void> {
-    password && username
-      ? await this.sendCommand("AUTH", username, password)
-      : await this.sendCommand("AUTH", password);
+    try {
+      password && username
+        ? await this.sendCommand("AUTH", username, password)
+        : await this.sendCommand("AUTH", password);
+    } catch (error) {
+      if (error instanceof ErrorReplyError) {
+        throw new AuthenticationError("Authentication failed", {
+          cause: error,
+        });
+      } else {
+        throw error;
+      }
+    }
   }
 
   private async selectDb(
@@ -166,7 +141,11 @@ export class RedisConnection implements Connection {
       }
       this.retryCount = 0;
     } catch (error) {
-      // TODO: Gracefully handle authentication error
+      if (error instanceof AuthenticationError) {
+        this.retryCount = 0;
+        throw error;
+      }
+
       if (this.retryCount++ >= this.maxRetryCount) {
         this.retryCount = 0;
         throw error;
@@ -202,6 +181,8 @@ export class RedisConnection implements Connection {
     }
   }
 }
+
+class AuthenticationError extends Error {}
 
 function parsePortLike(port: string | number | undefined): number {
   let parsedPort: number;
