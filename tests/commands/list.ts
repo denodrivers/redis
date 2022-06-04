@@ -48,6 +48,7 @@ export function listTests(
   });
 
   it("brpoplpush timeout", async () => {
+    // deno-lint-ignore ban-ts-comment
     // @ts-expect-error
     assertEquals(await client.brpoplpush("list", "list", 1), []);
   });

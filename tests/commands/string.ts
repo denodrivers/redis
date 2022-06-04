@@ -227,11 +227,13 @@ export function stringTests(
     assertEquals(await client.stralgo("LCS", "KEYS", "a", "b"), "eo");
     assertEquals(
       await client.stralgo("LCS", "KEYS", "a", "b", { len: true }),
+      // deno-lint-ignore ban-ts-comment
       // @ts-expect-error
       2,
     );
     assertEquals(
       await client.stralgo("LCS", "KEYS", "a", "b", { idx: true }),
+      // deno-lint-ignore ban-ts-comment
       // @ts-expect-error
       ["matches", matches, "len", 2],
     );
@@ -243,6 +245,7 @@ export function stringTests(
         "b",
         { idx: true, withmatchlen: true },
       ),
+      // deno-lint-ignore ban-ts-comment
       // @ts-expect-error
       ["matches", matchesWithLen, "len", 2],
     );
@@ -254,6 +257,7 @@ export function stringTests(
         "b",
         { idx: true, minmatchlen: 2 },
       ),
+      // deno-lint-ignore ban-ts-comment
       // @ts-expect-error
       ["matches", [], "len", 2],
     );
@@ -263,6 +267,7 @@ export function stringTests(
     );
     assertEquals(
       await client.stralgo("LCS", "STRINGS", "Hello", "Deno!", { len: true }),
+      // deno-lint-ignore ban-ts-comment
       // @ts-expect-error
       2,
     );
