@@ -69,7 +69,7 @@ export class RedisConnection implements Connection {
     if (options.name) {
       this.name = options.name;
     }
-    if (options.maxRetryCount) {
+    if (options.maxRetryCount != null) {
       this.maxRetryCount = options.maxRetryCount;
     }
     this.backoff = options.backoff ?? exponentialBackoff();
@@ -143,7 +143,7 @@ export class RedisConnection implements Connection {
     } catch (error) {
       if (error instanceof AuthenticationError) {
         this.retryCount = 0;
-        throw error;
+        throw (error.cause ?? error);
       }
 
       if (this.retryCount++ >= this.maxRetryCount) {
