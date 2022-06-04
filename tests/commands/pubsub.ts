@@ -82,7 +82,8 @@ export function pubsubTests(
     const port = nextPort();
     let tempServer = await startRedis({ port });
     const client = await newClient({ ...opts, port });
-    const pub = await newClient({ ...opts, maxRetryCount: 10, port });
+    const backoff = () => 1200;
+    const pub = await newClient({ ...opts, backoff, maxRetryCount: 10, port });
     const sub = await client.psubscribe("ps*");
     const it = sub.receive();
 
