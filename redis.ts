@@ -710,7 +710,7 @@ class RedisImpl implements Redis {
 
   geopos(key: string, ...members: string[]) {
     return this.execArrayReply("GEOPOS", key, ...members) as Promise<
-      ([BulkString, BulkString] | BulkNil)[]
+      ([BulkString, BulkString] | BulkNil | [])[]
     >;
   }
 

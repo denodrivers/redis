@@ -62,8 +62,6 @@ export function geoTests(
     assertEquals(resp, [
       ["13.36138933897018433", "38.11555639549629859"],
       ["15.08726745843887329", "37.50266842333162032"],
-      // deno-lint-ignore ban-ts-comment
-      // @ts-expect-error
       [],
     ]);
   });

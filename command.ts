@@ -362,7 +362,7 @@ export interface RedisCommands {
   geopos(
     key: string,
     ...members: string[]
-  ): Promise<([BulkString, BulkString] | BulkNil)[]>;
+  ): Promise<([BulkString, BulkString] | BulkNil | [])[]>;
   geodist(
     key: string,
     member1: string,
