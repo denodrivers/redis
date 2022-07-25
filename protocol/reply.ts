@@ -221,6 +221,11 @@ export async function readArrayReplyBody(
   }
 
   const argCount = parseSize(line);
+  if (argCount === -1) {
+    // `-1` indicates a null array
+    return null;
+  }
+
   const array: types.ConditionalArray = [];
   for (let i = 0; i < argCount; i++) {
     const res = await reader.peek(1);
