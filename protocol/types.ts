@@ -48,7 +48,7 @@ export interface RedisReply {
   string(): SimpleString;
   bulk(): Bulk;
   buffer(): Uint8Array;
-  array(): ConditionalArray;
+  array(): ConditionalArray | BulkNil;
   value(): Raw;
 }
 

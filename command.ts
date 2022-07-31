@@ -362,7 +362,7 @@ export interface RedisCommands {
   geopos(
     key: string,
     ...members: string[]
-  ): Promise<([BulkString, BulkString] | BulkNil | [])[]>;
+  ): Promise<Array<[BulkString, BulkString] | BulkNil | []> | BulkNil>;
   geodist(
     key: string,
     member1: string,
@@ -450,11 +450,11 @@ export interface RedisCommands {
   blpop(
     timeout: number,
     ...keys: string[]
-  ): Promise<[BulkString, BulkString] | []>;
+  ): Promise<[BulkString, BulkString] | BulkNil>;
   brpop(
     timeout: number,
     ...keys: string[]
-  ): Promise<[BulkString, BulkString] | []>;
+  ): Promise<[BulkString, BulkString] | BulkNil>;
   brpoplpush(
     source: string,
     destination: string,
@@ -899,11 +899,11 @@ XRANGE somestream - +
   bzpopmin(
     timeout: number,
     ...keys: string[]
-  ): Promise<[BulkString, BulkString, BulkString] | []>;
+  ): Promise<[BulkString, BulkString, BulkString] | BulkNil>;
   bzpopmax(
     timeout: number,
     ...keys: string[]
-  ): Promise<[BulkString, BulkString, BulkString] | []>;
+  ): Promise<[BulkString, BulkString, BulkString] | BulkNil>;
   zadd(
     key: string,
     score: number,

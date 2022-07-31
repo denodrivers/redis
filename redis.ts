@@ -319,13 +319,13 @@ class RedisImpl implements Redis {
 
   blpop(timeout: number, ...keys: string[]) {
     return this.execArrayReply("BLPOP", ...keys, timeout) as Promise<
-      [BulkString, BulkString] | []
+      [BulkString, BulkString] | BulkNil
     >;
   }
 
   brpop(timeout: number, ...keys: string[]) {
     return this.execArrayReply("BRPOP", ...keys, timeout) as Promise<
-      [BulkString, BulkString] | []
+      [BulkString, BulkString] | BulkNil
     >;
   }
 
@@ -335,13 +335,13 @@ class RedisImpl implements Redis {
 
   bzpopmin(timeout: number, ...keys: string[]) {
     return this.execArrayReply("BZPOPMIN", ...keys, timeout) as Promise<
-      [BulkString, BulkString, BulkString] | []
+      [BulkString, BulkString, BulkString] | BulkNil
     >;
   }
 
   bzpopmax(timeout: number, ...keys: string[]) {
     return this.execArrayReply("BZPOPMAX", ...keys, timeout) as Promise<
-      [BulkString, BulkString, BulkString] | []
+      [BulkString, BulkString, BulkString] | BulkNil
     >;
   }
 
@@ -1736,7 +1736,7 @@ class RedisImpl implements Redis {
           // Note that you should not rely on the fields
           // exact position, nor on the number of fields,
           // new fields may be added in the future.
-          if (raw === undefined) throw "no data";
+          if (raw == null) throw "no data";
 
           const data: Map<string, Raw> = convertMap(raw);
           if (data === undefined) throw "no data converted";

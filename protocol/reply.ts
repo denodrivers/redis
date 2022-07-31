@@ -55,7 +55,7 @@ abstract class BaseReply implements types.RedisReply {
     throw createDecodeError(this.code, "integer");
   }
 
-  array(): types.ConditionalArray {
+  array(): types.ConditionalArray | types.BulkNil {
     throw createDecodeError(this.code, "array");
   }
 
@@ -151,8 +151,8 @@ class ArrayReply extends BaseReply {
     return new ArrayReply(body);
   }
 
-  readonly #body: types.ConditionalArray;
-  private constructor(body: types.ConditionalArray) {
+  readonly #body: types.ConditionalArray | types.BulkNil;
+  private constructor(body: types.ConditionalArray | types.BulkNil) {
     super(ArrayReplyCode);
     this.#body = body;
   }
@@ -214,13 +214,18 @@ async function readSimpleStringReplyBody(
 
 export async function readArrayReplyBody(
   reader: BufReader,
-): Promise<types.ConditionalArray> {
+): Promise<types.ConditionalArray | types.BulkNil> {
   const line = await readLine(reader);
   if (line == null) {
     throw new InvalidStateError();
   }
 
   const argCount = parseSize(line);
+  if (argCount === -1) {
+    // `-1` indicates a null array
+    return undefined;
+  }
+
   const array: types.ConditionalArray = [];
   for (let i = 0; i < argCount; i++) {
     const res = await reader.peek(1);
