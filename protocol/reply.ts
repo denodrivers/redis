@@ -55,7 +55,7 @@ abstract class BaseReply implements types.RedisReply {
     throw createDecodeError(this.code, "integer");
   }
 
-  array(): types.ConditionalArray {
+  array(): types.ConditionalArray | types.BulkNil {
     throw createDecodeError(this.code, "array");
   }
 
