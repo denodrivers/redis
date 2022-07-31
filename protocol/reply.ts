@@ -214,7 +214,7 @@ async function readSimpleStringReplyBody(
 
 export async function readArrayReplyBody(
   reader: BufReader,
-): Promise<types.ConditionalArray> {
+): Promise<types.ConditionalArray | BulkNil> {
   const line = await readLine(reader);
   if (line == null) {
     throw new InvalidStateError();
@@ -223,7 +223,7 @@ export async function readArrayReplyBody(
   const argCount = parseSize(line);
   if (argCount === -1) {
     // `-1` indicates a null array
-    return null;
+    return undefined;
   }
 
   const array: types.ConditionalArray = [];
