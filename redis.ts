@@ -335,13 +335,13 @@ class RedisImpl implements Redis {
 
   bzpopmin(timeout: number, ...keys: string[]) {
     return this.execArrayReply("BZPOPMIN", ...keys, timeout) as Promise<
-      [BulkString, BulkString, BulkString] | []
+      [BulkString, BulkString, BulkString] | BulkNil
     >;
   }
 
   bzpopmax(timeout: number, ...keys: string[]) {
     return this.execArrayReply("BZPOPMAX", ...keys, timeout) as Promise<
-      [BulkString, BulkString, BulkString] | []
+      [BulkString, BulkString, BulkString] | BulkNil
     >;
   }
 

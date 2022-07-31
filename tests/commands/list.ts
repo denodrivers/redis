@@ -47,10 +47,8 @@ export function listTests(
     assertEquals(await client.brpoplpush("list", "list", 2), "2");
   });
 
-  it("brpoplpush timeout", async () => {
-    // deno-lint-ignore ban-ts-comment
-    // @ts-expect-error
-    assertEquals(await client.brpoplpush("list", "list", 1), []);
+  it("brpoplpush returns undefined on timeout", async () => {
+    assertEquals(await client.brpoplpush("list", "list", 1), undefined);
   });
 
   it("lindex", async () => {

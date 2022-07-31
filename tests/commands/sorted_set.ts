@@ -32,9 +32,9 @@ export function zsetTests(
     assertEquals(await client.bzpopmin(1, "key"), ["key", "1", "1"]);
   });
 
-  it("bzpopmin timeout", async () => {
+  it("bzpopmin returns undefined on timeout", async () => {
     const arr = await client.bzpopmin(1, "key");
-    assertEquals(arr.length, 0);
+    assertEquals(arr, undefined);
   });
 
   it("bzpopmax", async () => {
@@ -42,9 +42,9 @@ export function zsetTests(
     assertEquals(await client.bzpopmax(1, "key"), ["key", "2", "2"]);
   });
 
-  it("bzpopmax timeout", async () => {
+  it("bzpopmax returns undefined on timeout", async () => {
     const arr = await client.bzpopmax(1, "key");
-    assertEquals(arr.length, 0);
+    assertEquals(arr, undefined);
   });
 
   it("zadd", async () => {

@@ -899,11 +899,11 @@ XRANGE somestream - +
   bzpopmin(
     timeout: number,
     ...keys: string[]
-  ): Promise<[BulkString, BulkString, BulkString] | []>;
+  ): Promise<[BulkString, BulkString, BulkString] | BulkNil>;
   bzpopmax(
     timeout: number,
     ...keys: string[]
-  ): Promise<[BulkString, BulkString, BulkString] | []>;
+  ): Promise<[BulkString, BulkString, BulkString] | BulkNil>;
   zadd(
     key: string,
     score: number,
