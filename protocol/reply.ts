@@ -214,7 +214,7 @@ async function readSimpleStringReplyBody(
 
 export async function readArrayReplyBody(
   reader: BufReader,
-): Promise<types.ConditionalArray | BulkNil> {
+): Promise<types.ConditionalArray | types.BulkNil> {
   const line = await readLine(reader);
   if (line == null) {
     throw new InvalidStateError();
