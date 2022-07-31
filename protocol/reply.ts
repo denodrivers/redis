@@ -151,8 +151,8 @@ class ArrayReply extends BaseReply {
     return new ArrayReply(body);
   }
 
-  readonly #body: types.ConditionalArray;
-  private constructor(body: types.ConditionalArray) {
+  readonly #body: types.ConditionalArray | types.BulkNil;
+  private constructor(body: types.ConditionalArray | types.BulkNil) {
     super(ArrayReplyCode);
     this.#body = body;
   }
