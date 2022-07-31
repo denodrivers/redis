@@ -41,14 +41,14 @@ export type Binary = Uint8Array;
 /**
  * @description Represents the type of the value returned by `ArrayReply#value()`.
  */
-export type ConditionalArray = Raw[] | null;
+export type ConditionalArray = Raw[];
 
 export interface RedisReply {
   integer(): Integer;
   string(): SimpleString;
   bulk(): Bulk;
   buffer(): Uint8Array;
-  array(): ConditionalArray;
+  array(): ConditionalArray | null;
   value(): Raw;
 }
 

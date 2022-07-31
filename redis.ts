@@ -1736,7 +1736,7 @@ class RedisImpl implements Redis {
           // Note that you should not rely on the fields
           // exact position, nor on the number of fields,
           // new fields may be added in the future.
-          if (raw === undefined) throw "no data";
+          if (raw == null) throw "no data";
 
           const data: Map<string, Raw> = convertMap(raw);
           if (data === undefined) throw "no data converted";
