@@ -319,13 +319,13 @@ class RedisImpl implements Redis {
 
   blpop(timeout: number, ...keys: string[]) {
     return this.execArrayReply("BLPOP", ...keys, timeout) as Promise<
-      [BulkString, BulkString] | []
+      [BulkString, BulkString] | BulkNil
     >;
   }
 
   brpop(timeout: number, ...keys: string[]) {
     return this.execArrayReply("BRPOP", ...keys, timeout) as Promise<
-      [BulkString, BulkString] | []
+      [BulkString, BulkString] | BulkNil
     >;
   }
 

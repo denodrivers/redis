@@ -24,22 +24,22 @@ export function listTests(
     await client.flushdb();
   });
 
-  it("blpoop", async () => {
+  it("blpop", async () => {
     await client.rpush("list", "1", "2");
     assertEquals(await client.blpop(2, "list"), ["list", "1"]);
   });
 
-  it("blpoop timeout", async () => {
-    assertEquals(await client.blpop(1, "list"), []);
+  it("blpop returns undefined on timeout", async () => {
+    assertEquals(await client.blpop(1, "list"), undefined);
   });
 
-  it("brpoop", async () => {
+  it("brpop", async () => {
     await client.rpush("list", "1", "2");
     assertEquals(await client.brpop(2, "list"), ["list", "2"]);
   });
 
-  it("brpoop timeout", async () => {
-    assertEquals(await client.brpop(1, "list"), []);
+  it("brpop returns undefined on timeout", async () => {
+    assertEquals(await client.brpop(1, "list"), undefined);
   });
 
   it("brpoplpush", async () => {
