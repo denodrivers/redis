@@ -165,6 +165,10 @@ export interface ZRangeOpts {
   withScore?: boolean;
 }
 
+export type ZInterOpts = {
+  withScore?: boolean;
+} & ZStoreOpts;
+
 export interface ZRangeByLexOpts {
   limit?: { offset: number; count: number };
 }
@@ -933,6 +937,8 @@ XRANGE somestream - +
     increment: number,
     member: RedisValue,
   ): Promise<BulkString>;
+  zinter(keys: string[], opts?: ZInterOpts): Promise<Raw[]>;
+  zinter(key_weights: [string, number][], opts?: ZInterOpts): Promise<Raw[]>;
   zinterstore(
     destination: string,
     keys: string[],

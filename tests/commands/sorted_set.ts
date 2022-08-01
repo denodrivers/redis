@@ -122,6 +122,26 @@ export function zsetTests(
     assertEquals(await client.zinterstore("dest", ["key", "key2"]), 1);
   });
 
+  it("zinter", async () => {
+    await client.zadd("key", { "1": 1, "2": 2 });
+    await client.zadd("key2", { "1": 1, "3": 3 });
+    assertEquals(await client.zinter(["key", "key2"]), ["1"]);
+    assertEquals(await client.zinter([["key", 2], ["key2", 3]]), ["1"]);
+    assertEquals(
+      await client.zinter([
+        ["key", 2],
+        ["key2", 3], 
+      ], { aggregate: "MIN" }),
+      ["1"]
+    );
+    assertEquals(
+      await client.zinter(["key", "key2"], {
+        withScore: true,
+      }),
+      ["1", "2"]
+    );
+  });
+
   it("zlexcount", async () => {
     await client.zadd("key2", { "1": 1, "2": 2 });
     assertEquals(await client.zlexcount("key", "-", "(2"), 0);
