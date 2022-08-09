@@ -45,6 +45,7 @@ export type {
   StralgoOpts,
   StralgoTarget,
   ZAddOpts,
+  ZInterOpts,
   ZInterstoreOpts,
   ZRangeByLexOpts,
   ZRangeByScoreOpts,
