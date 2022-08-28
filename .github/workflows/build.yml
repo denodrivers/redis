@@ -34,8 +34,8 @@ jobs:
 
       - name: Check mod.ts
         run: |
-          deno task make_mod
-          git diff --exit-code
+          # deno task make_mod
+          # git diff --exit-code
           deno check mod.ts
 
       - name: Run lint
