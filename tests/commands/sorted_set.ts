@@ -130,15 +130,15 @@ export function zsetTests(
     assertEquals(
       await client.zinter([
         ["key", 2],
-        ["key2", 3], 
+        ["key2", 3],
       ], { aggregate: "MIN" }),
-      ["1"]
+      ["1"],
     );
     assertEquals(
       await client.zinter(["key", "key2"], {
         withScore: true,
       }),
-      ["1", "2"]
+      ["1", "2"],
     );
   });
 
