@@ -941,7 +941,7 @@ XRANGE somestream - +
   zinter(key_weights: [string, number][], opts?: ZInterOpts): Promise<Raw[]>;
   zinter(
     key_weights: Record<string, number>,
-    opts?: ZInterOpts
+    opts?: ZInterOpts,
   ): Promise<Raw[]>;
   zinterstore(
     destination: string,
