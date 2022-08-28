@@ -33,6 +33,7 @@ import type {
   StralgoOpts,
   StralgoTarget,
   ZAddOpts,
+  ZInterOpts,
   ZInterstoreOpts,
   ZRangeByLexOpts,
   ZRangeByScoreOpts,
@@ -2027,6 +2028,17 @@ class RedisImpl implements Redis {
 
   zincrby(key: string, increment: number, member: string) {
     return this.execBulkReply<BulkString>("ZINCRBY", key, increment, member);
+  }
+
+  zinter(
+    keys: string[] | [string, number][] | Record<string, number>,
+    opts?: ZInterOpts,
+  ) {
+    const args = this.pushZStoreArgs([], keys, opts);
+    if (opts?.withScore) {
+      args.push("WITHSCORES");
+    }
+    return this.execArrayReply("ZINTER", ...args);
   }
 
   zinterstore(
