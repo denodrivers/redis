@@ -75,7 +75,7 @@ export function hashTests(
     assertEquals(await client.hmget("key", "f1", "f2", "f3"), [
       "1",
       "2",
-      undefined,
+      null,
     ]);
   });
 
