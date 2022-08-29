@@ -74,7 +74,7 @@ export function geoTests(
     let resp = await client.geodist("Sicily", "Palermo", "Catania");
     assertEquals(resp, "166274.1516");
     resp = await client.geodist("Sicily", "Palermo", "Enna");
-    assertEquals(resp, undefined);
+    assertEquals(resp, null);
   });
 
   it("georadius", async () => {

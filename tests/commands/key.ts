@@ -103,7 +103,7 @@ export function keyTests(
 
   it("object freq", async () => {
     const v = await client.objectFreq("nosuchkey");
-    assertEquals(v, undefined);
+    assertEquals(v, null);
   });
 
   it("object help", async () => {

@@ -89,7 +89,7 @@ export function stringTests(
 
   it("getWhenNil", async () => {
     const hoge = await client.get("none");
-    assertEquals(hoge, undefined);
+    assertEquals(hoge, null);
   });
 
   it("getbit", async () => {
@@ -161,7 +161,7 @@ export function stringTests(
     assertEquals(rep2, 0); // No key was set.
     assertEquals(await client.get("key1"), "foo");
     assertEquals(await client.get("key2"), "bar");
-    assertEquals(await client.get("key3"), undefined);
+    assertEquals(await client.get("key3"), null);
   });
 
   it("psetex", async () => {

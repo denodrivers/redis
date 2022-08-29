@@ -38,7 +38,7 @@ export function hashTests(
   it("hget", async () => {
     await client.hset("key", "f1", "1");
     assertEquals(await client.hget("key", "f1"), "1");
-    assertEquals(await client.hget("key", "f2"), undefined);
+    assertEquals(await client.hget("key", "f2"), null);
   });
 
   it("hgetall", async () => {
