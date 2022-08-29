@@ -27,9 +27,9 @@ export type Bulk = BulkString | BulkNil;
 export type BulkString = string;
 
 /**
- * @description Represents the **null bulk string** in the RESP2 protocol.
+ * @description Represents the **null bulk string** and **null array** in the RESP2 protocol.
  */
-export type BulkNil = undefined;
+export type BulkNil = null;
 
 /**
  * @description Represents the some type in the RESP2 protocol.
