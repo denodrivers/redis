@@ -29,8 +29,8 @@ export function listTests(
     assertEquals(await client.blpop(2, "list"), ["list", "1"]);
   });
 
-  it("blpop returns undefined on timeout", async () => {
-    assertEquals(await client.blpop(1, "list"), undefined);
+  it("blpop returns null on timeout", async () => {
+    assertEquals(await client.blpop(1, "list"), null);
   });
 
   it("brpop", async () => {
@@ -38,8 +38,8 @@ export function listTests(
     assertEquals(await client.brpop(2, "list"), ["list", "2"]);
   });
 
-  it("brpop returns undefined on timeout", async () => {
-    assertEquals(await client.brpop(1, "list"), undefined);
+  it("brpop returns null on timeout", async () => {
+    assertEquals(await client.brpop(1, "list"), null);
   });
 
   it("brpoplpush", async () => {
@@ -47,14 +47,14 @@ export function listTests(
     assertEquals(await client.brpoplpush("list", "list", 2), "2");
   });
 
-  it("brpoplpush returns undefined on timeout", async () => {
-    assertEquals(await client.brpoplpush("list", "list", 1), undefined);
+  it("brpoplpush returns null on timeout", async () => {
+    assertEquals(await client.brpoplpush("list", "list", 1), null);
   });
 
   it("lindex", async () => {
     await client.rpush("list", "1", "2");
     assertEquals(await client.lindex("list", 0), "1");
-    assertEquals(await client.lindex("list", 3), undefined);
+    assertEquals(await client.lindex("list", 3), null);
   });
 
   it("linsert", async () => {
@@ -75,7 +75,7 @@ export function listTests(
   it("lpos", async () => {
     await client.rpush("list", "a", "b", "c", "1");
     assertEquals(await client.lpos("list", "c"), 2);
-    assertEquals(await client.lpos("list", "d"), undefined);
+    assertEquals(await client.lpos("list", "d"), null);
   });
 
   it("lpos with rank", async () => {
@@ -90,7 +90,7 @@ export function listTests(
 
   it("lpos with maxlen", async () => {
     await client.rpush("list", "a", "b", "c");
-    assertEquals(await client.lpos("list", "c", { maxlen: 2 }), undefined);
+    assertEquals(await client.lpos("list", "c", { maxlen: 2 }), null);
     assertEquals(await client.lpos("list", "c", { maxlen: 3 }), 2);
   });
 

@@ -104,7 +104,7 @@ class BulkReply extends BaseReply {
   }
 
   override bulk() {
-    return this.#body ? decoder.decode(this.#body) : undefined;
+    return this.#body ? decoder.decode(this.#body) : null;
   }
 
   override buffer() {
@@ -223,7 +223,7 @@ export async function readArrayReplyBody(
   const argCount = parseSize(line);
   if (argCount === -1) {
     // `-1` indicates a null array
-    return undefined;
+    return null;
   }
 
   const array: types.ConditionalArray = [];

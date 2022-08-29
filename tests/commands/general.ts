@@ -29,7 +29,7 @@ export function generalTests(
   afterAll(() => client.close());
 
   it("conccurent", async () => {
-    let promises: Promise<string | undefined>[] = [];
+    let promises: Promise<string | null>[] = [];
     for (const key of ["a", "b", "c"]) {
       promises.push(client.set(key, key));
     }

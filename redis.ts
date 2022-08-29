@@ -1713,11 +1713,13 @@ class RedisImpl implements Redis {
         );
 
         return {
-          length: rawnum(data.get("length")),
-          radixTreeKeys: rawnum(data.get("radix-tree-keys")),
-          radixTreeNodes: rawnum(data.get("radix-tree-nodes")),
-          groups: rawnum(data.get("groups")),
-          lastGeneratedId: parseXId(rawstr(data.get("last-generated-id"))),
+          length: rawnum(data.get("length") ?? null),
+          radixTreeKeys: rawnum(data.get("radix-tree-keys") ?? null),
+          radixTreeNodes: rawnum(data.get("radix-tree-nodes") ?? null),
+          groups: rawnum(data.get("groups") ?? null),
+          lastGeneratedId: parseXId(
+            rawstr(data.get("last-generated-id") ?? null),
+          ),
           firstEntry,
           lastEntry,
         };
@@ -1746,10 +1748,12 @@ class RedisImpl implements Redis {
             raw: Raw,
           ) => parseXMessage(raw as XReadIdData));
           return {
-            length: rawnum(data.get("length")),
-            radixTreeKeys: rawnum(data.get("radix-tree-keys")),
-            radixTreeNodes: rawnum(data.get("radix-tree-nodes")),
-            lastGeneratedId: parseXId(rawstr(data.get("last-generated-id"))),
+            length: rawnum(data.get("length") ?? null),
+            radixTreeKeys: rawnum(data.get("radix-tree-keys") ?? null),
+            radixTreeNodes: rawnum(data.get("radix-tree-nodes") ?? null),
+            lastGeneratedId: parseXId(
+              rawstr(data.get("last-generated-id") ?? null),
+            ),
             entries,
             groups: parseXGroupDetail(data.get("groups") as ConditionalArray),
           };
@@ -1763,10 +1767,12 @@ class RedisImpl implements Redis {
         raws.map((raw) => {
           const data = convertMap(raw);
           return {
-            name: rawstr(data.get("name")),
-            consumers: rawnum(data.get("consumers")),
-            pending: rawnum(data.get("pending")),
-            lastDeliveredId: parseXId(rawstr(data.get("last-delivered-id"))),
+            name: rawstr(data.get("name") ?? null),
+            consumers: rawnum(data.get("consumers") ?? null),
+            pending: rawnum(data.get("pending") ?? null),
+            lastDeliveredId: parseXId(
+              rawstr(data.get("last-delivered-id") ?? null),
+            ),
           };
         }),
     );
@@ -1783,9 +1789,9 @@ class RedisImpl implements Redis {
         raws.map((raw) => {
           const data = convertMap(raw);
           return {
-            name: rawstr(data.get("name")),
-            pending: rawnum(data.get("pending")),
-            idle: rawnum(data.get("idle")),
+            name: rawstr(data.get("name") ?? null),
+            pending: rawnum(data.get("pending") ?? null),
+            idle: rawnum(data.get("idle") ?? null),
           };
         }),
     );

@@ -50,7 +50,7 @@ export function geoTests(
       Catania: [15.087269, 37.502669],
     });
     const resp = await client.geohash("Sicily", "Palermo", "Catania", "Enna");
-    assertEquals(resp, ["sqc8b49rny0", "sqdtr74hyu0", undefined]);
+    assertEquals(resp, ["sqc8b49rny0", "sqdtr74hyu0", null]);
   });
 
   it("geopos", async () => {
@@ -62,7 +62,7 @@ export function geoTests(
     assertEquals(resp, [
       ["13.36138933897018433", "38.11555639549629859"],
       ["15.08726745843887329", "37.50266842333162032"],
-      undefined,
+      null,
     ]);
   });
 
@@ -74,7 +74,7 @@ export function geoTests(
     let resp = await client.geodist("Sicily", "Palermo", "Catania");
     assertEquals(resp, "166274.1516");
     resp = await client.geodist("Sicily", "Palermo", "Enna");
-    assertEquals(resp, undefined);
+    assertEquals(resp, null);
   });
 
   it("georadius", async () => {

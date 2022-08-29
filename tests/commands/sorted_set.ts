@@ -32,9 +32,9 @@ export function zsetTests(
     assertEquals(await client.bzpopmin(1, "key"), ["key", "1", "1"]);
   });
 
-  it("bzpopmin returns undefined on timeout", async () => {
+  it("bzpopmin returns null on timeout", async () => {
     const arr = await client.bzpopmin(1, "key");
-    assertEquals(arr, undefined);
+    assertEquals(arr, null);
   });
 
   it("bzpopmax", async () => {
@@ -42,9 +42,9 @@ export function zsetTests(
     assertEquals(await client.bzpopmax(1, "key"), ["key", "2", "2"]);
   });
 
-  it("bzpopmax returns undefined on timeout", async () => {
+  it("bzpopmax returns null on timeout", async () => {
     const arr = await client.bzpopmax(1, "key");
-    assertEquals(arr, undefined);
+    assertEquals(arr, null);
   });
 
   it("zadd", async () => {
@@ -85,7 +85,7 @@ export function zsetTests(
   it("zaddIncrWithMode", async () => {
     assertEquals(
       await client.zaddIncr("key", 1, "one", { mode: "XX" }),
-      undefined,
+      null,
       "no member should be added",
     );
     assertEquals(

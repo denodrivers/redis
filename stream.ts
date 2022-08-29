@@ -316,9 +316,11 @@ export function parseXGroupDetail(rawGroups: ConditionalArray): XGroupDetail[] {
 
       out.push(
         {
-          name: rawstr(data.get("name")),
-          lastDeliveredId: parseXId(rawstr(data.get("last-delivered-id"))),
-          pelCount: rawnum(data.get("pel-count")),
+          name: rawstr(data.get("name") ?? null),
+          lastDeliveredId: parseXId(
+            rawstr(data.get("last-delivered-id") ?? null),
+          ),
+          pelCount: rawnum(data.get("pel-count") ?? null),
           pending: parseXPendingCounts(
             data.get("pending") as ConditionalArray,
           ),
@@ -352,9 +354,9 @@ export function parseXConsumerDetail(
     );
 
     const r = {
-      name: rawstr(data.get("name")),
-      seenTime: rawnum(data.get("seen-time")),
-      pelCount: rawnum(data.get("pel-count")),
+      name: rawstr(data.get("name") ?? null),
+      seenTime: rawnum(data.get("seen-time") ?? null),
+      pelCount: rawnum(data.get("pel-count") ?? null),
       pending,
     };
 
