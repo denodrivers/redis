@@ -1,0 +1,5 @@
+{
+  "imports": {
+    "benny": "npm:./node_modules/benny"
+  }
+}
