@@ -1,6 +1,6 @@
 {
   "imports": {
-    "benny": "npm:benny@3.7.1",
+    "benny": "../vendor/https/esm.sh/benny/lib/index.js",
     "node:path": "../vendor/https/deno.land/std/node/path.ts"
   }
 }

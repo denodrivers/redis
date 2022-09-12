@@ -24,5 +24,11 @@
     "modules": [
       "/lib/index.js"
     ]
+  },
+  "https://esm.sh/benny": {
+    "version": "@3.7.1",
+    "modules": [
+      "/lib/index.js"
+    ]
   }
 }
