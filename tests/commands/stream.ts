@@ -1,4 +1,4 @@
-import { ErrorReplyError, Redis } from "../../mod.ts";
+import { ErrorReplyError, Redis, XReadReply } from "../../mod.ts";
 import { parseXId } from "../../stream.ts";
 import { delay } from "../../vendor/https/deno.land/std/async/delay.ts";
 import {
@@ -15,9 +15,7 @@ import {
 import { newClient } from "../test_util.ts";
 import type { TestServer } from "../test_util.ts";
 
-export function streamTests(
-  getServer: () => TestServer,
-): void {
+export function streamTests(getServer: () => TestServer): void {
   let client!: Redis;
   beforeAll(async () => {
     const server = getServer();
@@ -28,7 +26,7 @@ export function streamTests(
 
   const rnum = () => Math.floor(Math.random() * 1000);
   const randomStream = () =>
-    `test-deno-${(new Date().getTime())}-${rnum()}${rnum()}${rnum()}`;
+    `test-deno-${new Date().getTime()}-${rnum()}${rnum()}${rnum()}`;
 
   const cleanupStream = async (client: Redis, ...keys: string[]) => {
     await Promise.all(keys.map((key) => client.xtrim(key, { elements: 0 })));
@@ -182,6 +180,14 @@ export function streamTests(
     ]);
 
     await cleanupStream(client, key, key2);
+  });
+
+  it("xread manage empty stream on timeout", async () => {
+    const key = randomStream();
+    const [stream] = await client.xread([{ key, xid: 0 }], {
+      block: 1,
+    });
+    assertEquals(stream, undefined);
   });
 
   it("xgrouphelp", async () => {
@@ -413,50 +419,47 @@ export function streamTests(
     });
   });
 
-  it(
-    "broadcast pattern, all groups read their own version of the stream",
-    async () => {
-      const key = randomStream();
-      const group0 = "tg0";
-      const group1 = "tg1";
-      const group2 = "tg2";
-      const groups = [group0, group1, group2];
+  it("broadcast pattern, all groups read their own version of the stream", async () => {
+    const key = randomStream();
+    const group0 = "tg0";
+    const group1 = "tg1";
+    const group2 = "tg2";
+    const groups = [group0, group1, group2];
 
-      for (const g of groups) {
-        const created = await client.xgroupCreate(key, g, "$", true);
-        assertEquals(created, "OK");
-      }
+    for (const g of groups) {
+      const created = await client.xgroupCreate(key, g, "$", true);
+      assertEquals(created, "OK");
+    }
 
-      const addedIds = [];
+    const addedIds = [];
 
-      let msgCount = 0;
-      for (const group of groups) {
-        const payload = `data-${msgCount}`;
-        const a = await client.xadd(key, "*", { target: payload });
-        assert(a);
-        addedIds.push(a);
-        msgCount++;
+    let msgCount = 0;
+    for (const group of groups) {
+      const payload = `data-${msgCount}`;
+      const a = await client.xadd(key, "*", { target: payload });
+      assert(a);
+      addedIds.push(a);
+      msgCount++;
 
-        const consumer = "someconsumer";
-        const xid = ">";
-        const data = await client.xreadgroup([{ key, xid }], {
-          group,
-          consumer,
-        });
+      const consumer = "someconsumer";
+      const xid = ">";
+      const data = await client.xreadgroup([{ key, xid }], {
+        group,
+        consumer,
+      });
 
-        // each group should see ALL the messages
-        // that have been emitted
-        const toCheck = data[0].messages;
-        assertEquals(toCheck.length, msgCount);
-      }
+      // each group should see ALL the messages
+      // that have been emitted
+      const toCheck = data[0].messages;
+      assertEquals(toCheck.length, msgCount);
+    }
 
-      for (const g of groups) {
-        assertEquals(await client.xgroupDestroy(key, g), 1);
-      }
+    for (const g of groups) {
+      assertEquals(await client.xgroupDestroy(key, g), 1);
+    }
 
-      await cleanupStream(client, key);
-    },
-  );
+    await cleanupStream(client, key);
+  });
 
   it("xrange and xrevrange", async () => {
     const key = randomStream();
@@ -528,14 +531,8 @@ export function streamTests(
       );
       assert(firstClaimed.kind === "messages");
       assertEquals(firstClaimed.messages.length, 2);
-      assertEquals(
-        firstClaimed.messages[0].fieldValues,
-        { field: "foo" },
-      );
-      assertEquals(
-        firstClaimed.messages[1].fieldValues,
-        { field: "bar" },
-      );
+      assertEquals(firstClaimed.messages[0].fieldValues, { field: "foo" });
+      assertEquals(firstClaimed.messages[1].fieldValues, { field: "bar" });
 
       // ACK these messages so we can try XPENDING/XCLAIM
       // on a new batch
@@ -658,14 +655,14 @@ export function streamTests(
       );
       assert(thirdClaimed.kind === "messages");
       assertEquals(thirdClaimed.messages.length, 2);
-      assertEquals(
-        thirdClaimed.messages[0].fieldValues,
-        { field: "woof", farm: "chicken" },
-      );
-      assertEquals(
-        thirdClaimed.messages[1].fieldValues,
-        { field: "bop", farm: "duck" },
-      );
+      assertEquals(thirdClaimed.messages[0].fieldValues, {
+        field: "woof",
+        farm: "chicken",
+      });
+      assertEquals(thirdClaimed.messages[1].fieldValues, {
+        field: "bop",
+        farm: "duck",
+      });
     });
   });
 

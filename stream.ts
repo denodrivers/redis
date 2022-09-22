@@ -43,10 +43,7 @@ export type XReadReplyRaw = XReadStreamRaw[];
  * which will represent the the epoch Millis with
  * seqNo of zero.  (Especially useful is to pass 0.)
  */
-export type XIdInput =
-  | XId
-  | [number, number]
-  | number;
+export type XIdInput = XId | [number, number] | number;
 /**
  * ID input type for XADD, which is allowed to include the
  * "*" operator. */
@@ -212,9 +209,7 @@ export interface XClaimOpts {
   justXId?: boolean;
 }
 
-export function parseXMessage(
-  raw: XReadIdData,
-): XMessage {
+export function parseXMessage(raw: XReadIdData): XMessage {
   const fieldValues: Record<string, string> = {};
   let f: string | undefined = undefined;
 
@@ -248,11 +243,9 @@ export function convertMap(raw: ConditionalArray): Map<string, Raw> {
   return fieldValues;
 }
 
-export function parseXReadReply(
-  raw: XReadReplyRaw,
-): XReadReply {
+export function parseXReadReply(raw: XReadReplyRaw): XReadReply {
   const out: XReadStream[] = [];
-  for (const [key, idData] of raw) {
+  for (const [key, idData] of raw ?? []) {
     const messages = [];
     for (const rawMsg of idData) {
       messages.push(parseXMessage(rawMsg));
@@ -286,18 +279,18 @@ export function parseXPendingCounts(raw: ConditionalArray): XPendingCount[] {
   const infos: XPendingCount[] = [];
   for (const r of raw) {
     if (
-      isCondArray(r) && isString(r[0]) &&
-      isString(r[1]) && isNumber(r[2]) &&
+      isCondArray(r) &&
+      isString(r[0]) &&
+      isString(r[1]) &&
+      isNumber(r[2]) &&
       isNumber(r[3])
     ) {
-      infos.push(
-        {
-          xid: parseXId(r[0]),
-          owner: r[1],
-          lastDeliveredMs: r[2],
-          timesDelivered: r[3],
-        },
-      );
+      infos.push({
+        xid: parseXId(r[0]),
+        owner: r[1],
+        lastDeliveredMs: r[2],
+        timesDelivered: r[3],
+      });
     }
   }
 
@@ -314,30 +307,22 @@ export function parseXGroupDetail(rawGroups: ConditionalArray): XGroupDetail[] {
       // array of arrays
       const consDeets = data.get("consumers") as ConditionalArray[];
 
-      out.push(
-        {
-          name: rawstr(data.get("name") ?? null),
-          lastDeliveredId: parseXId(
-            rawstr(data.get("last-delivered-id") ?? null),
-          ),
-          pelCount: rawnum(data.get("pel-count") ?? null),
-          pending: parseXPendingCounts(
-            data.get("pending") as ConditionalArray,
-          ),
-          consumers: parseXConsumerDetail(
-            consDeets,
-          ),
-        },
-      );
+      out.push({
+        name: rawstr(data.get("name") ?? null),
+        lastDeliveredId: parseXId(
+          rawstr(data.get("last-delivered-id") ?? null),
+        ),
+        pelCount: rawnum(data.get("pel-count") ?? null),
+        pending: parseXPendingCounts(data.get("pending") as ConditionalArray),
+        consumers: parseXConsumerDetail(consDeets),
+      });
     }
   }
 
   return out;
 }
 
-export function parseXConsumerDetail(
-  nestedRaws: Raw[][],
-): XConsumerDetail[] {
+export function parseXConsumerDetail(nestedRaws: Raw[][]): XConsumerDetail[] {
   const out: XConsumerDetail[] = [];
 
   for (const raws of nestedRaws) {
