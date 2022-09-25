@@ -1,4 +1,4 @@
-import { ErrorReplyError, Redis, XReadReply } from "../../mod.ts";
+import { ErrorReplyError, Redis } from "../../mod.ts";
 import { parseXId } from "../../stream.ts";
 import { delay } from "../../vendor/https/deno.land/std/async/delay.ts";
 import {
