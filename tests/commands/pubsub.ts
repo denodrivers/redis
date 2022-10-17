@@ -149,4 +149,21 @@ export function pubsubTests(
       assert(sub.isClosed);
     },
   });
+
+  it("pubsubNumsub()", async () => {
+    const opts = getOpts();
+    const subClient1 = await newClient(opts);
+    await subClient1.subscribe("test1", "test2");
+
+    const subClient2 = await newClient(opts);
+    await subClient2.subscribe("test2", "test3");
+
+    const pubClient = await newClient(opts);
+    const resp = await pubClient.pubsubNumsub("test1", "test2", "test3");
+    assertEquals(resp, ["test1", 1, "test2", 2, "test3", 1]);
+
+    subClient1.close();
+    subClient2.close();
+    pubClient.close();
+  });
 }
