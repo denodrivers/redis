@@ -128,12 +128,15 @@ class RedisImpl implements Redis {
     this.executor.close();
   }
 
-  async execReply(command: string, ...args: RedisValue[]): Promise<Raw> {
+  async execReply<T extends Raw = Raw>(
+    command: string,
+    ...args: RedisValue[]
+  ): Promise<T> {
     const reply = await this.executor.exec(
       command,
       ...args,
     );
-    return reply.value();
+    return reply.value() as T;
   }
 
   async execStatusReply(
@@ -1456,6 +1459,51 @@ class RedisImpl implements Redis {
     target: StralgoTarget,
     a: string,
     b: string,
+  ): Promise<Bulk>;
+
+  stralgo(
+    algorithm: StralgoAlgorithm,
+    target: StralgoTarget,
+    a: string,
+    b: string,
+    opts?: { len: true },
+  ): Promise<Integer>;
+
+  stralgo(
+    algorithm: StralgoAlgorithm,
+    target: StralgoTarget,
+    a: string,
+    b: string,
+    opts?: { idx: true },
+  ): Promise<
+    [
+      string, //`"matches"`
+      Array<[[number, number], [number, number]]>,
+      string, // `"len"`
+      Integer,
+    ]
+  >;
+
+  stralgo(
+    algorithm: StralgoAlgorithm,
+    target: StralgoTarget,
+    a: string,
+    b: string,
+    opts?: { idx: true; withmatchlen: true },
+  ): Promise<
+    [
+      string, // `"matches"`
+      Array<[[number, number], [number, number], number]>,
+      string, // `"len"`
+      Integer,
+    ]
+  >;
+
+  stralgo(
+    algorithm: StralgoAlgorithm,
+    target: StralgoTarget,
+    a: string,
+    b: string,
     opts?: StralgoOpts,
   ) {
     const args: (number | string)[] = [];
@@ -1472,7 +1520,14 @@ class RedisImpl implements Redis {
       args.push("MINMATCHLEN");
       args.push(opts.minmatchlen);
     }
-    return this.execBulkReply("STRALGO", algorithm, target, a, b, ...args);
+    return this.execReply<Bulk | Integer | ConditionalArray>(
+      "STRALGO",
+      algorithm,
+      target,
+      a,
+      b,
+      ...args,
+    );
   }
 
   strlen(key: string) {

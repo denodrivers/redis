@@ -338,13 +338,67 @@ export interface RedisCommands {
   setex(key: string, seconds: number, value: RedisValue): Promise<SimpleString>;
   setnx(key: string, value: RedisValue): Promise<Integer>;
   setrange(key: string, offset: number, value: RedisValue): Promise<Integer>;
+
+  stralgo(
+    algorithm: StralgoAlgorithm,
+    target: StralgoTarget,
+    a: string,
+    b: string,
+  ): Promise<Bulk>;
+
+  stralgo(
+    algorithm: StralgoAlgorithm,
+    target: StralgoTarget,
+    a: string,
+    b: string,
+    opts?: { len: true },
+  ): Promise<Integer>;
+
+  stralgo(
+    algorithm: StralgoAlgorithm,
+    target: StralgoTarget,
+    a: string,
+    b: string,
+    opts?: { idx: true },
+  ): Promise<
+    [
+      string, //`"matches"`
+      Array<[[number, number], [number, number]]>,
+      string, // `"len"`
+      Integer,
+    ]
+  >;
+
+  stralgo(
+    algorithm: StralgoAlgorithm,
+    target: StralgoTarget,
+    a: string,
+    b: string,
+    opts?: { idx: true; withmatchlen: true },
+  ): Promise<
+    [
+      string, // `"matches"`
+      Array<[[number, number], [number, number], number]>,
+      string, // `"len"`
+      Integer,
+    ]
+  >;
+
   stralgo(
     algorithm: StralgoAlgorithm,
     target: StralgoTarget,
     a: string,
     b: string,
     opts?: StralgoOpts,
-  ): Promise<Bulk>;
+  ): Promise<
+    Bulk | Integer | [
+      string, // `"matches"`
+      Array<[[number, number], [number, number], number | undefined]>,
+      string, // `"len"`
+      Integer,
+    ]
+  >;
+
   strlen(key: string): Promise<Integer>;
 
   // Geo
