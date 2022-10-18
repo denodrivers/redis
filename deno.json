@@ -19,7 +19,7 @@
     "test": "deno test --allow-net --allow-read=tests --allow-write=tests/tmp --allow-run=redis-server,redis-cli ./tests",
     "test:doc": "deno test --doc --no-run --import-map=import_map.test.json",
     "make_mod": "deno run --allow-read --allow-write --allow-run tools/make_mod.ts",
-    "dlink": "deno run --allow-read=modules.json,modules-lock.json,vendor --allow-write=modules-lock.json,vendor --allow-net=deno.land https://deno.land/x/dlink@v0.8.9/dlink.ts && deno fmt modules-lock.json",
+    "dlink": "deno run --allow-read=modules.json,modules-lock.json,vendor --allow-write=modules-lock.json,vendor --allow-net=deno.land https://deno.land/x/dlink@v0.8.9/dlink.ts && deno fmt modules-lock.json vendor",
     "bench:deno-redis": "deno run --unstable --allow-net=127.0.0.1:6379 --allow-read --allow-env --allow-write=tmp --import-map=benchmark/import_map.json benchmark/deno-redis.ts",
     "bench:ioredis": "node benchmark/ioredis.js"
   }
