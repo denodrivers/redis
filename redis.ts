@@ -1180,7 +1180,7 @@ class RedisImpl implements Redis {
   pubsubNumsub(...channels: string[]) {
     return this.execArrayReply<BulkString | Integer>(
       "PUBSUB",
-      "NUMSUBS",
+      "NUMSUB",
       ...channels,
     );
   }
