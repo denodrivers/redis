@@ -361,7 +361,12 @@ export interface RedisCommands {
     b: string,
     opts?: { idx: true },
   ): Promise<
-    ["matches", Array<[[number, number], [number, number]]>, "len", Integer]
+    [
+      string, //`"matches"`
+      Array<[[number, number], [number, number]]>,
+      string, // `"len"`
+      Integer,
+    ]
   >;
 
   stralgo(
@@ -372,9 +377,9 @@ export interface RedisCommands {
     opts?: { idx: true; withmatchlen: true },
   ): Promise<
     [
-      "matches",
+      string, // `"matches"`
       Array<[[number, number], [number, number], number]>,
-      "len",
+      string, // `"len"`
       Integer,
     ]
   >;
@@ -387,9 +392,9 @@ export interface RedisCommands {
     opts?: StralgoOpts,
   ): Promise<
     Bulk | Integer | [
-      "matches",
+      string, // `"matches"`
       Array<[[number, number], [number, number], number | undefined]>,
-      "len",
+      string, // `"len"`
       Integer,
     ]
   >;
