@@ -8,7 +8,7 @@
       "/testing/asserts.ts",
       "/testing/bdd.ts",
       "/io/buffer.ts",
-      "/io/util.ts"
+      "/streams/conversion.ts"
     ]
   },
   "https://cdn.skypack.dev/lodash-es": {
