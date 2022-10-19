@@ -5,6 +5,7 @@ export function run({
   driver,
   client,
 }) {
+  const encoder = new TextEncoder();
   return suite(
     driver,
     configure({ minSamples: 10 }),
@@ -20,14 +21,14 @@ export function run({
       };
     }),
     add("set Uint8Array", () => {
-      const value = new TextEncoder().encode("abcde".repeat(100));
+      const value = encoder.encode("abcde".repeat(100));
       return async () => {
         const key = "bytes";
         await client.set(key, value);
       };
     }),
     add("mset & mget", async () => {
-      await client.mset({ a: "foo", b: "bar" });
+      await client.mset({ a: "foo", b: encoder.encode("bar") });
       await client.mget("a", "b");
     }),
     add("zadd & zscore", async () => {
