@@ -19,6 +19,13 @@ export function run({
         await client.get(key);
       };
     }),
+    add("set Uint8Array", () => {
+      const value = new TextEncoder().encode("abcde".repeat(100));
+      return async () => {
+        const key = "bytes";
+        await client.set(key, value);
+      };
+    }),
     add("mset & mget", async () => {
       await client.mset({ a: "foo", b: "bar" });
       await client.mget("a", "b");
