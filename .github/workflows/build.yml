@@ -9,29 +9,20 @@ on:
       - "**"
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
         redis: [6.2]
-
     steps:
       - uses: actions/checkout@v2
-
       - name: Get Deno version
         run: |
           echo "DENO_VERSION=$(cat .denov)" >> $GITHUB_ENV
-
       - name: Set up Deno ${{ env.DENO_VERSION }}
         uses: denoland/setup-deno@main
         with:
           deno-version: ${{ env.DENO_VERSION }}
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v2
-        with:
-          node-version: "16"
-
       - name: Check mod.ts
         run: |
           # deno task make_mod
@@ -42,22 +33,44 @@ jobs:
         run: |
           deno fmt --check
           deno lint
-
       - name: Set up Redis ${{ matrix.redis }}
         uses: shogo82148/actions-setup-redis@v1
         with:
           redis-version: ${{ matrix.redis }}
           auto-start: "true"
-
       - name: Run tests
         run: |
           deno task test
       - name: Run doc tests
         run: |
           deno task test:doc
+
+  benchmark:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        redis: [6.2]
+    steps:
+      - uses: actions/checkout@v2
+      - name: Get Deno version
+        run: |
+          echo "DENO_VERSION=$(cat .denov)" >> $GITHUB_ENV
+      - name: Set up Deno ${{ env.DENO_VERSION }}
+        uses: denoland/setup-deno@main
+        with:
+          deno-version: ${{ env.DENO_VERSION }}
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: "16"
       - uses: bahmutov/npm-install@v1
         with:
           working-directory: benchmark
+      - name: Set up Redis ${{ matrix.redis }}
+        uses: shogo82148/actions-setup-redis@v1
+        with:
+          redis-version: ${{ matrix.redis }}
+          auto-start: "true"
       - name: Run benchmarks
         run: |
           deno task bench:ioredis
