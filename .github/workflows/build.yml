@@ -71,9 +71,11 @@ jobs:
         with:
           redis-version: ${{ matrix.redis }}
           auto-start: "true"
-      - name: Run benchmarks
+      - name: Run benchmarks (ioredis)
         run: |
           deno task bench:ioredis
+      - name: Run benchmarks (deno-redis)
+        run: |
           deno task bench:deno-redis
       - uses: actions/upload-artifact@v3
         with:
