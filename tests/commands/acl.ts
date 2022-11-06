@@ -2,6 +2,7 @@ import { assertEquals } from "../../vendor/https/deno.land/std/testing/asserts.t
 import {
   afterAll,
   beforeAll,
+  describe,
   it,
 } from "../../vendor/https/deno.land/std/testing/bdd.ts";
 import { newClient } from "../test_util.ts";
@@ -19,132 +20,166 @@ export function aclTests(
 
   afterAll(() => client.close());
 
-  it("whoami", async () => {
-    assertEquals(await client.aclWhoami(), "default");
+  describe("whoami", () => {
+    it("returns the username of the current connection", async () => {
+      assertEquals(await client.aclWhoami(), "default");
+    });
   });
 
-  it("list", async () => {
-    assertEquals(await client.aclList(), [
-      "user default on nopass ~* &* +@all",
-    ]);
+  describe("list", () => {
+    it("returns the ACL rules", async () => {
+      assertEquals(await client.aclList(), [
+        "user default on nopass ~* &* +@all",
+      ]);
+    });
   });
 
-  it("getuser", async () => {
-    assertEquals(await client.aclGetUser("default"), [
-      "flags",
-      ["on", "allkeys", "allchannels", "allcommands", "nopass"],
-      "passwords",
-      [],
-      "commands",
-      "+@all",
-      "keys",
-      ["*"],
-      "channels",
-      ["*"],
-    ]);
-  });
-
-  it("cat", async () => {
-    assertEquals(
-      (await client.aclCat()).sort(),
-      [
-        "keyspace",
-        "read",
-        "write",
-        "set",
-        "sortedset",
-        "list",
-        "hash",
-        "string",
-        "bitmap",
-        "hyperloglog",
-        "geo",
-        "stream",
-        "pubsub",
-        "admin",
-        "fast",
-        "slow",
-        "blocking",
-        "dangerous",
-        "connection",
-        "transaction",
-        "scripting",
-      ].sort(),
-    );
-    assertEquals(
-      (await client.aclCat("dangerous")).sort(),
-      [
-        "lastsave",
-        "shutdown",
-        "module",
-        "monitor",
-        "role",
-        "client",
-        "replconf",
-        "config",
-        "pfselftest",
-        "save",
-        "replicaof",
-        "restore-asking",
-        "restore",
-        "latency",
-        "swapdb",
-        "slaveof",
-        "bgsave",
-        "debug",
-        "bgrewriteaof",
-        "sync",
-        "flushdb",
+  describe("getuser", () => {
+    it("returns the user's ACL flags", async () => {
+      assertEquals(await client.aclGetUser("default"), [
+        "flags",
+        ["on", "allkeys", "allchannels", "allcommands", "nopass"],
+        "passwords",
+        [],
+        "commands",
+        "+@all",
         "keys",
-        "psync",
-        "pfdebug",
-        "flushall",
-        "failover",
-        "cluster",
-        "info",
-        "migrate",
-        "acl",
-        "sort",
-        "slowlog",
-      ].sort(),
-    );
+        ["*"],
+        "channels",
+        ["*"],
+      ]);
+    });
   });
 
-  it("users", async () => {
-    assertEquals(await client.aclUsers(), ["default"]);
+  describe("cat", () => {
+    it("returns the available ACL categories if no arguments are given", async () => {
+      assertEquals(
+        (await client.aclCat()).sort(),
+        [
+          "keyspace",
+          "read",
+          "write",
+          "set",
+          "sortedset",
+          "list",
+          "hash",
+          "string",
+          "bitmap",
+          "hyperloglog",
+          "geo",
+          "stream",
+          "pubsub",
+          "admin",
+          "fast",
+          "slow",
+          "blocking",
+          "dangerous",
+          "connection",
+          "transaction",
+          "scripting",
+        ].sort(),
+      );
+    });
+
+    it("returns the commands in the specified category", async () => {
+      assertEquals(
+        (await client.aclCat("dangerous")).sort(),
+        [
+          "lastsave",
+          "shutdown",
+          "module",
+          "monitor",
+          "role",
+          "client",
+          "replconf",
+          "config",
+          "pfselftest",
+          "save",
+          "replicaof",
+          "restore-asking",
+          "restore",
+          "latency",
+          "swapdb",
+          "slaveof",
+          "bgsave",
+          "debug",
+          "bgrewriteaof",
+          "sync",
+          "flushdb",
+          "keys",
+          "psync",
+          "pfdebug",
+          "flushall",
+          "failover",
+          "cluster",
+          "info",
+          "migrate",
+          "acl",
+          "sort",
+          "slowlog",
+        ].sort(),
+      );
+    });
   });
 
-  it("acl_setuser", async () => {
-    assertEquals(await client.aclSetUser("alan", "+get"), "OK");
-    assertEquals(await client.aclDelUser("alan"), 1);
+  describe("users", () => {
+    it("returns usernames", async () => {
+      assertEquals(await client.aclUsers(), ["default"]);
+    });
   });
 
-  it("deluser", async () => {
-    assertEquals(await client.aclDelUser("alan"), 0);
+  describe("setuser", () => {
+    it("returns `OK` on success", async () => {
+      assertEquals(await client.aclSetUser("alan", "+get"), "OK");
+      assertEquals(await client.aclDelUser("alan"), 1);
+    });
   });
 
-  it("genpass", async () => {
-    assertEquals((await client.aclGenPass()).length, 64);
-    const testlen = 32;
-    assertEquals((await client.aclGenPass(testlen)).length, testlen / 4);
+  describe("deluser", () => {
+    it("returns the number of deleted users", async () => {
+      assertEquals(await client.aclDelUser("alan"), 0);
+    });
   });
 
-  it("aclauth", async () => {
-    assertEquals(await client.auth("default", ""), "OK");
+  describe("genpass", () => {
+    it("returns the generated password", async () => {
+      const reply = await client.aclGenPass();
+      assertEquals(typeof reply, "string");
+      assertEquals(reply.length, 64);
+
+      const testlen = 32;
+      assertEquals((await client.aclGenPass(testlen)).length, testlen / 4);
+    });
   });
 
-  it("log", async () => {
+  describe("auth", () => {
+    it("returns `OK` on success", async () => {
+      assertEquals(await client.auth("default", ""), "OK");
+    });
+  });
+
+  describe("log", () => {
     const randString = "balh";
-    try {
-      await client.auth(randString, randString);
-    } catch (_error) {
-      // skip invalid username-password pair error
-    }
-    assertEquals((await client.aclLog(1))[0][9], randString);
-    assertEquals(await client.aclLog("RESET"), "OK");
+    beforeAll(async () => {
+      try {
+        await client.auth(randString, randString);
+      } catch (_error) {
+        // skip invalid username-password pair error
+      }
+    });
+
+    it("returns the ACL security events", async () => {
+      assertEquals((await client.aclLog(1))[0][9], randString);
+    });
+
+    it("returns `OK` when called with `RESET`", async () => {
+      assertEquals(await client.aclLog("RESET"), "OK");
+    });
   });
 
-  it("module_list", async () => {
-    assertEquals(await client.moduleList(), []);
+  describe("module list", () => {
+    it("returns the list of loaded modules", async () => {
+      assertEquals(await client.moduleList(), []);
+    });
   });
 }
