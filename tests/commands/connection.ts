@@ -3,6 +3,7 @@ import { assertEquals } from "../../vendor/https/deno.land/std/testing/asserts.t
 import {
   afterAll,
   beforeAll,
+  describe,
   it,
 } from "../../vendor/https/deno.land/std/testing/bdd.ts";
 import { newClient } from "../test_util.ts";
