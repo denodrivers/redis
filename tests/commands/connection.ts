@@ -3,6 +3,7 @@ import { assertEquals } from "../../vendor/https/deno.land/std/testing/asserts.t
 import {
   afterAll,
   beforeAll,
+  describe,
   it,
 } from "../../vendor/https/deno.land/std/testing/bdd.ts";
 import { newClient } from "../test_util.ts";
@@ -20,30 +21,43 @@ export function connectionTests(
 
   afterAll(() => client.close());
 
-  it("echo", async () => {
-    assertEquals(await client.echo("Hello World"), "Hello World");
+  describe("echo", () => {
+    it("returns `message` as-is", async () => {
+      assertEquals(await client.echo("Hello World"), "Hello World");
+    });
   });
 
-  it("ping", async () => {
-    assertEquals(await client.ping(), "PONG");
-    assertEquals(await client.ping("Deno"), "Deno");
+  describe("ping", () => {
+    it("returns `PONG` if no argument is given", async () => {
+      assertEquals(await client.ping(), "PONG");
+    });
+
+    it("returns `message` as-is", async () => {
+      assertEquals(await client.ping("Deno"), "Deno");
+    });
   });
 
-  it("quit", async () => {
-    const { port } = getServer();
-    const tempClient = await connect({ hostname: "127.0.0.1", port });
-    assertEquals(tempClient.isConnected, true);
-    assertEquals(tempClient.isClosed, false);
-    assertEquals(await tempClient.quit(), "OK");
-    assertEquals(tempClient.isConnected, false);
-    assertEquals(tempClient.isClosed, true);
+  describe("quit", () => {
+    it("closes the connection", async () => {
+      const { port } = getServer();
+      const tempClient = await connect({ hostname: "127.0.0.1", port });
+      assertEquals(tempClient.isConnected, true);
+      assertEquals(tempClient.isClosed, false);
+      assertEquals(await tempClient.quit(), "OK");
+      assertEquals(tempClient.isConnected, false);
+      assertEquals(tempClient.isClosed, true);
+    });
   });
 
-  it("select", async () => {
-    assertEquals(await client.select(1), "OK");
+  describe("select", () => {
+    it("returns `OK` on success", async () => {
+      assertEquals(await client.select(1), "OK");
+    });
   });
 
-  it("swapdb", async () => {
-    assertEquals(await client.swapdb(0, 1), "OK");
+  describe("swapdb", () => {
+    it("returns `OK` on success", async () => {
+      assertEquals(await client.swapdb(0, 1), "OK");
+    });
   });
 }
