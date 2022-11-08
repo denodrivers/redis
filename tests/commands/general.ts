@@ -9,6 +9,7 @@ import {
 import {
   afterAll,
   beforeAll,
+  describe,
   it,
 } from "../../vendor/https/deno.land/std/testing/bdd.ts";
 import { newClient } from "../test_util.ts";
@@ -28,7 +29,7 @@ export function generalTests(
 
   afterAll(() => client.close());
 
-  it("conccurent", async () => {
+  it("can send multiple commands conccurently", async () => {
     let promises: Promise<string | null>[] = [];
     for (const key of ["a", "b", "c"]) {
       promises.push(client.set(key, key));
@@ -44,108 +45,137 @@ export function generalTests(
     assertEquals(c, "c");
   });
 
-  it("db0", async () => {
-    const opts = getOpts();
-    const key = "exists";
-    const client1 = await newClient({ ...opts, db: 0 });
-    await client1.set(key, "aaa");
-    const exists1 = await client1.exists(key);
-    assertEquals(exists1, 1);
-    const client2 = await newClient({ ...opts, db: 0 });
-    const exists2 = await client2.exists(key);
-    assertEquals(exists2, 1);
-    client1.close();
-    client2.close();
-  });
+  describe("connect", () => {
+    it("selects the DB specified by `opts.db`", async () => {
+      const opts = getOpts();
+      const key = "exists";
+      const client1 = await newClient({ ...opts, db: 0 });
+      try {
+        await client1.set(key, "aaa");
+        const exists = await client1.exists(key);
+        assertEquals(exists, 1);
+      } finally {
+        client1.close();
+      }
 
-  it("connect with wrong password", async () => {
-    const { port } = getOpts();
-    await assertRejects(async () => {
-      await newClient({
-        hostname: "127.0.0.1",
-        port,
-        password: "wrong_password",
-      });
-    }, ErrorReplyError);
-  });
+      const client2 = await newClient({ ...opts, db: 0 });
+      try {
+        const exists = await client2.exists(key);
+        assertEquals(exists, 1);
+      } finally {
+        client2.close();
+      }
 
-  it("connect with empty password", async () => {
-    const { port } = getOpts();
-    // In Redis, authentication with an empty password will always fail.
-    await assertRejects(async () => {
-      await newClient({
-        hostname: "127.0.0.1",
-        port,
-        password: "",
-      });
-    }, ErrorReplyError);
-  });
-
-  it("exists", async () => {
-    const opts = getOpts();
-    const key = "exists";
-    const client1 = await newClient({ ...opts, db: 0 });
-    await client1.set(key, "aaa");
-    const exists1 = await client1.exists(key);
-    assertEquals(exists1, 1);
-    const client2 = await newClient({ ...opts, db: 1 });
-    const exists2 = await client2.exists(key);
-    assertEquals(exists2, 0);
-    client1.close();
-    client2.close();
-  });
-
-  for (const v of [Infinity, NaN, "", "port"]) {
-    it(`invalid port: ${v}`, async () => {
-      await assertRejects(
-        async () => {
-          await newClient({ hostname: "127.0.0.1", port: v, maxRetryCount: 0 });
-        },
-        Error,
-        "invalid",
-      );
+      const client3 = await newClient({ ...opts, db: 1 });
+      try {
+        const exists = await client3.exists(key);
+        assertEquals(exists, 0);
+      } finally {
+        client3.close();
+      }
     });
-  }
 
-  it("sendCommand - simple types", async () => {
-    // simple string
-    {
-      const reply = await client.sendCommand("SET", "key", "a");
-      assertEquals(reply.value(), "OK");
+    it("throws an error if a wrong password is given", async () => {
+      const { port } = getOpts();
+      await assertRejects(async () => {
+        await newClient({
+          hostname: "127.0.0.1",
+          port,
+          password: "wrong_password",
+        });
+      }, ErrorReplyError);
+    });
+
+    it("throws an error if an empty password is given", async () => {
+      const { port } = getOpts();
+      // In Redis, authentication with an empty password will always fail.
+      await assertRejects(async () => {
+        await newClient({
+          hostname: "127.0.0.1",
+          port,
+          password: "",
+        });
+      }, ErrorReplyError);
+    });
+  });
+
+  describe("exists", () => {
+    it("returns if `key` exists", async () => {
+      const opts = getOpts();
+      const key = "exists";
+      const client1 = await newClient({ ...opts, db: 0 });
+      await client1.set(key, "aaa");
+      const exists1 = await client1.exists(key);
+      assertEquals(exists1, 1);
+      const client2 = await newClient({ ...opts, db: 1 });
+      const exists2 = await client2.exists(key);
+      assertEquals(exists2, 0);
+      client1.close();
+      client2.close();
+    });
+  });
+
+  describe("invalid port", () => {
+    for (const v of [Infinity, NaN, "", "port"]) {
+      it(`throws an error if \`${v}\` is given`, async () => {
+        await assertRejects(
+          async () => {
+            await newClient({
+              hostname: "127.0.0.1",
+              port: v,
+              maxRetryCount: 0,
+            });
+          },
+          Error,
+          "invalid",
+        );
+      });
     }
+  });
 
-    // bulk string
-    {
+  describe("sendCommand", () => {
+    it("can handle simple types", async () => {
+      // simple string
+      {
+        const reply = await client.sendCommand("SET", "key", "a");
+        assertEquals(reply.value(), "OK");
+      }
+
+      // bulk string
+      {
+        const reply = await client.sendCommand("GET", "key");
+        assertEquals(reply.value(), "a");
+      }
+
+      // integer
+      {
+        const reply = await client.sendCommand("EXISTS", "key");
+        assertEquals(reply.value(), 1);
+      }
+    });
+
+    it("can get the raw data as Uint8Array", async () => {
+      const encoder = new TextEncoder();
+      await client.set("key", encoder.encode("hello"));
       const reply = await client.sendCommand("GET", "key");
-      assertEquals(reply.value(), "a");
-    }
-
-    // integer
-    {
-      const reply = await client.sendCommand("EXISTS", "key");
-      assertEquals(reply.value(), 1);
-    }
+      assertEquals(reply.buffer(), encoder.encode("hello"));
+    });
   });
 
-  it("sendCommand - get the raw data as Uint8Array", async () => {
-    const encoder = new TextEncoder();
-    await client.set("key", encoder.encode("hello"));
-    const reply = await client.sendCommand("GET", "key");
-    assertEquals(reply.buffer(), encoder.encode("hello"));
-  });
-
-  it("lazy client", async () => {
-    const opts = getOpts();
-    const resources = Deno.resources();
-    const client = createLazyClient(opts);
-    assert(!client.isConnected);
-    assertEquals(resources, Deno.resources());
-    try {
-      await client.get("foo");
-      assert(client.isConnected);
-      assertNotEquals(resources, Deno.resources());
-    } finally {
-      client.close();
-    }
+  describe("createLazyClient", () => {
+    it("returns the lazily connected client", async () => {
+      const opts = getOpts();
+      const resources = Deno.resources();
+      const client = createLazyClient(opts);
+      assert(!client.isConnected);
+      assertEquals(resources, Deno.resources());
+      try {
+        await client.get("foo");
+        assert(client.isConnected);
+        assertNotEquals(resources, Deno.resources());
+      } finally {
+        client.close();
+      }
+    });
   });
 }
