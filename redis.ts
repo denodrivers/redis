@@ -2485,12 +2485,15 @@ function createLazyExecutor(connection: Connection): CommandExecutor {
     get connection() {
       return connection;
     },
-    async exec(command, ...args) {
+    exec(command, ...args) {
+      return this.sendCommand([command, ...args]);
+    },
+    async sendCommand(args) {
       if (!executor) {
         executor = new MuxExecutor(connection);
         await connection.connect();
       }
-      return executor.exec(command, ...args);
+      return executor.sendCommand(args);
     },
     close() {
       if (executor) {

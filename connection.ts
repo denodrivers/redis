@@ -84,8 +84,8 @@ export class RedisConnection implements Connection {
   ): Promise<void> {
     try {
       password && username
-        ? await this.sendCommand("AUTH", username, password)
-        : await this.sendCommand("AUTH", password);
+        ? await this.sendCommand(["AUTH", username, password])
+        : await this.sendCommand(["AUTH", password]);
     } catch (error) {
       if (error instanceof ErrorReplyError) {
         throw new AuthenticationError("Authentication failed", {
@@ -101,14 +101,13 @@ export class RedisConnection implements Connection {
     db: number | undefined = this.options.db,
   ): Promise<void> {
     if (!db) throw new Error("The database index is undefined.");
-    await this.sendCommand("SELECT", db);
+    await this.sendCommand(["SELECT", db]);
   }
 
   private async sendCommand(
-    command: string,
-    ...args: Array<RedisValue>
+    args: [command: string, ...args: Array<RedisValue>],
   ): Promise<Raw> {
-    const reply = await sendCommand(this.writer, this.reader, command, ...args);
+    const reply = await sendCommand(this.writer, this.reader, args);
     return reply.value();
   }
 
@@ -175,12 +174,12 @@ export class RedisConnection implements Connection {
       throw new Error("Client is closed.");
     }
     try {
-      await this.sendCommand("PING");
+      await this.sendCommand(["PING"]);
       this._isConnected = true;
     } catch (_error) { // TODO: Maybe we should log this error.
       this.close();
       await this.connect();
-      await this.sendCommand("PING");
+      await this.sendCommand(["PING"]);
     }
   }
 }

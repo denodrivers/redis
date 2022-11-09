@@ -30,15 +30,12 @@ export function createRedisPipeline(
 }
 
 export class PipelineExecutor implements CommandExecutor {
-  private commands: {
-    command: string;
-    args: RedisValue[];
-  }[] = [];
+  private commands: Array<[
+    command: string,
+    ...args: Array<RedisValue>,
+  ]> = [];
   private queue: {
-    commands: {
-      command: string;
-      args: RedisValue[];
-    }[];
+    commands: Array<[command: string, ...args: Array<RedisValue>]>;
     d: Deferred<RawOrError[]>;
   }[] = [];
 
@@ -48,12 +45,18 @@ export class PipelineExecutor implements CommandExecutor {
   ) {
   }
 
+  sendCommand(
+    args: [command: string, ...args: Array<RedisValue>],
+  ): Promise<RedisReply> {
+    this.commands.push(args);
+    return Promise.resolve(okReply);
+  }
+
   exec(
     command: string,
     ...args: RedisValue[]
   ): Promise<RedisReply> {
-    this.commands.push({ command, args });
-    return Promise.resolve(okReply);
+    return this.sendCommand([command, ...args]);
   }
 
   close(): void {
@@ -62,8 +65,8 @@ export class PipelineExecutor implements CommandExecutor {
 
   flush(): Promise<RawOrError[]> {
     if (this.tx) {
-      this.commands.unshift({ command: "MULTI", args: [] });
-      this.commands.push({ command: "EXEC", args: [] });
+      this.commands.unshift(["MULTI"]);
+      this.commands.push(["EXEC"]);
     }
     const d = deferred<RawOrError[]>();
     this.queue.push({ commands: [...this.commands], d });
