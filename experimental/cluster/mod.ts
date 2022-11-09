@@ -92,7 +92,9 @@ class ClusterExecutor implements CommandExecutor {
     throw new Error("Not implemented yet");
   }
 
-  async exec(command: string, ...args: RedisValue[]): Promise<RedisReply> {
+  async sendCommand(
+    [command, ...args]: [command: string, ...args: Array<RedisValue>],
+  ): Promise<RedisReply> {
     if (this.#refreshTableASAP) {
       await this.initializeSlotsCache();
     }
@@ -167,6 +169,10 @@ class ClusterExecutor implements CommandExecutor {
           ""
       })`,
     );
+  }
+
+  exec(command: string, ...args: RedisValue[]): Promise<RedisReply> {
+    return this.sendCommand([command, ...args]);
   }
 
   close(): void {

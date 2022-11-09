@@ -9,9 +9,17 @@ import type { RedisReply, RedisValue } from "./protocol/mod.ts";
 
 export interface CommandExecutor {
   readonly connection: Connection;
+
+  /**
+   * @deprecated use `sendCommand` instead
+   */
   exec(
     command: string,
     ...args: RedisValue[]
+  ): Promise<RedisReply>;
+
+  sendCommand(
+    args: [command: string, ...args: Array<RedisValue>],
   ): Promise<RedisReply>;
 
   /**
@@ -24,8 +32,7 @@ export class MuxExecutor implements CommandExecutor {
   constructor(readonly connection: Connection) {}
 
   private queue: {
-    command: string;
-    args: RedisValue[];
+    args: [command: string, ...args: Array<RedisValue>];
     d: Deferred<RedisReply>;
   }[] = [];
 
@@ -33,8 +40,14 @@ export class MuxExecutor implements CommandExecutor {
     command: string,
     ...args: RedisValue[]
   ): Promise<RedisReply> {
+    return this.sendCommand([command, ...args]);
+  }
+
+  sendCommand(
+    args: [command: string, ...args: Array<RedisValue>],
+  ): Promise<RedisReply> {
     const d = deferred<RedisReply>();
-    this.queue.push({ command, args, d });
+    this.queue.push({ args, d });
     if (this.queue.length === 1) {
       this.dequeue();
     }
@@ -51,8 +64,7 @@ export class MuxExecutor implements CommandExecutor {
     sendCommand(
       this.connection.writer,
       this.connection.reader,
-      e.command,
-      ...e.args,
+      e.args,
     )
       .then(e.d.resolve)
       .catch(async (error) => {

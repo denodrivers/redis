@@ -40,28 +40,28 @@ class RedisSubscriptionImpl<
   constructor(private executor: CommandExecutor) {}
 
   async psubscribe(...patterns: string[]) {
-    await this.executor.exec("PSUBSCRIBE", ...patterns);
+    await this.executor.sendCommand(["PSUBSCRIBE", ...patterns]);
     for (const pat of patterns) {
       this.patterns[pat] = true;
     }
   }
 
   async punsubscribe(...patterns: string[]) {
-    await this.executor.exec("PUNSUBSCRIBE", ...patterns);
+    await this.executor.sendCommand(["PUNSUBSCRIBE", ...patterns]);
     for (const pat of patterns) {
       delete this.patterns[pat];
     }
   }
 
   async subscribe(...channels: string[]) {
-    await this.executor.exec("SUBSCRIBE", ...channels);
+    await this.executor.sendCommand(["SUBSCRIBE", ...channels]);
     for (const chan of channels) {
       this.channels[chan] = true;
     }
   }
 
   async unsubscribe(...channels: string[]) {
-    await this.executor.exec("UNSUBSCRIBE", ...channels);
+    await this.executor.sendCommand(["UNSUBSCRIBE", ...channels]);
     for (const chan of channels) {
       delete this.channels[chan];
     }

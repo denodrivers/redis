@@ -13,10 +13,10 @@ const BulkCode = encoder.encode("$");
 
 async function writeRequest(
   writer: BufWriter,
-  command: string,
-  args: RedisValue[],
+  args: [command: string, ...args: Array<RedisValue>],
 ) {
-  const _args = args.filter((v) => v !== void 0 && v !== null);
+  const command = args[0];
+  const _args = args.slice(1).filter((v) => v !== void 0 && v !== null);
   await writer.write(ArrayCode);
   await writer.write(encoder.encode(String(1 + _args.length)));
   await writer.write(CRLF);
@@ -39,10 +39,9 @@ async function writeRequest(
 export async function sendCommand(
   writer: BufWriter,
   reader: BufReader,
-  command: string,
-  ...args: RedisValue[]
+  args: [command: string, ...args: Array<RedisValue>],
 ): Promise<RedisReply> {
-  await writeRequest(writer, command, args);
+  await writeRequest(writer, args);
   await writer.flush();
   return readReply(reader);
 }
@@ -50,13 +49,13 @@ export async function sendCommand(
 export async function sendCommands(
   writer: BufWriter,
   reader: BufReader,
-  commands: {
-    command: string;
-    args: RedisValue[];
-  }[],
+  commands: Array<[
+    command: string,
+    ...args: RedisValue[],
+  ]>,
 ): Promise<RawOrError[]> {
-  for (const { command, args } of commands) {
-    await writeRequest(writer, command, args);
+  for (const command of commands) {
+    await writeRequest(writer, command);
   }
   await writer.flush();
   const ret: RawOrError[] = [];
