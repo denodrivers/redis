@@ -108,8 +108,26 @@ export class RedisConnection implements Connection {
     command: string,
     ...args: Array<RedisValue>
   ): Promise<Raw> {
-    const reply = await sendCommand(this.writer, this.reader, command, ...args);
-    return reply.value();
+    try {
+      const reply = await sendCommand(
+        this.writer,
+        this.reader,
+        command,
+        ...args,
+      );
+      return reply.value();
+    } catch (error) {
+      if (!(error instanceof Deno.errors.BadResource)) {
+        throw error;
+      }
+
+      if (!this.isManuallyClosedByUser()) {
+        // Try to reconnect to the server and retry the command
+        this.close();
+        await this.connect();
+        return this.sendCommand(command, ...args);
+      }
+    }
   }
 
   /**
@@ -182,6 +200,10 @@ export class RedisConnection implements Connection {
       await this.connect();
       await this.sendCommand("PING");
     }
+  }
+
+  private isManuallyClosedByUser(): boolean {
+    return this._isClosed && !this._isConnected;
   }
 }
 

@@ -164,21 +164,21 @@ export function generalTests(
 
   describe("auto-reconnection", () => {
     it("reconnects when the connection is lost", async () => {
-      const client2 = await newClient(getOpts());
+      const tempClient = await newClient(getOpts());
       try {
-        const id = await client2.clientID();
+        const id = await tempClient.clientID();
         await client.clientKill({ id });
-        const reply = await client2.ping();
+        const reply = await tempClient.ping();
         assertEquals(reply, "OK");
       } finally {
-        client2.close();
+        tempClient.close();
       }
     });
 
     it("does not reconnect when the connection is manually closed by the user", async () => {
-      const client2 = await newClient(getOpts());
-      client2.close();
-      await assertRejects(() => client2.ping());
+      const tempClient = await newClient(getOpts());
+      tempClient.close();
+      await assertRejects(() => tempClient.ping());
     });
   });
 
