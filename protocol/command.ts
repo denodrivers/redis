@@ -75,6 +75,8 @@ function encodeRequest(
     index = writeFrom(request, encodedArg, index);
     index = writeFrom(request, CRLF, index);
   }
+
+  console.log(new TextDecoder().decode(request));
   return request;
 }
 
