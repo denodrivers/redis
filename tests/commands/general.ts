@@ -9,6 +9,7 @@ import {
 import {
   afterAll,
   beforeAll,
+  beforeEach,
   describe,
   it,
 } from "../../vendor/https/deno.land/std/testing/bdd.ts";
@@ -100,6 +101,8 @@ export function generalTests(
   });
 
   describe("exists", () => {
+    beforeEach(() => client.flushdb());
+
     it("returns if `key` exists", async () => {
       const opts = getOpts();
       const key = "exists";
