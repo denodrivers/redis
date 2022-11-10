@@ -113,6 +113,22 @@ export function generalTests(
       client1.close();
       client2.close();
     });
+
+    it("can handle many keys", async () => {
+      const reply = await client.exists(
+        "a",
+        "b",
+        "c",
+        "d",
+        "e",
+        "f",
+        "g",
+        "h",
+        "i",
+        "j",
+      );
+      assertEquals(reply, 0);
+    });
   });
 
   describe("invalid port", () => {
