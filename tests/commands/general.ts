@@ -101,7 +101,9 @@ export function generalTests(
   });
 
   describe("exists", () => {
-    beforeEach(() => client.flushdb());
+    beforeEach(async () => {
+      await client.flushdb();
+    });
 
     it("returns if `key` exists", async () => {
       const opts = getOpts();
