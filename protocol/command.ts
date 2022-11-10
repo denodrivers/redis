@@ -68,15 +68,16 @@ function encodeRequest(
   index = writeFrom(request, CRLF, index);
   for (let i = 0; i < encodedArgs.length; i++) {
     const encodedArg = encodedArgs[i];
-    const length = encoder.encode(String(encodedArg.byteLength));
+    const encodedLength = encoder.encode(String(encodedArg.byteLength));
     index = writeFrom(request, BulkCode, index);
-    index = writeFrom(request, length, index);
+    index = writeFrom(request, encodedLength, index);
     index = writeFrom(request, CRLF, index);
     index = writeFrom(request, encodedArg, index);
     index = writeFrom(request, CRLF, index);
   }
 
   console.log(new TextDecoder().decode(request));
+  console.log([request.byteLength, index]);
   return request;
 }
 
