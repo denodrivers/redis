@@ -25,9 +25,8 @@ function encodeRequest(
   args: RedisValue[],
 ): Uint8Array {
   const _args = args.filter((v) => v !== void 0 && v !== null);
-  const encodedArgsCount = encoder.encode(String(1 + _args.length));
-  const encodedArgsCountLength = encoder.encode(
-    String(encodedArgsCount.byteLength),
+  const encodedArgsCount = encoder.encode(
+    String(String(1 + _args.length)),
   );
   const encodedCommand = encoder.encode(command);
   const encodedCommandLength = encoder.encode(
@@ -35,7 +34,7 @@ function encodeRequest(
   );
   let totalBytes = (
     ArrayCode.byteLength +
-    encodedArgsCountLength.byteLength +
+    encodedArgsCount.byteLength +
     CRLF.byteLength +
     BulkCode.byteLength +
     encodedCommandLength.byteLength +
@@ -59,7 +58,7 @@ function encodeRequest(
   const request = new Uint8Array(totalBytes);
   let index = 0;
   index = writeFrom(request, ArrayCode, index);
-  index = writeFrom(request, encodedArgsCountLength, index);
+  index = writeFrom(request, encodedArgsCount, index);
   index = writeFrom(request, CRLF, index);
   index = writeFrom(request, BulkCode, index);
   index = writeFrom(request, encodedCommandLength, index);
@@ -76,8 +75,6 @@ function encodeRequest(
     index = writeFrom(request, CRLF, index);
   }
 
-  console.log(new TextDecoder().decode(request));
-  console.log([request.byteLength, index]);
   return request;
 }
 
