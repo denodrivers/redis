@@ -81,33 +81,35 @@ class RedisSubscriptionImpl<
   #receive(
     binaryMode: false,
   ): AsyncIterableIterator<RedisPubSubMessage<TMessage>>;
-  async *#receive<TBinaryMode extends boolean>(
+  async *#receive<
+    TBinaryMode extends boolean,
+    TMessageFormat = TBinaryMode extends true ? Binary : TMessage,
+  >(
     binaryMode: TBinaryMode,
   ): AsyncIterableIterator<
-    RedisPubSubMessage<TBinaryMode extends true ? Binary : TMessage>
+    RedisPubSubMessage<TMessageFormat>
   > {
     let forceReconnect = false;
     const connection = this.executor.connection;
     while (this.isConnected) {
       try {
-        let rep: [string, string, TMessage] | [
+        let rep: [string, string, TMessageFormat] | [
           string,
           string,
           string,
-          TBinaryMode extends true ? Binary : TMessage,
+          TMessageFormat,
         ];
         try {
           // TODO: `readArrayReplyBody` should not be called directly here
           rep = (await readArrayReplyBody(connection.reader, binaryMode)) as [
             string,
             string,
-            string,
-            TBinaryMode extends true ? Binary : TMessage,
+            TMessageFormat,
           ] | [
             string,
             string,
             string,
-            TBinaryMode extends true ? Binary : TMessage,
+            TMessageFormat,
           ];
         } catch (err) {
           if (err instanceof Deno.errors.BadResource) {
