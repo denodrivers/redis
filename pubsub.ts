@@ -1,5 +1,6 @@
 import type { CommandExecutor } from "./executor.ts";
 import { InvalidStateError } from "./errors.ts";
+import type { Binary } from "./protocol/mod.ts";
 import { readArrayReplyBody } from "./protocol/mod.ts";
 
 type DefaultMessageType = string;
@@ -10,6 +11,7 @@ export interface RedisSubscription<
 > {
   readonly isClosed: boolean;
   receive(): AsyncIterableIterator<RedisPubSubMessage<TMessage>>;
+  receiveBuffers(): AsyncIterableIterator<RedisPubSubMessage<Binary>>;
   psubscribe(...patterns: string[]): Promise<void>;
   subscribe(...channels: string[]): Promise<void>;
   punsubscribe(...patterns: string[]): Promise<void>;
@@ -67,7 +69,23 @@ class RedisSubscriptionImpl<
     }
   }
 
-  async *receive(): AsyncIterableIterator<RedisPubSubMessage<TMessage>> {
+  receive(): AsyncIterableIterator<RedisPubSubMessage<TMessage>> {
+    return this.#receive(false);
+  }
+
+  receiveBuffers(): AsyncIterableIterator<RedisPubSubMessage<Binary>> {
+    return this.#receive(true);
+  }
+
+  #receive(binaryMode: true): AsyncIterableIterator<RedisPubSubMessage<Binary>>;
+  #receive(
+    binaryMode: false,
+  ): AsyncIterableIterator<RedisPubSubMessage<TMessage>>;
+  async *#receive<TBinaryMode extends boolean>(
+    binaryMode: TBinaryMode,
+  ): AsyncIterableIterator<
+    RedisPubSubMessage<TBinaryMode extends true ? Binary : TMessage>
+  > {
     let forceReconnect = false;
     const connection = this.executor.connection;
     while (this.isConnected) {
@@ -76,14 +94,21 @@ class RedisSubscriptionImpl<
           string,
           string,
           string,
-          TMessage,
+          TBinaryMode extends true ? Binary : TMessage,
         ];
         try {
-          rep = (await readArrayReplyBody(connection.reader)) as [
+          // TODO: `readArrayReplyBody` should not be called directly here
+          rep = (await readArrayReplyBody(connection.reader, binaryMode)) as [
             string,
             string,
-            TMessage,
-          ] | [string, string, string, TMessage];
+            string,
+            TBinaryMode extends true ? Binary : TMessage,
+          ] | [
+            string,
+            string,
+            string,
+            TBinaryMode extends true ? Binary : TMessage,
+          ];
         } catch (err) {
           if (err instanceof Deno.errors.BadResource) {
             // Connection already closed.
