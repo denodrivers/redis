@@ -111,6 +111,7 @@ class RedisSubscriptionImpl<
             string,
             TMessageFormat,
           ];
+          console.info(rep);
         } catch (err) {
           if (err instanceof Deno.errors.BadResource) {
             // Connection already closed.
