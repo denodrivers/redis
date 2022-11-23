@@ -4,7 +4,7 @@ import {
   assertEquals,
   assertRejects,
 } from "../../vendor/https/deno.land/std/testing/asserts.ts";
-import { it } from "../../vendor/https/deno.land/std/testing/bdd.ts";
+import { describe, it } from "../../vendor/https/deno.land/std/testing/bdd.ts";
 import { newClient, nextPort, startRedis, stopRedis } from "../test_util.ts";
 import type { TestServer } from "../test_util.ts";
 
@@ -45,6 +45,32 @@ export function pubsubTests(
     await assertRejects(async () => {
       await client.get("aaa");
     }, Deno.errors.BadResource);
+  });
+
+  describe("receiveBuffers", () => {
+    it("returns messages as Uint8Array", async () => {
+      const opts = getOpts();
+      const client = await newClient(opts);
+      const pub = await newClient(opts);
+      const sub = await client.subscribe("subsc3");
+      const p = (async () => {
+        const it = sub.receiveBuffers();
+        return (await it.next()).value;
+      })();
+      try {
+        await pub.publish("subsc3", "foobar");
+        const message = await p;
+        assertEquals(message, {
+          channel: "subsc3",
+          message: new TextEncoder().encode("foobar"),
+        });
+      } finally {
+        sub.close();
+        pub.close();
+      }
+      assert(sub.isClosed);
+      assert(client.isClosed);
+    });
   });
 
   it("psubscribe()", async () => {
