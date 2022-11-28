@@ -2,6 +2,7 @@ import type { CommandExecutor } from "./executor.ts";
 import { InvalidStateError } from "./errors.ts";
 import type { Binary } from "./protocol/mod.ts";
 import { readArrayReplyBody } from "./protocol/mod.ts";
+import { decoder } from "./protocol/_util.ts";
 
 type DefaultMessageType = string;
 type ValidMessageType = string | string[];
@@ -77,41 +78,29 @@ class RedisSubscriptionImpl<
     return this.#receive(true);
   }
 
-  #receive(binaryMode: true): AsyncIterableIterator<RedisPubSubMessage<Binary>>;
-  #receive(
-    binaryMode: false,
-  ): AsyncIterableIterator<RedisPubSubMessage<TMessage>>;
   async *#receive<
-    TBinaryMode extends boolean,
-    TMessageFormat = TBinaryMode extends true ? Binary : TMessage,
+    T = TMessage,
   >(
-    binaryMode: TBinaryMode,
+    binaryMode: boolean,
   ): AsyncIterableIterator<
-    RedisPubSubMessage<TMessageFormat>
+    RedisPubSubMessage<T>
   > {
     let forceReconnect = false;
     const connection = this.executor.connection;
     while (this.isConnected) {
       try {
-        let rep: [string, string, TMessageFormat] | [
-          string,
-          string,
-          string,
-          TMessageFormat,
+        let rep: [string | Binary, string | Binary, T] | [
+          string | Binary,
+          string | Binary,
+          string | Binary,
+          T,
         ];
         try {
           // TODO: `readArrayReplyBody` should not be called directly here
-          rep = (await readArrayReplyBody(connection.reader, binaryMode)) as [
-            string,
-            string,
-            TMessageFormat,
-          ] | [
-            string,
-            string,
-            string,
-            TMessageFormat,
-          ];
-          console.info(rep);
+          rep = (await readArrayReplyBody(
+            connection.reader,
+            binaryMode,
+          )) as typeof rep;
         } catch (err) {
           if (err instanceof Deno.errors.BadResource) {
             // Connection already closed.
@@ -120,18 +109,41 @@ class RedisSubscriptionImpl<
           }
           throw err;
         }
-        const ev = rep[0];
 
-        if (ev === "message" && rep.length === 3) {
+        const event = rep[0] instanceof Uint8Array
+          ? decoder.decode(rep[0])
+          : rep[0];
+
+        if (event === "message" && rep.length === 3) {
+          if (rep[1] instanceof Uint8Array) {
+            const channel = decoder.decode(rep[1]);
+            const message = rep[2];
+            yield { channel, message };
+          } else {
+            const channel = rep[1];
+            const message = rep[2];
+            yield { channel, message };
+          }
+          const channel = rep[1] instanceof Uint8Array
+            ? decoder.decode(rep[1])
+            : rep[1];
+          const message = rep[2];
           yield {
-            channel: rep[1],
-            message: rep[2],
+            channel,
+            message,
           };
-        } else if (ev === "pmessage" && rep.length === 4) {
+        } else if (event === "pmessage" && rep.length === 4) {
+          const pattern = rep[1] instanceof Uint8Array
+            ? decoder.decode(rep[1])
+            : rep[1];
+          const channel = rep[2] instanceof Uint8Array
+            ? decoder.decode(rep[2])
+            : rep[2];
+          const message = rep[3];
           yield {
-            pattern: rep[1],
-            channel: rep[2],
-            message: rep[3],
+            pattern,
+            channel,
+            message,
           };
         }
       } catch (error) {

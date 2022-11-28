@@ -250,7 +250,7 @@ export async function readArrayReplyBody(
     switch (code) {
       case SimpleStringCode: {
         const reply = await SimpleStringReply.decode(reader);
-        array.push(reply.string());
+        array.push(binaryMode ? reply.buffer() : reply.string());
         break;
       }
       case BulkReplyCode: {
