@@ -239,6 +239,10 @@ export async function readArrayReplyBody(
     return null;
   }
 
+  const simpleStringReplyMethod = binaryMode
+    ? "buffer" as const
+    : "string" as const;
+  const bulkReplyMethod = binaryMode ? "buffer" as const : "bulk" as const;
   const array: Array<types.ConditionalArray[0] | Uint8Array> = [];
   for (let i = 0; i < argCount; i++) {
     const res = await reader.peek(1);
@@ -250,12 +254,12 @@ export async function readArrayReplyBody(
     switch (code) {
       case SimpleStringCode: {
         const reply = await SimpleStringReply.decode(reader);
-        array.push(binaryMode ? reply.buffer() : reply.string());
+        array.push(reply[simpleStringReplyMethod]());
         break;
       }
       case BulkReplyCode: {
         const reply = await BulkReply.decode(reader);
-        array.push(binaryMode ? reply.buffer() : reply.bulk());
+        array.push(reply[bulkReplyMethod]());
         break;
       }
       case IntegerReplyCode: {
