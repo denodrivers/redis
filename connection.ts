@@ -21,6 +21,7 @@ export interface Connection {
   close(): void;
   connect(): Promise<void>;
   reconnect(): Promise<void>;
+  sendCommand(command: string, ...args: Array<RedisValue>): Promise<Raw>;
 }
 
 export interface RedisConnectionOptions {
@@ -117,16 +118,17 @@ export class RedisConnection implements Connection {
       );
       return reply.value();
     } catch (error) {
-      if (!(error instanceof Deno.errors.BadResource)) {
+      if (
+        !(error instanceof Deno.errors.BadResource) ||
+        this.isManuallyClosedByUser()
+      ) {
         throw error;
       }
 
-      if (!this.isManuallyClosedByUser()) {
-        // Try to reconnect to the server and retry the command
-        this.close();
-        await this.connect();
-        return this.sendCommand(command, ...args);
-      }
+      // Try to reconnect to the server and retry the command
+      this.close();
+      await this.connect();
+      return this.sendCommand(command, ...args);
     }
   }
 

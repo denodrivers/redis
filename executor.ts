@@ -48,12 +48,7 @@ export class MuxExecutor implements CommandExecutor {
   private dequeue(): void {
     const [e] = this.queue;
     if (!e) return;
-    sendCommand(
-      this.connection.writer,
-      this.connection.reader,
-      e.command,
-      ...e.args,
-    )
+    this.connection.sendCommand(e.command, ...e.args)
       .then(e.d.resolve)
       .catch(async (error) => {
         if (
