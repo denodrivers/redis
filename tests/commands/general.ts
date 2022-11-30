@@ -9,6 +9,7 @@ import {
 import {
   afterAll,
   beforeAll,
+  beforeEach,
   describe,
   it,
 } from "../../vendor/https/deno.land/std/testing/bdd.ts";
@@ -100,6 +101,10 @@ export function generalTests(
   });
 
   describe("exists", () => {
+    beforeEach(async () => {
+      await client.flushdb();
+    });
+
     it("returns if `key` exists", async () => {
       const opts = getOpts();
       const key = "exists";
@@ -112,6 +117,22 @@ export function generalTests(
       assertEquals(exists2, 0);
       client1.close();
       client2.close();
+    });
+
+    it("can handle many keys", async () => {
+      const reply = await client.exists(
+        "a",
+        "b",
+        "c",
+        "d",
+        "e",
+        "f",
+        "g",
+        "h",
+        "i",
+        "j",
+      );
+      assertEquals(reply, 0);
     });
   });
 

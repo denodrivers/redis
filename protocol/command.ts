@@ -16,24 +16,75 @@ async function writeRequest(
   command: string,
   args: RedisValue[],
 ) {
+  const request = encodeRequest(command, args);
+  await writer.write(request);
+}
+
+function encodeRequest(
+  command: string,
+  args: RedisValue[],
+): Uint8Array {
   const _args = args.filter((v) => v !== void 0 && v !== null);
-  await writer.write(ArrayCode);
-  await writer.write(encoder.encode(String(1 + _args.length)));
-  await writer.write(CRLF);
-  await writer.write(BulkCode);
-  await writer.write(encoder.encode(String(command.length)));
-  await writer.write(CRLF);
-  await writer.write(encoder.encode(command));
-  await writer.write(CRLF);
-  for (const arg of _args) {
+  const encodedArgsCount = encoder.encode(
+    String(String(1 + _args.length)),
+  );
+  const encodedCommand = encoder.encode(command);
+  const encodedCommandLength = encoder.encode(
+    String(encodedCommand.byteLength),
+  );
+  let totalBytes = (
+    ArrayCode.byteLength +
+    encodedArgsCount.byteLength +
+    CRLF.byteLength +
+    BulkCode.byteLength +
+    encodedCommandLength.byteLength +
+    CRLF.byteLength +
+    encodedCommand.byteLength +
+    CRLF.byteLength
+  );
+  const encodedArgs = Array(_args.length);
+  for (let i = 0; i < _args.length; i++) {
+    const arg = _args[i];
     const bytes = arg instanceof Uint8Array ? arg : encoder.encode(String(arg));
     const bytesLen = bytes.byteLength;
-    await writer.write(BulkCode);
-    await writer.write(encoder.encode(String(bytesLen)));
-    await writer.write(CRLF);
-    await writer.write(bytes);
-    await writer.write(CRLF);
+    totalBytes += BulkCode.byteLength +
+      String(bytesLen).length +
+      CRLF.byteLength +
+      bytes.byteLength +
+      CRLF.byteLength;
+    encodedArgs[i] = bytes;
   }
+
+  const request = new Uint8Array(totalBytes);
+  let index = 0;
+  index = writeFrom(request, ArrayCode, index);
+  index = writeFrom(request, encodedArgsCount, index);
+  index = writeFrom(request, CRLF, index);
+  index = writeFrom(request, BulkCode, index);
+  index = writeFrom(request, encodedCommandLength, index);
+  index = writeFrom(request, CRLF, index);
+  index = writeFrom(request, encodedCommand, index);
+  index = writeFrom(request, CRLF, index);
+  for (let i = 0; i < encodedArgs.length; i++) {
+    const encodedArg = encodedArgs[i];
+    const encodedLength = encoder.encode(String(encodedArg.byteLength));
+    index = writeFrom(request, BulkCode, index);
+    index = writeFrom(request, encodedLength, index);
+    index = writeFrom(request, CRLF, index);
+    index = writeFrom(request, encodedArg, index);
+    index = writeFrom(request, CRLF, index);
+  }
+
+  return request;
+}
+
+function writeFrom(
+  bytes: Uint8Array,
+  payload: Uint8Array,
+  fromIndex: number,
+): number {
+  bytes.set(payload, fromIndex);
+  return fromIndex + payload.byteLength;
 }
 
 export async function sendCommand(

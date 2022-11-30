@@ -147,7 +147,7 @@ class IntegerReply extends BaseReply {
 
 class ArrayReply extends BaseReply {
   static async decode(reader: BufReader): Promise<types.RedisReply> {
-    const body = await readArrayReplyBody(reader);
+    const body = await readArrayReplyBody(reader, false);
     return new ArrayReply(body);
   }
 
@@ -212,9 +212,22 @@ async function readSimpleStringReplyBody(
   return line.subarray(1, line.length);
 }
 
+export function readArrayReplyBody(
+  reader: BufReader,
+  binaryMode?: false,
+): Promise<types.ConditionalArray | types.BulkNil>;
+export function readArrayReplyBody(
+  reader: BufReader,
+  binaryMode: true,
+): Promise<Array<types.ConditionalArray[0] | Uint8Array> | types.BulkNil>;
+export function readArrayReplyBody(
+  reader: BufReader,
+  binaryMode: boolean,
+): Promise<Array<types.ConditionalArray[0] | Uint8Array> | types.BulkNil>;
 export async function readArrayReplyBody(
   reader: BufReader,
-): Promise<types.ConditionalArray | types.BulkNil> {
+  binaryMode = false,
+): Promise<Array<types.ConditionalArray[0] | Uint8Array> | types.BulkNil> {
   const line = await readLine(reader);
   if (line == null) {
     throw new InvalidStateError();
@@ -226,7 +239,11 @@ export async function readArrayReplyBody(
     return null;
   }
 
-  const array: types.ConditionalArray = [];
+  const simpleStringReplyMethod = binaryMode
+    ? "buffer" as const
+    : "string" as const;
+  const bulkReplyMethod = binaryMode ? "buffer" as const : "bulk" as const;
+  const array: Array<types.ConditionalArray[0] | Uint8Array> = [];
   for (let i = 0; i < argCount; i++) {
     const res = await reader.peek(1);
     if (res === null) {
@@ -237,12 +254,12 @@ export async function readArrayReplyBody(
     switch (code) {
       case SimpleStringCode: {
         const reply = await SimpleStringReply.decode(reader);
-        array.push(reply.string());
+        array.push(reply[simpleStringReplyMethod]());
         break;
       }
       case BulkReplyCode: {
         const reply = await BulkReply.decode(reader);
-        array.push(reply.bulk());
+        array.push(reply[bulkReplyMethod]());
         break;
       }
       case IntegerReplyCode: {
