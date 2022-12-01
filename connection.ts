@@ -1,5 +1,5 @@
 import { sendCommand } from "./protocol/mod.ts";
-import type { Raw, RedisValue } from "./protocol/mod.ts";
+import type { RedisReply, RedisValue } from "./protocol/mod.ts";
 import type { Backoff } from "./backoff.ts";
 import { exponentialBackoff } from "./backoff.ts";
 import { ErrorReplyError } from "./errors.ts";
@@ -21,7 +21,7 @@ export interface Connection {
   close(): void;
   connect(): Promise<void>;
   reconnect(): Promise<void>;
-  sendCommand(command: string, ...args: Array<RedisValue>): Promise<Raw>;
+  sendCommand(command: string, ...args: Array<RedisValue>): Promise<RedisReply>;
 }
 
 export interface RedisConnectionOptions {
@@ -116,7 +116,7 @@ export class RedisConnection implements Connection {
         command,
         ...args,
       );
-      return reply.value();
+      return reply;
     } catch (error) {
       if (
         !(error instanceof Deno.errors.BadResource) ||
