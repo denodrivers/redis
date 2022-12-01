@@ -108,7 +108,7 @@ export class RedisConnection implements Connection {
   async sendCommand(
     command: string,
     ...args: Array<RedisValue>
-  ): Promise<Raw> {
+  ): Promise<RedisReply> {
     try {
       const reply = await sendCommand(
         this.writer,
