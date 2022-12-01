@@ -114,7 +114,7 @@ export class RedisConnection implements Connection {
         this.writer,
         this.reader,
         command,
-        ...args,
+        args,
       );
       return reply;
     } catch (error) {
