@@ -4,7 +4,6 @@ import {
   Deferred,
   deferred,
 } from "./vendor/https/deno.land/std/async/deferred.ts";
-import { sendCommand } from "./protocol/mod.ts";
 import type { RedisReply, RedisValue } from "./protocol/mod.ts";
 
 export interface CommandExecutor {
