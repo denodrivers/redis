@@ -105,7 +105,7 @@ export class RedisConnection implements Connection {
     await this.sendCommand("SELECT", db);
   }
 
-  private async sendCommand(
+  async sendCommand(
     command: string,
     ...args: Array<RedisValue>
   ): Promise<Raw> {
