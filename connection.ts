@@ -125,10 +125,22 @@ export class RedisConnection implements Connection {
         throw error;
       }
 
-      // Try to reconnect to the server and retry the command
-      this.close();
-      await this.connect();
-      return this.sendCommand(command, ...args);
+      for (let i = 0; i < this.maxRetryCount; i++) {
+        // Try to reconnect to the server and retry the command
+        this.close();
+        await this.connect();
+
+        const reply = await sendCommand(
+          this.writer,
+          this.reader,
+          command,
+          args,
+        );
+
+        return reply;
+      }
+
+      throw error;
     }
   }
 

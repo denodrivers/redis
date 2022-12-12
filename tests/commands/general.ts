@@ -191,7 +191,6 @@ export function generalTests(
         await client.clientKill({ id });
         const reply = await tempClient.ping();
         assertEquals(reply, "OK");
-        console.info("OK");
       } finally {
         tempClient.close();
       }
@@ -201,7 +200,6 @@ export function generalTests(
       const tempClient = await newClient(getOpts());
       tempClient.close();
       await assertRejects(() => tempClient.ping());
-      console.info("OK");
     });
   });
 
