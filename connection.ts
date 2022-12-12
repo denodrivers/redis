@@ -46,7 +46,6 @@ export class RedisConnection implements Connection {
 
   private readonly hostname: string;
   private readonly port: number | string;
-  private retryCount = 0;
   private _isClosed = false;
   private _isConnected = false;
   private backoff: Backoff;
@@ -128,16 +127,21 @@ export class RedisConnection implements Connection {
       for (let i = 0; i < this.maxRetryCount; i++) {
         // Try to reconnect to the server and retry the command
         this.close();
-        await this.connect();
+        try {
+          await this.connect();
 
-        const reply = await sendCommand(
-          this.writer,
-          this.reader,
-          command,
-          args,
-        );
+          const reply = await sendCommand(
+            this.writer,
+            this.reader,
+            command,
+            args,
+          );
 
-        return reply;
+          return reply;
+        } catch { // TODO: use `AggregateError`?
+          const backoff = this.backoff(i);
+          await delay(backoff);
+        }
       }
 
       throw error;
@@ -148,6 +152,10 @@ export class RedisConnection implements Connection {
    * Connect to Redis server
    */
   async connect(): Promise<void> {
+    await this.#connect(0);
+  }
+
+  async #connect(retryCount: number) {
     try {
       const dialOpts: Deno.ConnectOptions = {
         hostname: this.hostname,
@@ -174,21 +182,18 @@ export class RedisConnection implements Connection {
         this.close();
         throw error;
       }
-      this.retryCount = 0;
     } catch (error) {
       if (error instanceof AuthenticationError) {
-        this.retryCount = 0;
         throw (error.cause ?? error);
       }
 
-      if (this.retryCount++ >= this.maxRetryCount) {
-        this.retryCount = 0;
+      const backoff = this.backoff(retryCount);
+      retryCount++;
+      if (retryCount >= this.maxRetryCount) {
         throw error;
       }
-
-      const backoff = this.backoff(this.retryCount);
       await delay(backoff);
-      await this.connect();
+      await this.#connect(retryCount);
     }
   }
 
