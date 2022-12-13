@@ -190,7 +190,7 @@ export function generalTests(
         const id = await tempClient.clientID();
         await client.clientKill({ id });
         const reply = await tempClient.ping();
-        assertEquals(reply, "OK");
+        assertEquals(reply, "PONG");
       } finally {
         tempClient.close();
       }
