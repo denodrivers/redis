@@ -104,48 +104,42 @@ export class RedisConnection implements Connection {
     await this.sendCommand("SELECT", db);
   }
 
-  async sendCommand(
+  sendCommand(
     command: string,
     ...args: Array<RedisValue>
   ): Promise<RedisReply> {
-    try {
-      const reply = await sendCommand(
-        this.writer,
-        this.reader,
-        command,
-        args,
-      );
-      return reply;
-    } catch (error) {
-      if (
-        !isRetriableError(error) ||
-        this.isManuallyClosedByUser()
-      ) {
-        throw error;
-      }
-
-      for (let i = 0; i < this.maxRetryCount; i++) {
-        // Try to reconnect to the server and retry the command
-        this.close();
-        try {
-          await this.connect();
-
-          const reply = await sendCommand(
-            this.writer,
-            this.reader,
-            command,
-            args,
-          );
-
-          return reply;
-        } catch { // TODO: use `AggregateError`?
-          const backoff = this.backoff(i);
-          await delay(backoff);
+    return sendCommand(this.writer, this.reader, command, args).catch(
+      async (error) => {
+        if (
+          !isRetriableError(error) ||
+          this.isManuallyClosedByUser()
+        ) {
+          throw error;
         }
-      }
 
-      throw error;
-    }
+        for (let i = 0; i < this.maxRetryCount; i++) {
+          // Try to reconnect to the server and retry the command
+          this.close();
+          try {
+            await this.connect();
+
+            const reply = await sendCommand(
+              this.writer,
+              this.reader,
+              command,
+              args,
+            );
+
+            return reply;
+          } catch { // TODO: use `AggregateError`?
+            const backoff = this.backoff(i);
+            await delay(backoff);
+          }
+        }
+
+        throw error;
+      },
+    );
   }
 
   /**
