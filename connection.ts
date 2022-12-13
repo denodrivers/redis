@@ -125,6 +125,7 @@ export class RedisConnection implements Connection {
       }
 
       for (let i = 0; i < this.maxRetryCount; i++) {
+        console.info(`retries ${i}`);
         // Try to reconnect to the server and retry the command
         this.close();
         try {
