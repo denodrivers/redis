@@ -1,5 +1,4 @@
 import type { Connection } from "./connection.ts";
-import { EOFError } from "./errors.ts";
 import {
   Deferred,
   deferred,
