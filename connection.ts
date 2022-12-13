@@ -2,7 +2,7 @@ import { sendCommand } from "./protocol/mod.ts";
 import type { RedisReply, RedisValue } from "./protocol/mod.ts";
 import type { Backoff } from "./backoff.ts";
 import { exponentialBackoff } from "./backoff.ts";
-import { ErrorReplyError } from "./errors.ts";
+import { ErrorReplyError, isRetriableError } from "./errors.ts";
 import {
   BufReader,
   BufWriter,
@@ -118,14 +118,13 @@ export class RedisConnection implements Connection {
       return reply;
     } catch (error) {
       if (
-        !(error instanceof Deno.errors.BadResource) ||
+        !isRetriableError(error) ||
         this.isManuallyClosedByUser()
       ) {
         throw error;
       }
 
       for (let i = 0; i < this.maxRetryCount; i++) {
-        console.info(`retries ${i}`);
         // Try to reconnect to the server and retry the command
         this.close();
         try {
