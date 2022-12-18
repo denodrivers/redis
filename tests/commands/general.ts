@@ -196,6 +196,20 @@ export function generalTests(
       }
     });
 
+    it("fails when max retry count is exceeded", async () => {
+      const tempClient = await newClient({
+        ...getOpts(),
+        maxRetryCount: 0,
+      });
+      try {
+        const id = await tempClient.clientID();
+        await client.clientKill({ id });
+        await assertRejects(() => tempClient.ping());
+      } finally {
+        tempClient.close();
+      }
+    });
+
     it("does not reconnect when the connection is manually closed by the user", async () => {
       const tempClient = await newClient(getOpts());
       tempClient.close();
