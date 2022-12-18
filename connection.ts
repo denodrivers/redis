@@ -37,6 +37,8 @@ export interface RedisConnectionOptions {
   backoff?: Backoff;
 }
 
+const kEmptyRedisArgs: Array<RedisValue> = [];
+
 export class RedisConnection implements Connection {
   name: string | null = null;
   closer!: Closer;
@@ -113,7 +115,7 @@ export class RedisConnection implements Connection {
         this.writer,
         this.reader,
         command,
-        args ?? [],
+        args ?? kEmptyRedisArgs,
       );
       return reply;
     } catch (error) {
@@ -134,7 +136,7 @@ export class RedisConnection implements Connection {
             this.writer,
             this.reader,
             command,
-            args ?? [],
+            args ?? kEmptyRedisArgs,
           );
 
           return reply;
