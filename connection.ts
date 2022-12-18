@@ -21,7 +21,7 @@ export interface Connection {
   close(): void;
   connect(): Promise<void>;
   reconnect(): Promise<void>;
-  sendCommand(command: string, ...args: Array<RedisValue>): Promise<RedisReply>;
+  sendCommand(command: string, args?: Array<RedisValue>): Promise<RedisReply>;
 }
 
 export interface RedisConnectionOptions {
@@ -84,8 +84,8 @@ export class RedisConnection implements Connection {
   ): Promise<void> {
     try {
       password && username
-        ? await this.sendCommand("AUTH", username, password)
-        : await this.sendCommand("AUTH", password);
+        ? await this.sendCommand("AUTH", [username, password])
+        : await this.sendCommand("AUTH", [password]);
     } catch (error) {
       if (error instanceof ErrorReplyError) {
         throw new AuthenticationError("Authentication failed", {
@@ -101,19 +101,19 @@ export class RedisConnection implements Connection {
     db: number | undefined = this.options.db,
   ): Promise<void> {
     if (!db) throw new Error("The database index is undefined.");
-    await this.sendCommand("SELECT", db);
+    await this.sendCommand("SELECT", [db]);
   }
 
   async sendCommand(
     command: string,
-    ...args: Array<RedisValue>
+    args?: Array<RedisValue>,
   ): Promise<RedisReply> {
     try {
       const reply = await sendCommand(
         this.writer,
         this.reader,
         command,
-        args,
+        args ?? [],
       );
       return reply;
     } catch (error) {
@@ -134,7 +134,7 @@ export class RedisConnection implements Connection {
             this.writer,
             this.reader,
             command,
-            args,
+            args ?? [],
           );
 
           return reply;
