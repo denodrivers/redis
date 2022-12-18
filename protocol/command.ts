@@ -91,7 +91,7 @@ export async function sendCommand(
   writer: BufWriter,
   reader: BufReader,
   command: string,
-  ...args: RedisValue[]
+  args: RedisValue[],
 ): Promise<RedisReply> {
   await writeRequest(writer, command, args);
   await writer.flush();

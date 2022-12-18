@@ -1,10 +1,8 @@
 import type { Connection } from "./connection.ts";
-import { EOFError } from "./errors.ts";
 import {
   Deferred,
   deferred,
 } from "./vendor/https/deno.land/std/async/deferred.ts";
-import { sendCommand } from "./protocol/mod.ts";
 import type { RedisReply, RedisValue } from "./protocol/mod.ts";
 
 export interface CommandExecutor {
@@ -48,29 +46,9 @@ export class MuxExecutor implements CommandExecutor {
   private dequeue(): void {
     const [e] = this.queue;
     if (!e) return;
-    sendCommand(
-      this.connection.writer,
-      this.connection.reader,
-      e.command,
-      ...e.args,
-    )
+    this.connection.sendCommand(e.command, e.args)
       .then(e.d.resolve)
-      .catch(async (error) => {
-        if (
-          this.connection.maxRetryCount > 0 &&
-          // Error `BadResource` is thrown when an attempt is made to write to a closed connection,
-          //  Make sure that the connection wasn't explicitly closed by the user before trying to reconnect.
-          ((error instanceof Deno.errors.BadResource &&
-            !this.connection.isClosed) ||
-            error instanceof Deno.errors.BrokenPipe ||
-            error instanceof Deno.errors.ConnectionAborted ||
-            error instanceof Deno.errors.ConnectionRefused ||
-            error instanceof Deno.errors.ConnectionReset ||
-            error instanceof EOFError)
-        ) {
-          await this.connection.reconnect();
-        } else e.d.reject(error);
-      })
+      .catch(e.d.reject)
       .finally(() => {
         this.queue.shift();
         this.dequeue();

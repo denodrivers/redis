@@ -1,8 +1,8 @@
 import { sendCommand } from "./protocol/mod.ts";
-import type { Raw, RedisValue } from "./protocol/mod.ts";
+import type { RedisReply, RedisValue } from "./protocol/mod.ts";
 import type { Backoff } from "./backoff.ts";
 import { exponentialBackoff } from "./backoff.ts";
-import { ErrorReplyError } from "./errors.ts";
+import { ErrorReplyError, isRetriableError } from "./errors.ts";
 import {
   BufReader,
   BufWriter,
@@ -21,6 +21,7 @@ export interface Connection {
   close(): void;
   connect(): Promise<void>;
   reconnect(): Promise<void>;
+  sendCommand(command: string, args?: Array<RedisValue>): Promise<RedisReply>;
 }
 
 export interface RedisConnectionOptions {
@@ -36,6 +37,8 @@ export interface RedisConnectionOptions {
   backoff?: Backoff;
 }
 
+const kEmptyRedisArgs: Array<RedisValue> = [];
+
 export class RedisConnection implements Connection {
   name: string | null = null;
   closer!: Closer;
@@ -45,7 +48,6 @@ export class RedisConnection implements Connection {
 
   private readonly hostname: string;
   private readonly port: number | string;
-  private retryCount = 0;
   private _isClosed = false;
   private _isConnected = false;
   private backoff: Backoff;
@@ -84,8 +86,8 @@ export class RedisConnection implements Connection {
   ): Promise<void> {
     try {
       password && username
-        ? await this.sendCommand("AUTH", username, password)
-        : await this.sendCommand("AUTH", password);
+        ? await this.sendCommand("AUTH", [username, password])
+        : await this.sendCommand("AUTH", [password]);
     } catch (error) {
       if (error instanceof ErrorReplyError) {
         throw new AuthenticationError("Authentication failed", {
@@ -101,21 +103,61 @@ export class RedisConnection implements Connection {
     db: number | undefined = this.options.db,
   ): Promise<void> {
     if (!db) throw new Error("The database index is undefined.");
-    await this.sendCommand("SELECT", db);
+    await this.sendCommand("SELECT", [db]);
   }
 
-  private async sendCommand(
+  async sendCommand(
     command: string,
-    ...args: Array<RedisValue>
-  ): Promise<Raw> {
-    const reply = await sendCommand(this.writer, this.reader, command, ...args);
-    return reply.value();
+    args?: Array<RedisValue>,
+  ): Promise<RedisReply> {
+    try {
+      const reply = await sendCommand(
+        this.writer,
+        this.reader,
+        command,
+        args ?? kEmptyRedisArgs,
+      );
+      return reply;
+    } catch (error) {
+      if (
+        !isRetriableError(error) ||
+        this.isManuallyClosedByUser()
+      ) {
+        throw error;
+      }
+
+      for (let i = 0; i < this.maxRetryCount; i++) {
+        // Try to reconnect to the server and retry the command
+        this.close();
+        try {
+          await this.connect();
+
+          const reply = await sendCommand(
+            this.writer,
+            this.reader,
+            command,
+            args ?? kEmptyRedisArgs,
+          );
+
+          return reply;
+        } catch { // TODO: use `AggregateError`?
+          const backoff = this.backoff(i);
+          await delay(backoff);
+        }
+      }
+
+      throw error;
+    }
   }
 
   /**
    * Connect to Redis server
    */
   async connect(): Promise<void> {
+    await this.#connect(0);
+  }
+
+  async #connect(retryCount: number) {
     try {
       const dialOpts: Deno.ConnectOptions = {
         hostname: this.hostname,
@@ -142,21 +184,18 @@ export class RedisConnection implements Connection {
         this.close();
         throw error;
       }
-      this.retryCount = 0;
     } catch (error) {
       if (error instanceof AuthenticationError) {
-        this.retryCount = 0;
         throw (error.cause ?? error);
       }
 
-      if (this.retryCount++ >= this.maxRetryCount) {
-        this.retryCount = 0;
+      const backoff = this.backoff(retryCount);
+      retryCount++;
+      if (retryCount >= this.maxRetryCount) {
         throw error;
       }
-
-      const backoff = this.backoff(this.retryCount);
       await delay(backoff);
-      await this.connect();
+      await this.#connect(retryCount);
     }
   }
 
@@ -182,6 +221,10 @@ export class RedisConnection implements Connection {
       await this.connect();
       await this.sendCommand("PING");
     }
+  }
+
+  private isManuallyClosedByUser(): boolean {
+    return this._isClosed && !this._isConnected;
   }
 }
 
