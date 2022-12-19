@@ -1,7 +1,5 @@
-import {
-  BufReader,
-  BufWriter,
-} from "../vendor/https/deno.land/std/io/buffer.ts";
+import { BufReader } from "../vendor/https/deno.land/std/io/buf_reader.ts";
+import { BufWriter } from "../vendor/https/deno.land/std/io/buf_writer.ts";
 import { readReply } from "./reply.ts";
 import { ErrorReplyError } from "../errors.ts";
 import { encoder } from "./_util.ts";

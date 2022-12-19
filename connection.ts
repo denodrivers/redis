@@ -3,10 +3,8 @@ import type { RedisReply, RedisValue } from "./protocol/mod.ts";
 import type { Backoff } from "./backoff.ts";
 import { exponentialBackoff } from "./backoff.ts";
 import { ErrorReplyError, isRetriableError } from "./errors.ts";
-import {
-  BufReader,
-  BufWriter,
-} from "./vendor/https/deno.land/std/io/buffer.ts";
+import { BufReader } from "./vendor/https/deno.land/std/io/buf_reader.ts";
+import { BufWriter } from "./vendor/https/deno.land/std/io/buf_writer.ts";
 import { delay } from "./vendor/https/deno.land/std/async/delay.ts";
 type Closer = Deno.Closer;
 
