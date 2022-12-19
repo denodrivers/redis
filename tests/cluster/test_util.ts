@@ -1,6 +1,6 @@
 import { nextPort, startRedis, stopRedis } from "../test_util.ts";
 import type { TestServer } from "../test_util.ts";
-import { readAll } from "../../vendor/https/deno.land/std/streams/conversion.ts";
+import { readAll } from "../../vendor/https/deno.land/std/streams/read_all.ts";
 import { delay } from "../../vendor/https/deno.land/std/async/delay.ts";
 
 export interface TestCluster {
