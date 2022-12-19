@@ -8,6 +8,7 @@ import type { RawOrError, RedisReply, RedisValue } from "./types.ts";
 const CRLF = encoder.encode("\r\n");
 const ArrayCode = encoder.encode("*");
 const BulkCode = encoder.encode("$");
+const kNullValue = encoder.encode("-1");
 
 async function writeRequest(
   writer: BufWriter,
@@ -22,9 +23,8 @@ function encodeRequest(
   command: string,
   args: RedisValue[],
 ): Uint8Array {
-  const _args = args.filter((v) => v !== void 0 && v !== null);
   const encodedArgsCount = encoder.encode(
-    String(String(1 + _args.length)),
+    String(String(1 + args.length)),
   );
   const encodedCommand = encoder.encode(command);
   const encodedCommandLength = encoder.encode(
@@ -40,17 +40,25 @@ function encodeRequest(
     encodedCommand.byteLength +
     CRLF.byteLength
   );
-  const encodedArgs = Array(_args.length);
-  for (let i = 0; i < _args.length; i++) {
-    const arg = _args[i];
-    const bytes = arg instanceof Uint8Array ? arg : encoder.encode(String(arg));
-    const bytesLen = bytes.byteLength;
-    totalBytes += BulkCode.byteLength +
-      String(bytesLen).length +
-      CRLF.byteLength +
-      bytes.byteLength +
-      CRLF.byteLength;
-    encodedArgs[i] = bytes;
+  const encodedArgs: Array<Uint8Array | null> = Array(args.length);
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+    if (arg == null) {
+      totalBytes += BulkCode.byteLength + kNullValue.byteLength +
+        CRLF.byteLength;
+      encodedArgs[i] = null;
+    } else {
+      const bytes = arg instanceof Uint8Array
+        ? arg
+        : encoder.encode(String(arg));
+      const bytesLen = bytes.byteLength;
+      totalBytes += BulkCode.byteLength +
+        String(bytesLen).length +
+        CRLF.byteLength +
+        bytes.byteLength +
+        CRLF.byteLength;
+      encodedArgs[i] = bytes;
+    }
   }
 
   const request = new Uint8Array(totalBytes);
@@ -65,12 +73,18 @@ function encodeRequest(
   index = writeFrom(request, CRLF, index);
   for (let i = 0; i < encodedArgs.length; i++) {
     const encodedArg = encodedArgs[i];
-    const encodedLength = encoder.encode(String(encodedArg.byteLength));
-    index = writeFrom(request, BulkCode, index);
-    index = writeFrom(request, encodedLength, index);
-    index = writeFrom(request, CRLF, index);
-    index = writeFrom(request, encodedArg, index);
-    index = writeFrom(request, CRLF, index);
+    if (encodedArg == null) {
+      index = writeFrom(request, BulkCode, index);
+      index = writeFrom(request, kNullValue, index);
+      index = writeFrom(request, CRLF, index);
+    } else {
+      const encodedLength = encoder.encode(String(encodedArg.byteLength));
+      index = writeFrom(request, BulkCode, index);
+      index = writeFrom(request, encodedLength, index);
+      index = writeFrom(request, CRLF, index);
+      index = writeFrom(request, encodedArg, index);
+      index = writeFrom(request, CRLF, index);
+    }
   }
 
   return request;
