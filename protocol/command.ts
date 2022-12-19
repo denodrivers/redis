@@ -40,25 +40,19 @@ function encodeRequest(
     encodedCommand.byteLength +
     CRLF.byteLength
   );
-  const encodedArgs: Array<Uint8Array | null> = Array(args.length);
+  const encodedArgs: Array<Uint8Array> = Array(args.length);
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
-    if (arg == null) {
-      totalBytes += BulkCode.byteLength + kNullValue.byteLength +
-        CRLF.byteLength;
-      encodedArgs[i] = null;
-    } else {
-      const bytes = arg instanceof Uint8Array
-        ? arg
-        : encoder.encode(String(arg));
-      const bytesLen = bytes.byteLength;
-      totalBytes += BulkCode.byteLength +
-        String(bytesLen).length +
-        CRLF.byteLength +
-        bytes.byteLength +
-        CRLF.byteLength;
-      encodedArgs[i] = bytes;
-    }
+    const bytes = arg instanceof Uint8Array
+      ? arg
+      : encoder.encode(String(arg ?? ""));
+    const bytesLen = bytes.byteLength;
+    totalBytes += BulkCode.byteLength +
+      String(bytesLen).length +
+      CRLF.byteLength +
+      bytes.byteLength +
+      CRLF.byteLength;
+    encodedArgs[i] = bytes;
   }
 
   const request = new Uint8Array(totalBytes);
@@ -73,18 +67,12 @@ function encodeRequest(
   index = writeFrom(request, CRLF, index);
   for (let i = 0; i < encodedArgs.length; i++) {
     const encodedArg = encodedArgs[i];
-    if (encodedArg == null) {
-      index = writeFrom(request, BulkCode, index);
-      index = writeFrom(request, kNullValue, index);
-      index = writeFrom(request, CRLF, index);
-    } else {
-      const encodedLength = encoder.encode(String(encodedArg.byteLength));
-      index = writeFrom(request, BulkCode, index);
-      index = writeFrom(request, encodedLength, index);
-      index = writeFrom(request, CRLF, index);
-      index = writeFrom(request, encodedArg, index);
-      index = writeFrom(request, CRLF, index);
-    }
+    const encodedLength = encoder.encode(String(encodedArg.byteLength));
+    index = writeFrom(request, BulkCode, index);
+    index = writeFrom(request, encodedLength, index);
+    index = writeFrom(request, CRLF, index);
+    index = writeFrom(request, encodedArg, index);
+    index = writeFrom(request, CRLF, index);
   }
 
   return request;
