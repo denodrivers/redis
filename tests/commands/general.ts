@@ -28,6 +28,10 @@ export function generalTests(
     client = await newClient(getOpts());
   });
 
+  beforeEach(async () => {
+    await client.flushdb();
+  });
+
   afterAll(() => client.close());
 
   it("can send multiple commands conccurently", async () => {
@@ -44,6 +48,17 @@ export function generalTests(
     assertEquals(a, "a");
     assertEquals(b, "b");
     assertEquals(c, "c");
+  });
+
+  it("can treat `null` and `undefined`", async () => {
+    // @ts-expect-error This error is intended
+    await client.set("null", null);
+
+    // @ts-expect-error This error is intended
+    await client.set("undefined", undefined);
+
+    assertEquals(await client.get("null"), "");
+    assertEquals(await client.get("undefined"), "");
   });
 
   describe("connect", () => {
@@ -101,10 +116,6 @@ export function generalTests(
   });
 
   describe("exists", () => {
-    beforeEach(async () => {
-      await client.flushdb();
-    });
-
     it("returns if `key` exists", async () => {
       const opts = getOpts();
       const key = "exists";
