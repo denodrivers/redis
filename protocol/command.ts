@@ -8,7 +8,6 @@ import type { RawOrError, RedisReply, RedisValue } from "./types.ts";
 const CRLF = encoder.encode("\r\n");
 const ArrayCode = encoder.encode("*");
 const BulkCode = encoder.encode("$");
-const kNullValue = encoder.encode("-1");
 
 async function writeRequest(
   writer: BufWriter,
