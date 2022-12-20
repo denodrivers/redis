@@ -23,7 +23,7 @@ function encodeRequest(
   args: RedisValue[],
 ): Uint8Array {
   const encodedArgsCount = encoder.encode(
-    String(String(1 + args.length)),
+    String(1 + args.length),
   );
   const encodedCommand = encoder.encode(command);
   const encodedCommandLength = encoder.encode(
