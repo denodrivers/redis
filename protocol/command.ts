@@ -9,6 +9,8 @@ const CRLF = encoder.encode("\r\n");
 const ArrayCode = encoder.encode("*");
 const BulkCode = encoder.encode("$");
 
+const kEmptyBuffer = new Uint8Array(0);
+
 async function writeRequest(
   writer: BufWriter,
   command: string,
@@ -22,9 +24,8 @@ function encodeRequest(
   command: string,
   args: RedisValue[],
 ): Uint8Array {
-  const _args = args.filter((v) => v !== void 0 && v !== null);
   const encodedArgsCount = encoder.encode(
-    String(String(1 + _args.length)),
+    String(1 + args.length),
   );
   const encodedCommand = encoder.encode(command);
   const encodedCommandLength = encoder.encode(
@@ -40,10 +41,12 @@ function encodeRequest(
     encodedCommand.byteLength +
     CRLF.byteLength
   );
-  const encodedArgs = Array(_args.length);
-  for (let i = 0; i < _args.length; i++) {
-    const arg = _args[i];
-    const bytes = arg instanceof Uint8Array ? arg : encoder.encode(String(arg));
+  const encodedArgs: Array<Uint8Array> = Array(args.length);
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+    const bytes = arg instanceof Uint8Array
+      ? arg
+      : (arg == null ? kEmptyBuffer : encoder.encode(String(arg)));
     const bytesLen = bytes.byteLength;
     totalBytes += BulkCode.byteLength +
       String(bytesLen).length +
@@ -65,9 +68,9 @@ function encodeRequest(
   index = writeFrom(request, CRLF, index);
   for (let i = 0; i < encodedArgs.length; i++) {
     const encodedArg = encodedArgs[i];
-    const encodedLength = encoder.encode(String(encodedArg.byteLength));
+    const encodedArgLength = encoder.encode(String(encodedArg.byteLength));
     index = writeFrom(request, BulkCode, index);
-    index = writeFrom(request, encodedLength, index);
+    index = writeFrom(request, encodedArgLength, index);
     index = writeFrom(request, CRLF, index);
     index = writeFrom(request, encodedArg, index);
     index = writeFrom(request, CRLF, index);
