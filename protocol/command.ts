@@ -9,6 +9,8 @@ const CRLF = encoder.encode("\r\n");
 const ArrayCode = encoder.encode("*");
 const BulkCode = encoder.encode("$");
 
+const kEmptyBuffer = new Uint8Array(0);
+
 async function writeRequest(
   writer: BufWriter,
   command: string,
@@ -44,7 +46,7 @@ function encodeRequest(
     const arg = args[i];
     const bytes = arg instanceof Uint8Array
       ? arg
-      : encoder.encode(String(arg ?? ""));
+      : (arg == null ? kEmptyBuffer : encoder.encode(String(arg)));
     const bytesLen = bytes.byteLength;
     totalBytes += BulkCode.byteLength +
       String(bytesLen).length +
@@ -66,9 +68,9 @@ function encodeRequest(
   index = writeFrom(request, CRLF, index);
   for (let i = 0; i < encodedArgs.length; i++) {
     const encodedArg = encodedArgs[i];
-    const encodedLength = encoder.encode(String(encodedArg.byteLength));
+    const encodedArgLength = encoder.encode(String(encodedArg.byteLength));
     index = writeFrom(request, BulkCode, index);
-    index = writeFrom(request, encodedLength, index);
+    index = writeFrom(request, encodedArgLength, index);
     index = writeFrom(request, CRLF, index);
     index = writeFrom(request, encodedArg, index);
     index = writeFrom(request, CRLF, index);
