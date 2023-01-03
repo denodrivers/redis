@@ -102,6 +102,7 @@ export interface Redis extends RedisCommands {
    * Low level interface for Redis server
    */
   sendCommand(command: string, ...args: RedisValue[]): Promise<RedisReply>;
+  connect(): Promise<void>;
   close(): void;
 }
 
@@ -122,6 +123,10 @@ class RedisImpl implements Redis {
 
   sendCommand(command: string, ...args: RedisValue[]) {
     return this.executor.exec(command, ...args);
+  }
+
+  connect(): Promise<void> {
+    return this.executor.connection.connect();
   }
 
   close(): void {
