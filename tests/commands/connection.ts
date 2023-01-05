@@ -89,15 +89,12 @@ export function connectionTests(
     it("connects to the server", async () => {
       const client = await newClient(getOpts());
       assert(client.isConnected);
-      assert(!client.isClosed);
 
       client.close();
       assert(!client.isConnected);
-      assert(client.isClosed);
 
       await client.connect();
       assert(client.isConnected);
-      assert(!client.isClosed);
 
       assertEquals(await client.ping(), "PONG");
 
@@ -107,11 +104,9 @@ export function connectionTests(
     it("works with a lazy client", async () => {
       const client = createLazyClient(getOpts());
       assert(!client.isConnected);
-      assert(client.isClosed);
 
       await client.connect();
       assert(client.isConnected);
-      assert(!client.isClosed);
 
       assertEquals(await client.ping(), "PONG");
 
