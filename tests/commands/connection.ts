@@ -1,5 +1,9 @@
-import { connect } from "../../mod.ts";
-import { assertEquals } from "../../vendor/https/deno.land/std/testing/asserts.ts";
+import { connect, createLazyClient } from "../../mod.ts";
+import {
+  assert,
+  assertEquals,
+  assertNotEquals,
+} from "../../vendor/https/deno.land/std/testing/asserts.ts";
 import {
   afterAll,
   beforeAll,
@@ -14,9 +18,12 @@ export function connectionTests(
   getServer: () => TestServer,
 ): void {
   let client!: Redis;
+  const getOpts = () => ({
+    hostname: "127.0.0.1",
+    port: getServer().port,
+  });
   beforeAll(async () => {
-    const { port } = getServer();
-    client = await newClient({ hostname: "127.0.0.1", port });
+    client = await newClient(getOpts());
   });
 
   afterAll(() => client.close());
@@ -58,6 +65,52 @@ export function connectionTests(
   describe("swapdb", () => {
     it("returns `OK` on success", async () => {
       assertEquals(await client.swapdb(0, 1), "OK");
+    });
+  });
+
+  describe("createLazyClient", () => {
+    it("returns the lazily connected client", async () => {
+      const opts = getOpts();
+      const resources = Deno.resources();
+      const client = createLazyClient(opts);
+      assert(!client.isConnected);
+      assertEquals(resources, Deno.resources());
+      try {
+        await client.get("foo");
+        assert(client.isConnected);
+        assertNotEquals(resources, Deno.resources());
+      } finally {
+        client.close();
+      }
+    });
+  });
+
+  describe("connect()", () => {
+    it("connects to the server", async () => {
+      const client = await newClient(getOpts());
+      assert(client.isConnected);
+
+      client.close();
+      assert(!client.isConnected);
+
+      await client.connect();
+      assert(client.isConnected);
+
+      assertEquals(await client.ping(), "PONG");
+
+      client.close();
+    });
+
+    it("works with a lazy client", async () => {
+      const client = createLazyClient(getOpts());
+      assert(!client.isConnected);
+
+      await client.connect();
+      assert(client.isConnected);
+
+      assertEquals(await client.ping(), "PONG");
+
+      client.close();
     });
   });
 }
