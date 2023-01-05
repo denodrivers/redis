@@ -2440,7 +2440,9 @@ function createLazyExecutor(connection: Connection): CommandExecutor {
     async exec(command, ...args) {
       if (!executor) {
         executor = new MuxExecutor(connection);
-        await connection.connect();
+        if (!connection.isConnected) {
+          await connection.connect();
+        }
       }
       return executor.exec(command, ...args);
     },
