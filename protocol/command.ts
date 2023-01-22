@@ -31,16 +31,14 @@ function encodeRequest(
   const encodedCommandLength = encoder.encode(
     String(encodedCommand.byteLength),
   );
-  let totalBytes = (
-    ArrayCode.byteLength +
+  let totalBytes = ArrayCode.byteLength +
     encodedArgsCount.byteLength +
     CRLF.byteLength +
     BulkCode.byteLength +
     encodedCommandLength.byteLength +
     CRLF.byteLength +
     encodedCommand.byteLength +
-    CRLF.byteLength
-  );
+    CRLF.byteLength;
   const encodedArgs: Array<Uint8Array> = Array(args.length);
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
