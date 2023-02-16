@@ -162,20 +162,14 @@ export function keyTests(
   it("sort with multipe patterns", async () => {
     // https://github.com/denodrivers/redis/pull/364
     await client.rpush("ids", "1", "2", "3");
-    await client.mset(
-      "weight_1",
-      "8",
-      "weight_2",
-      "2",
-      "weight_3",
-      "5",
-      "name_1",
-      "foo",
-      "name_2",
-      "bar",
-      "name_3",
-      "baz",
-    );
+    await client.mset({
+      "weight_1": "8",
+      "weight_2": "2",
+      "weight_3": "5",
+      "name_1": "foo",
+      "name_2": "bar",
+      "name_3": "baz",
+    });
     const result = await client.sort("ids", {
       by: "weight_*",
       patterns: ["#", "name_*"],
