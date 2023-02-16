@@ -159,6 +159,37 @@ export function keyTests(
     assertEquals(v, ["1", "3", "5", "10"]);
   });
 
+  it("sort with multipe patterns", async () => {
+    // https://github.com/denodrivers/redis/pull/364
+    await client.rpush("ids", "1", "2", "3");
+    await client.mset(
+      "weight_1",
+      "8",
+      "weight_2",
+      "2",
+      "weight_3",
+      "5",
+      "name_1",
+      "foo",
+      "name_2",
+      "bar",
+      "name_3",
+      "baz",
+    );
+    const result = await client.sort("ids", {
+      by: "weight_*",
+      patterns: ["#", "name_*"],
+    });
+    assertEquals(result, [
+      "2",
+      "bar",
+      "3",
+      "baz",
+      "1",
+      "foo",
+    ]);
+  });
+
   it("touch", async () => {
     await client.set("key1", "baz");
     await client.set("key2", "qux");
