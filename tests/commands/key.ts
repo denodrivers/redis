@@ -159,7 +159,7 @@ export function keyTests(
     assertEquals(v, ["1", "3", "5", "10"]);
   });
 
-  it("sort with multipe patterns", async () => {
+  it("sort with multiple patterns", async () => {
     // https://github.com/denodrivers/redis/pull/364
     await client.rpush("ids", "1", "2", "3");
     await client.mset({
