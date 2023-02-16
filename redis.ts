@@ -1422,7 +1422,7 @@ class RedisImpl implements Redis {
       args.push("LIMIT", opts.limit.offset, opts.limit.count);
     }
     if (opts?.patterns) {
-      args.push("GET", ...opts.patterns);
+      args.push(...opts.patterns.flatMap((pattern) => ["GET", pattern]));
     }
     if (opts?.order) {
       args.push(opts.order);
