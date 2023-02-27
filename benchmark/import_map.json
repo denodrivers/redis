@@ -1,6 +1,5 @@
 {
   "imports": {
-    "benny": "npm:benny@3.7.1",
-    "node:path": "../vendor/https/deno.land/std/node/path.ts"
+    "benny": "npm:benny@3.7.1"
   }
 }
