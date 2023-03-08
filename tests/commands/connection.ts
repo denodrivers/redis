@@ -94,7 +94,7 @@ export function connectionTests(
       const previousCallCount = previousPingStats["calls"];
       const currentCallCount = currentPingStats["calls"];
       const d = currentCallCount - previousCallCount;
-      assert(d >= 2, `${d} should be greater or equal to 2`);
+      assert(d >= 2, `${d} should be greater than or equal to 2`);
     });
   });
 
@@ -149,6 +149,10 @@ function parseCommandStats(
   stats: string,
 ): Record<string, Record<string, number>> {
   return stats.split("\r\n").reduce((statsByCommand, line) => {
+    if (line.startsWith("#") || line.length === 0) {
+      return statsByCommand;
+    }
+
     const [section, details] = line.split(":");
     assertExists(section);
     assertExists(details);
@@ -162,6 +166,7 @@ function parseCommandStats(
       stats[key] = parseInt(value);
       return stats;
     }, {} as Record<string, number>);
+
     return statsByCommand;
   }, {} as Record<string, Record<string, number>>);
 }
