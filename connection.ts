@@ -33,6 +33,7 @@ export interface RedisConnectionOptions {
    */
   maxRetryCount?: number;
   backoff?: Backoff;
+  healthCheckInterval?: number;
 }
 
 const kEmptyRedisArgs: Array<RedisValue> = [];
@@ -182,6 +183,8 @@ export class RedisConnection implements Connection {
         this.close();
         throw error;
       }
+
+      this.#enableHealthCheckIfNeeded();
     } catch (error) {
       if (error instanceof AuthenticationError) {
         throw (error.cause ?? error);
@@ -223,6 +226,27 @@ export class RedisConnection implements Connection {
 
   private isManuallyClosedByUser(): boolean {
     return this._isClosed && !this._isConnected;
+  }
+
+  #enableHealthCheckIfNeeded() {
+    const { healthCheckInterval } = this.options;
+    if (healthCheckInterval == null) {
+      return;
+    }
+
+    async function ping() {
+      if (this.isManuallyClosedByUser) {
+        return;
+      }
+
+      try {
+        await this.sendCommand("PING");
+      } finally {
+        setTimeout(ping, healthCheckInterval);
+      }
+    }
+
+    setTimeout(ping, healthCheckInterval);
   }
 }
 
