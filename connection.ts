@@ -241,6 +241,10 @@ export class RedisConnection implements Connection {
 
       try {
         await this.sendCommand("PING");
+        this._isConnected = true;
+      } catch {
+        // TODO: notify the user of an error
+        this._isConnected = false;
       } finally {
         setTimeout(ping, healthCheckInterval);
       }
