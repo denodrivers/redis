@@ -234,7 +234,7 @@ export class RedisConnection implements Connection {
       return;
     }
 
-    async function ping() {
+    const ping = async () => {
       if (this.isManuallyClosedByUser) {
         return;
       }
@@ -244,7 +244,7 @@ export class RedisConnection implements Connection {
       } finally {
         setTimeout(ping, healthCheckInterval);
       }
-    }
+    };
 
     setTimeout(ping, healthCheckInterval);
   }
