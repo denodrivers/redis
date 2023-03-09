@@ -1,4 +1,4 @@
-function formatResultsAs({ name, results }) {
+function formatResultsAsMarkdown({ name, results }) {
   const keys = ["ops", "margin", "min", "max", "mean", "median", "samples"];
   const header = ["name", ...keys];
   const rows = results.map((result) => {
@@ -22,7 +22,7 @@ function makeTableRow(columns) {
 const tmpDir = new URL("../tmp", import.meta.url).pathname;
 for (const driver of ["deno-redis", "ioredis"]) {
   console.log(
-    formatResultsAsMarkdownTable(
+    formatResultsAsMarkdown(
       JSON.parse(await Deno.readTextFile(`${tmpDir}/${driver}-bench.json`)),
     ),
   );
