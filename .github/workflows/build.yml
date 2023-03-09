@@ -79,5 +79,4 @@ jobs:
           deno task bench:deno-redis
       - name: Output results as a job summary
         run: |
-          cat tmp/deno-redis-bench.table.html >> $GITHUB_STEP_SUMMARY
-          cat tmp/ioredis-bench.table.html >> $GITHUB_STEP_SUMMARY
+          deno run --allow-read=tmp tools/format-benchmark-results.js >> $GITHUB_STEP_SUMMARY

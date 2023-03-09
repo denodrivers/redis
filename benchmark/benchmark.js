@@ -68,7 +68,7 @@ export function run({
     }),
     save({
       file: `${driver}-bench`,
-      format: "table.html",
+      details: true,
       folder: join(dirname(dirname(new URL(import.meta.url).pathname)), "tmp"),
     }),
   );
