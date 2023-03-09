@@ -77,7 +77,6 @@ jobs:
       - name: Run benchmarks (deno-redis)
         run: |
           deno task bench:deno-redis
-      - uses: actions/upload-artifact@v3
-        with:
-          name: benchmark
-          path: tmp/*.html
+      - name: Output results as a job summary
+        run: |
+          deno run --allow-read=tmp tools/format-benchmark-results.js >> $GITHUB_STEP_SUMMARY
