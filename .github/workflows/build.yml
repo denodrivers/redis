@@ -78,11 +78,11 @@ jobs:
         run: |
           deno task bench:deno-redis
       - name: Output results as a job summary (deno-redis)
-        run:
+        run: |
           ls tmp
           cat tmp/deno-redis-bench.html
           cat tmp/deno-redis-bench.html >> $GITHUB_STEP_SUMMARY
       - name: Output results as a job summary (ioredis)
-        run:
+        run: |
           cat tmp/ioredis-bench.html
           cat tmp/ioredis-bench.html >> $GITHUB_STEP_SUMMARY
