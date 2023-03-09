@@ -1,6 +1,6 @@
 function formatResultsAsMarkdown({ name, results }) {
   const detailKeys = ["margin", "min", "max", "mean", "median"];
-  const header = ["name", "opts", ...keys, "samples"];
+  const header = ["name", "opts", ...detailKeys, "samples"];
   const rows = results.map((result) => {
     const { name, ops, details, samples } = result;
     return [name, ops, ...detailKeys.map((key) => details[key]), samples];
