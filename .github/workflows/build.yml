@@ -87,4 +87,3 @@ jobs:
           echo "<![CDATA[" >> $GITHUB_STEP_SUMMARY
           cat tmp/ioredis-bench.html >> $GITHUB_STEP_SUMMARY
           echo "]]>" >> $GITHUB_STEP_SUMMARY
-
