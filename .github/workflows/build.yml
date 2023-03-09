@@ -79,7 +79,7 @@ jobs:
           deno task bench:deno-redis
       - name: Output results as a job summary (deno-redis)
         run: |
-          cat tmp/deno-redis-bench.html.table.html >> $GITHUB_STEP_SUMMARY
+          cat tmp/deno-redis-bench.table.html >> $GITHUB_STEP_SUMMARY
       - name: Output results as a job summary (ioredis)
         run: |
-          cat tmp/ioredis-bench.html.table.html >> $GITHUB_STEP_SUMMARY
+          cat tmp/ioredis-bench.table.html >> $GITHUB_STEP_SUMMARY
