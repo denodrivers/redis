@@ -77,7 +77,12 @@ jobs:
       - name: Run benchmarks (deno-redis)
         run: |
           deno task bench:deno-redis
-      - uses: actions/upload-artifact@v3
-        with:
-          name: benchmark
-          path: tmp/*.html
+      - name: Output results
+        run: # https://github.github.com/gfm/#html-blocks
+          echo "<![CDATA[" >> $GITHUB_STEP_SUMMARY
+          cat tmp/deno-redis-bench.html >> $GITHUB_STEP_SUMMARY
+          echo "]]>"
+          echo "<![CDATA[" >> $GITHUB_STEP_SUMMARY
+          cat tmp/ioredis-bench.html >> $GITHUB_STEP_SUMMARY
+          echo "]]>"
+
