@@ -67,7 +67,7 @@ export function run({
       await client.flushdb();
     }),
     save({
-      file: `${driver}-bench.html`,
+      file: `${driver}-bench`,
       format: "table.html",
       folder: join(dirname(dirname(new URL(import.meta.url).pathname)), "tmp"),
     }),
