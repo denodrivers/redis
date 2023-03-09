@@ -77,12 +77,14 @@ jobs:
       - name: Run benchmarks (deno-redis)
         run: |
           deno task bench:deno-redis
-      - name: Output results
-        run: # https://github.github.com/gfm/#html-blocks
+      - name: Output results as a job summary
+        # https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#adding-a-job-summary
+        # https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#adding-a-job-summary
+        run:
           echo "<![CDATA[" >> $GITHUB_STEP_SUMMARY
           cat tmp/deno-redis-bench.html >> $GITHUB_STEP_SUMMARY
-          echo "]]>"
+          echo "]]>" >> $GITHUB_STEP_SUMMARY
           echo "<![CDATA[" >> $GITHUB_STEP_SUMMARY
           cat tmp/ioredis-bench.html >> $GITHUB_STEP_SUMMARY
-          echo "]]>"
+          echo "]]>" $GITHUB_STEP_SUMMARY
 
