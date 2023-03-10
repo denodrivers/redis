@@ -3,4 +3,5 @@ deno.d.ts
 testdata/*/
 benchmark/node_modules
 tests/tmp/*/
+coverage
 tmp

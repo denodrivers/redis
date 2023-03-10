@@ -44,6 +44,10 @@ jobs:
       - name: Run doc tests
         run: |
           deno task test:doc
+      - name: Generate an lcov report
+        run: |
+          deno task coverage
+      - uses: k1LoW/octocov-action@v0
 
   benchmark:
     runs-on: ubuntu-latest
