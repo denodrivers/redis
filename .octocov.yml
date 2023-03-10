@@ -14,7 +14,9 @@ diff:
   datastores:
     - artifact://${GITHUB_REPOSITORY}
 comment:
+  # TODO: enable this
   if: is_pull_request
+  # if: is_pull_request
 summary:
   if: true
 report:
