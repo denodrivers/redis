@@ -5,7 +5,7 @@ type TestFunc = () => void | Promise<void>;
 export interface TestServer {
   path: string;
   port: number;
-  process: Deno.Process;
+  process: Deno.ChildProcess;
 }
 
 const encoder = new TextEncoder();
@@ -34,11 +34,11 @@ export async function startRedis({
   await Deno.writeFile(destPath, encoder.encode(config));
 
   // Start redis server
-  const process = Deno.run({
-    cmd: ["redis-server", `${path}/redis.conf`],
+  const process = new Deno.Command("redis-server", {
+    args: [`${path}/redis.conf`],
     stdin: "null",
     stdout: "null",
-  });
+  }).spawn();
 
   await waitForPort(port);
   return { path, port, process };
@@ -46,7 +46,7 @@ export async function startRedis({
 
 export function stopRedis(server: TestServer): void {
   Deno.removeSync(server.path, { recursive: true });
-  server.process.close();
+  server.process.kill();
 }
 
 export function newClient(opt: RedisConnectOptions): Promise<Redis> {
