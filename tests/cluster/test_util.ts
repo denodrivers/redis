@@ -16,8 +16,9 @@ export async function startRedisCluster(ports: number[]): Promise<TestCluster> {
     })
   ));
   const cluster = { servers };
-  const redisCLI = new Deno.Command("redis-cli", {
-    args: [
+  const redisCLI = Deno.run({
+    cmd: [
+      "redis-cli",
       "--cluster",
       "create",
       ...ports.map((port) => `127.0.0.1:${port}`),
@@ -26,10 +27,10 @@ export async function startRedisCluster(ports: number[]): Promise<TestCluster> {
       "--cluster-yes",
     ],
     stderr: "piped",
-  }).spawn();
+  });
   try {
     // Wait for cluster setup to complete...
-    const status = await redisCLI.status;
+    const status = await redisCLI.status();
     if (!status.success) {
       stopRedisCluster(cluster);
       const errOutput = await readAll(redisCLI.stderr);

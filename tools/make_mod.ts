@@ -12,7 +12,6 @@ interface Node {
 }
 
 async function doc(fileName: string): Promise<Array<Node>> {
-  // deno-lint-ignore no-deprecated-deno-api
   const deno = Deno.run({
     cmd: [Deno.execPath(), "doc", "--json", fileName],
     stdout: "piped",
@@ -27,7 +26,6 @@ async function doc(fileName: string): Promise<Array<Node>> {
 }
 
 async function fmt(content: string): Promise<string> {
-  // deno-lint-ignore no-deprecated-deno-api
   const deno = Deno.run({
     cmd: [Deno.execPath(), "fmt", "-"],
     stdin: "piped",
