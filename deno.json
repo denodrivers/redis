@@ -16,7 +16,7 @@
     }
   },
   "tasks": {
-    "test": "deno test --allow-net --allow-read=tests --allow-write=tests/tmp --allow-run=redis-server,redis-cli --coverage=coverage ./tests",
+    "test": "deno test --allow-net --allow-read=tests --allow-write=tests/tmp --allow-run --coverage=coverage ./tests",
     "test:doc": "deno test --doc --no-run --import-map=import_map.test.json",
     "coverage": "deno coverage ./coverage --lcov --output=coverage/lcov.info",
     "make_mod": "deno run --allow-read --allow-write --allow-run tools/make_mod.ts",
