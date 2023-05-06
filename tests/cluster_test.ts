@@ -28,9 +28,9 @@ describe("cluster", () => {
     client = await newClient({ hostname: "127.0.0.1", port: port2 });
   });
 
-  afterAll(() => {
-    stopRedis(s1);
-    stopRedis(s2);
+  afterAll(async () => {
+    await stopRedis(s1);
+    await stopRedis(s2);
     client.close();
   });
 
