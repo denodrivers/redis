@@ -1,8 +1,5 @@
 #!/usr/bin/env deno run --allow-read --allow-write --allow-run
 
-import { readAll } from "../vendor/https/deno.land/std/streams/read_all.ts";
-import { writeAll } from "../vendor/https/deno.land/std/streams/write_all.ts";
-
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
 
@@ -12,36 +9,27 @@ interface Node {
 }
 
 async function doc(fileName: string): Promise<Array<Node>> {
-  // deno-lint-ignore no-deprecated-deno-api
-  const deno = Deno.run({
-    cmd: [Deno.execPath(), "doc", "--json", fileName],
-    stdout: "piped",
+  const deno = new Deno.Command(Deno.execPath(), {
+    args: ["doc", "--json", fileName],
   });
-  try {
-    const out = await readAll(deno.stdout);
-    return JSON.parse(decoder.decode(out));
-  } finally {
-    deno.stdout.close();
-    deno.close();
-  }
+  const { stdout } = await deno.output();
+  return JSON.parse(decoder.decode(stdout));
 }
 
 async function fmt(content: string): Promise<string> {
-  // deno-lint-ignore no-deprecated-deno-api
-  const deno = Deno.run({
+  const deno = new Deno.Command({
     cmd: [Deno.execPath(), "fmt", "-"],
     stdin: "piped",
     stdout: "piped",
   });
-  try {
-    await writeAll(deno.stdin, encoder.encode(content));
-    deno.stdin.close();
-    const formattedContent = decoder.decode(await readAll(deno.stdout));
-    return formattedContent;
-  } finally {
-    deno.stdout.close();
-    deno.close();
-  }
+  const stdin = deno.stdin.getWriter();
+  await stdin.ready;
+  await stdin.write(encoder.encode(content));
+  await stdin.ready;
+  await stdin.close();
+  const { stdout } = await deno.status;
+  const formattedContent = decoder.decode(stdout);
+  return formattedContent;
 }
 
 function collectSourceFilesInRootDir(): Array<string> {
