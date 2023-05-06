@@ -44,7 +44,7 @@ export async function startRedis({
   return { path, port, process };
 }
 
-export async function stopRedis(server: TestServer): void {
+export async function stopRedis(server: TestServer): Promise<void> {
   try {
     await Deno.remove(server.path, { recursive: true });
   } catch (error) {
@@ -56,7 +56,9 @@ export async function stopRedis(server: TestServer): void {
   await ensureTerminated(server.process);
 }
 
-export async function ensureTerminated(process: Deno.ChildProcess): void {
+export async function ensureTerminated(
+  process: Deno.ChildProcess,
+): Promise<void> {
   try {
     process.kill();
     await process.status;
