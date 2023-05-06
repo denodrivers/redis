@@ -1,4 +1,9 @@
-import { nextPort, startRedis, stopRedis } from "../test_util.ts";
+import {
+  isAlreadyKilled,
+  nextPort,
+  startRedis,
+  stopRedis,
+} from "../test_util.ts";
 import type { TestServer } from "../test_util.ts";
 import { readAll } from "../../vendor/https/deno.land/std/streams/read_all.ts";
 import { readerFromStreamReader } from "../../vendor/https/deno.land/std/streams/reader_from_stream_reader.ts";
@@ -45,7 +50,13 @@ export async function startRedisCluster(ports: number[]): Promise<TestCluster> {
 
     return cluster;
   } finally {
-    redisCLI.kill();
+    try {
+      redisCLI.kill();
+    } catch (error) {
+      if (!isAlreadyKilled(error)) {
+        throw error;
+      }
+    }
   }
 }
 

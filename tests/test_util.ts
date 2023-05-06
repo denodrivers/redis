@@ -45,8 +45,26 @@ export async function startRedis({
 }
 
 export function stopRedis(server: TestServer): void {
-  Deno.removeSync(server.path, { recursive: true });
-  server.process.kill();
+  try {
+    Deno.removeSync(server.path, { recursive: true });
+  } catch (error) {
+    if (!(error instanceof Deno.errors.NotFound)) {
+      throw error;
+    }
+  }
+
+  try {
+    server.process.kill();
+  } catch (error) {
+    if (!isAlreadyKilled(error)) {
+      throw error;
+    }
+  }
+}
+
+export function isAlreadyKilled(error: unknown): boolean {
+  return error instanceof TypeError &&
+    error.message === "Child process has already terminated.";
 }
 
 export function newClient(opt: RedisConnectOptions): Promise<Redis> {
