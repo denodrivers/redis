@@ -62,6 +62,7 @@ export async function ensureTerminated(
   try {
     process.kill("SIGKILL");
     await process.status;
+    await process.stderr.cancel();
   } catch (error) {
     const alreadyKilled = error instanceof TypeError &&
       error.message === "Child process has already terminated.";
