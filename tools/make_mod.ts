@@ -21,7 +21,7 @@ async function fmt(content: string): Promise<string> {
     args: ["fmt", "-"],
     stdin: "piped",
     stdout: "piped",
-  });
+  }).spawn();
   const stdin = deno.stdin.getWriter();
   await stdin.ready;
   await stdin.write(encoder.encode(content));
