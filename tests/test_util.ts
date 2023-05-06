@@ -58,7 +58,7 @@ export function stopRedis(server: TestServer): void {
 
 export function ensureTerminated(process: Deno.ChildProcess): void {
   try {
-    redisCLI.kill();
+    process.kill();
   } catch (error) {
     const alreadyKilled = error instanceof TypeError &&
       error.message === "Child process has already terminated.";
