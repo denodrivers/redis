@@ -53,18 +53,20 @@ export function stopRedis(server: TestServer): void {
     }
   }
 
-  try {
-    server.process.kill();
-  } catch (error) {
-    if (!isAlreadyKilled(error)) {
-      throw error;
-    }
-  }
+  ensureTerminated(server.process);
 }
 
-export function isAlreadyKilled(error: unknown): boolean {
-  return error instanceof TypeError &&
-    error.message === "Child process has already terminated.";
+export function ensureTerminated(process: Deno.ChildProcess): void {
+  try {
+    redisCLI.kill();
+  } catch (error) {
+    const alreadyKilled = error instanceof TypeError &&
+      error.message === "Child process has already terminated.";
+    if (alreadyKilled) {
+      return;
+    }
+    throw error;
+  }
 }
 
 export function newClient(opt: RedisConnectOptions): Promise<Redis> {

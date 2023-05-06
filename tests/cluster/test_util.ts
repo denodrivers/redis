@@ -1,5 +1,5 @@
 import {
-  isAlreadyKilled,
+  ensureTerminated,
   nextPort,
   startRedis,
   stopRedis,
@@ -50,13 +50,7 @@ export async function startRedisCluster(ports: number[]): Promise<TestCluster> {
 
     return cluster;
   } finally {
-    try {
-      redisCLI.kill();
-    } catch (error) {
-      if (!isAlreadyKilled(error)) {
-        throw error;
-      }
-    }
+    ensureTerminated(redisCLI);
   }
 }
 
