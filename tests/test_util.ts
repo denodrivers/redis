@@ -56,6 +56,7 @@ export async function stopRedis(server: TestServer): Promise<void> {
   await ensureTerminated(server.process);
 }
 
+// deno-lint-ignore require-await
 export async function ensureTerminated(
   process: Deno.ChildProcess,
 ): Promise<void> {
