@@ -38,6 +38,7 @@ export async function startRedis({
     args: [`${path}/redis.conf`],
     stdin: "null",
     stdout: "null",
+    stderr: "piped",
   }).spawn();
 
   await waitForPort(port);
