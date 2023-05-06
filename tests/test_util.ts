@@ -61,7 +61,8 @@ export async function ensureTerminated(
   process: Deno.ChildProcess,
 ): Promise<void> {
   try {
-    process.kill();
+    process.kill("SIGKILL");
+    await process.status;
   } catch (error) {
     const alreadyKilled = error instanceof TypeError &&
       error.message === "Child process has already terminated.";
