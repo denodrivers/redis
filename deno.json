@@ -13,9 +13,6 @@
         "benchmark/benchmark.js",
         "benchmark/ioredis.js"
       ]
-    },
-    "rules": {
-      "exclude": ["no-deprecated-deno-api"]
     }
   },
   "tasks": {

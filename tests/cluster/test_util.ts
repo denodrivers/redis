@@ -1,6 +1,7 @@
 import { nextPort, startRedis, stopRedis } from "../test_util.ts";
 import type { TestServer } from "../test_util.ts";
 import { readAll } from "../../vendor/https/deno.land/std/streams/read_all.ts";
+import { readerFromStreamReader } from "../../vendor/https/deno.land/std/streams/reader_from_stream_reader.ts";
 import { delay } from "../../vendor/https/deno.land/std/async/delay.ts";
 
 export interface TestCluster {
@@ -16,9 +17,8 @@ export async function startRedisCluster(ports: number[]): Promise<TestCluster> {
     })
   ));
   const cluster = { servers };
-  const redisCLI = Deno.run({
-    cmd: [
-      "redis-cli",
+  const redisCLI = new Deno.Command("redis-cli", {
+    args: [
       "--cluster",
       "create",
       ...ports.map((port) => `127.0.0.1:${port}`),
@@ -27,13 +27,15 @@ export async function startRedisCluster(ports: number[]): Promise<TestCluster> {
       "--cluster-yes",
     ],
     stderr: "piped",
-  });
+  }).spawn();
   try {
     // Wait for cluster setup to complete...
-    const status = await redisCLI.status();
+    const status = await redisCLI.status;
     if (!status.success) {
       stopRedisCluster(cluster);
-      const errOutput = await readAll(redisCLI.stderr);
+      const errOutput = await readAll(
+        readerFromStreamReader(redisCLI.stderr.getReader()),
+      );
       const decoder = new TextDecoder();
       throw new Error(`Failed to setup cluster: ${decoder.decode(errOutput)}`);
     }
