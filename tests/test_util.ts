@@ -44,21 +44,22 @@ export async function startRedis({
   return { path, port, process };
 }
 
-export function stopRedis(server: TestServer): void {
+export async function stopRedis(server: TestServer): void {
   try {
-    Deno.removeSync(server.path, { recursive: true });
+    await Deno.remove(server.path, { recursive: true });
   } catch (error) {
     if (!(error instanceof Deno.errors.NotFound)) {
       throw error;
     }
   }
 
-  ensureTerminated(server.process);
+  await ensureTerminated(server.process);
 }
 
-export function ensureTerminated(process: Deno.ChildProcess): void {
+export async function ensureTerminated(process: Deno.ChildProcess): void {
   try {
     process.kill();
+    await process.status;
   } catch (error) {
     const alreadyKilled = error instanceof TypeError &&
       error.message === "Child process has already terminated.";

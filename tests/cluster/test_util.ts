@@ -54,9 +54,9 @@ export async function startRedisCluster(ports: number[]): Promise<TestCluster> {
   }
 }
 
-export function stopRedisCluster(cluster: TestCluster): void {
+export async function stopRedisCluster(cluster: TestCluster): Promise<void> {
   for (const server of cluster.servers) {
-    stopRedis(server);
+    await stopRedis(server);
   }
 }
 
