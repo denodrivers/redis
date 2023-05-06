@@ -45,18 +45,7 @@ export async function startRedisCluster(ports: number[]): Promise<TestCluster> {
 
     return cluster;
   } finally {
-    tryClose(redisCLI.stderr);
     redisCLI.kill();
-  }
-}
-
-function tryClose(closer: Deno.Closer): void {
-  try {
-    closer.close();
-  } catch (error) {
-    if (!(error instanceof Deno.errors.BadResource)) {
-      throw error;
-    }
   }
 }
 
