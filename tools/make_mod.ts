@@ -31,7 +31,7 @@ async function fmt(content: string): Promise<string> {
   await stdin.ready;
   await stdin.close();
   await deno.status;
-  const stdout = await readAll(readerFromStreamReader(deno.stdout));
+  const stdout = await readAll(readerFromStreamReader(deno.stdout.getReader()));
   const formattedContent = decoder.decode(stdout);
   return formattedContent;
 }
