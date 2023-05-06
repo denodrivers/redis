@@ -9,8 +9,7 @@
       "/io/buf_reader.ts",
       "/io/buf_writer.ts",
       "/streams/read_all.ts",
-      "/streams/reader_from_stream_reader.ts",
-      "/streams/write_all.ts"
+      "/streams/reader_from_stream_reader.ts"
     ]
   },
   "https://cdn.skypack.dev/lodash-es": {
