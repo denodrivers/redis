@@ -17,8 +17,8 @@ async function doc(fileName: string): Promise<Array<Node>> {
 }
 
 async function fmt(content: string): Promise<string> {
-  const deno = new Deno.Command({
-    cmd: [Deno.execPath(), "fmt", "-"],
+  const deno = new Deno.Command(Deno.execPath(), {
+    args: ["fmt", "-"],
     stdin: "piped",
     stdout: "piped",
   });
