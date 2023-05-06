@@ -46,7 +46,7 @@ export async function startRedis({
 
 export function stopRedis(server: TestServer): void {
   Deno.removeSync(server.path, { recursive: true });
-  server.process.close();
+  server.process.kill();
 }
 
 export function newClient(opt: RedisConnectOptions): Promise<Redis> {

@@ -46,7 +46,7 @@ export async function startRedisCluster(ports: number[]): Promise<TestCluster> {
     return cluster;
   } finally {
     tryClose(redisCLI.stderr);
-    tryClose(redisCLI);
+    redisCLI.kill();
   }
 }
 
