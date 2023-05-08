@@ -1,19 +1,15 @@
 {
   "fmt": {
-    "files": {
-      "exclude": [
-        "benchmark/node_modules"
-      ]
-    }
+    "exclude": [
+      "benchmark/node_modules"
+    ]
   },
   "lint": {
-    "files": {
-      "exclude": [
-        "benchmark/node_modules",
-        "benchmark/benchmark.js",
-        "benchmark/ioredis.js"
-      ]
-    }
+    "exclude": [
+      "benchmark/node_modules",
+      "benchmark/benchmark.js",
+      "benchmark/ioredis.js"
+    ]
   },
   "tasks": {
     "test": "deno test --allow-net --allow-read=tests --allow-write=tests/tmp --allow-run --coverage=coverage ./tests",
