@@ -1,1 +1,1 @@
-export * from "https://deno.land/std@0.186.0/testing/bdd.ts";
+export * from "https://deno.land/std@0.187.0/testing/bdd.ts";
