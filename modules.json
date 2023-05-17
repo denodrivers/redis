@@ -2,7 +2,6 @@
   "https://deno.land/std": {
     "version": "@0.187.0",
     "modules": [
-      "/async/deferred.ts",
       "/async/delay.ts",
       "/testing/asserts.ts",
       "/testing/bdd.ts",

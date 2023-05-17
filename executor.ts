@@ -1,8 +1,5 @@
 import type { Connection } from "./connection.ts";
-import {
-  Deferred,
-  deferred,
-} from "./vendor/https/deno.land/std/async/deferred.ts";
+import { Deferred, deferred } from "./_deferred.ts";
 import type { RedisReply, RedisValue } from "./protocol/mod.ts";
 
 export interface CommandExecutor {

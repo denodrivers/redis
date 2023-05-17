@@ -8,10 +8,7 @@ import {
   sendCommands,
 } from "./protocol/mod.ts";
 import { create, Redis } from "./redis.ts";
-import {
-  Deferred,
-  deferred,
-} from "./vendor/https/deno.land/std/async/deferred.ts";
+import { Deferred, deferred } from "./_deferred.ts";
 
 export interface RedisPipeline extends Redis {
   flush(): Promise<RawOrError[]>;
