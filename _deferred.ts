@@ -4,13 +4,11 @@ export interface Deferred<T> extends Promise<T> {
 }
 
 export function deferred<T>(): Deferred<T> {
-  let _resolve!: (value: T) => void;
-  let _reject!: (error: Error) => void;
-  const promise = new Promise<T>((resolve, reject) => {
-    _resolve = resolve;
-    _reject = reject;
+  let resolve!: (value: T) => void;
+  let reject!: (error: Error) => void;
+  const promise = new Promise<T>((_resolve, _reject) => {
+    resolve = _resolve;
+    reject = _reject;
   }) as Deferred<T>;
-  promise.resolve = _resolve;
-  promise.reject = _reject;
-  return promise;
+  return Object.assign(promise, { resolve, reject });
 }
