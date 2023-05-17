@@ -41,7 +41,7 @@ function collectSourceFilesInRootDir(): Array<string> {
     const name = f.name;
     if (!name || name === "mod.ts") return false;
     return name.endsWith(".ts") && !name.endsWith("_test.ts") &&
-      !name.endsWith(".d.ts");
+      !name.endsWith(".d.ts") && !name.startsWith("_");
   }).map((f) => f.name);
 }
 
