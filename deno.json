@@ -1,12 +1,9 @@
 {
-  "fmt": {
-    "exclude": [
-      "benchmark/node_modules"
-    ]
-  },
+  "exclude": [
+    "benchmark/node_modules"
+  ],
   "lint": {
     "exclude": [
-      "benchmark/node_modules",
       "benchmark/benchmark.js",
       "benchmark/ioredis.js"
     ]
