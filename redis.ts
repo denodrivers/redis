@@ -44,7 +44,7 @@ import type {
 import { RedisConnection } from "./connection.ts";
 import type { Connection } from "./connection.ts";
 import type { RedisConnectionOptions } from "./connection.ts";
-import { CommandExecutor, MuxExecutor } from "./executor.ts";
+import { CommandExecutor, DefaultExecutor } from "./executor.ts";
 import type {
   Binary,
   Bulk,
@@ -2361,7 +2361,7 @@ export interface RedisConnectOptions extends RedisConnectionOptions {
 export async function connect(options: RedisConnectOptions): Promise<Redis> {
   const connection = createRedisConnection(options);
   await connection.connect();
-  const executor = new MuxExecutor(connection);
+  const executor = new DefaultExecutor(connection);
   return create(executor);
 }
 
@@ -2439,7 +2439,7 @@ function createLazyExecutor(connection: Connection): CommandExecutor {
     },
     async exec(command, ...args) {
       if (!executor) {
-        executor = new MuxExecutor(connection);
+        executor = new DefaultExecutor(connection);
         if (!connection.isConnected) {
           await connection.connect();
         }
