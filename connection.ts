@@ -5,6 +5,10 @@ import { exponentialBackoff } from "./backoff.ts";
 import { ErrorReplyError, isRetriableError } from "./errors.ts";
 import { BufReader } from "./vendor/https/deno.land/std/io/buf_reader.ts";
 import { BufWriter } from "./vendor/https/deno.land/std/io/buf_writer.ts";
+import {
+  Deferred,
+  deferred,
+} from "./vendor/https/deno.land/std/async/deferred.ts";
 import { delay } from "./vendor/https/deno.land/std/async/delay.ts";
 type Closer = Deno.Closer;
 
@@ -49,6 +53,12 @@ export class RedisConnection implements Connection {
   private _isClosed = false;
   private _isConnected = false;
   private backoff: Backoff;
+
+  private commandQueue: {
+    name: string;
+    args: RedisValue[];
+    promise: Deferred<RedisReply>;
+  }[] = [];
 
   get isClosed(): boolean {
     return this._isClosed;
@@ -104,48 +114,20 @@ export class RedisConnection implements Connection {
     await this.sendCommand("SELECT", [db]);
   }
 
-  async sendCommand(
+  sendCommand(
     command: string,
     args?: Array<RedisValue>,
   ): Promise<RedisReply> {
-    try {
-      const reply = await sendCommand(
-        this.writer,
-        this.reader,
-        command,
-        args ?? kEmptyRedisArgs,
-      );
-      return reply;
-    } catch (error) {
-      if (
-        !isRetriableError(error) ||
-        this.isManuallyClosedByUser()
-      ) {
-        throw error;
-      }
-
-      for (let i = 0; i < this.maxRetryCount; i++) {
-        // Try to reconnect to the server and retry the command
-        this.close();
-        try {
-          await this.connect();
-
-          const reply = await sendCommand(
-            this.writer,
-            this.reader,
-            command,
-            args ?? kEmptyRedisArgs,
-          );
-
-          return reply;
-        } catch { // TODO: use `AggregateError`?
-          const backoff = this.backoff(i);
-          await delay(backoff);
-        }
-      }
-
-      throw error;
+    const promise = deferred<RedisReply>();
+    this.commandQueue.push({
+      name: command,
+      args: args ?? kEmptyRedisArgs,
+      promise,
+    });
+    if (this.commandQueue.length === 1) {
+      this.processCommandQueue();
     }
+    return promise;
   }
 
   /**
@@ -218,6 +200,53 @@ export class RedisConnection implements Connection {
       this.close();
       await this.connect();
       await this.sendCommand("PING");
+    }
+  }
+
+  private async processCommandQueue() {
+    const [command] = this.commandQueue;
+    if (!command) return;
+
+    try {
+      const reply = await sendCommand(
+        this.writer,
+        this.reader,
+        command.name,
+        command.args,
+      );
+      command.promise.resolve(reply);
+    } catch (error) {
+      if (
+        !isRetriableError(error) ||
+        this.isManuallyClosedByUser()
+      ) {
+        return command.promise.reject(error);
+      }
+
+      for (let i = 0; i < this.maxRetryCount; i++) {
+        // Try to reconnect to the server and retry the command
+        this.close();
+        try {
+          await this.connect();
+
+          const reply = await sendCommand(
+            this.writer,
+            this.reader,
+            command.name,
+            command.args,
+          );
+
+          return command.promise.resolve(reply);
+        } catch { // TODO: use `AggregateError`?
+          const backoff = this.backoff(i);
+          await delay(backoff);
+        }
+      }
+
+      command.promise.reject(error);
+    } finally {
+      this.commandQueue.shift();
+      this.processCommandQueue();
     }
   }
 
