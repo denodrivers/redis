@@ -37,6 +37,10 @@ export interface RedisConnectionOptions {
    */
   maxRetryCount?: number;
   backoff?: Backoff;
+  /**
+   * When this option is set, a `PING` command is sent every specified number of seconds.
+   */
+  healthCheckInterval?: number;
 }
 
 const kEmptyRedisArgs: Array<RedisValue> = [];
@@ -164,6 +168,8 @@ export class RedisConnection implements Connection {
         this.close();
         throw error;
       }
+
+      this.#enableHealthCheckIfNeeded();
     } catch (error) {
       if (error instanceof AuthenticationError) {
         throw (error.cause ?? error);
@@ -252,6 +258,31 @@ export class RedisConnection implements Connection {
 
   private isManuallyClosedByUser(): boolean {
     return this._isClosed && !this._isConnected;
+  }
+
+  #enableHealthCheckIfNeeded() {
+    const { healthCheckInterval } = this.options;
+    if (healthCheckInterval == null) {
+      return;
+    }
+
+    const ping = async () => {
+      if (this.isManuallyClosedByUser()) {
+        return;
+      }
+
+      try {
+        await this.sendCommand("PING");
+        this._isConnected = true;
+      } catch {
+        // TODO: notify the user of an error
+        this._isConnected = false;
+      } finally {
+        setTimeout(ping, healthCheckInterval);
+      }
+    };
+
+    setTimeout(ping, healthCheckInterval);
   }
 }
 
