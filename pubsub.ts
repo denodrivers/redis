@@ -115,15 +115,6 @@ class RedisSubscriptionImpl<
           : rep[0];
 
         if (event === "message" && rep.length === 3) {
-          if (rep[1] instanceof Uint8Array) {
-            const channel = decoder.decode(rep[1]);
-            const message = rep[2];
-            yield { channel, message };
-          } else {
-            const channel = rep[1];
-            const message = rep[2];
-            yield { channel, message };
-          }
           const channel = rep[1] instanceof Uint8Array
             ? decoder.decode(rep[1])
             : rep[1];

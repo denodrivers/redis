@@ -43,7 +43,7 @@ export type XReadReplyRaw = XReadStreamRaw[];
  * which will represent the the epoch Millis with
  * seqNo of zero.  (Especially useful is to pass 0.)
  */
-export type XIdInput = XId | [number, number] | number;
+export type XIdInput = XId | [number, number] | number | string;
 /**
  * ID input type for XADD, which is allowed to include the
  * "*" operator. */

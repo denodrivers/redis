@@ -5,7 +5,7 @@ type TestFunc = () => void | Promise<void>;
 export interface TestServer {
   path: string;
   port: number;
-  process: Deno.Process;
+  process: Deno.ChildProcess;
 }
 
 const encoder = new TextEncoder();
@@ -34,19 +34,44 @@ export async function startRedis({
   await Deno.writeFile(destPath, encoder.encode(config));
 
   // Start redis server
-  const process = Deno.run({
-    cmd: ["redis-server", `${path}/redis.conf`],
+  const process = new Deno.Command("redis-server", {
+    args: [`${path}/redis.conf`],
     stdin: "null",
     stdout: "null",
-  });
+    stderr: "piped",
+  }).spawn();
 
   await waitForPort(port);
   return { path, port, process };
 }
 
-export function stopRedis(server: TestServer): void {
-  Deno.removeSync(server.path, { recursive: true });
-  server.process.close();
+export async function stopRedis(server: TestServer): Promise<void> {
+  try {
+    await Deno.remove(server.path, { recursive: true });
+  } catch (error) {
+    if (!(error instanceof Deno.errors.NotFound)) {
+      throw error;
+    }
+  }
+
+  await ensureTerminated(server.process);
+}
+
+export async function ensureTerminated(
+  process: Deno.ChildProcess,
+): Promise<void> {
+  try {
+    await process.stderr.cancel();
+    process.kill("SIGKILL");
+    await process.status;
+  } catch (error) {
+    const alreadyKilled = error instanceof TypeError &&
+      error.message === "Child process has already terminated.";
+    if (alreadyKilled) {
+      return;
+    }
+    throw error;
+  }
 }
 
 export function newClient(opt: RedisConnectOptions): Promise<Redis> {
