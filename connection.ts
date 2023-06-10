@@ -13,13 +13,10 @@ import { delay } from "./vendor/https/deno.land/std/async/delay.ts";
 type Closer = Deno.Closer;
 
 export interface Connection {
-  closer: Closer;
   reader: BufReader;
   writer: BufWriter;
-  maxRetryCount: number;
   isClosed: boolean;
   isConnected: boolean;
-  isRetriable: boolean;
   close(): void;
   connect(): Promise<void>;
   reconnect(): Promise<void>;
@@ -47,10 +44,10 @@ const kEmptyRedisArgs: Array<RedisValue> = [];
 
 export class RedisConnection implements Connection {
   name: string | null = null;
-  closer!: Closer;
   reader!: BufReader;
   writer!: BufWriter;
-  maxRetryCount = 10;
+  private closer!: Closer;
+  private maxRetryCount = 10;
 
   private readonly hostname: string;
   private readonly port: number | string;
