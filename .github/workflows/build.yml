@@ -23,6 +23,12 @@ jobs:
         uses: denoland/setup-deno@main
         with:
           deno-version: ${{ env.DENO_VERSION }}
+      - uses: actions/cache@v3
+        with:
+          path: |
+            ~/.deno
+            ~/.cache/deno
+          key: ${{ runner.os }}-deno-${{ hashFiles('**/import_map.json', '**/.deno-version', '**/modules-lock.json') }}
       - name: Check mod.ts
         run: |
           deno task make_mod
@@ -63,6 +69,12 @@ jobs:
         uses: denoland/setup-deno@main
         with:
           deno-version: ${{ env.DENO_VERSION }}
+      - uses: actions/cache@v3
+        with:
+          path: |
+            ~/.deno
+            ~/.cache/deno
+          key: ${{ runner.os }}-deno-benchmark-${{ hashFiles('**/import_map.json', '**/.deno-version', '**/modules-lock.json') }}
       - name: Set up Node.js
         uses: actions/setup-node@v2
         with:
