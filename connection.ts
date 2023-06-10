@@ -269,8 +269,11 @@ export class RedisConnection implements Connection {
       }
 
       try {
-        await this.sendCommand("PING");
-        this._isConnected = true;
+        const isIdle = this.commandQueue.length === 0;
+        if (isIdle) {
+          await this.sendCommand("PING");
+          this._isConnected = true;
+        }
       } catch {
         // TODO: notify the user of an error
         this._isConnected = false;
