@@ -14,8 +14,8 @@ import {
   describe,
   it,
 } from "../../vendor/https/deno.land/std/testing/bdd.ts";
-import sample from "../../vendor/https/cdn.skypack.dev/lodash-es/sample.js";
-import calculateSlot from "../../vendor/https/cdn.skypack.dev/cluster-key-slot/lib/index.js";
+import sample from "../../vendor/https/esm.sh/lodash-es/sample.js";
+import calculateSlot from "../../vendor/https/esm.sh/cluster-key-slot/lib/index.js";
 import { ErrorReplyError } from "../../errors.ts";
 import { connect, create } from "../../redis.ts";
 import type { CommandExecutor } from "../../executor.ts";

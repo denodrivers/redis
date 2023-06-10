@@ -12,7 +12,7 @@
       "/streams/reader_from_stream_reader.ts"
     ]
   },
-  "https://cdn.skypack.dev/lodash-es": {
+  "https://esm.sh/lodash-es": {
     "version": "@4.17.21",
     "modules": [
       "/sample.js",
@@ -20,7 +20,7 @@
       "/uniqBy.js"
     ]
   },
-  "https://cdn.skypack.dev/cluster-key-slot": {
+  "https://esm.sh/cluster-key-slot": {
     "version": "@1.1.0",
     "modules": [
       "/lib/index.js"
