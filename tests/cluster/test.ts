@@ -17,7 +17,7 @@ import {
 import sample from "../../vendor/https/esm.sh/lodash-es/sample.js";
 import calculateSlot from "../../vendor/https/esm.sh/cluster-key-slot/lib/index.js";
 import { ErrorReplyError } from "../../errors.ts";
-import { connect, create } from "../../redis.ts";
+import { connect, create, internalGetConnection } from "../../redis.ts";
 import type { CommandExecutor } from "../../executor.ts";
 import type { Connection } from "../../connection.ts";
 import type { Redis } from "../../mod.ts";
@@ -72,7 +72,7 @@ describe("experimental/cluster", () => {
         assert(opts.port != null);
         const proxyExecutor = {
           get connection(): Connection {
-            throw new Error("Not supported");
+            return redis[internalGetConnection]();
           },
           close() {
             return redis.close();
@@ -127,7 +127,7 @@ describe("experimental/cluster", () => {
         assert(opts.port != null);
         const proxyExecutor = {
           get connection(): Connection {
-            throw new Error("Not supported");
+            return redis[internalGetConnection]();
           },
           close() {
             return redis.close();
@@ -179,7 +179,7 @@ describe("experimental/cluster", () => {
         assert(opts.port != null);
         const proxyExecutor = {
           get connection(): Connection {
-            throw new Error("Not supported");
+            return redis[internalGetConnection]();
           },
           close() {
             return redis.close();
