@@ -26,7 +26,7 @@
 import { connect, create } from "../../redis.ts";
 import type { RedisConnectOptions } from "../../redis.ts";
 import type { CommandExecutor } from "../../executor.ts";
-import type { Connection } from "../../connection.ts";
+import type { Connection, SendCommandOptions } from "../../connection.ts";
 import type { Redis } from "../../redis.ts";
 import type { RedisReply, RedisValue } from "../../protocol/mod.ts";
 import { ErrorReplyError } from "../../errors.ts";
@@ -92,7 +92,15 @@ class ClusterExecutor implements CommandExecutor {
     throw new Error("Not implemented yet");
   }
 
-  async exec(command: string, ...args: RedisValue[]): Promise<RedisReply> {
+  exec(command: string, ...args: RedisValue[]): Promise<RedisReply> {
+    return this.sendCommand(command, args);
+  }
+
+  async sendCommand<T = RedisReply>(
+    command: string,
+    _args?: RedisValue[],
+    options?: SendCommandOptions<T>,
+  ): Promise<T> {
     if (this.#refreshTableASAP) {
       await this.initializeSlotsCache();
     }
@@ -101,6 +109,7 @@ class ClusterExecutor implements CommandExecutor {
     let tryRandomNode = false;
     let ttl = kRedisClusterRequestTTL;
     let lastError: null | Error;
+    const args = _args ?? [];
     while (ttl > 0) {
       ttl -= 1;
       const key = getKeyFromCommand(command, args);
@@ -126,7 +135,7 @@ class ClusterExecutor implements CommandExecutor {
           await r.asking();
         }
         asking = false;
-        const reply = await r.sendCommand(command, args);
+        const reply = await r.sendCommand(command, args, options);
         return reply;
       } catch (err) {
         lastError = err;

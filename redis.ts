@@ -98,12 +98,6 @@ const binaryCommandOptions = {
   decodeReply: (reply: Uint8Array) => reply,
 };
 
-/**
- * TODO: remove this symbol.
- * @private
- */
-export const internalGetConnection = Symbol("getConnection");
-
 export interface Redis extends RedisCommands {
   readonly isClosed: boolean;
   readonly isConnected: boolean;
@@ -118,8 +112,6 @@ export interface Redis extends RedisCommands {
   ): Promise<T>;
   connect(): Promise<void>;
   close(): void;
-
-  [internalGetConnection]: () => Connection;
 }
 
 class RedisImpl implements Redis {
@@ -137,16 +129,12 @@ class RedisImpl implements Redis {
     this.executor = executor;
   }
 
-  [internalGetConnection]() {
-    return this.executor.connection;
-  }
-
   sendCommand<T = RedisReply>(
     command: string,
     args?: RedisValue[],
     options?: SendCommandOptions<T>,
   ) {
-    return this.executor.connection.sendCommand(command, args, options);
+    return this.executor.sendCommand(command, args, options);
   }
 
   connect(): Promise<void> {
@@ -188,7 +176,7 @@ class RedisImpl implements Redis {
     command: string,
     ...args: RedisValue[]
   ): Promise<Binary | BulkNil> {
-    const reply = await this.executor.connection.sendCommand(
+    const reply = await this.executor.sendCommand(
       command,
       args,
       binaryCommandOptions,

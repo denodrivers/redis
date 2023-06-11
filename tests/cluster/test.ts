@@ -17,7 +17,7 @@ import {
 import sample from "../../vendor/https/esm.sh/lodash-es/sample.js";
 import calculateSlot from "../../vendor/https/esm.sh/cluster-key-slot/lib/index.js";
 import { ErrorReplyError } from "../../errors.ts";
-import { connect, create, internalGetConnection } from "../../redis.ts";
+import { connect, create } from "../../redis.ts";
 import type { CommandExecutor } from "../../executor.ts";
 import type { Connection } from "../../connection.ts";
 import type { Redis } from "../../mod.ts";
@@ -72,15 +72,18 @@ describe("experimental/cluster", () => {
         assert(opts.port != null);
         const proxyExecutor = {
           get connection(): Connection {
-            return redis[internalGetConnection]();
+            throw new Error("Not supported");
           },
           close() {
             return redis.close();
           },
-          async exec(cmd, ...args) {
+          exec(cmd, ...args) {
+            return this.sendCommand(cmd, args);
+          },
+          async sendCommand(cmd, args, options) {
             if (cmd === "GET" && !redirected) {
               // Manually cause a -MOVED redirection error
-              const [key] = args;
+              const [key] = args ?? [];
               assert(typeof key === "string");
               const slot = calculateSlot(key);
               manuallyRedirectedPort = sample(
@@ -94,7 +97,7 @@ describe("experimental/cluster", () => {
             } else {
               assert(opts.port);
               portsSent.add(Number(opts.port));
-              const reply = await redis.sendCommand(cmd, args);
+              const reply = await redis.sendCommand(cmd, args, options);
               return reply;
             }
           },
@@ -127,16 +130,19 @@ describe("experimental/cluster", () => {
         assert(opts.port != null);
         const proxyExecutor = {
           get connection(): Connection {
-            return redis[internalGetConnection]();
+            throw new Error("Not supported");
           },
           close() {
             return redis.close();
           },
-          async exec(cmd, ...args) {
+          exec(cmd, ...args) {
+            return this.sendCommand(cmd, args);
+          },
+          async sendCommand(cmd, args, options) {
             commandsSent.add(cmd);
             if (cmd === "GET" && !redirected) {
               // Manually cause a -ASK redirection error
-              const [key] = args;
+              const [key] = args ?? [];
               assert(typeof key === "string");
               const slot = calculateSlot(key);
               manuallyRedirectedPort = sample(
@@ -150,7 +156,7 @@ describe("experimental/cluster", () => {
             } else {
               assert(opts.port);
               portsSent.add(Number(opts.port));
-              const reply = await redis.sendCommand(cmd, args);
+              const reply = await redis.sendCommand(cmd, args, options);
               return reply;
             }
           },
@@ -179,15 +185,18 @@ describe("experimental/cluster", () => {
         assert(opts.port != null);
         const proxyExecutor = {
           get connection(): Connection {
-            return redis[internalGetConnection]();
+            throw new Error("Not supported");
           },
           close() {
             return redis.close();
           },
-          async exec(cmd, ...args) {
+          exec(cmd, ...args) {
+            return this.sendCommand(cmd, args);
+          },
+          async sendCommand(cmd, args, options) {
             if (cmd === "GET") {
               // Manually cause a -MOVED redirection error
-              const [key] = args;
+              const [key] = args ?? [];
               assert(typeof key === "string");
               const slot = calculateSlot(key);
               const randomPort = sample(
@@ -198,7 +207,7 @@ describe("experimental/cluster", () => {
               );
               throw error;
             } else {
-              const reply = await redis.sendCommand(cmd, args);
+              const reply = await redis.sendCommand(cmd, args, options);
               return reply;
             }
           },
