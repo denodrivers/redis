@@ -193,7 +193,7 @@ export function generalTests(
       {
         await client.set("key", encoder.encode("hello"));
         const reply = await client.sendCommand("GET", ["key"], {
-          decodeReply: (reply: Uint8Array) => reply,
+          decodeReply: (reply) => reply,
         });
         assertEquals(reply, encoder.encode("hello"));
       }

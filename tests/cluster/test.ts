@@ -94,7 +94,7 @@ describe("experimental/cluster", () => {
             } else {
               assert(opts.port);
               portsSent.add(Number(opts.port));
-              const reply = await redis.sendCommand(cmd, ...args);
+              const reply = await redis.sendCommand(cmd, args);
               return reply;
             }
           },
@@ -150,7 +150,7 @@ describe("experimental/cluster", () => {
             } else {
               assert(opts.port);
               portsSent.add(Number(opts.port));
-              const reply = await redis.sendCommand(cmd, ...args);
+              const reply = await redis.sendCommand(cmd, args);
               return reply;
             }
           },
@@ -198,7 +198,7 @@ describe("experimental/cluster", () => {
               );
               throw error;
             } else {
-              const reply = await redis.sendCommand(cmd, ...args);
+              const reply = await redis.sendCommand(cmd, args);
               return reply;
             }
           },

@@ -110,13 +110,16 @@ import { connect } from "https://deno.land/x/redis/mod.ts";
 const redis = await connect({ hostname: "127.0.0.1" });
 
 {
-  const reply = await redis.sendCommand("SET", "redis", "nice");
-  console.assert(reply.value() === "OK");
+  const reply = await redis.sendCommand("SET", ["redis", "nice"]);
+  console.assert(reply === "OK");
 }
 
 {
-  const reply = await redis.sendCommand("GET", "redis");
-  console.assert(reply.value() === "nice");
+  // You can customize the parsing logic of replies with the `decodeReply` option
+  const reply = await redis.sendCommand("GET", ["redis"], {
+    decodeReply: (reply: Uint8Array) => reply,
+  });
+  console.assert(reply instanceof Uint8Array);
 }
 ```
 
