@@ -1,7 +1,7 @@
 import { BufReader } from "../vendor/https/deno.land/std/io/buf_reader.ts";
 import type * as types from "./types.ts";
 import { EOFError, ErrorReplyError, InvalidStateError } from "../errors.ts";
-import { decoder, encoder } from "./_util.ts";
+import { decoder } from "./_util.ts";
 
 const IntegerReplyCode = ":".charCodeAt(0);
 const BulkReplyCode = "$".charCodeAt(0);
