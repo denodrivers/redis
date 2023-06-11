@@ -62,6 +62,7 @@ export type {
   BulkNil,
   BulkString,
   ConditionalArray,
+  Decode,
   Integer,
   Raw,
   RawOrError,
