@@ -193,14 +193,14 @@ export function generalTests(
       {
         await client.set("key", encoder.encode("hello"));
         const reply = await client.sendCommand("GET", ["key"], {
-          decodeReply: (reply) => reply,
+          parseReply: (reply) => reply,
         });
         assertEquals(reply, encoder.encode("hello"));
       }
 
       {
         const reply = await client.sendCommand("EXISTS", ["key"], {
-          decodeReply: (reply) => decoder.decode(reply) === "1",
+          parseReply: (reply) => decoder.decode(reply) === "1",
         });
         assert(reply);
       }
