@@ -229,6 +229,7 @@ export class RedisConnection implements Connection {
         this.reader,
         command.name,
         command.args,
+        command.decode,
       );
       command.promise.resolve(reply);
     } catch (error) {
