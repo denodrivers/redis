@@ -42,7 +42,7 @@ import type {
   ZUnionstoreOpts,
 } from "./command.ts";
 import { RedisConnection } from "./connection.ts";
-import type { Connection } from "./connection.ts";
+import type { Connection, SendCommandOptions } from "./connection.ts";
 import type { RedisConnectionOptions } from "./connection.ts";
 import { CommandExecutor, DefaultExecutor } from "./executor.ts";
 import type {
@@ -105,7 +105,11 @@ export interface Redis extends RedisCommands {
   /**
    * Low level interface for Redis server
    */
-  sendCommand(command: string, ...args: RedisValue[]): Promise<RedisReply>;
+  sendCommand<T = RedisReply>(
+    command: string,
+    args?: RedisValue[],
+    options?: SendCommandOptions<T>,
+  ): Promise<T>;
   connect(): Promise<void>;
   close(): void;
 }
@@ -125,8 +129,12 @@ class RedisImpl implements Redis {
     this.executor = executor;
   }
 
-  sendCommand(command: string, ...args: RedisValue[]) {
-    return this.executor.exec(command, ...args);
+  sendCommand<T = RedisReply>(
+    command: string,
+    args?: RedisValue[],
+    options?: SendCommandOptions<T>,
+  ) {
+    return this.executor.connection.sendCommand(command, args, options);
   }
 
   connect(): Promise<void> {

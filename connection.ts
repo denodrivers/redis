@@ -12,7 +12,7 @@ import {
 import { delay } from "./vendor/https/deno.land/std/async/delay.ts";
 type Closer = Deno.Closer;
 
-interface SendCommandOptions<T = unknown> {
+export interface SendCommandOptions<T = unknown> {
   decodeReply?: Decode<T>;
 }
 

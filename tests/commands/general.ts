@@ -167,28 +167,30 @@ export function generalTests(
     it("can handle simple types", async () => {
       // simple string
       {
-        const reply = await client.sendCommand("SET", "key", "a");
-        assertEquals(reply.value(), "OK");
+        const reply = await client.sendCommand("SET", ["key", "a"]);
+        assertEquals(reply, "OK");
       }
 
       // bulk string
       {
-        const reply = await client.sendCommand("GET", "key");
-        assertEquals(reply.value(), "a");
+        const reply = await client.sendCommand("GET", ["key"]);
+        assertEquals(reply, "a");
       }
 
       // integer
       {
-        const reply = await client.sendCommand("EXISTS", "key");
-        assertEquals(reply.value(), 1);
+        const reply = await client.sendCommand("EXISTS", ["key"]);
+        assertEquals(reply, 1);
       }
     });
 
     it("can get the raw data as Uint8Array", async () => {
       const encoder = new TextEncoder();
       await client.set("key", encoder.encode("hello"));
-      const reply = await client.sendCommand("GET", "key");
-      assertEquals(reply.buffer(), encoder.encode("hello"));
+      const reply = await client.sendCommand("GET", ["key"], {
+        decodeReply: (reply: Uint8Array) => reply,
+      });
+      assertEquals(reply, encoder.encode("hello"));
     });
   });
 
