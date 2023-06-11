@@ -2453,14 +2453,17 @@ function createLazyExecutor(connection: Connection): CommandExecutor {
     get connection() {
       return connection;
     },
-    async exec(command, ...args) {
+    exec(command, ...args) {
+      return this.sendCommand(command, args);
+    },
+    async sendCommand(command, args, options) {
       if (!executor) {
         executor = new DefaultExecutor(connection);
         if (!connection.isConnected) {
           await connection.connect();
         }
       }
-      return executor.exec(command, ...args);
+      return executor.sendCommand(command, args, options);
     },
     close() {
       if (executor) {

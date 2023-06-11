@@ -105,16 +105,17 @@ export async function sendCommands(
   commands: {
     command: string;
     args: RedisValue[];
+    decode?: Decode<unknown>;
   }[],
-): Promise<RawOrError[]> {
+): Promise<unknown[]> {
   for (const { command, args } of commands) {
     await writeRequest(writer, command, args);
   }
   await writer.flush();
-  const ret: RawOrError[] = [];
+  const ret: unknown[] = [];
   for (let i = 0; i < commands.length; i++) {
     try {
-      const rep = await readReply(reader);
+      const rep = await readReply(reader, commands[i].decode);
       ret.push(rep);
     } catch (e) {
       if (e instanceof ErrorReplyError) {

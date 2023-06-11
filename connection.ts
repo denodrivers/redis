@@ -48,7 +48,7 @@ export interface RedisConnectionOptions {
   healthCheckInterval?: number;
 }
 
-const kEmptyRedisArgs: Array<RedisValue> = [];
+export const kEmptyRedisArgs: Array<RedisValue> = [];
 
 interface Command<T = RedisReply> {
   name: string;
