@@ -1,5 +1,6 @@
 import { BufReader } from "../vendor/https/deno.land/std/io/buf_reader.ts";
 import { BufWriter } from "../vendor/https/deno.land/std/io/buf_writer.ts";
+import type { Decode } from "./reply.ts";
 import { readReply } from "./reply.ts";
 import { ErrorReplyError } from "../errors.ts";
 import { encoder } from "./_util.ts";
@@ -86,15 +87,16 @@ function writeFrom(
   return fromIndex + payload.byteLength;
 }
 
-export async function sendCommand(
+export async function sendCommand<T = RedisReply>(
   writer: BufWriter,
   reader: BufReader,
   command: string,
   args: RedisValue[],
-): Promise<RedisReply> {
+  decode?: Decode<T>,
+): Promise<T> {
   await writeRequest(writer, command, args);
   await writer.flush();
-  return readReply(reader);
+  return readReply(reader, decode);
 }
 
 export async function sendCommands(
@@ -113,7 +115,7 @@ export async function sendCommands(
   for (let i = 0; i < commands.length; i++) {
     try {
       const rep = await readReply(reader);
-      ret.push(rep.value());
+      ret.push(rep);
     } catch (e) {
       if (e instanceof ErrorReplyError) {
         ret.push(e);

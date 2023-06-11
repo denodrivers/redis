@@ -9,7 +9,7 @@ const SimpleStringCode = "+".charCodeAt(0);
 const ArrayReplyCode = "*".charCodeAt(0);
 const ErrorReplyCode = "-".charCodeAt(0);
 
-interface Decode<T = unknown> {
+export interface Decode<T = unknown> {
   (reply: Uint8Array): T;
 }
 
@@ -161,7 +161,7 @@ export async function readArrayReply<T>(
   return array;
 }
 
-export const okReply = encoder.encode("OK");
+export const okReply = "OK";
 
 function tryParseErrorReply(line: Uint8Array): never {
   const code = line[0];
