@@ -1,6 +1,7 @@
 import { ErrorReplyError } from "../../mod.ts";
 import type { Redis } from "../../mod.ts";
 import {
+  assert,
   assertEquals,
   assertRejects,
 } from "../../vendor/https/deno.land/std/testing/asserts.ts";
@@ -184,13 +185,25 @@ export function generalTests(
       }
     });
 
-    it("can get the raw data as Uint8Array", async () => {
+    it("supports custom reply parsing with `decodeReply` option", async () => {
       const encoder = new TextEncoder();
-      await client.set("key", encoder.encode("hello"));
-      const reply = await client.sendCommand("GET", ["key"], {
-        decodeReply: (reply: Uint8Array) => reply,
-      });
-      assertEquals(reply, encoder.encode("hello"));
+      const decoder = new TextDecoder();
+
+      // Uint8Array
+      {
+        await client.set("key", encoder.encode("hello"));
+        const reply = await client.sendCommand("GET", ["key"], {
+          decodeReply: (reply: Uint8Array) => reply,
+        });
+        assertEquals(reply, encoder.encode("hello"));
+      }
+
+      {
+        const reply = await client.sendCommand("EXISTS", ["key"], {
+          decodeReply: (reply) => decoder.decode(reply) === "1",
+        });
+        assert(reply);
+      }
     });
   });
 
