@@ -12,7 +12,7 @@ export type {
   SimpleString,
 } from "./types.ts";
 
-export type { Decode } from "./reply.ts";
+export type { ParseReply } from "./reply.ts";
 export { okReply, readArrayReply, readReply } from "./reply.ts";
 
 export { sendCommand, sendCommands } from "./command.ts";

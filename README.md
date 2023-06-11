@@ -115,9 +115,9 @@ const redis = await connect({ hostname: "127.0.0.1" });
 }
 
 {
-  // You can customize the parsing logic of replies with the `decodeReply` option
+  // You can customize the parsing logic of replies with the `parseReply` option
   const reply = await redis.sendCommand("GET", ["redis"], {
-    decodeReply: (reply: Uint8Array) => reply,
+    parseReply: (reply: Uint8Array) => reply,
   });
   console.assert(reply instanceof Uint8Array);
 }

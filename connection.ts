@@ -1,5 +1,5 @@
 import { sendCommand } from "./protocol/mod.ts";
-import type { Decode, RedisReply, RedisValue } from "./protocol/mod.ts";
+import type { ParseReply, RedisReply, RedisValue } from "./protocol/mod.ts";
 import type { Backoff } from "./backoff.ts";
 import { exponentialBackoff } from "./backoff.ts";
 import { ErrorReplyError, isRetriableError } from "./errors.ts";
@@ -13,7 +13,7 @@ import { delay } from "./vendor/https/deno.land/std/async/delay.ts";
 type Closer = Deno.Closer;
 
 export interface SendCommandOptions<T = unknown> {
-  decodeReply?: Decode<T>;
+  parseReply?: ParseReply<T>;
 }
 
 export interface Connection {
@@ -54,7 +54,7 @@ interface Command<T = RedisReply> {
   name: string;
   args: RedisValue[];
   promise: Deferred<T>;
-  decode?: Decode<T>;
+  parseReply?: ParseReply<T>;
 }
 
 export class RedisConnection implements Connection {
@@ -136,7 +136,7 @@ export class RedisConnection implements Connection {
       name: command,
       args: args ?? kEmptyRedisArgs,
       promise,
-      decode: options?.decodeReply,
+      parseReply: options?.parseReply,
     });
     if (this.commandQueue.length === 1) {
       this.processCommandQueue();
@@ -229,7 +229,7 @@ export class RedisConnection implements Connection {
         this.reader,
         command.name,
         command.args,
-        command.decode,
+        command.parseReply,
       );
       command.promise.resolve(reply);
     } catch (error) {
@@ -251,7 +251,7 @@ export class RedisConnection implements Connection {
             this.reader,
             command.name,
             command.args,
-            command.decode,
+            command.parseReply,
           );
 
           return command.promise.resolve(reply);

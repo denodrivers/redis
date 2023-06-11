@@ -95,7 +95,7 @@ import {
 } from "./stream.ts";
 
 const binaryCommandOptions = {
-  decodeReply: (reply: Uint8Array) => reply,
+  parseReply: (reply: Uint8Array) => reply,
 };
 
 export interface Redis extends RedisCommands {
