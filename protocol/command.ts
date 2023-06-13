@@ -105,7 +105,7 @@ export async function sendCommands(
   commands: {
     command: string;
     args: RedisValue[];
-    decode?: ParseReply<unknown>;
+    parseReply?: ParseReply<unknown>;
   }[],
 ): Promise<unknown[]> {
   for (const { command, args } of commands) {
@@ -115,7 +115,7 @@ export async function sendCommands(
   const ret: unknown[] = [];
   for (let i = 0; i < commands.length; i++) {
     try {
-      const rep = await readReply(reader, commands[i].decode);
+      const rep = await readReply(reader, commands[i].parseReply);
       ret.push(rep);
     } catch (e) {
       if (e instanceof ErrorReplyError) {
