@@ -1,7 +1,7 @@
 import type { CommandExecutor } from "./executor.ts";
 import { InvalidStateError } from "./errors.ts";
 import type { Binary } from "./protocol/mod.ts";
-import { readArrayReplyBody } from "./protocol/mod.ts";
+import { readArrayReply } from "./protocol/mod.ts";
 import { decoder } from "./protocol/_util.ts";
 
 type DefaultMessageType = string;
@@ -87,6 +87,7 @@ class RedisSubscriptionImpl<
   > {
     let forceReconnect = false;
     const connection = this.executor.connection;
+    const decode = binaryMode ? (reply: Uint8Array) => reply : undefined;
     while (this.isConnected) {
       try {
         let rep: [string | Binary, string | Binary, T] | [
@@ -96,10 +97,10 @@ class RedisSubscriptionImpl<
           T,
         ];
         try {
-          // TODO: `readArrayReplyBody` should not be called directly here
-          rep = (await readArrayReplyBody(
+          // TODO: `readArrayReply` should not be called directly here
+          rep = (await readArrayReply(
             connection.reader,
-            binaryMode,
+            decode,
           )) as typeof rep;
         } catch (err) {
           if (err instanceof Deno.errors.BadResource) {

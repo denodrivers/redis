@@ -1,5 +1,7 @@
-import type { Connection } from "./connection.ts";
+import type { Connection, SendCommandOptions } from "./connection.ts";
+import { kEmptyRedisArgs } from "./connection.ts";
 import { CommandExecutor } from "./executor.ts";
+import type { ParseReply } from "./protocol/mod.ts";
 import {
   okReply,
   RawOrError,
@@ -33,13 +35,15 @@ export class PipelineExecutor implements CommandExecutor {
   private commands: {
     command: string;
     args: RedisValue[];
+    parseReply?: ParseReply<unknown>;
   }[] = [];
   private queue: {
     commands: {
       command: string;
       args: RedisValue[];
+      parseReply?: ParseReply<unknown>;
     }[];
-    d: Deferred<RawOrError[]>;
+    d: Deferred<unknown[]>;
   }[] = [];
 
   constructor(
@@ -52,7 +56,21 @@ export class PipelineExecutor implements CommandExecutor {
     command: string,
     ...args: RedisValue[]
   ): Promise<RedisReply> {
-    this.commands.push({ command, args });
+    return this.sendCommand(command, args);
+  }
+
+  // deno-lint-ignore no-explicit-any
+  sendCommand<T = any>(
+    command: string,
+    args?: RedisValue[],
+    options?: SendCommandOptions<T>,
+    // deno-lint-ignore no-explicit-any
+  ): Promise<any> {
+    this.commands.push({
+      command,
+      args: args ?? kEmptyRedisArgs,
+      parseReply: options?.parseReply,
+    });
     return Promise.resolve(okReply);
   }
 

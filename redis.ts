@@ -42,7 +42,7 @@ import type {
   ZUnionstoreOpts,
 } from "./command.ts";
 import { RedisConnection } from "./connection.ts";
-import type { Connection } from "./connection.ts";
+import type { Connection, SendCommandOptions } from "./connection.ts";
 import type { RedisConnectionOptions } from "./connection.ts";
 import { CommandExecutor, DefaultExecutor } from "./executor.ts";
 import type {
@@ -94,6 +94,10 @@ import {
   XReadStreamRaw,
 } from "./stream.ts";
 
+const binaryCommandOptions = {
+  parseReply: (reply: Uint8Array) => reply,
+};
+
 export interface Redis extends RedisCommands {
   readonly isClosed: boolean;
   readonly isConnected: boolean;
@@ -101,7 +105,11 @@ export interface Redis extends RedisCommands {
   /**
    * Low level interface for Redis server
    */
-  sendCommand(command: string, ...args: RedisValue[]): Promise<RedisReply>;
+  sendCommand<T = RedisReply>(
+    command: string,
+    args?: RedisValue[],
+    options?: SendCommandOptions<T>,
+  ): Promise<T>;
   connect(): Promise<void>;
   close(): void;
 }
@@ -121,8 +129,12 @@ class RedisImpl implements Redis {
     this.executor = executor;
   }
 
-  sendCommand(command: string, ...args: RedisValue[]) {
-    return this.executor.exec(command, ...args);
+  sendCommand<T = RedisReply>(
+    command: string,
+    args?: RedisValue[],
+    options?: SendCommandOptions<T>,
+  ) {
+    return this.executor.sendCommand(command, args, options);
   }
 
   connect(): Promise<void> {
@@ -141,7 +153,7 @@ class RedisImpl implements Redis {
       command,
       ...args,
     );
-    return reply.value() as T;
+    return reply as T;
   }
 
   async execStatusReply(
@@ -149,7 +161,7 @@ class RedisImpl implements Redis {
     ...args: RedisValue[]
   ): Promise<SimpleString> {
     const reply = await this.executor.exec(command, ...args);
-    return reply.value() as SimpleString;
+    return reply as SimpleString;
   }
 
   async execIntegerReply(
@@ -157,15 +169,19 @@ class RedisImpl implements Redis {
     ...args: RedisValue[]
   ): Promise<Integer> {
     const reply = await this.executor.exec(command, ...args);
-    return reply.value() as Integer;
+    return reply as Integer;
   }
 
   async execBinaryReply(
     command: string,
     ...args: RedisValue[]
   ): Promise<Binary | BulkNil> {
-    const reply = await this.executor.exec(command, ...args);
-    return reply.buffer();
+    const reply = await this.executor.sendCommand(
+      command,
+      args,
+      binaryCommandOptions,
+    );
+    return reply;
   }
 
   async execBulkReply<T extends Bulk = Bulk>(
@@ -173,7 +189,7 @@ class RedisImpl implements Redis {
     ...args: RedisValue[]
   ): Promise<T> {
     const reply = await this.executor.exec(command, ...args);
-    return reply.value() as T;
+    return reply as T;
   }
 
   async execArrayReply<T extends Raw = Raw>(
@@ -181,7 +197,7 @@ class RedisImpl implements Redis {
     ...args: RedisValue[]
   ): Promise<T[]> {
     const reply = await this.executor.exec(command, ...args);
-    return reply.value() as Array<T>;
+    return reply as Array<T>;
   }
 
   async execIntegerOrNilReply(
@@ -189,7 +205,7 @@ class RedisImpl implements Redis {
     ...args: RedisValue[]
   ): Promise<Integer | BulkNil> {
     const reply = await this.executor.exec(command, ...args);
-    return reply.value() as Integer | BulkNil;
+    return reply as Integer | BulkNil;
   }
 
   async execStatusOrNilReply(
@@ -197,7 +213,7 @@ class RedisImpl implements Redis {
     ...args: RedisValue[]
   ): Promise<SimpleString | BulkNil> {
     const reply = await this.executor.exec(command, ...args);
-    return reply.string() as SimpleString | BulkNil;
+    return reply as SimpleString | BulkNil;
   }
 
   aclCat(categoryname?: string) {
@@ -2437,14 +2453,17 @@ function createLazyExecutor(connection: Connection): CommandExecutor {
     get connection() {
       return connection;
     },
-    async exec(command, ...args) {
+    exec(command, ...args) {
+      return this.sendCommand(command, args);
+    },
+    async sendCommand(command, args, options) {
       if (!executor) {
         executor = new DefaultExecutor(connection);
         if (!connection.isConnected) {
           await connection.connect();
         }
       }
-      return executor.exec(command, ...args);
+      return executor.sendCommand(command, args, options);
     },
     close() {
       if (executor) {

@@ -77,10 +77,13 @@ describe("experimental/cluster", () => {
           close() {
             return redis.close();
           },
-          async exec(cmd, ...args) {
+          exec(cmd, ...args) {
+            return this.sendCommand(cmd, args);
+          },
+          async sendCommand(cmd, args, options) {
             if (cmd === "GET" && !redirected) {
               // Manually cause a -MOVED redirection error
-              const [key] = args;
+              const [key] = args ?? [];
               assert(typeof key === "string");
               const slot = calculateSlot(key);
               manuallyRedirectedPort = sample(
@@ -94,7 +97,7 @@ describe("experimental/cluster", () => {
             } else {
               assert(opts.port);
               portsSent.add(Number(opts.port));
-              const reply = await redis.sendCommand(cmd, ...args);
+              const reply = await redis.sendCommand(cmd, args, options);
               return reply;
             }
           },
@@ -132,11 +135,14 @@ describe("experimental/cluster", () => {
           close() {
             return redis.close();
           },
-          async exec(cmd, ...args) {
+          exec(cmd, ...args) {
+            return this.sendCommand(cmd, args);
+          },
+          async sendCommand(cmd, args, options) {
             commandsSent.add(cmd);
             if (cmd === "GET" && !redirected) {
               // Manually cause a -ASK redirection error
-              const [key] = args;
+              const [key] = args ?? [];
               assert(typeof key === "string");
               const slot = calculateSlot(key);
               manuallyRedirectedPort = sample(
@@ -150,7 +156,7 @@ describe("experimental/cluster", () => {
             } else {
               assert(opts.port);
               portsSent.add(Number(opts.port));
-              const reply = await redis.sendCommand(cmd, ...args);
+              const reply = await redis.sendCommand(cmd, args, options);
               return reply;
             }
           },
@@ -184,10 +190,13 @@ describe("experimental/cluster", () => {
           close() {
             return redis.close();
           },
-          async exec(cmd, ...args) {
+          exec(cmd, ...args) {
+            return this.sendCommand(cmd, args);
+          },
+          async sendCommand(cmd, args, options) {
             if (cmd === "GET") {
               // Manually cause a -MOVED redirection error
-              const [key] = args;
+              const [key] = args ?? [];
               assert(typeof key === "string");
               const slot = calculateSlot(key);
               const randomPort = sample(
@@ -198,7 +207,7 @@ describe("experimental/cluster", () => {
               );
               throw error;
             } else {
-              const reply = await redis.sendCommand(cmd, ...args);
+              const reply = await redis.sendCommand(cmd, args, options);
               return reply;
             }
           },

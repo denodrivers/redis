@@ -1,7 +1,7 @@
 import { BufReader } from "../vendor/https/deno.land/std/io/buf_reader.ts";
 import type * as types from "./types.ts";
 import { EOFError, ErrorReplyError, InvalidStateError } from "../errors.ts";
-import { decoder, encoder } from "./_util.ts";
+import { decoder } from "./_util.ts";
 
 const IntegerReplyCode = ":".charCodeAt(0);
 const BulkReplyCode = "$".charCodeAt(0);
@@ -9,7 +9,26 @@ const SimpleStringCode = "+".charCodeAt(0);
 const ArrayReplyCode = "*".charCodeAt(0);
 const ErrorReplyCode = "-".charCodeAt(0);
 
-export async function readReply(reader: BufReader): Promise<types.RedisReply> {
+export interface ParseReply<T = unknown> {
+  (reply: Uint8Array): T;
+}
+
+function parseIntegerReply(reply: Uint8Array): number {
+  return Number.parseInt(decoder.decode(reply));
+}
+const decode = decoder.decode.bind(decoder);
+const parseSimpleStringReply = decode;
+const parseBulkReply = decode;
+
+export function readReply(reader: BufReader): Promise<types.RedisReply>;
+export function readReply<T>(
+  reader: BufReader,
+  parseReply?: ParseReply<T>,
+): Promise<T>;
+export async function readReply<T>(
+  reader: BufReader,
+  parseReply?: ParseReply<T>,
+): Promise<types.RedisReply | unknown> {
   const res = await reader.peek(1);
   if (res == null) {
     throw new EOFError();
@@ -22,13 +41,13 @@ export async function readReply(reader: BufReader): Promise<types.RedisReply> {
 
   switch (code) {
     case IntegerReplyCode:
-      return IntegerReply.decode(reader);
+      return readIntegerReply(reader, parseReply);
     case SimpleStringCode:
-      return SimpleStringReply.decode(reader);
+      return readSimpleStringReply(reader, parseReply);
     case BulkReplyCode:
-      return BulkReply.decode(reader);
+      return readBulkReply(reader, parseReply);
     case ArrayReplyCode:
-      return ArrayReply.decode(reader);
+      return readArrayReply(reader, parseReply);
     default:
       throw new InvalidStateError(
         `unknown code: '${String.fromCharCode(code)}' (${code})`,
@@ -36,148 +55,34 @@ export async function readReply(reader: BufReader): Promise<types.RedisReply> {
   }
 }
 
-abstract class BaseReply implements types.RedisReply {
-  constructor(readonly code: number) {}
-
-  buffer(): Uint8Array {
-    throw createDecodeError(this.code, "buffer");
-  }
-
-  string(): string {
-    throw createDecodeError(this.code, "string");
-  }
-
-  bulk(): types.Bulk {
-    throw createDecodeError(this.code, "bulk");
-  }
-
-  integer(): types.Integer {
-    throw createDecodeError(this.code, "integer");
-  }
-
-  array(): types.ConditionalArray | types.BulkNil {
-    throw createDecodeError(this.code, "array");
-  }
-
-  abstract value(): types.Raw;
-}
-
-class SimpleStringReply extends BaseReply {
-  static async decode(reader: BufReader): Promise<types.RedisReply> {
-    const body = await readSimpleStringReplyBody(reader);
-    return new SimpleStringReply(body);
-  }
-
-  readonly #body: Uint8Array;
-  constructor(body: Uint8Array) {
-    super(SimpleStringCode);
-    this.#body = body;
-  }
-
-  override bulk() {
-    return this.string();
-  }
-
-  override buffer() {
-    return this.#body;
-  }
-
-  override string() {
-    return decoder.decode(this.#body);
-  }
-
-  override value() {
-    return this.string();
-  }
-}
-
-class BulkReply extends BaseReply {
-  static async decode(reader: BufReader): Promise<types.RedisReply> {
-    const body = await readBulkReplyBody(reader);
-    return new BulkReply(body);
-  }
-
-  readonly #body: Uint8Array | null;
-  private constructor(body: Uint8Array | null) {
-    super(BulkReplyCode);
-    this.#body = body;
-  }
-
-  override bulk() {
-    return this.#body ? decoder.decode(this.#body) : null;
-  }
-
-  override buffer() {
-    return this.#body ?? new Uint8Array();
-  }
-
-  override string() {
-    return decoder.decode(this.#body ?? new Uint8Array());
-  }
-
-  override value() {
-    return this.bulk();
-  }
-}
-
-class IntegerReply extends BaseReply {
-  static async decode(reader: BufReader): Promise<types.RedisReply> {
-    const body = await readIntegerReplyBody(reader);
-    return new IntegerReply(body);
-  }
-
-  readonly #body: Uint8Array;
-  private constructor(body: Uint8Array) {
-    super(IntegerReplyCode);
-    this.#body = body;
-  }
-
-  override integer() {
-    return parseInt(decoder.decode(this.#body));
-  }
-
-  override string() {
-    return this.integer().toString();
-  }
-
-  override value() {
-    return this.integer();
-  }
-}
-
-class ArrayReply extends BaseReply {
-  static async decode(reader: BufReader): Promise<types.RedisReply> {
-    const body = await readArrayReplyBody(reader, false);
-    return new ArrayReply(body);
-  }
-
-  readonly #body: types.ConditionalArray | types.BulkNil;
-  private constructor(body: types.ConditionalArray | types.BulkNil) {
-    super(ArrayReplyCode);
-    this.#body = body;
-  }
-
-  override array() {
-    return this.#body;
-  }
-
-  override value() {
-    return this.array();
-  }
-}
-
-async function readIntegerReplyBody(reader: BufReader): Promise<Uint8Array> {
+async function readIntegerReply(
+  reader: BufReader,
+): Promise<number>;
+async function readIntegerReply<T>(
+  reader: BufReader,
+  parseReply?: ParseReply<T>,
+): Promise<T>;
+async function readIntegerReply(
+  reader: BufReader,
+  parseReply = parseIntegerReply,
+) {
   const line = await readLine(reader);
   if (line == null) {
     throw new InvalidStateError();
   }
 
-  return line.subarray(1, line.length);
+  return parseReply(line.subarray(1, line.length));
 }
 
-async function readBulkReplyBody(
+function readBulkReply(reader: BufReader): Promise<string | null>;
+function readBulkReply<T>(
   reader: BufReader,
-): Promise<Uint8Array | null> {
+  parseReply?: ParseReply<T>,
+): Promise<T | null>;
+async function readBulkReply(
+  reader: BufReader,
+  parseReply?: ParseReply<unknown>,
+) {
   const line = await readLine(reader);
   if (line == null) {
     throw new InvalidStateError();
@@ -195,12 +100,25 @@ async function readBulkReplyBody(
 
   const dest = new Uint8Array(size + 2);
   await reader.readFull(dest);
-  return dest.subarray(0, dest.length - 2); // Strip CR and LF
+  const body = dest.subarray(0, dest.length - 2); // Strip CR and LF
+  if (parseReply) {
+    return parseReply(body);
+  } else {
+    return parseBulkReply(body);
+  }
 }
 
-async function readSimpleStringReplyBody(
+async function readSimpleStringReply(
   reader: BufReader,
-): Promise<Uint8Array> {
+): Promise<string>;
+async function readSimpleStringReply<T>(
+  reader: BufReader,
+  parseReply?: ParseReply<T>,
+): Promise<T>;
+async function readSimpleStringReply(
+  reader: BufReader,
+  parseReply?: ParseReply<unknown>,
+) {
   const line = await readLine(reader);
   if (line == null) {
     throw new InvalidStateError();
@@ -209,25 +127,25 @@ async function readSimpleStringReplyBody(
   if (line[0] !== SimpleStringCode) {
     tryParseErrorReply(line);
   }
-  return line.subarray(1, line.length);
+  const body = line.subarray(1, line.length);
+  if (parseReply) {
+    return parseReply(body);
+  } else {
+    return parseSimpleStringReply(body);
+  }
 }
 
-export function readArrayReplyBody(
+export function readArrayReply(
   reader: BufReader,
-  binaryMode?: false,
 ): Promise<types.ConditionalArray | types.BulkNil>;
-export function readArrayReplyBody(
+export function readArrayReply<T>(
   reader: BufReader,
-  binaryMode: true,
-): Promise<Array<types.ConditionalArray[0] | Uint8Array> | types.BulkNil>;
-export function readArrayReplyBody(
+  parseReply?: ParseReply<T>,
+): Promise<Array<T>>;
+export async function readArrayReply<T>(
   reader: BufReader,
-  binaryMode: boolean,
-): Promise<Array<types.ConditionalArray[0] | Uint8Array> | types.BulkNil>;
-export async function readArrayReplyBody(
-  reader: BufReader,
-  binaryMode = false,
-): Promise<Array<types.ConditionalArray[0] | Uint8Array> | types.BulkNil> {
+  parseReply?: ParseReply<T>,
+) {
   const line = await readLine(reader);
   if (line == null) {
     throw new InvalidStateError();
@@ -239,45 +157,14 @@ export async function readArrayReplyBody(
     return null;
   }
 
-  const simpleStringReplyMethod = binaryMode
-    ? "buffer" as const
-    : "string" as const;
-  const bulkReplyMethod = binaryMode ? "buffer" as const : "bulk" as const;
-  const array: Array<types.ConditionalArray[0] | Uint8Array> = [];
+  const array: Array<types.ConditionalArray[0] | Uint8Array | T> = [];
   for (let i = 0; i < argCount; i++) {
-    const res = await reader.peek(1);
-    if (res === null) {
-      throw new EOFError();
-    }
-
-    const code = res[0];
-    switch (code) {
-      case SimpleStringCode: {
-        const reply = await SimpleStringReply.decode(reader);
-        array.push(reply[simpleStringReplyMethod]());
-        break;
-      }
-      case BulkReplyCode: {
-        const reply = await BulkReply.decode(reader);
-        array.push(reply[bulkReplyMethod]());
-        break;
-      }
-      case IntegerReplyCode: {
-        const reply = await IntegerReply.decode(reader);
-        array.push(reply.integer());
-        break;
-      }
-      case ArrayReplyCode: {
-        const reply = await ArrayReply.decode(reader);
-        array.push(reply.value());
-        break;
-      }
-    }
+    array.push(await readReply(reader, parseReply));
   }
   return array;
 }
 
-export const okReply = new SimpleStringReply(encoder.encode("OK"));
+export const okReply = "OK";
 
 function tryParseErrorReply(line: Uint8Array): never {
   const code = line[0];
@@ -309,12 +196,4 @@ function parseSize(line: Uint8Array): number {
   const sizeStr = line.subarray(1, line.length);
   const size = parseInt(decoder.decode(sizeStr));
   return size;
-}
-
-function createDecodeError(code: number, expectedType: string): Error {
-  return new InvalidStateError(
-    `cannot decode '${
-      String.fromCharCode(code)
-    }' type as \`${expectedType}\` value`,
-  );
 }
