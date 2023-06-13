@@ -122,7 +122,7 @@ const redis = await connect({ hostname: "127.0.0.1" });
   console.assert(reply instanceof Uint8Array);
 
   const decoder = new TextDecoder();
-  const ok = await client.sendCommand("EXISTS", ["key"], {
+  const ok = await redis.sendCommand("EXISTS", ["key"], {
     parseReply: (reply) => decoder.decode(reply) === "1",
   });
   console.assert(ok);
