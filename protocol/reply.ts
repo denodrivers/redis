@@ -9,26 +9,10 @@ const SimpleStringCode = "+".charCodeAt(0);
 const ArrayReplyCode = "*".charCodeAt(0);
 const ErrorReplyCode = "-".charCodeAt(0);
 
-export interface ParseReply<T = unknown> {
-  (reply: Uint8Array): T;
-}
-
-function parseIntegerReply(reply: Uint8Array): number {
-  return Number.parseInt(decoder.decode(reply));
-}
-const decode = decoder.decode.bind(decoder);
-const parseSimpleStringReply = decode;
-const parseBulkReply = decode;
-
-export function readReply(reader: BufReader): Promise<types.RedisReply>;
-export function readReply<T>(
+export async function readReply(
   reader: BufReader,
-  parseReply?: ParseReply<T>,
-): Promise<T>;
-export async function readReply<T>(
-  reader: BufReader,
-  parseReply?: ParseReply<T>,
-): Promise<types.RedisReply | unknown> {
+  returnUint8Arrays?: boolean,
+): Promise<types.RedisReply> {
   const res = await reader.peek(1);
   if (res == null) {
     throw new EOFError();
@@ -41,13 +25,13 @@ export async function readReply<T>(
 
   switch (code) {
     case IntegerReplyCode:
-      return readIntegerReply(reader, parseReply);
+      return readIntegerReply(reader);
     case SimpleStringCode:
-      return readSimpleStringReply(reader, parseReply);
+      return readSimpleStringReply(reader, returnUint8Arrays);
     case BulkReplyCode:
-      return readBulkReply(reader, parseReply);
+      return readBulkReply(reader, returnUint8Arrays);
     case ArrayReplyCode:
-      return readArrayReply(reader, parseReply);
+      return readArrayReply(reader, returnUint8Arrays);
     default:
       throw new InvalidStateError(
         `unknown code: '${String.fromCharCode(code)}' (${code})`,
@@ -57,32 +41,19 @@ export async function readReply<T>(
 
 async function readIntegerReply(
   reader: BufReader,
-): Promise<number>;
-async function readIntegerReply<T>(
-  reader: BufReader,
-  parseReply?: ParseReply<T>,
-): Promise<T>;
-async function readIntegerReply(
-  reader: BufReader,
-  parseReply = parseIntegerReply,
-) {
+): Promise<number> {
   const line = await readLine(reader);
   if (line == null) {
     throw new InvalidStateError();
   }
 
-  return parseReply(line.subarray(1, line.length));
+  return Number.parseInt(decoder.decode(line.subarray(1, line.length)));
 }
 
-function readBulkReply(reader: BufReader): Promise<string | null>;
-function readBulkReply<T>(
-  reader: BufReader,
-  parseReply?: ParseReply<T>,
-): Promise<T | null>;
 async function readBulkReply(
   reader: BufReader,
-  parseReply?: ParseReply<unknown>,
-) {
+  returnUint8Arrays?: boolean,
+): Promise<string | types.Binary | null> {
   const line = await readLine(reader);
   if (line == null) {
     throw new InvalidStateError();
@@ -101,24 +72,13 @@ async function readBulkReply(
   const dest = new Uint8Array(size + 2);
   await reader.readFull(dest);
   const body = dest.subarray(0, dest.length - 2); // Strip CR and LF
-  if (parseReply) {
-    return parseReply(body);
-  } else {
-    return parseBulkReply(body);
-  }
+  return returnUint8Arrays ? body : decoder.decode(body);
 }
 
 async function readSimpleStringReply(
   reader: BufReader,
-): Promise<string>;
-async function readSimpleStringReply<T>(
-  reader: BufReader,
-  parseReply?: ParseReply<T>,
-): Promise<T>;
-async function readSimpleStringReply(
-  reader: BufReader,
-  parseReply?: ParseReply<unknown>,
-) {
+  returnUint8Arrays?: boolean,
+): Promise<string | types.Binary> {
   const line = await readLine(reader);
   if (line == null) {
     throw new InvalidStateError();
@@ -128,24 +88,13 @@ async function readSimpleStringReply(
     tryParseErrorReply(line);
   }
   const body = line.subarray(1, line.length);
-  if (parseReply) {
-    return parseReply(body);
-  } else {
-    return parseSimpleStringReply(body);
-  }
+  return returnUint8Arrays ? body : decoder.decode(body);
 }
 
-export function readArrayReply(
+export async function readArrayReply(
   reader: BufReader,
-): Promise<types.ConditionalArray | types.BulkNil>;
-export function readArrayReply<T>(
-  reader: BufReader,
-  parseReply?: ParseReply<T>,
-): Promise<Array<T>>;
-export async function readArrayReply<T>(
-  reader: BufReader,
-  parseReply?: ParseReply<T>,
-) {
+  returnUint8Arrays?: boolean,
+): Promise<Array<types.RedisReply> | null> {
   const line = await readLine(reader);
   if (line == null) {
     throw new InvalidStateError();
@@ -157,9 +106,9 @@ export async function readArrayReply<T>(
     return null;
   }
 
-  const array: Array<types.ConditionalArray[0] | Uint8Array | T> = [];
+  const array: Array<types.RedisReply> = [];
   for (let i = 0; i < argCount; i++) {
-    array.push(await readReply(reader, parseReply));
+    array.push(await readReply(reader, returnUint8Arrays));
   }
   return array;
 }

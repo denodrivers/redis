@@ -185,25 +185,14 @@ export function generalTests(
       }
     });
 
-    it("supports custom reply parsing with `decodeReply` option", async () => {
+    it("simple strings and blob strings are returned as `Uint8Array` if `returnUint8Arrays` is set to `true`", async () => {
       const encoder = new TextEncoder();
-      const decoder = new TextDecoder();
 
-      // Uint8Array
-      {
-        await client.set("key", encoder.encode("hello"));
-        const reply = await client.sendCommand("GET", ["key"], {
-          parseReply: (reply) => reply,
-        });
-        assertEquals(reply, encoder.encode("hello"));
-      }
-
-      {
-        const reply = await client.sendCommand("EXISTS", ["key"], {
-          parseReply: (reply) => decoder.decode(reply) === "1",
-        });
-        assert(reply);
-      }
+      await client.set("key", encoder.encode("hello"));
+      const reply = await client.sendCommand("GET", ["key"], {
+        returnUint8Arrays: true,
+      });
+      assertEquals(reply, encoder.encode("hello"));
     });
   });
 

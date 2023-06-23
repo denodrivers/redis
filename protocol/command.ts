@@ -1,6 +1,5 @@
 import { BufReader } from "../vendor/https/deno.land/std/io/buf_reader.ts";
 import { BufWriter } from "../vendor/https/deno.land/std/io/buf_writer.ts";
-import type { ParseReply } from "./reply.ts";
 import { readReply } from "./reply.ts";
 import { ErrorReplyError } from "../errors.ts";
 import { encoder } from "./_util.ts";
@@ -87,16 +86,16 @@ function writeFrom(
   return fromIndex + payload.byteLength;
 }
 
-export async function sendCommand<T = RedisReply>(
+export async function sendCommand(
   writer: BufWriter,
   reader: BufReader,
   command: string,
   args: RedisValue[],
-  decode?: ParseReply<T>,
-): Promise<T> {
+  returnUint8Arrays?: boolean,
+): Promise<RedisReply> {
   await writeRequest(writer, command, args);
   await writer.flush();
-  return readReply(reader, decode);
+  return readReply(reader, returnUint8Arrays);
 }
 
 export async function sendCommands(
@@ -105,7 +104,7 @@ export async function sendCommands(
   commands: {
     command: string;
     args: RedisValue[];
-    parseReply?: ParseReply<unknown>;
+    returnUint8Arrays?: boolean;
   }[],
 ): Promise<unknown[]> {
   for (const { command, args } of commands) {
@@ -115,7 +114,7 @@ export async function sendCommands(
   const ret: unknown[] = [];
   for (let i = 0; i < commands.length; i++) {
     try {
-      const rep = await readReply(reader, commands[i].parseReply);
+      const rep = await readReply(reader, commands[i].returnUint8Arrays);
       ret.push(rep);
     } catch (e) {
       if (e instanceof ErrorReplyError) {
