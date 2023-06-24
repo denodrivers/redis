@@ -184,7 +184,7 @@ export function generalTests(
       }
     });
 
-    it("simple strings and blob strings are returned as `Uint8Array` if `returnUint8Arrays` is set to `true`", async () => {
+    it("returns simple strings or blob strings as `Uint8Array` if `returnUint8Arrays` is set to `true`", async () => {
       const encoder = new TextEncoder();
 
       await client.set("key", encoder.encode("hello"));
