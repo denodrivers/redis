@@ -95,7 +95,7 @@ import {
 } from "./stream.ts";
 
 const binaryCommandOptions = {
-  parseReply: (reply: Uint8Array) => reply,
+  returnUint8Arrays: true,
 };
 
 export interface Redis extends RedisCommands {
@@ -105,11 +105,11 @@ export interface Redis extends RedisCommands {
   /**
    * Low level interface for Redis server
    */
-  sendCommand<T = RedisReply>(
+  sendCommand(
     command: string,
     args?: RedisValue[],
-    options?: SendCommandOptions<T>,
-  ): Promise<T>;
+    options?: SendCommandOptions,
+  ): Promise<RedisReply>;
   connect(): Promise<void>;
   close(): void;
 }
@@ -129,10 +129,10 @@ class RedisImpl implements Redis {
     this.executor = executor;
   }
 
-  sendCommand<T = RedisReply>(
+  sendCommand(
     command: string,
     args?: RedisValue[],
-    options?: SendCommandOptions<T>,
+    options?: SendCommandOptions,
   ) {
     return this.executor.sendCommand(command, args, options);
   }
@@ -181,7 +181,7 @@ class RedisImpl implements Redis {
       args,
       binaryCommandOptions,
     );
-    return reply;
+    return reply as Binary | BulkNil;
   }
 
   async execBulkReply<T extends Bulk = Bulk>(

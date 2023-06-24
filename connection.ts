@@ -1,5 +1,5 @@
 import { sendCommand } from "./protocol/mod.ts";
-import type { ParseReply, RedisReply, RedisValue } from "./protocol/mod.ts";
+import type { RedisReply, RedisValue } from "./protocol/mod.ts";
 import type { Backoff } from "./backoff.ts";
 import { exponentialBackoff } from "./backoff.ts";
 import { ErrorReplyError, isRetriableError } from "./errors.ts";
@@ -12,8 +12,13 @@ import {
 import { delay } from "./vendor/https/deno.land/std/async/delay.ts";
 type Closer = Deno.Closer;
 
-export interface SendCommandOptions<T = unknown> {
-  parseReply?: ParseReply<T>;
+export interface SendCommandOptions {
+  /**
+   * When this option is set, simple or bulk string replies are returned as `Uint8Array` type.
+   *
+   * @default false
+   */
+  returnUint8Arrays?: boolean;
 }
 
 export interface Connection {
@@ -24,11 +29,11 @@ export interface Connection {
   close(): void;
   connect(): Promise<void>;
   reconnect(): Promise<void>;
-  sendCommand<T = RedisReply>(
+  sendCommand(
     command: string,
     args?: Array<RedisValue>,
-    options?: SendCommandOptions<T>,
-  ): Promise<T>;
+    options?: SendCommandOptions,
+  ): Promise<RedisReply>;
 }
 
 export interface RedisConnectionOptions {
@@ -50,11 +55,11 @@ export interface RedisConnectionOptions {
 
 export const kEmptyRedisArgs: Array<RedisValue> = [];
 
-interface Command<T = RedisReply> {
+interface Command {
   name: string;
   args: RedisValue[];
-  promise: Deferred<T>;
-  parseReply?: ParseReply<T>;
+  promise: Deferred<RedisReply>;
+  returnUint8Arrays?: boolean;
 }
 
 export class RedisConnection implements Connection {
@@ -70,7 +75,7 @@ export class RedisConnection implements Connection {
   private _isConnected = false;
   private backoff: Backoff;
 
-  private commandQueue: Command<unknown>[] = [];
+  private commandQueue: Command[] = [];
 
   get isClosed(): boolean {
     return this._isClosed;
@@ -126,17 +131,17 @@ export class RedisConnection implements Connection {
     await this.sendCommand("SELECT", [db]);
   }
 
-  sendCommand<T = RedisReply>(
+  sendCommand(
     command: string,
     args?: Array<RedisValue>,
-    options?: SendCommandOptions<T>,
-  ): Promise<T> {
-    const promise = deferred<T>();
+    options?: SendCommandOptions,
+  ): Promise<RedisReply> {
+    const promise = deferred<RedisReply>();
     this.commandQueue.push({
       name: command,
       args: args ?? kEmptyRedisArgs,
       promise,
-      parseReply: options?.parseReply,
+      returnUint8Arrays: options?.returnUint8Arrays,
     });
     if (this.commandQueue.length === 1) {
       this.processCommandQueue();
@@ -229,7 +234,7 @@ export class RedisConnection implements Connection {
         this.reader,
         command.name,
         command.args,
-        command.parseReply,
+        command.returnUint8Arrays,
       );
       command.promise.resolve(reply);
     } catch (error) {
@@ -251,7 +256,7 @@ export class RedisConnection implements Connection {
             this.reader,
             command.name,
             command.args,
-            command.parseReply,
+            command.returnUint8Arrays,
           );
 
           return command.promise.resolve(reply);

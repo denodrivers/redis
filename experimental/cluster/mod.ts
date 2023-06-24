@@ -96,11 +96,11 @@ class ClusterExecutor implements CommandExecutor {
     return this.sendCommand(command, args);
   }
 
-  async sendCommand<T = RedisReply>(
+  async sendCommand(
     command: string,
     _args?: RedisValue[],
-    options?: SendCommandOptions<T>,
-  ): Promise<T> {
+    options?: SendCommandOptions,
+  ): Promise<RedisReply> {
     if (this.#refreshTableASAP) {
       await this.initializeSlotsCache();
     }

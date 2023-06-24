@@ -34,7 +34,7 @@ export type BulkNil = null;
 /**
  * @description Represents the some type in the RESP2 protocol.
  */
-export type Raw = SimpleString | Integer | Bulk | ConditionalArray;
+export type Raw = SimpleString | Integer | Bulk | ConditionalArray | Binary;
 
 export type Binary = Uint8Array;
 

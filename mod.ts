@@ -67,7 +67,6 @@ export type {
   BulkString,
   ConditionalArray,
   Integer,
-  ParseReply,
   Raw,
   RawOrError,
   RedisReply,

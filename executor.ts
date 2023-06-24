@@ -11,11 +11,11 @@ export interface CommandExecutor {
     ...args: RedisValue[]
   ): Promise<RedisReply>;
 
-  sendCommand<T = RedisReply>(
+  sendCommand(
     command: string,
     args?: RedisValue[],
-    options?: SendCommandOptions<T>,
-  ): Promise<T>;
+    options?: SendCommandOptions,
+  ): Promise<RedisReply>;
 
   /**
    * Closes a redis connection.
@@ -33,10 +33,10 @@ export class DefaultExecutor implements CommandExecutor {
     return this.connection.sendCommand(command, args);
   }
 
-  sendCommand<T = RedisReply>(
+  sendCommand(
     command: string,
     args?: RedisValue[],
-    options?: SendCommandOptions<T>,
+    options?: SendCommandOptions,
   ) {
     return this.connection.sendCommand(command, args, options);
   }

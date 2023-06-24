@@ -109,24 +109,22 @@ import { connect } from "https://deno.land/x/redis/mod.ts";
 
 const redis = await connect({ hostname: "127.0.0.1" });
 
-{
-  const reply = await redis.sendCommand("SET", ["redis", "nice"]);
-  console.assert(reply === "OK");
-}
+const reply = await redis.sendCommand("SET", ["redis", "nice"]);
+console.assert(reply === "OK");
+```
 
-{
-  // You can customize the parsing logic of replies with the `parseReply` option
-  const reply = await redis.sendCommand("GET", ["redis"], {
-    parseReply: (reply: Uint8Array) => reply,
-  });
-  console.assert(reply instanceof Uint8Array);
+If `returnUint8Arrays` option is set to `true`, simple strings and bulk strings
+are returned as `Uint8Array`
 
-  const decoder = new TextDecoder();
-  const ok = await redis.sendCommand("EXISTS", ["key"], {
-    parseReply: (reply) => decoder.decode(reply) === "1",
-  });
-  console.assert(ok);
-}
+```ts
+import { connect } from "https://deno.land/x/redis/mod.ts";
+
+const redis = await connect({ hostname: "127.0.0.1" });
+
+const reply = await redis.sendCommand("GET", ["redis"], {
+  returnUint8Arrays: true,
+});
+console.assert(reply instanceof Uint8Array);
 ```
 
 ### Pipelining

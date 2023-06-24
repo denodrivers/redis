@@ -12,7 +12,6 @@ export type {
   SimpleString,
 } from "./types.ts";
 
-export type { ParseReply } from "./reply.ts";
 export { okReply, readArrayReply, readReply } from "./reply.ts";
 
 export { sendCommand, sendCommands } from "./command.ts";

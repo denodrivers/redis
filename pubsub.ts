@@ -87,7 +87,6 @@ class RedisSubscriptionImpl<
   > {
     let forceReconnect = false;
     const connection = this.executor.connection;
-    const decode = binaryMode ? (reply: Uint8Array) => reply : undefined;
     while (this.isConnected) {
       try {
         let rep: [string | Binary, string | Binary, T] | [
@@ -100,7 +99,7 @@ class RedisSubscriptionImpl<
           // TODO: `readArrayReply` should not be called directly here
           rep = (await readArrayReply(
             connection.reader,
-            decode,
+            binaryMode,
           )) as typeof rep;
         } catch (err) {
           if (err instanceof Deno.errors.BadResource) {
