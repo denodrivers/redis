@@ -1,7 +1,6 @@
 import { ErrorReplyError } from "../../mod.ts";
 import type { Redis } from "../../mod.ts";
 import {
-  assert,
   assertEquals,
   assertRejects,
 } from "../../vendor/https/deno.land/std/testing/asserts.ts";
