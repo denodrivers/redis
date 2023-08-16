@@ -2359,9 +2359,16 @@ class RedisImpl implements Redis {
   }
 }
 
-export interface RedisConnectOptions extends RedisConnectionOptions {
+export type RedisConnectOptions = RedisConnectOptionsTCP | RedisConnectOptionsUnix;
+
+export interface RedisConnectOptionsTCP extends RedisConnectionOptions {
   hostname: string;
   port?: number | string;
+}
+
+export interface RedisConnectOptionsUnix extends RedisConnectionOptions {
+  path: string;
+  transport: "unix";
 }
 
 /**
@@ -2443,6 +2450,10 @@ export function parseURL(url: string): RedisConnectOptions {
 }
 
 function createRedisConnection(options: RedisConnectOptions): Connection {
+  if ("transport" in options) {
+    const { path, transport, ...opts } = options;
+    return new RedisConnection(path, transport, opts);
+  }
   const { hostname, port = 6379, ...opts } = options;
   return new RedisConnection(hostname, port, opts);
 }

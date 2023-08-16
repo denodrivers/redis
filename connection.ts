@@ -158,13 +158,15 @@ export class RedisConnection implements Connection {
 
   async #connect(retryCount: number) {
     try {
-      const dialOpts: Deno.ConnectOptions = {
-        hostname: this.hostname,
-        port: parsePortLike(this.port),
+      const dialOpts: Deno.ConnectOptions|Deno.UnixConnectOptions = this.port === "unix" 
+        ? { path: this.hostname, transport: "unix" }
+        : { hostname: this.hostname, port: parsePortLike(this.port),
       };
-      const conn: Deno.Conn = this.options?.tls
+      const conn = this.options?.tls && !("path" in dialOpts)
         ? await Deno.connectTls(dialOpts)
-        : await Deno.connect(dialOpts);
+        : !("path" in dialOpts) // function overloading -- just say no
+          ? await Deno.connect(dialOpts)
+          : await Deno.connect(dialOpts);
 
       this.closer = conn;
       this.reader = new BufReader(conn);
