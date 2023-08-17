@@ -2359,8 +2359,6 @@ class RedisImpl implements Redis {
   }
 }
 
-export type RedisConnectOptions = RedisConnectOptionsTCP | RedisConnectOptionsUnix;
-
 export interface RedisConnectOptionsTCP extends RedisConnectionOptions {
   hostname: string;
   port?: number | string;
@@ -2370,6 +2368,16 @@ export interface RedisConnectOptionsUnix extends RedisConnectionOptions {
   path: string;
   transport: "unix";
 }
+
+// @ts-ignore: Exploiting missing type resolving to `any` to detect if `UnixConnectOptions` is available:
+type ExtendsUCO<T> = T extends Deno.UnixConnectOptions ? true : false;
+type HasUCO = ExtendsUCO<{ path: string, transport: "unix"}> extends false 
+  ? never 
+  : ExtendsUCO<{ transport: "not-unix" }> extends true 
+    ? never 
+    : {};
+
+export type RedisConnectOptions = RedisConnectOptionsTCP | (HasUCO & RedisConnectOptionsUnix);
 
 /**
  * Connect to Redis server
@@ -2449,8 +2457,12 @@ export function parseURL(url: string): RedisConnectOptions {
   };
 }
 
+function isRedisConnectOptionsUnixLike(x: object): x is { path: string, transport: "unix" } {
+  return "path" in x && "transport" in x;
+}
+
 function createRedisConnection(options: RedisConnectOptions): Connection {
-  if ("transport" in options) {
+  if (isRedisConnectOptionsUnixLike(options)) {
     const { path, transport, ...opts } = options;
     return new RedisConnection(path, transport, opts);
   }
