@@ -2359,25 +2359,27 @@ class RedisImpl implements Redis {
   }
 }
 
-export interface RedisConnectOptionsTCP extends RedisConnectionOptions {
+interface RedisConnectOptionsTCP extends RedisConnectionOptions {
   hostname: string;
   port?: number | string;
 }
 
-export interface RedisConnectOptionsUnix extends RedisConnectionOptions {
+interface RedisConnectOptionsUnix extends RedisConnectionOptions {
   path: string;
   transport: "unix";
 }
 
-// @ts-ignore: Exploiting missing type resolving to `any` to detect if `UnixConnectOptions` is available:
+// @ts-ignore: Exploiting missing type resolving to `any` to detect if `UnixConnectOptions` is in type scope:
 type ExtendsUCO<T> = T extends Deno.UnixConnectOptions ? true : false;
-type HasUCO = ExtendsUCO<{ path: string, transport: "unix"}> extends false 
-  ? never 
-  : ExtendsUCO<{ transport: "not-unix" }> extends true 
-    ? never 
-    : {};
+type ValidUCO = ExtendsUCO<{ path: string; transport: "unix" }>;
+type InvalidUCO = ExtendsUCO<{ transport: "not-unix" }>;
+type HasUCO = ValidUCO extends false ? never
+  : InvalidUCO extends true ? never
+  : {};
 
-export type RedisConnectOptions = RedisConnectOptionsTCP | (HasUCO & RedisConnectOptionsUnix);
+export type RedisConnectOptions =
+  | RedisConnectOptionsTCP
+  | (HasUCO & RedisConnectOptionsUnix);
 
 /**
  * Connect to Redis server
@@ -2457,7 +2459,9 @@ export function parseURL(url: string): RedisConnectOptions {
   };
 }
 
-function isRedisConnectOptionsUnixLike(x: object): x is { path: string, transport: "unix" } {
+function isRedisConnectOptionsUnixLike(
+  x: object,
+): x is { path: string; transport: "unix" } {
   return "path" in x && "transport" in x;
 }
 
