@@ -1,4 +1,4 @@
-import { assertEquals } from "../../vendor/https/deno.land/std/testing/asserts.ts";
+import { assertEquals } from "../../vendor/https/deno.land/std/assert/mod.ts";
 import {
   afterAll,
   beforeAll,

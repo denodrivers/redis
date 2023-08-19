@@ -3,7 +3,7 @@ import {
   assert,
   assertEquals,
   assertStringIncludes,
-} from "../vendor/https/deno.land/std/testing/asserts.ts";
+} from "../vendor/https/deno.land/std/assert/mod.ts";
 import {
   afterAll,
   beforeAll,

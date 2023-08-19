@@ -2,7 +2,7 @@ import { ErrorReplyError, Raw } from "../../mod.ts";
 import {
   assert,
   assertEquals,
-} from "../../vendor/https/deno.land/std/testing/asserts.ts";
+} from "../../vendor/https/deno.land/std/assert/mod.ts";
 import { it } from "../../vendor/https/deno.land/std/testing/bdd.ts";
 import { newClient } from "../test_util.ts";
 import type { TestServer } from "../test_util.ts";
