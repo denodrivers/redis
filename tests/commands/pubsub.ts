@@ -3,7 +3,7 @@ import {
   assert,
   assertEquals,
   assertRejects,
-} from "../../vendor/https/deno.land/std/testing/asserts.ts";
+} from "../../vendor/https/deno.land/std/assert/mod.ts";
 import { describe, it } from "../../vendor/https/deno.land/std/testing/bdd.ts";
 import { newClient, nextPort, startRedis, stopRedis } from "../test_util.ts";
 import type { TestServer } from "../test_util.ts";
