@@ -64,11 +64,14 @@ interface Command {
   returnUint8Arrays?: boolean;
 }
 
-function isRedisConnectOptionsUnixLike(
-  x: object,
-): x is { path: string; transport: "unix" } {
+function isUnixConnectOptionsLike(x: object): x is UnixConnectOptionsLike {
   return "path" in x && "transport" in x;
 }
+
+type UnixConnectOptionsLike = {
+  path: string;
+  transport: "unix";
+};
 
 export class RedisConnection implements Connection {
   name: string | null = null;
@@ -77,8 +80,6 @@ export class RedisConnection implements Connection {
   private closer!: Closer;
   private maxRetryCount = 10;
 
-  private readonly hostname: string;
-  private readonly port: number | string;
   private _isClosed = false;
   private _isConnected = false;
   private backoff: Backoff;
@@ -98,13 +99,6 @@ export class RedisConnection implements Connection {
   }
 
   constructor(private options: RedisConnectionOptions) {
-    if (isRedisConnectOptionsUnixLike(options)) {
-      this.hostname = options.path;
-      this.port = "unix";
-    } else {
-      this.hostname = options.hostname;
-      this.port = parsePortLike(options.port || 6379);
-    }
     if (options.name) {
       this.name = options.name;
     }
@@ -167,19 +161,16 @@ export class RedisConnection implements Connection {
 
   async #connect(retryCount: number) {
     try {
-      type UnixConnectOptions = {
-        path: string;
-        transport: "unix";
-      };
-      const dialOpts: Deno.ConnectOptions | UnixConnectOptions =
-        this.port !== "unix"
+      const { options } = this;
+      const dialOpts: Deno.ConnectOptions | UnixConnectOptionsLike =
+        !isUnixConnectOptionsLike(options)
           ? {
-            hostname: this.hostname,
-            port: parsePortLike(this.port),
+            hostname: options.hostname,
+            port: parsePortLike(options.port),
           }
           : {
-            path: this.hostname,
-            transport: this.port,
+            path: options.path,
+            transport: options.transport,
           };
       const conn: Deno.Conn =
         !("path" in dialOpts) && ("tls" in this.options && this.options.tls)
