@@ -1,6 +1,7 @@
 import { sendCommand } from "./protocol/mod.ts";
 import type { RedisReply, RedisValue } from "./protocol/mod.ts";
 import type { Backoff } from "./backoff.ts";
+import type { RedisConnectionOptions } from "./redis.ts";
 import { exponentialBackoff } from "./backoff.ts";
 import { ErrorReplyError, isRetriableError } from "./errors.ts";
 import { BufReader } from "./vendor/https/deno.land/std/io/buf_reader.ts";
@@ -36,8 +37,7 @@ export interface Connection {
   ): Promise<RedisReply>;
 }
 
-export interface RedisConnectionOptions {
-  tls?: boolean;
+export interface BaseRedisConnectionOptions {
   db?: number;
   password?: string;
   username?: string;
@@ -53,6 +53,8 @@ export interface RedisConnectionOptions {
   healthCheckInterval?: number;
 }
 
+export { RedisConnectionOptions };
+
 export const kEmptyRedisArgs: Array<RedisValue> = [];
 
 interface Command {
@@ -60,6 +62,12 @@ interface Command {
   args: RedisValue[];
   promise: Deferred<RedisReply>;
   returnUint8Arrays?: boolean;
+}
+
+function isRedisConnectOptionsUnixLike(
+  x: object,
+): x is { path: string; transport: "unix" } {
+  return "path" in x && "transport" in x;
 }
 
 export class RedisConnection implements Connection {
@@ -89,13 +97,14 @@ export class RedisConnection implements Connection {
     return this.maxRetryCount > 0;
   }
 
-  constructor(
-    hostname: string,
-    port: number | string,
-    private options: RedisConnectionOptions,
-  ) {
-    this.hostname = hostname;
-    this.port = port;
+  constructor(private options: RedisConnectionOptions) {
+    if (isRedisConnectOptionsUnixLike(options)) {
+      this.hostname = options.path;
+      this.port = "unix";
+    } else {
+      this.hostname = options.hostname;
+      this.port = parsePortLike(options.port || 6379);
+    }
     if (options.name) {
       this.name = options.name;
     }
@@ -170,14 +179,15 @@ export class RedisConnection implements Connection {
           }
           : {
             path: this.hostname,
-            transport: "unix",
+            transport: this.port,
           };
-      const conn: Deno.Conn = this.options?.tls && !("path" in dialOpts)
-        ? await Deno.connectTls(dialOpts)
-        : !("path" in dialOpts)
-        ? await Deno.connect(dialOpts)
-        // @ts-ignore: type error iff `lib.deno.unstable` is missing
-        : await Deno.connect(dialOpts);
+      const conn: Deno.Conn =
+        !("path" in dialOpts) && ("tls" in this.options && this.options.tls)
+          ? await Deno.connectTls(dialOpts)
+          : !("path" in dialOpts)
+          ? await Deno.connect(dialOpts)
+          // @ts-ignore: type error iff `lib.deno.unstable` is missing
+          : await Deno.connect(dialOpts);
 
       this.closer = conn;
       this.reader = new BufReader(conn);

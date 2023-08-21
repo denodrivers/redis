@@ -17,5 +17,10 @@
     "bench:deno-redis": "DENO_NO_PACKAGE_JSON=1 deno run --unstable --allow-net=127.0.0.1:6379 --allow-read --allow-env --allow-write=tmp --import-map=benchmark/import_map.json benchmark/deno-redis.ts",
     "bench:ioredis": "node benchmark/ioredis.js"
   },
+  "compilerOptions": {
+    "lib": [
+      "deno.window"
+    ]
+  },
   "lock": false
 }

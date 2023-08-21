@@ -43,7 +43,7 @@ import type {
 } from "./command.ts";
 import { RedisConnection } from "./connection.ts";
 import type { Connection, SendCommandOptions } from "./connection.ts";
-import type { RedisConnectionOptions } from "./connection.ts";
+import type { BaseRedisConnectionOptions } from "./connection.ts";
 import { CommandExecutor, DefaultExecutor } from "./executor.ts";
 import type {
   Binary,
@@ -2359,14 +2359,14 @@ class RedisImpl implements Redis {
   }
 }
 
-interface RedisConnectOptionsTCP extends RedisConnectionOptions {
+interface RedisConnectionOptionsTCP extends BaseRedisConnectionOptions {
+  tls?: boolean;
   hostname: string;
   port?: number | string;
 }
 
-interface RedisConnectOptionsUnix extends RedisConnectionOptions {
+interface RedisConnectionOptionsUnix extends BaseRedisConnectionOptions {
   path: string;
-  transport: "unix";
 }
 
 // @ts-ignore: Exploiting missing type resolving to `any` to detect if `UnixConnectOptions` is in type scope:
@@ -2377,9 +2377,12 @@ type HasUCO = ValidUCO extends false ? never
   : InvalidUCO extends true ? never
   : {};
 
-export type RedisConnectOptions =
-  | RedisConnectOptionsTCP
-  | (HasUCO & RedisConnectOptionsUnix);
+export type RedisConnectionOptions =
+  | RedisConnectionOptionsTCP
+  | (HasUCO & RedisConnectionOptionsUnix);
+
+/** @deprecated Use `RedisConnectionOptons` instead */
+export type RedisConnectOptions = RedisConnectionOptions;
 
 /**
  * Connect to Redis server
@@ -2391,7 +2394,7 @@ export type RedisConnectOptions =
  * const conn2 = await connect({hostname: "redis.proxy", port: 443, tls: true}); // -> TLS, redis.proxy:443
  * ```
  */
-export async function connect(options: RedisConnectOptions): Promise<Redis> {
+export async function connect(options: RedisConnectionOptions): Promise<Redis> {
   const connection = createRedisConnection(options);
   await connection.connect();
   const executor = new DefaultExecutor(connection);
@@ -2410,7 +2413,7 @@ export async function connect(options: RedisConnectOptions): Promise<Redis> {
  * console.assert(client.isConnected);
  * ```
  */
-export function createLazyClient(options: RedisConnectOptions): Redis {
+export function createLazyClient(options: RedisConnectionOptions): Redis {
   const connection = createRedisConnection(options);
   const executor = createLazyExecutor(connection);
   return create(executor);
@@ -2434,7 +2437,7 @@ export function create(executor: CommandExecutor): Redis {
  * parseURL("rediss://127.0.0.1:443/?db=2&password=bar"); // -> {hostname: "127.0.0.1", port: "443", tls: true, db: 2, name: undefined, password: bar}
  * ```
  */
-export function parseURL(url: string): RedisConnectOptions {
+export function parseURL(url: string): RedisConnectionOptions {
   const {
     protocol,
     hostname,
@@ -2459,19 +2462,8 @@ export function parseURL(url: string): RedisConnectOptions {
   };
 }
 
-function isRedisConnectOptionsUnixLike(
-  x: object,
-): x is { path: string; transport: "unix" } {
-  return "path" in x && "transport" in x;
-}
-
-function createRedisConnection(options: RedisConnectOptions): Connection {
-  if (isRedisConnectOptionsUnixLike(options)) {
-    const { path, transport, ...opts } = options;
-    return new RedisConnection(path, transport, opts);
-  }
-  const { hostname, port = 6379, ...opts } = options;
-  return new RedisConnection(hostname, port, opts);
+function createRedisConnection(options: RedisConnectionOptions): Connection {
+  return new RedisConnection(options);
 }
 
 function createLazyExecutor(connection: Connection): CommandExecutor {
