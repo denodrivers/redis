@@ -155,7 +155,7 @@ export function pubsubTests(
     sub.close();
     pub.close();
     client.close();
-    stopRedis(tempServer);
+    await stopRedis(tempServer);
   });
 
   it({
