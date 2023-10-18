@@ -9,6 +9,7 @@ import {
   sendCommands,
 } from "./protocol/mod.ts";
 import { create, Redis } from "./redis.ts";
+import { kUnstablePipeline } from "./internal/symbols.ts";
 import {
   Deferred,
   deferred,
@@ -92,7 +93,7 @@ export class PipelineExecutor implements CommandExecutor {
   private dequeue(): void {
     const [e] = this.queue;
     if (!e) return;
-    sendCommands(this.connection.writer, this.connection.reader, e.commands)
+    this.connection[kUnstablePipeline](e.commands)
       .then(e.d.resolve)
       .catch(e.d.reject)
       .finally(() => {

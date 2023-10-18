@@ -1,8 +1,9 @@
-import { sendCommand } from "./protocol/mod.ts";
-import type { RedisReply, RedisValue } from "./protocol/mod.ts";
+import { readReply, sendCommand, sendCommands } from "./protocol/mod.ts";
+import type { Command, RedisReply, RedisValue } from "./protocol/mod.ts";
 import type { Backoff } from "./backoff.ts";
 import { exponentialBackoff } from "./backoff.ts";
 import { ErrorReplyError, isRetriableError } from "./errors.ts";
+import { kUnstablePipeline, kUnstableReadReply } from "./internal/symbols.ts";
 import { BufReader } from "./vendor/https/deno.land/std/io/buf_reader.ts";
 import { BufWriter } from "./vendor/https/deno.land/std/io/buf_writer.ts";
 import {
@@ -22,8 +23,6 @@ export interface SendCommandOptions {
 }
 
 export interface Connection {
-  reader: BufReader;
-  writer: BufWriter;
   isClosed: boolean;
   isConnected: boolean;
   close(): void;
@@ -34,6 +33,16 @@ export interface Connection {
     args?: Array<RedisValue>,
     options?: SendCommandOptions,
   ): Promise<RedisReply>;
+  /**
+   * @private
+   */
+  [kUnstableReadReply](returnsUint8Arrays?: boolean): Promise<RedisReply>;
+  /**
+   * @private
+   */
+  [kUnstablePipeline](
+    commands: Array<Command>,
+  ): Promise<Array<RedisReply | ErrorReplyError>>;
 }
 
 export interface RedisConnectionOptions {
@@ -64,8 +73,8 @@ interface Command {
 
 export class RedisConnection implements Connection {
   name: string | null = null;
-  reader!: BufReader;
-  writer!: BufWriter;
+  private reader!: BufReader;
+  private writer!: BufWriter;
   private closer!: Closer;
   private maxRetryCount = 10;
 
@@ -147,6 +156,14 @@ export class RedisConnection implements Connection {
       this.processCommandQueue();
     }
     return promise;
+  }
+
+  [kUnstableReadReply](returnsUint8Arrays?: boolean): Promise<RedisReply> {
+    return readReply(this.reader, returnsUint8Arrays);
+  }
+
+  [kUnstablePipeline](commands: Array<Command>) {
+    return sendCommands(this.writer, this.reader, commands);
   }
 
   /**
