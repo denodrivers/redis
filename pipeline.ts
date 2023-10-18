@@ -6,7 +6,6 @@ import {
   RawOrError,
   RedisReply,
   RedisValue,
-  sendCommands,
 } from "./protocol/mod.ts";
 import { create, Redis } from "./redis.ts";
 import { kUnstablePipeline } from "./internal/symbols.ts";

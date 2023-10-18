@@ -1,7 +1,6 @@
 import type { CommandExecutor } from "./executor.ts";
 import { InvalidStateError } from "./errors.ts";
 import type { Binary } from "./protocol/mod.ts";
-import { readArrayReply } from "./protocol/mod.ts";
 import { decoder } from "./protocol/_util.ts";
 import { kUnstableReadReply } from "./internal/symbols.ts";
 
