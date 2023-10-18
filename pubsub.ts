@@ -103,6 +103,10 @@ class RedisSubscriptionImpl<
             connection.close();
             break;
           }
+          if (connection.isClosed) {
+            // Connection already closed.
+            break;
+          }
           throw err;
         }
 
