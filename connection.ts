@@ -1,5 +1,6 @@
 import { readReply, sendCommand, sendCommands } from "./protocol/mod.ts";
-import type { Command, RedisReply, RedisValue } from "./protocol/mod.ts";
+import type { RedisReply, RedisValue } from "./protocol/mod.ts";
+import type { Command } from "./protocol/command.ts";
 import type { Backoff } from "./backoff.ts";
 import { exponentialBackoff } from "./backoff.ts";
 import { ErrorReplyError, isRetriableError } from "./errors.ts";
@@ -64,7 +65,7 @@ export interface RedisConnectionOptions {
 
 export const kEmptyRedisArgs: Array<RedisValue> = [];
 
-interface Command {
+interface PendingCommand {
   name: string;
   args: RedisValue[];
   promise: Deferred<RedisReply>;
@@ -84,7 +85,7 @@ export class RedisConnection implements Connection {
   private _isConnected = false;
   private backoff: Backoff;
 
-  private commandQueue: Command[] = [];
+  private commandQueue: PendingCommand[] = [];
 
   get isClosed(): boolean {
     return this._isClosed;

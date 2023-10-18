@@ -14,5 +14,4 @@ export type {
 
 export { okReply, readArrayReply, readReply } from "./reply.ts";
 
-export type { Command } from "./command.ts";
 export { sendCommand, sendCommands } from "./command.ts";
