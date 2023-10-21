@@ -98,20 +98,22 @@ export async function sendCommand(
   return readReply(reader, returnUint8Arrays);
 }
 
+export interface Command {
+  command: string;
+  args: RedisValue[];
+  returnUint8Arrays?: boolean;
+}
+
 export async function sendCommands(
   writer: BufWriter,
   reader: BufReader,
-  commands: {
-    command: string;
-    args: RedisValue[];
-    returnUint8Arrays?: boolean;
-  }[],
-): Promise<unknown[]> {
+  commands: Command[],
+): Promise<(RedisReply | ErrorReplyError)[]> {
   for (const { command, args } of commands) {
     await writeRequest(writer, command, args);
   }
   await writer.flush();
-  const ret: unknown[] = [];
+  const ret: (RedisReply | ErrorReplyError)[] = [];
   for (let i = 0; i < commands.length; i++) {
     try {
       const rep = await readReply(reader, commands[i].returnUint8Arrays);

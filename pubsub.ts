@@ -1,8 +1,8 @@
 import type { CommandExecutor } from "./executor.ts";
-import { InvalidStateError } from "./errors.ts";
+import { EOFError, InvalidStateError } from "./errors.ts";
 import type { Binary } from "./protocol/mod.ts";
-import { readArrayReply } from "./protocol/mod.ts";
 import { decoder } from "./protocol/_util.ts";
+import { kUnstableReadReply } from "./internal/symbols.ts";
 
 type DefaultMessageType = string;
 type ValidMessageType = string | string[];
@@ -96,11 +96,7 @@ class RedisSubscriptionImpl<
           T,
         ];
         try {
-          // TODO: `readArrayReply` should not be called directly here
-          rep = (await readArrayReply(
-            connection.reader,
-            binaryMode,
-          )) as typeof rep;
+          rep = await connection[kUnstableReadReply](binaryMode) as typeof rep;
         } catch (err) {
           if (err instanceof Deno.errors.BadResource) {
             // Connection already closed.
@@ -139,6 +135,7 @@ class RedisSubscriptionImpl<
         }
       } catch (error) {
         if (
+          error instanceof EOFError ||
           error instanceof InvalidStateError ||
           error instanceof Deno.errors.BadResource
         ) {
