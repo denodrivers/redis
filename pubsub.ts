@@ -1,5 +1,5 @@
 import type { CommandExecutor } from "./executor.ts";
-import { InvalidStateError } from "./errors.ts";
+import { EOFError, InvalidStateError } from "./errors.ts";
 import type { Binary } from "./protocol/mod.ts";
 import { decoder } from "./protocol/_util.ts";
 import { kUnstableReadReply } from "./internal/symbols.ts";
@@ -103,10 +103,6 @@ class RedisSubscriptionImpl<
             connection.close();
             break;
           }
-          if (connection.isClosed) {
-            // Connection already closed.
-            break;
-          }
           throw err;
         }
 
@@ -139,6 +135,7 @@ class RedisSubscriptionImpl<
         }
       } catch (error) {
         if (
+          error instanceof EOFError ||
           error instanceof InvalidStateError ||
           error instanceof Deno.errors.BadResource
         ) {
