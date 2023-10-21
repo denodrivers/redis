@@ -67,9 +67,12 @@ export function run({
       await client.flushdb();
     }),
     save({
-      file: `${driver}-bench`,
+      file: driver,
       details: true,
-      folder: join(dirname(dirname(new URL(import.meta.url).pathname)), "tmp"),
+      folder: join(
+        dirname(dirname(new URL(import.meta.url).pathname)),
+        "tmp/benchmark",
+      ),
     }),
   );
 }
