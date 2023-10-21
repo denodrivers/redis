@@ -1,3 +1,5 @@
+import { join } from "node:path";
+
 function formatResultsAsMarkdown({ name, results }) {
   const detailKeys = ["min", "max", "mean", "median"];
   const header = ["name", "ops", "margin", ...detailKeys, "samples"];
@@ -25,11 +27,12 @@ function makeTableRow(columns) {
   return `|${columns.join("|")}|`;
 }
 
-const tmpDir = new URL("../tmp", import.meta.url).pathname;
-for (const driver of ["deno-redis", "ioredis"]) {
-  console.log(
-    formatResultsAsMarkdown(
-      JSON.parse(await Deno.readTextFile(`${tmpDir}/${driver}-bench.json`)),
-    ),
-  );
+const resultsDir = new URL("../tmp/benchmark", import.meta.url);
+const paths = Array.from(Deno.readDirSync(resultsDir)).map((x) =>
+  join(resultsDir.pathname, x.name)
+).sort();
+for (const path of paths) {
+  const results = JSON.parse(await Deno.readTextFile(path));
+  const markdown = formatResultsAsMarkdown(results);
+  console.log(markdown);
 }
