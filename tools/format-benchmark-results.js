@@ -28,10 +28,11 @@ function makeTableRow(columns) {
 }
 
 const resultsDir = new URL("../tmp/benchmark", import.meta.url);
-for await (const entry of Deno.readDir(resultsDir)) {
-  const results = JSON.parse(
-    await Deno.readTextFile(join(resultsDir.pathname, entry.name)),
-  );
+const paths = Array.from(Deno.readDirSync(resultsDir)).map((x) =>
+  join(resultsDir.pathname, x.name)
+).sort();
+for (const path of paths) {
+  const results = JSON.parse(await Deno.readTextFile(path));
   const markdown = formatResultsAsMarkdown(results);
   console.log(markdown);
 }
