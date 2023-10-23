@@ -36,7 +36,7 @@ export class BufferedReadableStream {
 
   async readFull(buffer: Uint8Array): Promise<void> {
     if (buffer.length <= this.#buffer.length) {
-      buffer.set(this.#buffer);
+      buffer.set(this.#buffer.subarray(0, buffer.length));
       this.#buffer = this.#buffer.subarray(buffer.length);
       return;
     }

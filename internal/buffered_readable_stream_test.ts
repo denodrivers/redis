@@ -1,3 +1,4 @@
+import { encoder } from "../protocol/_util.ts";
 import {
   assertEquals,
   assertFalse,
@@ -62,6 +63,37 @@ Deno.test({
 
       assertFalse(readable.locked);
     });
+
+    await t.step(
+      "`readFull` should not throw `RangeError: offset is out of bounds` error",
+      async () => {
+        const readable = new ReadableStream<Uint8Array>({
+          start(controller) {
+            controller.enqueue(encoder.encode("foobar"));
+            controller.close();
+          },
+        });
+        const buffered = new BufferedReadableStream(readable);
+        {
+          const buf = new Uint8Array(3);
+          await buffered.readFull(buf);
+          assertEquals(decoder.decode(buf), "foo");
+        }
+
+        {
+          const buf = new Uint8Array(1);
+          await buffered.readFull(buf);
+          assertEquals(decoder.decode(buf), "b");
+        }
+
+        await buffered.readFull(new Uint8Array(0));
+        {
+          const buf = new Uint8Array(2);
+          await buffered.readFull(buf);
+          assertEquals(decoder.decode(buf), "ar");
+        }
+      },
+    );
   },
 });
 
