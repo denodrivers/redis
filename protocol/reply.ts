@@ -1,6 +1,11 @@
-import { BufReader } from "../vendor/https/deno.land/std/io/buf_reader.ts";
+import { concat } from "../vendor/https/deno.land/std/bytes/concat.ts";
 import type * as types from "./types.ts";
-import { EOFError, ErrorReplyError, InvalidStateError } from "../errors.ts";
+import {
+  EOFError,
+  ErrorReplyError,
+  InvalidStateError,
+  NotImplementedError,
+} from "../errors.ts";
 import { decoder } from "./_util.ts";
 
 const IntegerReplyCode = ":".charCodeAt(0);
@@ -9,140 +14,106 @@ const SimpleStringCode = "+".charCodeAt(0);
 const ArrayReplyCode = "*".charCodeAt(0);
 const ErrorReplyCode = "-".charCodeAt(0);
 
+const CR = "\r".charCodeAt(0);
+const LF = "\n".charCodeAt(0);
+
+type ReadLineResult =
+  | Omit<ReadableStreamDefaultReadValueResult<Uint8Array>, "done"> & {
+    done?: false;
+    continuation?: Uint8Array;
+  }
+  | ReadableStreamDefaultReadDoneResult;
+
+export async function readLine(
+  reader: ReadableStreamDefaultReader<Uint8Array>,
+): Promise<ReadLineResult> {
+  const res = await reader.read();
+  if (res.done) {
+    return res;
+  }
+
+  let buf = res.value;
+  while (true) {
+    const i = buf.lastIndexOf(LF);
+    if (i > -1) {
+      const j = i - 1;
+      if (buf[j] !== CR) {
+        throw new InvalidStateError();
+      }
+      const line = buf.slice(0, j);
+      if (buf.byteLength === i + 1) {
+        return { value: line };
+      } else {
+        return { value: line, continuation: buf.slice(i + 1) };
+      }
+    }
+
+    const res = await reader.read();
+    if (res.done) {
+      return { done: true };
+    }
+    buf = concat(buf, res.value);
+  }
+}
+
 export async function readReply(
-  reader: BufReader,
+  readable: ReadableStream<Uint8Array>,
   returnUint8Arrays?: boolean,
-): Promise<types.RedisReply> {
-  const res = await reader.peek(1);
-  if (res == null) {
+) {
+  const reader = readable.getReader();
+  const res = await readLine(reader).finally(() => reader.releaseLock());
+  if (res.done) {
     throw new EOFError();
+  } else if (res.continuation) {
+    throw new NotImplementedError();
   }
 
-  const code = res[0];
-  if (code === ErrorReplyCode) {
-    await tryReadErrorReply(reader);
-  }
-
+  const { value: line } = res;
+  const code = line[0];
   switch (code) {
-    case IntegerReplyCode:
-      return readIntegerReply(reader);
-    case SimpleStringCode:
-      return readSimpleStringReply(reader, returnUint8Arrays);
-    case BulkReplyCode:
-      return readBulkReply(reader, returnUint8Arrays);
-    case ArrayReplyCode:
-      return readArrayReply(reader, returnUint8Arrays);
+    case ErrorReplyCode: {
+      throw new ErrorReplyError(decoder.decode(line));
+    }
+    case IntegerReplyCode: {
+      return Number.parseInt(decoder.decode(line.slice(1)));
+    }
+    case SimpleStringCode: {
+      const body = line.slice(1);
+      return returnUint8Arrays ? body : decoder.decode(body);
+    }
+    case BulkReplyCode: {
+      const size = Number.parseInt(decoder.decode(line.slice(1)));
+      if (size < 0) {
+        // nil bulk reply
+        return null;
+      }
+      // NOTE: `Deno.Conn.readable` is a readable byte stream. (https://github.com/denoland/deno/blob/v1.37.2/ext/net/01_net.js#L130)
+      const reader = readable.getReader({ mode: "byob" });
+      const buf = new Uint8Array(size + 2);
+      const res = await reader.read(buf).finally(() => reader.releaseLock());
+      if (res.done) {
+        throw new EOFError();
+      }
+      const body = res.value.slice(0, size); // Strip CR and LF.
+      return returnUint8Arrays ? body : decoder.decode(body);
+    }
+    case ArrayReplyCode: {
+      const size = Number.parseInt(decoder.decode(line.slice(1)));
+      if (size === -1) {
+        // `-1` indicates a null array
+        return null;
+      }
+      const array: Array<types.RedisReply> = [];
+      for (let i = 0; i < size; i++) {
+        array.push(await readReply(readable, returnUint8Arrays));
+      }
+      return array;
+    }
     default:
-      throw new InvalidStateError(
-        `unknown code: '${String.fromCharCode(code)}' (${code})`,
+      throw new NotImplementedError(
+        `'${String.fromCharCode(code)}' reply is not implemented`,
       );
   }
 }
 
-async function readIntegerReply(
-  reader: BufReader,
-): Promise<number> {
-  const line = await readLine(reader);
-  if (line == null) {
-    throw new InvalidStateError();
-  }
-
-  return Number.parseInt(decoder.decode(line.subarray(1, line.length)));
-}
-
-async function readBulkReply(
-  reader: BufReader,
-  returnUint8Arrays?: boolean,
-): Promise<string | types.Binary | null> {
-  const line = await readLine(reader);
-  if (line == null) {
-    throw new InvalidStateError();
-  }
-
-  if (line[0] !== BulkReplyCode) {
-    tryParseErrorReply(line);
-  }
-
-  const size = parseSize(line);
-  if (size < 0) {
-    // nil bulk reply
-    return null;
-  }
-
-  const dest = new Uint8Array(size + 2);
-  await reader.readFull(dest);
-  const body = dest.subarray(0, dest.length - 2); // Strip CR and LF
-  return returnUint8Arrays ? body : decoder.decode(body);
-}
-
-async function readSimpleStringReply(
-  reader: BufReader,
-  returnUint8Arrays?: boolean,
-): Promise<string | types.Binary> {
-  const line = await readLine(reader);
-  if (line == null) {
-    throw new InvalidStateError();
-  }
-
-  if (line[0] !== SimpleStringCode) {
-    tryParseErrorReply(line);
-  }
-  const body = line.subarray(1, line.length);
-  return returnUint8Arrays ? body : decoder.decode(body);
-}
-
-export async function readArrayReply(
-  reader: BufReader,
-  returnUint8Arrays?: boolean,
-): Promise<Array<types.RedisReply> | null> {
-  const line = await readLine(reader);
-  if (line == null) {
-    throw new InvalidStateError();
-  }
-
-  const argCount = parseSize(line);
-  if (argCount === -1) {
-    // `-1` indicates a null array
-    return null;
-  }
-
-  const array: Array<types.RedisReply> = [];
-  for (let i = 0; i < argCount; i++) {
-    array.push(await readReply(reader, returnUint8Arrays));
-  }
-  return array;
-}
-
 export const okReply = "OK";
-
-function tryParseErrorReply(line: Uint8Array): never {
-  const code = line[0];
-  if (code === ErrorReplyCode) {
-    throw new ErrorReplyError(decoder.decode(line));
-  }
-  throw new Error(`invalid line: ${line}`);
-}
-
-async function tryReadErrorReply(reader: BufReader): Promise<never> {
-  const line = await readLine(reader);
-  if (line == null) {
-    throw new InvalidStateError();
-  }
-  tryParseErrorReply(line);
-}
-
-async function readLine(reader: BufReader): Promise<Uint8Array> {
-  const result = await reader.readLine();
-  if (result == null) {
-    throw new InvalidStateError();
-  }
-
-  const { line } = result;
-  return line;
-}
-
-function parseSize(line: Uint8Array): number {
-  const sizeStr = line.subarray(1, line.length);
-  const size = parseInt(decoder.decode(sizeStr));
-  return size;
-}

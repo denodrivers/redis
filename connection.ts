@@ -5,8 +5,6 @@ import type { Backoff } from "./backoff.ts";
 import { exponentialBackoff } from "./backoff.ts";
 import { ErrorReplyError, isRetriableError } from "./errors.ts";
 import { kUnstablePipeline, kUnstableReadReply } from "./internal/symbols.ts";
-import { BufReader } from "./vendor/https/deno.land/std/io/buf_reader.ts";
-import { BufWriter } from "./vendor/https/deno.land/std/io/buf_writer.ts";
 import {
   Deferred,
   deferred,
@@ -74,9 +72,7 @@ interface PendingCommand {
 
 export class RedisConnection implements Connection {
   name: string | null = null;
-  private reader!: BufReader;
-  private writer!: BufWriter;
-  private closer!: Closer;
+  #conn!: Deno.Conn;
   private maxRetryCount = 10;
 
   private readonly hostname: string;
@@ -160,11 +156,11 @@ export class RedisConnection implements Connection {
   }
 
   [kUnstableReadReply](returnsUint8Arrays?: boolean): Promise<RedisReply> {
-    return readReply(this.reader, returnsUint8Arrays);
+    return readReply(this.#conn.readable, returnsUint8Arrays);
   }
 
   [kUnstablePipeline](commands: Array<Command>) {
-    return sendCommands(this.writer, this.reader, commands);
+    return sendCommands(this.#conn.writable, this.#conn.readable, commands);
   }
 
   /**
@@ -184,9 +180,7 @@ export class RedisConnection implements Connection {
         ? await Deno.connectTls(dialOpts)
         : await Deno.connect(dialOpts);
 
-      this.closer = conn;
-      this.reader = new BufReader(conn);
-      this.writer = new BufWriter(conn);
+      this.#conn = conn;
       this._isClosed = false;
       this._isConnected = true;
 
@@ -222,16 +216,13 @@ export class RedisConnection implements Connection {
     this._isClosed = true;
     this._isConnected = false;
     try {
-      this.closer!.close();
+      this.#conn!.close();
     } catch (error) {
       if (!(error instanceof Deno.errors.BadResource)) throw error;
     }
   }
 
   async reconnect(): Promise<void> {
-    if (!this.reader.peek(1)) {
-      throw new Error("Client is closed.");
-    }
     try {
       await this.sendCommand("PING");
       this._isConnected = true;
@@ -248,8 +239,8 @@ export class RedisConnection implements Connection {
 
     try {
       const reply = await sendCommand(
-        this.writer,
-        this.reader,
+        this.#conn.writable,
+        this.#conn.readable,
         command.name,
         command.args,
         command.returnUint8Arrays,
@@ -270,8 +261,8 @@ export class RedisConnection implements Connection {
           await this.connect();
 
           const reply = await sendCommand(
-            this.writer,
-            this.reader,
+            this.#conn.writable,
+            this.#conn.readable,
             command.name,
             command.args,
             command.returnUint8Arrays,

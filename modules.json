@@ -5,9 +5,8 @@
       "/assert/mod.ts",
       "/async/deferred.ts",
       "/async/delay.ts",
+      "/bytes/concat.ts",
       "/testing/bdd.ts",
-      "/io/buf_reader.ts",
-      "/io/buf_writer.ts",
       "/streams/read_all.ts",
       "/streams/reader_from_stream_reader.ts"
     ]

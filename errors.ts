@@ -5,6 +5,11 @@ export class ConnectionClosedError extends Error {}
 export class SubscriptionClosedError extends Error {}
 
 export class ErrorReplyError extends Error {}
+export class NotImplementedError extends Error {
+  constructor(message?: string) {
+    super(message ? `Not implemented: ${message}` : "Not implemented");
+  }
+}
 
 export class InvalidStateError extends Error {
   constructor(message?: string) {

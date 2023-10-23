@@ -1,9 +1,8 @@
-import { BufReader } from "../vendor/https/deno.land/std/io/buf_reader.ts";
-import { BufWriter } from "../vendor/https/deno.land/std/io/buf_writer.ts";
 import { readReply } from "./reply.ts";
 import { ErrorReplyError } from "../errors.ts";
 import { encoder } from "./_util.ts";
 import type { RedisReply, RedisValue } from "./types.ts";
+import { concat } from "../vendor/https/deno.land/std/bytes/concat.ts";
 
 const CRLF = encoder.encode("\r\n");
 const ArrayCode = encoder.encode("*");
@@ -12,15 +11,20 @@ const BulkCode = encoder.encode("$");
 const kEmptyBuffer = new Uint8Array(0);
 
 async function writeRequest(
-  writer: BufWriter,
+  writable: WritableStream<Uint8Array>,
   command: string,
   args: RedisValue[],
 ) {
   const request = encodeRequest(command, args);
-  await writer.write(request);
+  const writer = writable.getWriter();
+  try {
+    await writer.write(request);
+  } finally {
+    writer.releaseLock();
+  }
 }
 
-function encodeRequest(
+export function encodeRequest(
   command: string,
   args: RedisValue[],
 ): Uint8Array {
@@ -87,15 +91,14 @@ function writeFrom(
 }
 
 export async function sendCommand(
-  writer: BufWriter,
-  reader: BufReader,
+  writable: WritableStream<Uint8Array>,
+  readable: ReadableStream<Uint8Array>,
   command: string,
   args: RedisValue[],
   returnUint8Arrays?: boolean,
 ): Promise<RedisReply> {
-  await writeRequest(writer, command, args);
-  await writer.flush();
-  return readReply(reader, returnUint8Arrays);
+  await writeRequest(writable, command, args);
+  return readReply(readable, returnUint8Arrays);
 }
 
 export interface Command {
@@ -105,18 +108,22 @@ export interface Command {
 }
 
 export async function sendCommands(
-  writer: BufWriter,
-  reader: BufReader,
+  writable: WritableStream<Uint8Array>,
+  readable: ReadableStream<Uint8Array>,
   commands: Command[],
 ): Promise<(RedisReply | ErrorReplyError)[]> {
-  for (const { command, args } of commands) {
-    await writeRequest(writer, command, args);
+  const request = encodeRequests(commands);
+  const writer = writable.getWriter();
+  try {
+    await writer.write(request);
+  } finally {
+    writer.releaseLock();
   }
-  await writer.flush();
+
   const ret: (RedisReply | ErrorReplyError)[] = [];
   for (let i = 0; i < commands.length; i++) {
     try {
-      const rep = await readReply(reader, commands[i].returnUint8Arrays);
+      const rep = await readReply(readable, commands[i].returnUint8Arrays);
       ret.push(rep);
     } catch (e) {
       if (e instanceof ErrorReplyError) {
@@ -127,4 +134,14 @@ export async function sendCommands(
     }
   }
   return ret;
+}
+
+function encodeRequests(commands: Array<Command>): Uint8Array {
+  // TODO: find a more optimized solution.
+  const bufs: Array<Uint8Array> = Array(commands.length);
+  for (let i = 0; i < commands.length; i++) {
+    const { command, args } = commands[i];
+    bufs[i] = encodeRequest(command, args);
+  }
+  return concat(...bufs);
 }
