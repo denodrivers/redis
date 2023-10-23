@@ -1,38 +1,9 @@
 import {
-  assert,
   assertEquals,
   assertFalse,
 } from "../vendor/https/deno.land/std/assert/mod.ts";
-import { readLine, readReply } from "./reply.ts";
-
-Deno.test({
-  name: "readLine",
-  permissions: "none",
-  fn: async () => {
-    const decoder = new TextDecoder();
-    const readable = createReadableByteStream("$11\r\nhello_world\r\n");
-    const reader = readable.getReader();
-
-    {
-      const res = await readLine(reader);
-      assertFalse(res.done);
-      assertEquals(decoder.decode(res.value), "$11");
-    }
-
-    {
-      const res = await readLine(reader);
-      assertFalse(res.done);
-      assertEquals(decoder.decode(res.value), "hello_world");
-    }
-
-    {
-      const res = await readLine(reader);
-      assert(res.done);
-    }
-
-    assert(readable.locked);
-  },
-});
+import { readReply } from "./reply.ts";
+import { BufferedReadableStream } from "../internal/buffered_readable_stream.ts";
 
 Deno.test({
   name: "readReply",
@@ -40,21 +11,21 @@ Deno.test({
   fn: async (t) => {
     await t.step("blob", async () => {
       const readable = createReadableByteStream("$6\r\nfoobar\r\n");
-      const reply = await readReply(readable);
+      const reply = await readReply(new BufferedReadableStream(readable));
       assertEquals(reply, "foobar");
       assertFalse(readable.locked);
     });
 
     await t.step("simple string", async () => {
       const readable = createReadableByteStream("+OK\r\n");
-      const reply = await readReply(readable);
+      const reply = await readReply(new BufferedReadableStream(readable));
       assertEquals(reply, "OK");
       assertFalse(readable.locked);
     });
 
     await t.step("integer", async () => {
       const readable = createReadableByteStream(":1234\r\n");
-      const reply = await readReply(readable);
+      const reply = await readReply(new BufferedReadableStream(readable));
       assertEquals(reply, 1234);
       assertFalse(readable.locked);
     });
@@ -63,7 +34,7 @@ Deno.test({
       const readable = createReadableByteStream(
         "*3\r\n$3\r\nfoo\r\n*2\r\n:456\r\n+OK\r\n:78\r\n",
       );
-      const reply = await readReply(readable);
+      const reply = await readReply(new BufferedReadableStream(readable));
       assertEquals(reply, ["foo", [456, "OK"], 78]);
       assertFalse(readable.locked);
     });

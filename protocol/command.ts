@@ -1,8 +1,9 @@
+import { concat } from "../vendor/https/deno.land/std/bytes/concat.ts";
 import { readReply } from "./reply.ts";
 import { ErrorReplyError } from "../errors.ts";
 import { encoder } from "./_util.ts";
 import type { RedisReply, RedisValue } from "./types.ts";
-import { concat } from "../vendor/https/deno.land/std/bytes/concat.ts";
+import type { BufferedReadableStream } from "../internal/buffered_readable_stream.ts";
 
 const CRLF = encoder.encode("\r\n");
 const ArrayCode = encoder.encode("*");
@@ -92,7 +93,7 @@ function writeFrom(
 
 export async function sendCommand(
   writable: WritableStream<Uint8Array>,
-  readable: ReadableStream<Uint8Array>,
+  readable: BufferedReadableStream,
   command: string,
   args: RedisValue[],
   returnUint8Arrays?: boolean,
@@ -109,7 +110,7 @@ export interface Command {
 
 export async function sendCommands(
   writable: WritableStream<Uint8Array>,
-  readable: ReadableStream<Uint8Array>,
+  readable: BufferedReadableStream,
   commands: Command[],
 ): Promise<(RedisReply | ErrorReplyError)[]> {
   const request = encodeRequests(commands);

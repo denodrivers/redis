@@ -5,6 +5,7 @@ import type { Backoff } from "./backoff.ts";
 import { exponentialBackoff } from "./backoff.ts";
 import { ErrorReplyError, isRetriableError } from "./errors.ts";
 import { kUnstablePipeline, kUnstableReadReply } from "./internal/symbols.ts";
+import { BufferedReadableStream } from "./internal/buffered_readable_stream.ts";
 import {
   Deferred,
   deferred,
@@ -73,6 +74,8 @@ interface PendingCommand {
 export class RedisConnection implements Connection {
   name: string | null = null;
   #conn!: Deno.Conn;
+  #readable!: BufferedReadableStream;
+  #writable!: WritableStream<Uint8Array>;
   private maxRetryCount = 10;
 
   private readonly hostname: string;
@@ -156,11 +159,11 @@ export class RedisConnection implements Connection {
   }
 
   [kUnstableReadReply](returnsUint8Arrays?: boolean): Promise<RedisReply> {
-    return readReply(this.#conn.readable, returnsUint8Arrays);
+    return readReply(this.#readable, returnsUint8Arrays);
   }
 
   [kUnstablePipeline](commands: Array<Command>) {
-    return sendCommands(this.#conn.writable, this.#conn.readable, commands);
+    return sendCommands(this.#writable, this.#readable, commands);
   }
 
   /**
@@ -181,6 +184,8 @@ export class RedisConnection implements Connection {
         : await Deno.connect(dialOpts);
 
       this.#conn = conn;
+      this.#readable = new BufferedReadableStream(conn.readable);
+      this.#writable = conn.writable;
       this._isClosed = false;
       this._isConnected = true;
 
@@ -239,8 +244,8 @@ export class RedisConnection implements Connection {
 
     try {
       const reply = await sendCommand(
-        this.#conn.writable,
-        this.#conn.readable,
+        this.#writable,
+        this.#readable,
         command.name,
         command.args,
         command.returnUint8Arrays,
@@ -261,8 +266,8 @@ export class RedisConnection implements Connection {
           await this.connect();
 
           const reply = await sendCommand(
-            this.#conn.writable,
-            this.#conn.readable,
+            this.#writable,
+            this.#readable,
             command.name,
             command.args,
             command.returnUint8Arrays,
