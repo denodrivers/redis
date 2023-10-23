@@ -9,9 +9,11 @@ const LF = "\n".charCodeAt(0);
  */
 export class BufferedReadableStream {
   #readable: ReadableStream<Uint8Array>;
+  #reader: ReadableStreamDefaultReader<Uint8Array>;
   #buffer: Uint8Array;
   constructor(readable: ReadableStream<Uint8Array>) {
     this.#readable = readable;
+    this.#reader = readable.getReader();
     this.#buffer = new Uint8Array(0);
   }
 
@@ -22,14 +24,9 @@ export class BufferedReadableStream {
       this.#buffer = this.#buffer.subarray(i + 1);
       return line;
     }
-    const reader = this.#readable.getReader();
-    try {
-      for (;;) {
-        await this.#fill(reader);
-        if (this.#buffer.lastIndexOf(LF) > -1) break;
-      }
-    } finally {
-      reader.releaseLock();
+    for (;;) {
+      await this.#fill();
+      if (this.#buffer.lastIndexOf(LF) > -1) break;
     }
     return this.readLine();
   }
@@ -40,20 +37,15 @@ export class BufferedReadableStream {
       this.#buffer = this.#buffer.subarray(buffer.length);
       return;
     }
-    const reader = this.#readable.getReader();
-    try {
-      for (;;) {
-        await this.#fill(reader);
-        if (this.#buffer.length >= buffer.length) break;
-      }
-    } finally {
-      reader.releaseLock();
+    for (;;) {
+      await this.#fill();
+      if (this.#buffer.length >= buffer.length) break;
     }
     return this.readFull(buffer);
   }
 
-  async #fill(reader: ReadableStreamDefaultReader) {
-    const chunk = await reader.read();
+  async #fill() {
+    const chunk = await this.#reader.read();
     if (chunk.done) {
       throw new Deno.errors.UnexpectedEof();
     }

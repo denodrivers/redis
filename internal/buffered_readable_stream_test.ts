@@ -21,7 +21,6 @@ Deno.test({
       assertEquals(decoder.decode(await buffered.readLine()), "hello\r\n");
       assertEquals(decoder.decode(await buffered.readLine()), ":1234\r\n");
       await assertRejects(() => buffered.readLine(), Deno.errors.UnexpectedEof);
-      assertFalse(readable.locked);
     });
 
     await t.step("readFull", async () => {
@@ -60,8 +59,6 @@ Deno.test({
         () => buffered.readFull(new Uint8Array(1)),
         Deno.errors.UnexpectedEof,
       );
-
-      assertFalse(readable.locked);
     });
 
     await t.step(

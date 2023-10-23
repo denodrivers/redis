@@ -13,21 +13,18 @@ Deno.test({
       const readable = createReadableByteStream("$6\r\nfoobar\r\n");
       const reply = await readReply(new BufferedReadableStream(readable));
       assertEquals(reply, "foobar");
-      assertFalse(readable.locked);
     });
 
     await t.step("simple string", async () => {
       const readable = createReadableByteStream("+OK\r\n");
       const reply = await readReply(new BufferedReadableStream(readable));
       assertEquals(reply, "OK");
-      assertFalse(readable.locked);
     });
 
     await t.step("integer", async () => {
       const readable = createReadableByteStream(":1234\r\n");
       const reply = await readReply(new BufferedReadableStream(readable));
       assertEquals(reply, 1234);
-      assertFalse(readable.locked);
     });
 
     await t.step("array", async () => {
@@ -36,7 +33,6 @@ Deno.test({
       );
       const reply = await readReply(new BufferedReadableStream(readable));
       assertEquals(reply, ["foo", [456, "OK"], 78]);
-      assertFalse(readable.locked);
     });
   },
 });
