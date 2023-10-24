@@ -4,7 +4,11 @@ import type { Command, Protocol } from "./protocol/shared/protocol.ts";
 import type { Backoff } from "./backoff.ts";
 import { exponentialBackoff } from "./backoff.ts";
 import { ErrorReplyError, isRetriableError } from "./errors.ts";
-import { kUnstablePipeline, kUnstableReadReply } from "./internal/symbols.ts";
+import {
+  kUnstableCreateProtocol,
+  kUnstablePipeline,
+  kUnstableReadReply,
+} from "./internal/symbols.ts";
 import {
   Deferred,
   deferred,
@@ -58,6 +62,11 @@ export interface RedisConnectionOptions {
    * When this option is set, a `PING` command is sent every specified number of seconds.
    */
   healthCheckInterval?: number;
+
+  /**
+   * @private
+   */
+  [kUnstableCreateProtocol]?: (conn: Deno.Conn) => Protocol;
 }
 
 export const kEmptyRedisArgs: Array<RedisValue> = [];
@@ -181,7 +190,8 @@ export class RedisConnection implements Connection {
         : await Deno.connect(dialOpts);
 
       this.#conn = conn;
-      this.#protocol = new DenoStreamsProtocol(conn);
+      this.#protocol = this.options?.[kUnstableCreateProtocol]?.(conn) ??
+        new DenoStreamsProtocol(conn);
       this._isClosed = false;
       this._isConnected = true;
 

@@ -11,4 +11,4 @@ export const kUnstablePipeline = Symbol("deno-redis.pipeline");
 /**
  * @private
  */
-export const kUnstableProtocol = Symbol("deno-redis.protocol");
+export const kUnstableCreateProtocol = Symbol("deno-redis.createProtocol");
