@@ -1,4 +1,4 @@
-import { connect, createLazyClient } from "../../mod.ts";
+import { createLazyClient } from "../../mod.ts";
 import {
   assert,
   assertEquals,
