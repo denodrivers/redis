@@ -1,7 +1,6 @@
 import { encoder } from "./encoding.ts";
 import {
   assertEquals,
-  assertFalse,
   assertRejects,
 } from "../vendor/https/deno.land/std/assert/mod.ts";
 import { BufferedReadableStream } from "./buffered_readable_stream.ts";
