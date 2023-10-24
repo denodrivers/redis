@@ -1,22 +1,15 @@
-import {
-  readReply,
-  sendCommand,
-  sendCommands,
-} from "./protocol/deno_streams/mod.ts";
+import { Protocol as DenoStreamsProtocol } from "./protocol/deno_streams/mod.ts";
 import type { RedisReply, RedisValue } from "./protocol/shared/types.ts";
-import type { Command } from "./protocol/deno_streams/command.ts";
+import type { Command, Protocol } from "./protocol/shared/protocol.ts";
 import type { Backoff } from "./backoff.ts";
 import { exponentialBackoff } from "./backoff.ts";
 import { ErrorReplyError, isRetriableError } from "./errors.ts";
 import { kUnstablePipeline, kUnstableReadReply } from "./internal/symbols.ts";
-import { BufReader } from "./vendor/https/deno.land/std/io/buf_reader.ts";
-import { BufWriter } from "./vendor/https/deno.land/std/io/buf_writer.ts";
 import {
   Deferred,
   deferred,
 } from "./vendor/https/deno.land/std/async/deferred.ts";
 import { delay } from "./vendor/https/deno.land/std/async/delay.ts";
-type Closer = Deno.Closer;
 
 export interface SendCommandOptions {
   /**
@@ -78,9 +71,6 @@ interface PendingCommand {
 
 export class RedisConnection implements Connection {
   name: string | null = null;
-  private reader!: BufReader;
-  private writer!: BufWriter;
-  private closer!: Closer;
   private maxRetryCount = 10;
 
   private readonly hostname: string;
@@ -90,6 +80,8 @@ export class RedisConnection implements Connection {
   private backoff: Backoff;
 
   private commandQueue: PendingCommand[] = [];
+  #conn!: Deno.Conn;
+  #protocol!: Protocol;
 
   get isClosed(): boolean {
     return this._isClosed;
@@ -164,11 +156,11 @@ export class RedisConnection implements Connection {
   }
 
   [kUnstableReadReply](returnsUint8Arrays?: boolean): Promise<RedisReply> {
-    return readReply(this.reader, returnsUint8Arrays);
+    return this.#protocol.readReply(returnsUint8Arrays);
   }
 
   [kUnstablePipeline](commands: Array<Command>) {
-    return sendCommands(this.writer, this.reader, commands);
+    return this.#protocol.pipeline(commands);
   }
 
   /**
@@ -188,9 +180,8 @@ export class RedisConnection implements Connection {
         ? await Deno.connectTls(dialOpts)
         : await Deno.connect(dialOpts);
 
-      this.closer = conn;
-      this.reader = new BufReader(conn);
-      this.writer = new BufWriter(conn);
+      this.#conn = conn;
+      this.#protocol = new DenoStreamsProtocol(conn);
       this._isClosed = false;
       this._isConnected = true;
 
@@ -226,16 +217,13 @@ export class RedisConnection implements Connection {
     this._isClosed = true;
     this._isConnected = false;
     try {
-      this.closer!.close();
+      this.#conn!.close();
     } catch (error) {
       if (!(error instanceof Deno.errors.BadResource)) throw error;
     }
   }
 
   async reconnect(): Promise<void> {
-    if (!this.reader.peek(1)) {
-      throw new Error("Client is closed.");
-    }
     try {
       await this.sendCommand("PING");
       this._isConnected = true;
@@ -251,9 +239,7 @@ export class RedisConnection implements Connection {
     if (!command) return;
 
     try {
-      const reply = await sendCommand(
-        this.writer,
-        this.reader,
+      const reply = await this.#protocol.sendCommand(
         command.name,
         command.args,
         command.returnUint8Arrays,
@@ -273,9 +259,7 @@ export class RedisConnection implements Connection {
         try {
           await this.connect();
 
-          const reply = await sendCommand(
-            this.writer,
-            this.reader,
+          const reply = await this.#protocol.sendCommand(
             command.name,
             command.args,
             command.returnUint8Arrays,
