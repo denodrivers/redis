@@ -1,13 +1,14 @@
 import { BufReader } from "../../vendor/https/deno.land/std/io/buf_reader.ts";
 import type * as types from "../shared/types.ts";
+import {
+  ArrayReplyCode,
+  BulkReplyCode,
+  ErrorReplyCode,
+  IntegerReplyCode,
+  SimpleStringCode,
+} from "../shared/reply.ts";
 import { EOFError, ErrorReplyError, InvalidStateError } from "../../errors.ts";
 import { decoder } from "../../internal/encoding.ts";
-
-const IntegerReplyCode = ":".charCodeAt(0);
-const BulkReplyCode = "$".charCodeAt(0);
-const SimpleStringCode = "+".charCodeAt(0);
-const ArrayReplyCode = "*".charCodeAt(0);
-const ErrorReplyCode = "-".charCodeAt(0);
 
 export async function readReply(
   reader: BufReader,

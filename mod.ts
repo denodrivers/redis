@@ -6,6 +6,7 @@ export {
   EOFError,
   ErrorReplyError,
   InvalidStateError,
+  NotImplementedError,
   SubscriptionClosedError,
 } from "./errors.ts";
 export type { Backoff, ExponentialBackoffOptions } from "./backoff.ts";
