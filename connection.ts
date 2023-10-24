@@ -1,6 +1,10 @@
-import { readReply, sendCommand, sendCommands } from "./protocol/mod.ts";
-import type { RedisReply, RedisValue } from "./protocol/mod.ts";
-import type { Command } from "./protocol/command.ts";
+import {
+  readReply,
+  sendCommand,
+  sendCommands,
+} from "./protocol/deno_streams/mod.ts";
+import type { RedisReply, RedisValue } from "./protocol/shared/types.ts";
+import type { Command } from "./protocol/deno_streams/command.ts";
 import type { Backoff } from "./backoff.ts";
 import { exponentialBackoff } from "./backoff.ts";
 import { ErrorReplyError, isRetriableError } from "./errors.ts";

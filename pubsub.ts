@@ -1,7 +1,7 @@
 import type { CommandExecutor } from "./executor.ts";
 import { EOFError, InvalidStateError } from "./errors.ts";
-import type { Binary } from "./protocol/mod.ts";
-import { decoder } from "./protocol/_util.ts";
+import type { Binary } from "./protocol/shared/types.ts";
+import { decoder } from "./internal/encoding.ts";
 import { kUnstableReadReply } from "./internal/symbols.ts";
 
 type DefaultMessageType = string;

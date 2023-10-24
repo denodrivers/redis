@@ -1,5 +1,5 @@
 import type { Connection, SendCommandOptions } from "./connection.ts";
-import type { RedisReply, RedisValue } from "./protocol/mod.ts";
+import type { RedisReply, RedisValue } from "./protocol/shared/types.ts";
 
 export interface CommandExecutor {
   readonly connection: Connection;

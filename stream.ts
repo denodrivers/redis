@@ -1,4 +1,8 @@
-import type { ConditionalArray, Raw, RedisValue } from "./protocol/mod.ts";
+import type {
+  ConditionalArray,
+  Raw,
+  RedisValue,
+} from "./protocol/shared/types.ts";
 
 export interface XId {
   unixMs: number;

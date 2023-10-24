@@ -1,9 +1,9 @@
-import { BufReader } from "../vendor/https/deno.land/std/io/buf_reader.ts";
-import { BufWriter } from "../vendor/https/deno.land/std/io/buf_writer.ts";
+import { BufReader } from "../../vendor/https/deno.land/std/io/buf_reader.ts";
+import { BufWriter } from "../../vendor/https/deno.land/std/io/buf_writer.ts";
 import { readReply } from "./reply.ts";
-import { ErrorReplyError } from "../errors.ts";
-import { encoder } from "./_util.ts";
-import type { RedisReply, RedisValue } from "./types.ts";
+import { ErrorReplyError } from "../../errors.ts";
+import { encoder } from "../../internal/encoding.ts";
+import type { RedisReply, RedisValue } from "../shared/types.ts";
 
 const CRLF = encoder.encode("\r\n");
 const ArrayCode = encoder.encode("*");

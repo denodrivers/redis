@@ -56,7 +56,7 @@ import type {
   RedisReply,
   RedisValue,
   SimpleString,
-} from "./protocol/mod.ts";
+} from "./protocol/shared/types.ts";
 import { createRedisPipeline } from "./pipeline.ts";
 import { psubscribe, subscribe } from "./pubsub.ts";
 import {
