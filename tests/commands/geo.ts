@@ -4,16 +4,16 @@ import {
   beforeAll,
   it,
 } from "../../vendor/https/deno.land/std/testing/bdd.ts";
-import { newClient } from "../test_util.ts";
-import type { TestServer } from "../test_util.ts";
+import type { Connector, TestServer } from "../test_util.ts";
 import type { Redis } from "../../mod.ts";
 
 export function geoTests(
+  connect: Connector,
   getServer: () => TestServer,
 ): void {
   let client!: Redis;
   beforeAll(async () => {
-    client = await newClient({ hostname: "127.0.0.1", port: getServer().port });
+    client = await connect({ hostname: "127.0.0.1", port: getServer().port });
   });
 
   afterAll(() => client.close());

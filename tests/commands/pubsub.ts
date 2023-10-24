@@ -5,17 +5,18 @@ import {
   assertRejects,
 } from "../../vendor/https/deno.land/std/assert/mod.ts";
 import { describe, it } from "../../vendor/https/deno.land/std/testing/bdd.ts";
-import { newClient, nextPort, startRedis, stopRedis } from "../test_util.ts";
-import type { TestServer } from "../test_util.ts";
+import { nextPort, startRedis, stopRedis } from "../test_util.ts";
+import type { Connector, TestServer } from "../test_util.ts";
 
 export function pubsubTests(
+  connect: Connector,
   getServer: () => TestServer,
 ): void {
   const getOpts = () => ({ hostname: "127.0.0.1", port: getServer().port });
 
   it("subscribe() & unsubscribe()", async () => {
     const opts = getOpts();
-    const client = await newClient(opts);
+    const client = await connect(opts);
     const sub = await client.subscribe("subsc");
     await sub.unsubscribe("subsc");
     sub.close();
@@ -25,8 +26,8 @@ export function pubsubTests(
 
   it("receive()", async () => {
     const opts = getOpts();
-    const client = await newClient(opts);
-    const pub = await newClient(opts);
+    const client = await connect(opts);
+    const pub = await connect(opts);
     const sub = await client.subscribe("subsc2");
     const p = (async function () {
       const it = sub.receive();
@@ -50,8 +51,8 @@ export function pubsubTests(
   describe("receiveBuffers", () => {
     it("returns messages as Uint8Array", async () => {
       const opts = getOpts();
-      const client = await newClient(opts);
-      const pub = await newClient(opts);
+      const client = await connect(opts);
+      const pub = await connect(opts);
       const sub = await client.subscribe("subsc3");
       const p = (async () => {
         const it = sub.receiveBuffers();
@@ -75,8 +76,8 @@ export function pubsubTests(
 
   it("psubscribe()", async () => {
     const opts = getOpts();
-    const client = await newClient(opts);
-    const pub = await newClient(opts);
+    const client = await connect(opts);
+    const pub = await connect(opts);
     const sub = await client.psubscribe("ps*");
     let message1;
     let message2;
@@ -107,9 +108,9 @@ export function pubsubTests(
     const opts = getOpts();
     const port = nextPort();
     let tempServer = await startRedis({ port });
-    const client = await newClient({ ...opts, port });
+    const client = await connect({ ...opts, port });
     const backoff = () => 1200;
-    const pub = await newClient({ ...opts, backoff, maxRetryCount: 10, port });
+    const pub = await connect({ ...opts, backoff, maxRetryCount: 10, port });
     const sub = await client.psubscribe("ps*");
     const it = sub.receive();
 
@@ -137,7 +138,7 @@ export function pubsubTests(
 
       tempServer = await startRedis({ port });
 
-      const tempClient = await newClient({ ...opts, port });
+      const tempClient = await connect({ ...opts, port });
       await tempClient.ping();
       tempClient.close();
 
@@ -164,7 +165,7 @@ export function pubsubTests(
       "SubscriptionShouldNotThrowBadResourceErrorWhenConnectionIsClosed (#89)",
     fn: async () => {
       const opts = getOpts();
-      const redis = await newClient(opts);
+      const redis = await connect(opts);
       const sub = await redis.subscribe("test");
       const subscriptionPromise = (async () => {
         // deno-lint-ignore no-empty
@@ -178,13 +179,13 @@ export function pubsubTests(
 
   it("pubsubNumsub()", async () => {
     const opts = getOpts();
-    const subClient1 = await newClient(opts);
+    const subClient1 = await connect(opts);
     await subClient1.subscribe("test1", "test2");
 
-    const subClient2 = await newClient(opts);
+    const subClient2 = await connect(opts);
     await subClient2.subscribe("test2", "test3");
 
-    const pubClient = await newClient(opts);
+    const pubClient = await connect(opts);
     const resp = await pubClient.pubsubNumsub("test1", "test2", "test3");
     assertEquals(resp, ["test1", 1, "test2", 2, "test3", 1]);
 

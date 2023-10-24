@@ -5,17 +5,17 @@ import {
   beforeEach,
   it,
 } from "../../vendor/https/deno.land/std/testing/bdd.ts";
-import { newClient } from "../test_util.ts";
-import type { TestServer } from "../test_util.ts";
+import type { Connector, TestServer } from "../test_util.ts";
 import type { Redis } from "../../mod.ts";
 
 export function stringTests(
+  connect: Connector,
   getServer: () => TestServer,
 ): void {
   let client!: Redis;
   beforeAll(async () => {
     const server = getServer();
-    client = await newClient({ hostname: "127.0.0.1", port: server.port });
+    client = await connect({ hostname: "127.0.0.1", port: server.port });
   });
 
   afterAll(() => client.close());

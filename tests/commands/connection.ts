@@ -12,11 +12,11 @@ import {
   it,
 } from "../../vendor/https/deno.land/std/testing/bdd.ts";
 import { delay } from "../../vendor/https/deno.land/std/async/delay.ts";
-import { newClient } from "../test_util.ts";
-import type { TestServer } from "../test_util.ts";
+import type { Connector, TestServer } from "../test_util.ts";
 import type { Redis } from "../../mod.ts";
 
 export function connectionTests(
+  connect: Connector,
   getServer: () => TestServer,
 ): void {
   let client!: Redis;
@@ -25,7 +25,7 @@ export function connectionTests(
     port: getServer().port,
   });
   beforeAll(async () => {
-    client = await newClient(getOpts());
+    client = await connect(getOpts());
   });
 
   afterAll(() => client.close());
@@ -117,7 +117,7 @@ export function connectionTests(
 
   describe("connect()", () => {
     it("connects to the server", async () => {
-      const client = await newClient(getOpts());
+      const client = await connect(getOpts());
       assert(client.isConnected);
 
       client.close();

@@ -11,10 +11,10 @@ import {
   describe,
   it,
 } from "../../vendor/https/deno.land/std/testing/bdd.ts";
-import { newClient } from "../test_util.ts";
-import type { TestServer } from "../test_util.ts";
+import type { Connector, TestServer } from "../test_util.ts";
 
 export function generalTests(
+  connect: Connector,
   getServer: () => TestServer,
 ): void {
   const getOpts = () => ({
@@ -23,7 +23,7 @@ export function generalTests(
   });
   let client!: Redis;
   beforeAll(async () => {
-    client = await newClient(getOpts());
+    client = await connect(getOpts());
   });
 
   beforeEach(async () => {
@@ -63,7 +63,7 @@ export function generalTests(
     it("selects the DB specified by `opts.db`", async () => {
       const opts = getOpts();
       const key = "exists";
-      const client1 = await newClient({ ...opts, db: 0 });
+      const client1 = await connect({ ...opts, db: 0 });
       try {
         await client1.set(key, "aaa");
         const exists = await client1.exists(key);
@@ -72,7 +72,7 @@ export function generalTests(
         client1.close();
       }
 
-      const client2 = await newClient({ ...opts, db: 0 });
+      const client2 = await connect({ ...opts, db: 0 });
       try {
         const exists = await client2.exists(key);
         assertEquals(exists, 1);
@@ -80,7 +80,7 @@ export function generalTests(
         client2.close();
       }
 
-      const client3 = await newClient({ ...opts, db: 1 });
+      const client3 = await connect({ ...opts, db: 1 });
       try {
         const exists = await client3.exists(key);
         assertEquals(exists, 0);
@@ -92,7 +92,7 @@ export function generalTests(
     it("throws an error if a wrong password is given", async () => {
       const { port } = getOpts();
       await assertRejects(async () => {
-        await newClient({
+        await connect({
           hostname: "127.0.0.1",
           port,
           password: "wrong_password",
@@ -104,7 +104,7 @@ export function generalTests(
       const { port } = getOpts();
       // In Redis, authentication with an empty password will always fail.
       await assertRejects(async () => {
-        await newClient({
+        await connect({
           hostname: "127.0.0.1",
           port,
           password: "",
@@ -117,11 +117,11 @@ export function generalTests(
     it("returns if `key` exists", async () => {
       const opts = getOpts();
       const key = "exists";
-      const client1 = await newClient({ ...opts, db: 0 });
+      const client1 = await connect({ ...opts, db: 0 });
       await client1.set(key, "aaa");
       const exists1 = await client1.exists(key);
       assertEquals(exists1, 1);
-      const client2 = await newClient({ ...opts, db: 1 });
+      const client2 = await connect({ ...opts, db: 1 });
       const exists2 = await client2.exists(key);
       assertEquals(exists2, 0);
       client1.close();
@@ -150,7 +150,7 @@ export function generalTests(
       it(`throws an error if \`${v}\` is given`, async () => {
         await assertRejects(
           async () => {
-            await newClient({
+            await connect({
               hostname: "127.0.0.1",
               port: v,
               maxRetryCount: 0,
@@ -197,7 +197,7 @@ export function generalTests(
 
   describe("automatic reconnection", () => {
     it("reconnects when the connection is lost", async () => {
-      const tempClient = await newClient(getOpts());
+      const tempClient = await connect(getOpts());
       try {
         const id = await tempClient.clientID();
         await client.clientKill({ id });
@@ -209,7 +209,7 @@ export function generalTests(
     });
 
     it("fails when max retry count is exceeded", async () => {
-      const tempClient = await newClient({
+      const tempClient = await connect({
         ...getOpts(),
         maxRetryCount: 0,
       });
@@ -223,7 +223,7 @@ export function generalTests(
     });
 
     it("does not reconnect when the connection is manually closed by the user", async () => {
-      const tempClient = await newClient(getOpts());
+      const tempClient = await connect(getOpts());
       tempClient.close();
       await assertRejects(() => tempClient.ping());
     });
