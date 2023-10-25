@@ -1,5 +1,5 @@
 import type { CommandExecutor } from "./executor.ts";
-import { isRetriableError(error) } from "./errors.ts";
+import { isRetriableError } from "./errors.ts";
 import type { Binary } from "./protocol/shared/types.ts";
 import { decoder } from "./internal/encoding.ts";
 import { kUnstableReadReply } from "./internal/symbols.ts";
