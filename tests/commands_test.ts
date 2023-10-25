@@ -37,8 +37,11 @@ describe("commands", () => {
 
   for (
     const [kind, connector] of [
-      ["deno_streams", connect] as const,
-      ["web_streams", connectWebStreamsConnection] as const,
+      ["deno_streams connection", connect] as const,
+      [
+        "experimental web_streams connection",
+        connectWebStreamsConnection,
+      ] as const,
     ]
   ) {
     describe(kind, () => {
