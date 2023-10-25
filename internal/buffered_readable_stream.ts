@@ -48,7 +48,6 @@ export class BufferedReadableStream {
   async #fill() {
     const chunk = await this.#reader.read();
     if (chunk.done) {
-      await this.#reader.cancel(new Deno.errors.BadResource());
       throw new Deno.errors.BadResource();
     }
     const bytes = chunk.value;

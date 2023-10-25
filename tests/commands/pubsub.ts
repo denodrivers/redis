@@ -7,6 +7,7 @@ import {
 import { describe, it } from "../../vendor/https/deno.land/std/testing/bdd.ts";
 import { nextPort, startRedis, stopRedis } from "../test_util.ts";
 import type { Connector, TestServer } from "../test_util.ts";
+import { deferred } from "../../vendor/https/deno.land/std/async/deferred.ts";
 
 export function pubsubTests(
   connect: Connector,
@@ -123,29 +124,36 @@ export function pubsubTests(
 
     setTimeout(() => stopRedis(tempServer), 1000);
 
+    const promise = deferred();
     setTimeout(async () => {
-      assertEquals(
-        client.isConnected,
-        false,
-        "The main client still thinks it is connected.",
-      );
-      assertEquals(
-        pub.isConnected,
-        false,
-        "The publisher client still thinks it is connected.",
-      );
-      assert(messages < 5, "Too many messages were published.");
+      try {
+        assertEquals(
+          client.isConnected,
+          false,
+          "The main client still thinks it is connected.",
+        );
+        assertEquals(
+          pub.isConnected,
+          false,
+          "The publisher client still thinks it is connected.",
+        );
+        assert(messages < 5, "Too many messages were published.");
 
-      tempServer = await startRedis({ port });
+        tempServer = await startRedis({ port });
 
-      const tempClient = await connect({ ...opts, port });
-      await tempClient.ping();
-      tempClient.close();
+        const tempClient = await connect({ ...opts, port });
+        await tempClient.ping();
+        tempClient.close();
 
-      await delay(1000);
+        await delay(1000);
 
-      assert(client.isConnected, "The main client is not connected.");
-      assert(pub.isConnected, "The publisher client is not connected.");
+        assert(client.isConnected, "The main client is not connected.");
+        assert(pub.isConnected, "The publisher client is not connected.");
+
+        promise.resolve();
+      } catch (error) {
+        promise.reject(error);
+      }
     }, 2000);
 
     // Block until all resolve
@@ -157,6 +165,7 @@ export function pubsubTests(
     pub.close();
     client.close();
     await stopRedis(tempServer);
+    await promise;
   });
 
   it({
