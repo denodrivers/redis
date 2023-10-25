@@ -20,6 +20,8 @@ import { connect as connectWebStreams } from "../experimental/web_streams_connec
     await run({
       client: redis,
       driver: "deno-redis (experimental/web_streams_connection)",
+      outputFilename:
+        "deno-redis-with-experimental-web-streams-based-connection",
     });
   } finally {
     await redis.quit();

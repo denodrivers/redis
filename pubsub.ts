@@ -98,9 +98,8 @@ class RedisSubscriptionImpl<
         try {
           rep = await connection[kUnstableReadReply](binaryMode) as typeof rep;
         } catch (err) {
-          if (err instanceof Deno.errors.BadResource) {
-            // Connection already closed.
-            connection.close();
+          if (this.isClosed) {
+            // Connection already closed by the user.
             break;
           }
           throw err;
