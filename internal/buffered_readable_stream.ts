@@ -48,7 +48,7 @@ export class BufferedReadableStream {
   async #fill() {
     const chunk = await this.#reader.read();
     if (chunk.done) {
-      throw new Deno.errors.UnexpectedEof();
+      throw new Deno.errors.BadResource();
     }
     const bytes = chunk.value;
     this.#buffer = concateBytes(this.#buffer, bytes);

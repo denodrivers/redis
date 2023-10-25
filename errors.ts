@@ -24,6 +24,5 @@ export function isRetriableError(error: Error): boolean {
     error instanceof Deno.errors.ConnectionAborted ||
     error instanceof Deno.errors.ConnectionRefused ||
     error instanceof Deno.errors.ConnectionReset ||
-    error instanceof Deno.errors.UnexpectedEof ||
     error instanceof EOFError);
 }
