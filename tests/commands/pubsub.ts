@@ -109,16 +109,21 @@ export function pubsubTests(
     const opts = getOpts();
     const port = nextPort();
     let tempServer = await startRedis({ port });
-    const client = await connect({ ...opts, port });
+    const subscriberClient = await connect({ ...opts, port });
     const backoff = () => 1200;
-    const pub = await connect({ ...opts, backoff, maxRetryCount: 10, port });
-    const sub = await client.psubscribe("ps*");
-    const it = sub.receive();
+    const publisher = await connect({
+      ...opts,
+      backoff,
+      maxRetryCount: 10,
+      port,
+    });
+    const subscription = await subscriberClient.psubscribe("ps*");
+    const it = subscription.receive();
 
     let messages = 0;
 
     const interval = setInterval(async () => {
-      await pub.publish("psub", "wayway");
+      await publisher.publish("psub", "wayway");
       messages++;
     }, 900);
 
@@ -128,12 +133,12 @@ export function pubsubTests(
     setTimeout(async () => {
       try {
         assertEquals(
-          client.isConnected,
+          subscriberClient.isConnected,
           false,
-          "The main client still thinks it is connected.",
+          "The subscriber client still thinks it is connected.",
         );
         assertEquals(
-          pub.isConnected,
+          publisher.isConnected,
           false,
           "The publisher client still thinks it is connected.",
         );
@@ -147,8 +152,11 @@ export function pubsubTests(
 
         await delay(1000);
 
-        assert(client.isConnected, "The main client is not connected.");
-        assert(pub.isConnected, "The publisher client is not connected.");
+        assert(
+          subscriberClient.isConnected,
+          "The subscriber client is not connected.",
+        );
+        assert(publisher.isConnected, "The publisher client is not connected.");
 
         promise.resolve();
       } catch (error) {
@@ -161,9 +169,9 @@ export function pubsubTests(
 
     // Cleanup
     clearInterval(interval);
-    sub.close();
-    pub.close();
-    client.close();
+    subscription.close();
+    publisher.close();
+    subscriberClient.close();
     await stopRedis(tempServer);
     await promise;
   });

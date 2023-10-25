@@ -1,5 +1,5 @@
 import type { CommandExecutor } from "./executor.ts";
-import { EOFError, InvalidStateError } from "./errors.ts";
+import { isRetriableError(error) } from "./errors.ts";
 import type { Binary } from "./protocol/shared/types.ts";
 import { decoder } from "./internal/encoding.ts";
 import { kUnstableReadReply } from "./internal/symbols.ts";
@@ -134,17 +134,13 @@ class RedisSubscriptionImpl<
           };
         }
       } catch (error) {
-        if (
-          error instanceof EOFError ||
-          error instanceof InvalidStateError ||
-          error instanceof Deno.errors.BadResource
-        ) {
+        if (isRetriableError(error)) {
           forceReconnect = true;
         } else throw error;
       } finally {
         if ((!this.isClosed && !this.isConnected) || forceReconnect) {
-          await connection.reconnect();
           forceReconnect = false;
+          await connection.reconnect();
 
           if (Object.keys(this.channels).length > 0) {
             await this.subscribe(...Object.keys(this.channels));
