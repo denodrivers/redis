@@ -112,6 +112,7 @@ export interface Redis extends RedisCommands {
   ): Promise<RedisReply>;
   connect(): Promise<void>;
   close(): void;
+  [Symbol.dispose](): void;
 }
 
 class RedisImpl implements Redis {
@@ -142,7 +143,11 @@ class RedisImpl implements Redis {
   }
 
   close(): void {
-    this.executor.close();
+    return this.executor.close();
+  }
+
+  [Symbol.dispose](): void {
+    return this.close();
   }
 
   async execReply<T extends Raw = Raw>(
