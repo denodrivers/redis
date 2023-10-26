@@ -143,6 +143,14 @@ export function connectionTests(
       client.close();
     });
   });
+
+  describe("using", () => {
+    it("implements `Symbol.dispose`", async () => {
+      using client = await connect(getOpts());
+      assert(client.isConnected);
+      assert(!client.isClosed);
+    });
+  });
 }
 
 function parseCommandStats(
