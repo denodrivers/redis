@@ -7,9 +7,9 @@ Deno.test({
   permissions: "none",
   fn: async (t) => {
     await t.step("blob", async () => {
-      const readable = createReadableByteStream("$6\r\nfoobar\r\n");
+      const readable = createReadableByteStream("$12\r\nhello\nworld!\r\n");
       const reply = await readReply(new BufferedReadableStream(readable));
-      assertEquals(reply, "foobar");
+      assertEquals(reply, "hello\nworld!");
     });
 
     await t.step("simple string", async () => {

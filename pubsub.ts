@@ -102,7 +102,7 @@ class RedisSubscriptionImpl<
             // Connection already closed by the user.
             break;
           }
-          throw err;
+          throw err; // Connection may have been unintentionally closed.
         }
 
         const event = rep[0] instanceof Uint8Array
