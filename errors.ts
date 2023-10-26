@@ -5,6 +5,11 @@ export class ConnectionClosedError extends Error {}
 export class SubscriptionClosedError extends Error {}
 
 export class ErrorReplyError extends Error {}
+export class NotImplementedError extends Error {
+  constructor(message?: string) {
+    super(message ? `Not implemented: ${message}` : "Not implemented");
+  }
+}
 
 export class InvalidStateError extends Error {
   constructor(message?: string) {
@@ -19,5 +24,6 @@ export function isRetriableError(error: Error): boolean {
     error instanceof Deno.errors.ConnectionAborted ||
     error instanceof Deno.errors.ConnectionRefused ||
     error instanceof Deno.errors.ConnectionReset ||
+    error instanceof Deno.errors.UnexpectedEof ||
     error instanceof EOFError);
 }

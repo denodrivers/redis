@@ -4,6 +4,7 @@ import { dirname, join } from "node:path";
 export function run({
   driver,
   client,
+  outputFilename = driver,
 }) {
   const encoder = new TextEncoder();
   return suite(
@@ -67,7 +68,7 @@ export function run({
       await client.flushdb();
     }),
     save({
-      file: driver,
+      file: outputFilename,
       details: true,
       folder: join(
         dirname(dirname(new URL(import.meta.url).pathname)),

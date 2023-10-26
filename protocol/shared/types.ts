@@ -1,4 +1,4 @@
-import { ErrorReplyError } from "../errors.ts";
+import { ErrorReplyError } from "../../errors.ts";
 
 /**
  * @see https://redis.io/topics/protocol
@@ -46,3 +46,5 @@ export type ConditionalArray = Raw[];
 export type RedisReply = Raw | ConditionalArray;
 
 export type RawOrError = Raw | ErrorReplyError;
+
+export const okReply = "OK";

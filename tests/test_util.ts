@@ -1,7 +1,7 @@
 import { connect, Redis, RedisConnectOptions } from "../mod.ts";
 import { delay } from "../vendor/https/deno.land/std/async/delay.ts";
 
-type TestFunc = () => void | Promise<void>;
+export type Connector = typeof connect;
 export interface TestServer {
   path: string;
   port: number;

@@ -5,6 +5,7 @@
       "/assert/mod.ts",
       "/async/deferred.ts",
       "/async/delay.ts",
+      "/bytes/concat.ts",
       "/testing/bdd.ts",
       "/io/buf_reader.ts",
       "/io/buf_writer.ts",

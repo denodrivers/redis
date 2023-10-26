@@ -28,7 +28,7 @@ import type { RedisConnectOptions } from "../../redis.ts";
 import type { CommandExecutor } from "../../executor.ts";
 import type { Connection, SendCommandOptions } from "../../connection.ts";
 import type { Redis } from "../../redis.ts";
-import type { RedisReply, RedisValue } from "../../protocol/mod.ts";
+import type { RedisReply, RedisValue } from "../../protocol/shared/types.ts";
 import { ErrorReplyError } from "../../errors.ts";
 import { delay } from "../../vendor/https/deno.land/std/async/delay.ts";
 import calculateSlot from "../../vendor/https/esm.sh/cluster-key-slot/lib/index.js";

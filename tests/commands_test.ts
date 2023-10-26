@@ -15,6 +15,8 @@ import { zsetTests } from "./commands/sorted_set.ts";
 import { scriptTests } from "./commands/script.ts";
 import { streamTests } from "./commands/stream.ts";
 import { stringTests } from "./commands/string.ts";
+import { connect } from "../redis.ts";
+import { connect as connectWebStreamsConnection } from "../experimental/web_streams_connection/mod.ts";
 
 import {
   afterAll,
@@ -33,19 +35,31 @@ describe("commands", () => {
 
   const getServer = () => server;
 
-  describe("acl", () => aclTests(getServer));
-  describe("connection", () => connectionTests(getServer));
-  describe("general", () => generalTests(getServer));
-  describe("geo", () => geoTests(getServer));
-  describe("hash", () => hashTests(getServer));
-  describe("hyperloglog", () => hyperloglogTests(getServer));
-  describe("key", () => keyTests(getServer));
-  describe("list", () => listTests(getServer));
-  describe("pipeline", () => pipelineTests(getServer));
-  describe("pubsub", () => pubsubTests(getServer));
-  describe("set", () => setTests(getServer));
-  describe("zset", () => zsetTests(getServer));
-  describe("script", () => scriptTests(getServer));
-  describe("stream", () => streamTests(getServer));
-  describe("string", () => stringTests(getServer));
+  for (
+    const [kind, connector] of [
+      ["deno_streams connection", connect] as const,
+      [
+        "experimental web_streams connection",
+        connectWebStreamsConnection,
+      ] as const,
+    ]
+  ) {
+    describe(kind, () => {
+      describe("acl", () => aclTests(connector, getServer));
+      describe("connection", () => connectionTests(connector, getServer));
+      describe("general", () => generalTests(connector, getServer));
+      describe("geo", () => geoTests(connector, getServer));
+      describe("hash", () => hashTests(connector, getServer));
+      describe("hyperloglog", () => hyperloglogTests(connector, getServer));
+      describe("key", () => keyTests(connector, getServer));
+      describe("list", () => listTests(connector, getServer));
+      describe("pipeline", () => pipelineTests(connector, getServer));
+      describe("pubsub", () => pubsubTests(connector, getServer));
+      describe("set", () => setTests(connector, getServer));
+      describe("zset", () => zsetTests(connector, getServer));
+      describe("script", () => scriptTests(connector, getServer));
+      describe("stream", () => streamTests(connector, getServer));
+      describe("string", () => stringTests(connector, getServer));
+    });
+  }
 });

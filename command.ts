@@ -8,7 +8,7 @@ import type {
   Raw,
   RedisValue,
   SimpleString,
-} from "./protocol/mod.ts";
+} from "./protocol/shared/types.ts";
 import type { RedisPipeline } from "./pipeline.ts";
 import type { RedisSubscription } from "./pubsub.ts";
 import type {

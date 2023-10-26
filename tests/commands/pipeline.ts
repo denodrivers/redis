@@ -4,10 +4,10 @@ import {
   assertEquals,
 } from "../../vendor/https/deno.land/std/assert/mod.ts";
 import { it } from "../../vendor/https/deno.land/std/testing/bdd.ts";
-import { newClient } from "../test_util.ts";
-import type { TestServer } from "../test_util.ts";
+import type { Connector, TestServer } from "../test_util.ts";
 
 export function pipelineTests(
+  connect: Connector,
   getServer: () => TestServer,
 ): void {
   const getOpts = () => ({
@@ -17,7 +17,7 @@ export function pipelineTests(
 
   it("testPipeline", async () => {
     const opts = getOpts();
-    const client = await newClient(opts);
+    const client = await connect(opts);
     const pl = client.pipeline();
     await Promise.all([
       pl.ping(),
@@ -43,7 +43,7 @@ export function pipelineTests(
 
   it("testTx", async () => {
     const opts = getOpts();
-    const client = await newClient(opts);
+    const client = await connect(opts);
     const tx1 = client.tx();
     const tx2 = client.tx();
     const tx3 = client.tx();
@@ -88,7 +88,7 @@ export function pipelineTests(
   it("pipeline in concurrent", async () => {
     {
       const opts = getOpts();
-      const client = await newClient(opts);
+      const client = await connect(opts);
       const tx = client.pipeline();
       const promises: Promise<unknown>[] = [];
       await client.del("a", "b", "c");
@@ -119,7 +119,7 @@ export function pipelineTests(
 
   it("error while pipeline", async () => {
     const opts = getOpts();
-    const client = await newClient(opts);
+    const client = await connect(opts);
     const tx = client.pipeline();
     tx.set("a", "a");
     tx.eval("var", ["k"], ["v"]);

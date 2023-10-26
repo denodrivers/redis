@@ -1,7 +1,12 @@
 import type { Connection, SendCommandOptions } from "./connection.ts";
 import { kEmptyRedisArgs } from "./connection.ts";
 import { CommandExecutor } from "./executor.ts";
-import { okReply, RawOrError, RedisReply, RedisValue } from "./protocol/mod.ts";
+import {
+  okReply,
+  RawOrError,
+  RedisReply,
+  RedisValue,
+} from "./protocol/shared/types.ts";
 import { create, Redis } from "./redis.ts";
 import { kUnstablePipeline } from "./internal/symbols.ts";
 import {
