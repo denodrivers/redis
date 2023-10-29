@@ -227,7 +227,7 @@ export class RedisConnection implements Connection {
     this._isClosed = true;
     this._isConnected = false;
     try {
-      this.#conn!.close();
+      this.#protocol.close();
     } catch (error) {
       if (!(error instanceof Deno.errors.BadResource)) throw error;
     }

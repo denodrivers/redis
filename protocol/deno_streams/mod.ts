@@ -10,10 +10,12 @@ import { ErrorReplyError } from "../../errors.ts";
 export class Protocol implements BaseProtocol {
   #reader: BufReader;
   #writer: BufWriter;
+  #conn: Deno.Conn;
 
   constructor(conn: Deno.Conn) {
     this.#reader = new BufReader(conn);
     this.#writer = new BufWriter(conn);
+    this.#conn = conn;
   }
 
   sendCommand(
@@ -36,5 +38,9 @@ export class Protocol implements BaseProtocol {
 
   pipeline(commands: Command[]): Promise<Array<RedisReply | ErrorReplyError>> {
     return sendCommands(this.#writer, this.#reader, commands);
+  }
+
+  close(): void {
+    return this.#conn.close();
   }
 }
