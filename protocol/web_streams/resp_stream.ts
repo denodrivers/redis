@@ -54,8 +54,12 @@ export class RESPStream {
       pull: (controller) => this.#pullCommand(controller),
     });
     const writable = new WritableStream<Uint8Array>({
-      write: (chunk, controller) =>
-        this.#handleReply(chunk, controller, this.#readQueue.shift()),
+      write: (chunk, controller) => {
+        const item = this.#readQueue[0];
+        if (this.#handleReply(chunk, controller, item) !== Imcompleted) {
+          this.#readQueue.shift();
+        }
+      },
     });
 
     readable.pipeTo(conn.writable, { signal: this.#ac.signal }).catch(
@@ -161,7 +165,7 @@ export class RESPStream {
     chunk: Uint8Array,
     controller: WritableStreamDefaultController,
     maybePendingItem: ReadQueueItem | undefined,
-  ) {
+  ): typeof Imcompleted | void {
     const indexOfLF = chunk.indexOf(LF);
     const isIncomplete = (indexOfLF === -1) ||
       (indexOfLF === 0 && this.#buffer[this.#buffer.length - 1] !== CR) ||
@@ -169,7 +173,7 @@ export class RESPStream {
 
     if (isIncomplete) {
       this.#buffer = concateBytes(this.#buffer, chunk);
-      return;
+      return Imcompleted;
     }
 
     const data = concateBytes(this.#buffer, chunk);
@@ -203,19 +207,19 @@ export class RESPStream {
     let remaining = buffer.subarray(indexOfLF + 1);
     switch (line[0]) {
       case SimpleStringCode: {
-        const body = line.subarray(1, -2);
+        const body = line.subarray(1);
         return [
           maybeCommand?.returnUint8Arrays ? body : decoder.decode(body),
           remaining,
         ];
       }
       case IntegerReplyCode: {
-        const i = Number.parseInt(decoder.decode(line.subarray(1, -2)));
+        const i = Number.parseInt(decoder.decode(line.subarray(1)));
         return [i, remaining];
       }
       case BulkReplyCode: {
         const size = Number.parseInt(
-          decoder.decode(line.subarray(1, indexOfLF - 1)),
+          decoder.decode(line.subarray(1)),
         );
         if (size < 0) {
           // nil bulk reply
@@ -224,18 +228,18 @@ export class RESPStream {
 
         const end = size + 2;
         if (remaining.length >= end) {
-          const buf = remaining.subarray(0, end);
+          const buf = remaining.subarray(0, end - 2);
           const parsed = maybeCommand?.returnUint8Arrays
             ? buf
             : decoder.decode(buf);
-          remaining = remaining.subarray(end + 1);
+          remaining = remaining.subarray(end);
           return [parsed, remaining];
         }
 
         return Imcompleted;
       }
       case ArrayReplyCode: {
-        const size = Number.parseInt(decoder.decode(line.subarray(1, -2)));
+        const size = Number.parseInt(decoder.decode(line.subarray(1)));
         const isNullArray = size === -1; // `-1` indicates a null array
         if (isNullArray) {
           return [null, remaining];
