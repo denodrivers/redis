@@ -19,7 +19,6 @@ import type {
   LPosWithCountOpts,
   MemoryUsageOpts,
   MigrateOpts,
-  RedisCommands,
   RestoreOpts,
   ScanOpts,
   ScriptDebugMode,
@@ -41,9 +40,9 @@ import type {
   ZScanOpts,
   ZUnionstoreOpts,
 } from "./command.ts";
-import { RedisConnection } from "./connection.ts";
 import type { Connection, SendCommandOptions } from "./connection.ts";
-import type { RedisConnectionOptions } from "./connection.ts";
+import { RedisConnection } from "./connection.ts";
+import { RedisConnectionOptions } from "./connection.ts";
 import { CommandExecutor, DefaultExecutor } from "./executor.ts";
 import type {
   Binary,
@@ -93,6 +92,8 @@ import {
   XReadOpts,
   XReadStreamRaw,
 } from "./stream.ts";
+
+import { RedisCommands } from "./command.ts";
 
 const binaryCommandOptions = {
   returnUint8Arrays: true,
