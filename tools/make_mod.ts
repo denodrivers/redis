@@ -9,6 +9,7 @@ const decoder = new TextDecoder();
 interface Node {
   kind: string;
   name: string;
+  declarationKind: "export" | "private";
 }
 
 async function doc(fileName: string): Promise<Array<Node>> {
