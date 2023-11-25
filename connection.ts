@@ -9,10 +9,6 @@ import {
   kUnstablePipeline,
   kUnstableReadReply,
 } from "./internal/symbols.ts";
-import {
-  Deferred,
-  deferred,
-} from "./vendor/https/deno.land/std/async/deferred.ts";
 import { delay } from "./vendor/https/deno.land/std/async/delay.ts";
 
 export interface SendCommandOptions {
@@ -74,7 +70,8 @@ export const kEmptyRedisArgs: Array<RedisValue> = [];
 interface PendingCommand {
   name: string;
   args: RedisValue[];
-  promise: Deferred<RedisReply>;
+  resolve: (reply: RedisReply) => void;
+  reject: (error: unknown) => void;
   returnUint8Arrays?: boolean;
 }
 
@@ -151,11 +148,12 @@ export class RedisConnection implements Connection {
     args?: Array<RedisValue>,
     options?: SendCommandOptions,
   ): Promise<RedisReply> {
-    const promise = deferred<RedisReply>();
+    const { promise, resolve, reject } = Promise.withResolvers<RedisReply>();
     this.commandQueue.push({
       name: command,
       args: args ?? kEmptyRedisArgs,
-      promise,
+      resolve,
+      reject,
       returnUint8Arrays: options?.returnUint8Arrays,
     });
     if (this.commandQueue.length === 1) {
@@ -254,13 +252,13 @@ export class RedisConnection implements Connection {
         command.args,
         command.returnUint8Arrays,
       );
-      command.promise.resolve(reply);
+      command.resolve(reply);
     } catch (error) {
       if (
         !isRetriableError(error) ||
         this.isManuallyClosedByUser()
       ) {
-        return command.promise.reject(error);
+        return command.reject(error);
       }
 
       for (let i = 0; i < this.maxRetryCount; i++) {
@@ -275,14 +273,14 @@ export class RedisConnection implements Connection {
             command.returnUint8Arrays,
           );
 
-          return command.promise.resolve(reply);
+          return command.resolve(reply);
         } catch { // TODO: use `AggregateError`?
           const backoff = this.backoff(i);
           await delay(backoff);
         }
       }
 
-      command.promise.reject(error);
+      command.reject(error);
     } finally {
       this.commandQueue.shift();
       this.processCommandQueue();

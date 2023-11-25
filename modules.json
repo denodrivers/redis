@@ -3,7 +3,6 @@
     "version": "@0.207.0",
     "modules": [
       "/assert/mod.ts",
-      "/async/deferred.ts",
       "/async/delay.ts",
       "/bytes/concat.ts",
       "/testing/bdd.ts",
