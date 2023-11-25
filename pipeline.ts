@@ -38,7 +38,7 @@ export class PipelineExecutor implements CommandExecutor {
       args: RedisValue[];
       returnUint8Arrays?: boolean;
     }[];
-    resolve: (value: unknown[]) => void;
+    resolve: (value: RawOrError[]) => void;
     reject: (error: unknown) => void;
   }[] = [];
 
@@ -77,7 +77,7 @@ export class PipelineExecutor implements CommandExecutor {
       this.commands.unshift({ command: "MULTI", args: [] });
       this.commands.push({ command: "EXEC", args: [] });
     }
-    const { promise, resolve, reject } = Promise.withResolvers<unknown[]>();
+    const { promise, resolve, reject } = Promise.withResolvers<RawOrError[]>();
     this.queue.push({ commands: [...this.commands], resolve, reject });
     if (this.queue.length === 1) {
       this.dequeue();
