@@ -9,10 +9,6 @@ import {
 } from "./protocol/shared/types.ts";
 import { create, Redis } from "./redis.ts";
 import { kUnstablePipeline } from "./internal/symbols.ts";
-import {
-  Deferred,
-  deferred,
-} from "./vendor/https/deno.land/std/async/deferred.ts";
 
 export interface RedisPipeline extends Redis {
   flush(): Promise<RawOrError[]>;
@@ -42,7 +38,8 @@ export class PipelineExecutor implements CommandExecutor {
       args: RedisValue[];
       returnUint8Arrays?: boolean;
     }[];
-    d: Deferred<unknown[]>;
+    resolve: (value: RawOrError[]) => void;
+    reject: (error: unknown) => void;
   }[] = [];
 
   constructor(
@@ -80,21 +77,21 @@ export class PipelineExecutor implements CommandExecutor {
       this.commands.unshift({ command: "MULTI", args: [] });
       this.commands.push({ command: "EXEC", args: [] });
     }
-    const d = deferred<RawOrError[]>();
-    this.queue.push({ commands: [...this.commands], d });
+    const { promise, resolve, reject } = Promise.withResolvers<RawOrError[]>();
+    this.queue.push({ commands: [...this.commands], resolve, reject });
     if (this.queue.length === 1) {
       this.dequeue();
     }
     this.commands = [];
-    return d;
+    return promise;
   }
 
   private dequeue(): void {
     const [e] = this.queue;
     if (!e) return;
     this.connection[kUnstablePipeline](e.commands)
-      .then(e.d.resolve)
-      .catch(e.d.reject)
+      .then(e.resolve)
+      .catch(e.reject)
       .finally(() => {
         this.queue.shift();
         this.dequeue();

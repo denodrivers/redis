@@ -7,7 +7,6 @@ import {
 import { describe, it } from "../../vendor/https/deno.land/std/testing/bdd.ts";
 import { nextPort, startRedis, stopRedis } from "../test_util.ts";
 import type { Connector, TestServer } from "../test_util.ts";
-import { deferred } from "../../vendor/https/deno.land/std/async/deferred.ts";
 
 export function pubsubTests(
   connect: Connector,
@@ -129,7 +128,7 @@ export function pubsubTests(
 
     setTimeout(() => stopRedis(tempServer), 1000);
 
-    const promise = deferred();
+    const { promise, resolve, reject } = Promise.withResolvers<void>();
     setTimeout(async () => {
       try {
         assertEquals(
@@ -158,9 +157,9 @@ export function pubsubTests(
         );
         assert(publisher.isConnected, "The publisher client is not connected.");
 
-        promise.resolve();
+        resolve();
       } catch (error) {
-        promise.reject(error);
+        reject(error);
       }
     }, 2000);
 
