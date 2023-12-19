@@ -82,5 +82,5 @@ export function encodeCommands(commands: Array<Command>): Uint8Array {
     const { command, args } = commands[i];
     bufs[i] = encodeCommand(command, args);
   }
-  return concat(...bufs);
+  return concat(bufs);
 }
