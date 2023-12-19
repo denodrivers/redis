@@ -33,8 +33,7 @@ export async function readReply(
         // nil bulk reply
         return null;
       }
-      const buf = new Uint8Array(size + 2);
-      await readable.readFull(buf);
+      const buf = await readable.readN(size + 2);
       const body = buf.subarray(0, size); // Strip CR and LF.
       return returnUint8Arrays ? body : decoder.decode(body);
     }

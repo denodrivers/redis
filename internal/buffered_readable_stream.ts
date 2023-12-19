@@ -7,11 +7,10 @@ const LF = "\n".charCodeAt(0);
  * {@link https://github.com/denoland/deno_std/blob/0.204.0/io/buf_reader.ts}
  */
 export class BufferedReadableStream {
-  #reader: ReadableStreamDefaultReader<Uint8Array>;
+  #reader: ReadableStreamBYOBReader;
   #buffer: Uint8Array;
   constructor(readable: ReadableStream<Uint8Array>) {
-    // TODO: This class could probably be optimized with a BYOB reader.
-    this.#reader = readable.getReader();
+    this.#reader = readable.getReader({ mode: "byob" });
     this.#buffer = new Uint8Array(0);
   }
 
@@ -27,16 +26,38 @@ export class BufferedReadableStream {
     }
   }
 
-  async readFull(buffer: Uint8Array): Promise<void> {
-    if (buffer.length <= this.#buffer.length) {
-      buffer.set(this.#consume(buffer.length));
-      return;
+  async readN(n: number): Promise<Uint8Array> {
+    if (n <= this.#buffer.length) {
+      return this.#consume(n);
     }
-    for (;;) {
-      await this.#fill();
-      if (this.#buffer.length >= buffer.length) break;
+
+    if (n === 0) {
+      return new Uint8Array(0);
     }
-    return this.readFull(buffer);
+
+    if (this.#buffer.length === 0) {
+      const buffer = new Uint8Array(n);
+      const { done, value } = await this.#reader.read(buffer, {
+        min: buffer.length,
+      });
+      if (done) {
+        throw new Deno.errors.BadResource();
+      }
+      return value;
+    } else {
+      const remaining = n - this.#buffer.length;
+      const buffer = new Uint8Array(remaining);
+      const { value, done } = await this.#reader.read(buffer, {
+        min: remaining,
+      });
+      if (done) {
+        throw new Deno.errors.BadResource();
+      }
+
+      const result = concateBytes(this.#buffer, value);
+      this.#buffer = new Uint8Array();
+      return result;
+    }
   }
 
   #consume(n: number): Uint8Array {
@@ -46,7 +67,7 @@ export class BufferedReadableStream {
   }
 
   async #fill() {
-    const chunk = await this.#reader.read();
+    const chunk = await this.#reader.read(new Uint8Array(1024));
     if (chunk.done) {
       throw new Deno.errors.BadResource();
     }
