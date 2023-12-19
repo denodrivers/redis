@@ -1,1 +1,1 @@
-export * from "https://deno.land/std@0.207.0/streams/read_all.ts";
+export * from "https://deno.land/std@0.209.0/streams/read_all.ts";
