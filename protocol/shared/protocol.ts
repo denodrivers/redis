@@ -17,4 +17,5 @@ export interface Protocol {
   pipeline(
     commands: Array<Command>,
   ): Promise<Array<RedisReply | ErrorReplyError>>;
+  close(): void;
 }
