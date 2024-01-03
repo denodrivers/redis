@@ -14,7 +14,7 @@ export function pubsubTests(
 ): void {
   const getOpts = () => ({ hostname: "127.0.0.1", port: getServer().port });
 
-  it("subscribe() & unsubscribe()", async () => {
+  it("supports unsubscribing channels by `unsubscribe()`", async () => {
     const opts = getOpts();
     const client = await connect(opts);
     const sub = await client.subscribe("subsc");
@@ -24,7 +24,7 @@ export function pubsubTests(
     client.close();
   });
 
-  it("receive()", async () => {
+  it("supports reading messages sequentially by `receive()`", async () => {
     const opts = getOpts();
     const client = await connect(opts);
     const pub = await connect(opts);
@@ -74,7 +74,7 @@ export function pubsubTests(
     });
   });
 
-  it("psubscribe()", async () => {
+  it("supports `psubscribe()`", async () => {
     const opts = getOpts();
     const client = await connect(opts);
     const pub = await connect(opts);
@@ -104,7 +104,7 @@ export function pubsubTests(
     client.close();
   });
 
-  it("retry", async () => {
+  it("supports automatic reconnection of subscribers", async () => {
     const opts = getOpts();
     const port = nextPort();
     let tempServer = await startRedis({ port });
@@ -126,11 +126,14 @@ export function pubsubTests(
       messages++;
     }, 900);
 
+    // Intentionally stops the server after the first message is delivered.
     setTimeout(() => stopRedis(tempServer), 1000);
 
     const { promise, resolve, reject } = Promise.withResolvers<void>();
     setTimeout(async () => {
       try {
+        // At this point, the server is assumed to be stopped.
+        // The subscriber and publisher should attempt to reconnect.
         assertEquals(
           subscriberClient.isConnected,
           false,
@@ -141,14 +144,17 @@ export function pubsubTests(
           false,
           "The publisher client still thinks it is connected.",
         );
+        assert(messages >= 1, "At least one message should be published.");
         assert(messages < 5, "Too many messages were published.");
 
+        // Reboot the server.
         tempServer = await startRedis({ port });
 
         const tempClient = await connect({ ...opts, port });
         await tempClient.ping();
         tempClient.close();
 
+        // Wait for the subscriber and publisher to reconnect...
         await delay(1000);
 
         assert(
@@ -193,7 +199,7 @@ export function pubsubTests(
     },
   });
 
-  it("pubsubNumsub()", async () => {
+  it("supports `pubsubNumsub()`", async () => {
     const opts = getOpts();
     const subClient1 = await connect(opts);
     await subClient1.subscribe("test1", "test2");
