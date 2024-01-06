@@ -218,38 +218,39 @@ export function pubsubTests(
 
   it("supports calling `subscribe()` multiple times", async () => {
     // https://github.com/denodrivers/redis/issues/390
-    const signal = AbortSignal.timeout(10000);
     const opts = getOpts();
     const redis = await connect(opts);
     const pub = await connect(opts);
     const channel1 = "foo";
     const channel2 = "bar";
 
-    const { resolve, reject, promise: timeoutPromise } = Promise.withResolvers<
-      void
-    >();
-    const onAbort = () => reject();
-    signal.addEventListener("abort", onAbort);
-
     // First subscription
     const sub1 = await redis.subscribe(channel1);
     const it1 = sub1.receive();
     const promise = it1.next();
-    await pub.publish(channel1, "A");
-    await Promise.race([promise, timeoutPromise]);
+    const message = "A";
+    await pub.publish(channel1, message);
+    const result = await promise;
+    assert(!result.done);
+    assertEquals(result.value, { channel: channel1, message });
     try {
       // Second subscription
       const sub2 = await redis.subscribe(channel2);
       try {
         const it2 = sub2.receive();
         const promise = it2.next();
-        await pub.publish(channel2, "B");
-        await Promise.race([promise, timeoutPromise]);
+        const message = "B";
+        await pub.publish(channel2, message);
+        const result = await promise;
+        assert(!result.done);
+        assertEquals(result.value, {
+          channel: channel2,
+          message: "B",
+        });
       } finally {
         sub2.close();
       }
     } finally {
-      resolve();
       pub.close();
       sub1.close();
       redis.close();
