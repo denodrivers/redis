@@ -58,6 +58,7 @@ import type {
   SimpleString,
 } from "./protocol/shared/types.ts";
 import { createRedisPipeline } from "./pipeline.ts";
+import type { RedisSubscription } from "./pubsub.ts";
 import { psubscribe, subscribe } from "./pubsub.ts";
 import {
   convertMap,
@@ -1180,16 +1181,30 @@ class RedisImpl implements Redis {
     return this.execIntegerReply("PUBLISH", channel, message);
   }
 
-  subscribe<TMessage extends string | string[] = string>(
+  // deno-lint-ignore no-explicit-any
+  #subscription?: RedisSubscription<any>;
+  async subscribe<TMessage extends string | string[] = string>(
     ...channels: string[]
   ) {
-    return subscribe<TMessage>(this.executor, ...channels);
+    if (this.#subscription) {
+      await this.#subscription.subscribe(...channels);
+      return this.#subscription;
+    }
+    const subscription = await subscribe<TMessage>(this.executor, ...channels);
+    this.#subscription = subscription;
+    return subscription;
   }
 
-  psubscribe<TMessage extends string | string[] = string>(
+  async psubscribe<TMessage extends string | string[] = string>(
     ...patterns: string[]
   ) {
-    return psubscribe<TMessage>(this.executor, ...patterns);
+    if (this.#subscription) {
+      await this.#subscription.psubscribe(...patterns);
+      return this.#subscription;
+    }
+    const subscription = await psubscribe<TMessage>(this.executor, ...patterns);
+    this.#subscription = subscription;
+    return subscription;
   }
 
   pubsubChannels(pattern?: string) {

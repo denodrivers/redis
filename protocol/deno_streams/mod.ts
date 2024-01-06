@@ -1,7 +1,7 @@
 import { BufReader } from "../../vendor/https/deno.land/std/io/buf_reader.ts";
 import { BufWriter } from "../../vendor/https/deno.land/std/io/buf_writer.ts";
 import { readReply } from "./reply.ts";
-import { sendCommand, sendCommands } from "./command.ts";
+import { sendCommand, sendCommands, writeCommand } from "./command.ts";
 
 import type { Command, Protocol as BaseProtocol } from "../shared/protocol.ts";
 import { RedisReply, RedisValue } from "../shared/types.ts";
@@ -32,6 +32,11 @@ export class Protocol implements BaseProtocol {
 
   readReply(returnsUint8Arrays?: boolean): Promise<RedisReply> {
     return readReply(this.#reader, returnsUint8Arrays);
+  }
+
+  async writeCommand(command: Command): Promise<void> {
+    await writeCommand(this.#writer, command.command, command.args);
+    await this.#writer.flush();
   }
 
   pipeline(commands: Command[]): Promise<Array<RedisReply | ErrorReplyError>> {

@@ -8,6 +8,7 @@ import {
   kUnstableCreateProtocol,
   kUnstablePipeline,
   kUnstableReadReply,
+  kUnstableWriteCommand,
 } from "./internal/symbols.ts";
 import { delay } from "./vendor/https/deno.land/std/async/delay.ts";
 
@@ -35,6 +36,10 @@ export interface Connection {
    * @private
    */
   [kUnstableReadReply](returnsUint8Arrays?: boolean): Promise<RedisReply>;
+  /**
+   * @private
+   */
+  [kUnstableWriteCommand](command: Command): Promise<void>;
   /**
    * @private
    */
@@ -168,6 +173,10 @@ export class RedisConnection implements Connection {
 
   [kUnstablePipeline](commands: Array<Command>) {
     return this.#protocol.pipeline(commands);
+  }
+
+  [kUnstableWriteCommand](command: Command): Promise<void> {
+    return this.#protocol.writeCommand(command);
   }
 
   /**

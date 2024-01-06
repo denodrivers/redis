@@ -4,7 +4,7 @@ import type { BufferedReadableStream } from "../../internal/buffered_readable_st
 import type { RedisReply, RedisValue } from "../shared/types.ts";
 import { encodeCommand, encodeCommands } from "../shared/command.ts";
 
-async function writeRequest(
+export async function writeCommand(
   writable: WritableStream<Uint8Array>,
   command: string,
   args: RedisValue[],
@@ -25,7 +25,7 @@ export async function sendCommand(
   args: RedisValue[],
   returnUint8Arrays?: boolean,
 ): Promise<RedisReply> {
-  await writeRequest(writable, command, args);
+  await writeCommand(writable, command, args);
   return readReply(readable, returnUint8Arrays);
 }
 

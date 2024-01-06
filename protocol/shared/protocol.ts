@@ -14,6 +14,7 @@ export interface Protocol {
     returnsUint8Arrays?: boolean,
   ): Promise<RedisReply>;
   readReply(returnsUint8Array?: boolean): Promise<RedisReply>;
+  writeCommand(command: Command): Promise<void>;
   pipeline(
     commands: Array<Command>,
   ): Promise<Array<RedisReply | ErrorReplyError>>;
