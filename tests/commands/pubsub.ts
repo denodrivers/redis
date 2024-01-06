@@ -252,6 +252,7 @@ export function pubsubTests(
       resolve();
       pub.close();
       sub1.close();
+      redis.close();
     }
   });
 }
