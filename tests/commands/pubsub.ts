@@ -209,4 +209,45 @@ export function pubsubTests(
     subClient2.close();
     pubClient.close();
   });
+
+  it("supports calling `subscribe()` multiple times", async () => {
+    // https://github.com/denodrivers/redis/issues/390
+    const opts = getOpts();
+    const redis = await connect(opts);
+    const pub = await connect(opts);
+    const channel1 = "foo";
+    const channel2 = "bar";
+
+    // First subscription
+    const sub1 = await redis.subscribe(channel1);
+    const it1 = sub1.receive();
+    const promise = it1.next();
+    const message = "A";
+    await pub.publish(channel1, message);
+    const result = await promise;
+    assert(!result.done);
+    assertEquals(result.value, { channel: channel1, message });
+    try {
+      // Second subscription
+      const sub2 = await redis.subscribe(channel2);
+      try {
+        const it2 = sub2.receive();
+        const promise = it2.next();
+        const message = "B";
+        await pub.publish(channel2, message);
+        const result = await promise;
+        assert(!result.done);
+        assertEquals(result.value, {
+          channel: channel2,
+          message: "B",
+        });
+      } finally {
+        sub2.close();
+      }
+    } finally {
+      pub.close();
+      sub1.close();
+      redis.close();
+    }
+  });
 }
