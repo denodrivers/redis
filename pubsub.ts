@@ -2,7 +2,10 @@ import type { CommandExecutor } from "./executor.ts";
 import { isRetriableError } from "./errors.ts";
 import type { Binary } from "./protocol/shared/types.ts";
 import { decoder } from "./internal/encoding.ts";
-import { kUnstableReadReply } from "./internal/symbols.ts";
+import {
+  kUnstableReadReply,
+  kUnstableWriteCommand,
+} from "./internal/symbols.ts";
 
 type DefaultMessageType = string;
 type ValidMessageType = string | string[];
@@ -43,28 +46,28 @@ class RedisSubscriptionImpl<
   constructor(private executor: CommandExecutor) {}
 
   async psubscribe(...patterns: string[]) {
-    await this.executor.exec("PSUBSCRIBE", ...patterns);
+    await this.#writeCommand("PSUBSCRIBE", patterns);
     for (const pat of patterns) {
       this.patterns[pat] = true;
     }
   }
 
   async punsubscribe(...patterns: string[]) {
-    await this.executor.exec("PUNSUBSCRIBE", ...patterns);
+    await this.#writeCommand("PUNSUBSCRIBE", patterns);
     for (const pat of patterns) {
       delete this.patterns[pat];
     }
   }
 
   async subscribe(...channels: string[]) {
-    await this.executor.exec("SUBSCRIBE", ...channels);
+    await this.#writeCommand("SUBSCRIBE", channels);
     for (const chan of channels) {
       this.channels[chan] = true;
     }
   }
 
   async unsubscribe(...channels: string[]) {
-    await this.executor.exec("UNSUBSCRIBE", ...channels);
+    await this.#writeCommand("UNSUBSCRIBE", channels);
     for (const chan of channels) {
       delete this.channels[chan];
     }
@@ -154,6 +157,10 @@ class RedisSubscriptionImpl<
 
   close() {
     this.executor.connection.close();
+  }
+
+  async #writeCommand(command: string, args: Array<string>): Promise<void> {
+    await this.executor.connection[kUnstableWriteCommand]({ command, args });
   }
 }
 

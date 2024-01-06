@@ -6,7 +6,7 @@ import type { RedisReply, RedisValue } from "../shared/types.ts";
 import { encodeCommand } from "../shared/command.ts";
 import type { Command } from "../shared/protocol.ts";
 
-async function writeRequest(
+export async function writeCommand(
   writer: BufWriter,
   command: string,
   args: RedisValue[],
@@ -22,7 +22,7 @@ export async function sendCommand(
   args: RedisValue[],
   returnUint8Arrays?: boolean,
 ): Promise<RedisReply> {
-  await writeRequest(writer, command, args);
+  await writeCommand(writer, command, args);
   await writer.flush();
   return readReply(reader, returnUint8Arrays);
 }
@@ -33,7 +33,7 @@ export async function sendCommands(
   commands: Command[],
 ): Promise<(RedisReply | ErrorReplyError)[]> {
   for (const { command, args } of commands) {
-    await writeRequest(writer, command, args);
+    await writeCommand(writer, command, args);
   }
   await writer.flush();
   const ret: (RedisReply | ErrorReplyError)[] = [];

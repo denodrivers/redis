@@ -1,4 +1,4 @@
-import { sendCommand, sendCommands } from "./command.ts";
+import { sendCommand, sendCommands, writeCommand } from "./command.ts";
 import { readReply } from "./reply.ts";
 import type { Command, Protocol as BaseProtocol } from "../shared/protocol.ts";
 import { RedisReply, RedisValue } from "../shared/types.ts";
@@ -28,6 +28,10 @@ export class Protocol implements BaseProtocol {
 
   readReply(returnsUint8Arrays?: boolean): Promise<RedisReply> {
     return readReply(this.#readable, returnsUint8Arrays);
+  }
+
+  writeCommand(command: Command): Promise<void> {
+    return writeCommand(this.#writable, command.command, command.args);
   }
 
   pipeline(commands: Command[]): Promise<Array<RedisReply | ErrorReplyError>> {
