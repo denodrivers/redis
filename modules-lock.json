@@ -1,6 +1,6 @@
 {
   "https://deno.land/std": {
-    "version": "@0.211.0",
+    "version": "@0.215.0",
     "modules": [
       "/assert/mod.ts",
       "/async/delay.ts",
@@ -8,7 +8,7 @@
       "/testing/bdd.ts",
       "/io/buf_reader.ts",
       "/io/buf_writer.ts",
-      "/streams/read_all.ts",
+      "/io/read_all.ts",
       "/streams/reader_from_stream_reader.ts"
     ]
   },
