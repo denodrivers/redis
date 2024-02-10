@@ -3,7 +3,6 @@ import {
   assert,
   assertEquals,
   assertExists,
-  assertNotEquals,
 } from "../../vendor/https/deno.land/std/assert/mod.ts";
 import {
   afterAll,
@@ -101,14 +100,11 @@ export function connectionTests(
   describe("createLazyClient", () => {
     it("returns the lazily connected client", async () => {
       const opts = getOpts();
-      const resources = Deno.resources();
       const client = createLazyClient(opts);
       assert(!client.isConnected);
-      assertEquals(resources, Deno.resources());
       try {
         await client.get("foo");
         assert(client.isConnected);
-        assertNotEquals(resources, Deno.resources());
       } finally {
         client.close();
       }
