@@ -298,7 +298,8 @@ class ClusterExecutor implements CommandExecutor {
       try {
         await conn.quit();
       } catch (err) {
-        console.error(err); // TODO: Improve logging
+        // deno-lint-ignore no-console -- TODO: consider improving logging
+        console.error(err);
       }
     }
   }
