@@ -6,7 +6,8 @@
     "exclude": [
       "benchmark/benchmark.js",
       "benchmark/ioredis.js"
-    ]
+    ],
+    "rules": { "include": ["no-console"] }
   },
   "test": {
     "exclude": ["benchmark/", "tmp/", "vendor/"]
