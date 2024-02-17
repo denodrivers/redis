@@ -34,5 +34,6 @@ const paths = Array.from(Deno.readDirSync(resultsDir)).map((x) =>
 for (const path of paths) {
   const results = JSON.parse(await Deno.readTextFile(path));
   const markdown = formatResultsAsMarkdown(results);
+  // deno-lint-ignore no-console
   console.log(markdown);
 }
