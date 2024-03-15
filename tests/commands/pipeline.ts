@@ -117,6 +117,37 @@ export function pipelineTests(
     }
   });
 
+  it("pipeline in concurrent, avoid redundant response mixup", async () => {
+    {
+      const opts = getOpts();
+      const client = await connect(opts);
+
+      const randomValues = new Array(10)
+        .fill(0)
+        .map(() => new Array(10).fill(0).map(() => Math.random().toString()));
+
+      for (let i = 0; i < 10; i++) {
+        const key = `list_${i}`;
+        const values = randomValues[i];
+        await client.del(key);
+        await client.rpush(key, ...values);
+      }
+
+      // deno-lint-ignore no-inner-declarations
+      async function task() {
+        const tx = client.pipeline();
+        for (let i = 0; i < 10; i++) {
+          tx.lrange(`list_${i}`, 0, -1);
+        }
+        return await tx.flush();
+      }
+
+      const res = await Promise.all([task(), task()]);
+      assertEquals(res, [randomValues, randomValues]);
+      client.close();
+    }
+  });
+
   it("error while pipeline", async () => {
     const opts = getOpts();
     const client = await connect(opts);
