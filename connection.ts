@@ -1,6 +1,3 @@
-import { Protocol as DenoStreamsProtocol } from "./protocol/deno_streams/mod.ts";
-import type { RedisReply, RedisValue } from "./protocol/shared/types.ts";
-import type { Command, Protocol } from "./protocol/shared/protocol.ts";
 import type { Backoff } from "./backoff.ts";
 import { exponentialBackoff } from "./backoff.ts";
 import { ErrorReplyError, isRetriableError } from "./errors.ts";
@@ -10,6 +7,9 @@ import {
   kUnstableReadReply,
   kUnstableWriteCommand,
 } from "./internal/symbols.ts";
+import { Protocol as DenoStreamsProtocol } from "./protocol/deno_streams/mod.ts";
+import type { Command, Protocol } from "./protocol/shared/protocol.ts";
+import type { RedisReply, RedisValue } from "./protocol/shared/types.ts";
 import { delay } from "./vendor/https/deno.land/std/async/delay.ts";
 
 export interface SendCommandOptions {
@@ -73,11 +73,9 @@ export interface RedisConnectionOptions {
 export const kEmptyRedisArgs: Array<RedisValue> = [];
 
 interface PendingCommand {
-  name: string;
-  args: RedisValue[];
+  execute: () => Promise<RedisReply>;
   resolve: (reply: RedisReply) => void;
   reject: (error: unknown) => void;
-  returnUint8Arrays?: boolean;
 }
 
 export class RedisConnection implements Connection {
@@ -148,22 +146,29 @@ export class RedisConnection implements Connection {
     await this.sendCommand("SELECT", [db]);
   }
 
+  private enqueueCommand(
+    command: PendingCommand,
+  ) {
+    this.commandQueue.push(command);
+    if (this.commandQueue.length === 1) {
+      this.processCommandQueue();
+    }
+  }
+
   sendCommand(
     command: string,
     args?: Array<RedisValue>,
     options?: SendCommandOptions,
   ): Promise<RedisReply> {
     const { promise, resolve, reject } = Promise.withResolvers<RedisReply>();
-    this.commandQueue.push({
-      name: command,
-      args: args ?? kEmptyRedisArgs,
-      resolve,
-      reject,
-      returnUint8Arrays: options?.returnUint8Arrays,
-    });
-    if (this.commandQueue.length === 1) {
-      this.processCommandQueue();
-    }
+    const execute = () =>
+      this.#protocol.sendCommand(
+        command,
+        args ?? kEmptyRedisArgs,
+        options?.returnUint8Arrays,
+      );
+    this.enqueueCommand({ execute, resolve, reject });
+
     return promise;
   }
 
@@ -172,7 +177,12 @@ export class RedisConnection implements Connection {
   }
 
   [kUnstablePipeline](commands: Array<Command>) {
-    return this.#protocol.pipeline(commands);
+    const { promise, resolve, reject } = Promise.withResolvers<
+      RedisReply[]
+    >();
+    const execute = () => this.#protocol.pipeline(commands);
+    this.enqueueCommand({ execute, resolve, reject } as PendingCommand);
+    return promise;
   }
 
   [kUnstableWriteCommand](command: Command): Promise<void> {
@@ -256,11 +266,7 @@ export class RedisConnection implements Connection {
     if (!command) return;
 
     try {
-      const reply = await this.#protocol.sendCommand(
-        command.name,
-        command.args,
-        command.returnUint8Arrays,
-      );
+      const reply = await command.execute();
       command.resolve(reply);
     } catch (error) {
       if (
@@ -275,13 +281,7 @@ export class RedisConnection implements Connection {
         this.close();
         try {
           await this.connect();
-
-          const reply = await this.#protocol.sendCommand(
-            command.name,
-            command.args,
-            command.returnUint8Arrays,
-          );
-
+          const reply = await command.execute();
           return command.resolve(reply);
         } catch { // TODO: use `AggregateError`?
           const backoff = this.backoff(i);
