@@ -19,6 +19,13 @@ export interface SendCommandOptions {
    * @default false
    */
   returnUint8Arrays?: boolean;
+
+  /**
+   * When this option is set, the command is executed directly without queueing.
+   *
+   * @default false
+   */
+  inline?: boolean;
 }
 
 export interface Connection {
@@ -126,8 +133,8 @@ export class RedisConnection implements Connection {
   ): Promise<void> {
     try {
       password && username
-        ? await this.sendCommand("AUTH", [username, password])
-        : await this.sendCommand("AUTH", [password]);
+        ? await this.sendCommand("AUTH", [username, password], { inline: true })
+        : await this.sendCommand("AUTH", [password], { inline: true });
     } catch (error) {
       if (error instanceof ErrorReplyError) {
         throw new AuthenticationError("Authentication failed", {
@@ -143,7 +150,7 @@ export class RedisConnection implements Connection {
     db: number | undefined = this.options.db,
   ): Promise<void> {
     if (!db) throw new Error("The database index is undefined.");
-    await this.sendCommand("SELECT", [db]);
+    await this.sendCommand("SELECT", [db], { inline: true });
   }
 
   private enqueueCommand(
@@ -160,13 +167,16 @@ export class RedisConnection implements Connection {
     args?: Array<RedisValue>,
     options?: SendCommandOptions,
   ): Promise<RedisReply> {
-    const { promise, resolve, reject } = Promise.withResolvers<RedisReply>();
     const execute = () =>
       this.#protocol.sendCommand(
         command,
         args ?? kEmptyRedisArgs,
         options?.returnUint8Arrays,
       );
+    if (options?.inline) {
+      return execute();
+    }
+    const { promise, resolve, reject } = Promise.withResolvers<RedisReply>();
     this.enqueueCommand({ execute, resolve, reject });
 
     return promise;
