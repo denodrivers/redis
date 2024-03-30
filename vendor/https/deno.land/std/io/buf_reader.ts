@@ -1,1 +1,1 @@
-export * from "https://deno.land/std@0.218.0/io/buf_reader.ts";
+export * from "https://deno.land/std@0.221.0/io/buf_reader.ts";
