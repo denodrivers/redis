@@ -1922,8 +1922,8 @@ class RedisImpl implements Redis {
     consumer?: string,
   ) {
     const args = [];
-    args.push(startEndCount.start);
-    args.push(startEndCount.end);
+    args.push(xidstr(startEndCount.start));
+    args.push(xidstr(startEndCount.end));
     args.push(startEndCount.count);
 
     if (consumer) {
