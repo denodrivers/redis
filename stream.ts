@@ -137,8 +137,8 @@ export interface XPendingCount {
  * args must be specified if _any_ are specified.
  */
 export interface StartEndCount {
-  start: number | "-";
-  end: number | "+";
+  start: XIdNeg;
+  end: XIdPos;
   count: number;
 }
 
