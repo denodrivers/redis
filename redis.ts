@@ -1825,7 +1825,7 @@ class RedisImpl implements Redis {
 
   xinfoStreamFull(key: string, count?: number) {
     const args = [];
-    if (count) {
+    if (count !== undefined) {
       args.push("COUNT");
       args.push(count);
     }
@@ -1941,7 +1941,7 @@ class RedisImpl implements Redis {
     count?: number,
   ) {
     const args: (string | number)[] = [key, xidstr(start), xidstr(end)];
-    if (count) {
+    if (count !== undefined) {
       args.push("COUNT");
       args.push(count);
     }
@@ -1957,7 +1957,7 @@ class RedisImpl implements Redis {
     count?: number,
   ) {
     const args: (string | number)[] = [key, xidstr(start), xidstr(end)];
-    if (count) {
+    if (count !== undefined) {
       args.push("COUNT");
       args.push(count);
     }
@@ -1972,11 +1972,11 @@ class RedisImpl implements Redis {
   ) {
     const args = [];
     if (opts) {
-      if (opts.count) {
+      if (opts.count !== undefined) {
         args.push("COUNT");
         args.push(opts.count);
       }
-      if (opts.block) {
+      if (opts.block !== undefined) {
         args.push("BLOCK");
         args.push(opts.block);
       }
@@ -2014,11 +2014,11 @@ class RedisImpl implements Redis {
       consumer,
     ];
 
-    if (count) {
+    if (count !== undefined) {
       args.push("COUNT");
       args.push(count);
     }
-    if (block) {
+    if (block !== undefined) {
       args.push("BLOCK");
       args.push(block);
     }
