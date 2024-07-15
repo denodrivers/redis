@@ -31,10 +31,8 @@ import type { Redis } from "../../redis.ts";
 import type { RedisReply, RedisValue } from "../../protocol/shared/types.ts";
 import { ErrorReplyError } from "../../errors.ts";
 import { delay } from "../../deps/std/async.ts";
-import calculateSlot from "../../vendor/https/esm.sh/cluster-key-slot/lib/index.js";
-import sample from "../../vendor/https/esm.sh/lodash-es/sample.js";
-import shuffle from "../../vendor/https/esm.sh/lodash-es/shuffle.js";
-import uniqBy from "../../vendor/https/esm.sh/lodash-es/uniqBy.js";
+import calculateSlot from "../../deps/cluster-key-slot.js";
+import { sample, shuffle, uniqBy } from "../../deps/lodash-es.js";
 
 export interface ClusterConnectOptions {
   nodes: Array<NodeOptions>;
