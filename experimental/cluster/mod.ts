@@ -31,7 +31,7 @@ import type { Redis } from "../../redis.ts";
 import type { RedisReply, RedisValue } from "../../protocol/shared/types.ts";
 import { ErrorReplyError } from "../../errors.ts";
 import { delay } from "../../deps/std/async.ts";
-import calculateSlot from "../../deps/cluster-key-slot.js";
+import { calculateSlot } from "../../deps/cluster-key-slot.js";
 import { sample, shuffle, uniqBy } from "../../deps/lodash-es.js";
 
 export interface ClusterConnectOptions {
