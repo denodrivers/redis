@@ -1,11 +1,11 @@
 import type { Redis } from "../redis.ts";
-import { delay } from "../deps/async.ts";
+import { delay } from "../deps/std/async.ts";
 import {
   assert,
   assertEquals,
   assertRejects,
   assertThrows,
-} from "../deps/assert.ts";
+} from "../deps/std/assert.ts";
 import {
   afterAll,
   afterEach,
@@ -13,7 +13,7 @@ import {
   beforeEach,
   describe,
   it,
-} from "../deps/testing.ts";
+} from "../deps/std/testing.ts";
 import { newClient, nextPort, startRedis, stopRedis } from "./test_util.ts";
 import type { TestServer } from "./test_util.ts";
 

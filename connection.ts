@@ -10,7 +10,7 @@ import {
 import { Protocol as DenoStreamsProtocol } from "./protocol/deno_streams/mod.ts";
 import type { Command, Protocol } from "./protocol/shared/protocol.ts";
 import type { RedisReply, RedisValue } from "./protocol/shared/types.ts";
-import { delay } from "./deps/async.ts";
+import { delay } from "./deps/std/async.ts";
 
 export interface SendCommandOptions {
   /**

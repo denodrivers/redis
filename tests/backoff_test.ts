@@ -1,5 +1,5 @@
-import { assertEquals } from "../deps/assert.ts";
-import { describe, it } from "../deps/testing.ts";
+import { assertEquals } from "../deps/std/assert.ts";
+import { describe, it } from "../deps/std/testing.ts";
 
 import { exponentialBackoff } from "../backoff.ts";
 

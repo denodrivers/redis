@@ -1,4 +1,4 @@
-import { BufReader } from "../../deps/io.ts";
+import { BufReader } from "../../deps/std/io.ts";
 import type * as types from "../shared/types.ts";
 import {
   ArrayReplyCode,

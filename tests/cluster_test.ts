@@ -3,13 +3,13 @@ import {
   assert,
   assertEquals,
   assertStringIncludes,
-} from "../deps/assert.ts";
+} from "../deps/std/assert.ts";
 import {
   afterAll,
   beforeAll,
   describe,
   it,
-} from "../deps/testing.ts";
+} from "../deps/std/testing.ts";
 import { newClient, nextPort, startRedis, stopRedis } from "./test_util.ts";
 import type { TestServer } from "./test_util.ts";
 

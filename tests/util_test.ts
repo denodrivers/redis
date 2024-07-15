@@ -1,6 +1,6 @@
 import { parseURL } from "../mod.ts";
-import { assertEquals } from "../deps/assert.ts";
-import { describe, it } from "../deps/testing.ts";
+import { assertEquals } from "../deps/std/assert.ts";
+import { describe, it } from "../deps/std/testing.ts";
 
 describe("util", {
   permissions: {

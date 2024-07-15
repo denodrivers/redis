@@ -2,7 +2,7 @@ import { encoder } from "./encoding.ts";
 import {
   assertEquals,
   assertRejects,
-} from "../deps/assert.ts";
+} from "../deps/std/assert.ts";
 import { BufferedReadableStream } from "./buffered_readable_stream.ts";
 
 Deno.test({

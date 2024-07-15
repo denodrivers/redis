@@ -1,5 +1,5 @@
 import { encodeCommand } from "./command.ts";
-import { assertEquals } from "../../deps/assert.ts";
+import { assertEquals } from "../../deps/std/assert.ts";
 
 Deno.test({
   name: "encodeCommand",

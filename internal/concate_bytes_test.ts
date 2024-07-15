@@ -1,4 +1,4 @@
-import { assertEquals } from "../deps/assert.ts";
+import { assertEquals } from "../deps/std/assert.ts";
 import { concateBytes } from "./concate_bytes.ts";
 
 Deno.test("concateBytes", () => {

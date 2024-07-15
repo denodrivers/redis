@@ -22,7 +22,7 @@ import {
   afterAll,
   beforeAll,
   describe,
-} from "../deps/testing.ts";
+} from "../deps/std/testing.ts";
 
 describe("commands", () => {
   let port!: number;

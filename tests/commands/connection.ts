@@ -3,14 +3,14 @@ import {
   assert,
   assertEquals,
   assertExists,
-} from "../../deps/assert.ts";
+} from "../../deps/std/assert.ts";
 import {
   afterAll,
   beforeAll,
   describe,
   it,
-} from "../../deps/testing.ts";
-import { delay } from "../../deps/async.ts";
+} from "../../deps/std/testing.ts";
+import { delay } from "../../deps/std/async.ts";
 import type { Connector, TestServer } from "../test_util.ts";
 import type { Redis } from "../../mod.ts";
 

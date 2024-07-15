@@ -1,17 +1,17 @@
 import { ErrorReplyError, Redis } from "../../mod.ts";
 import { parseXId } from "../../stream.ts";
-import { delay } from "../../deps/async.ts";
+import { delay } from "../../deps/std/async.ts";
 import {
   assert,
   assertEquals,
   assertNotEquals,
   assertRejects,
-} from "../../deps/assert.ts";
+} from "../../deps/std/assert.ts";
 import {
   afterAll,
   beforeAll,
   it,
-} from "../../deps/testing.ts";
+} from "../../deps/std/testing.ts";
 import type { Connector, TestServer } from "../test_util.ts";
 
 export function streamTests(

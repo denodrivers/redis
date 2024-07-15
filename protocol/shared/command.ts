@@ -1,4 +1,4 @@
-import { concat } from "../../deps/bytes.ts";
+import { concat } from "../../deps/std/bytes.ts";
 import { encoder } from "../../internal/encoding.ts";
 import type { RedisValue } from "./types.ts";
 import type { Command } from "./protocol.ts";

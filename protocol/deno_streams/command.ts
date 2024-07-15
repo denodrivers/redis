@@ -1,4 +1,4 @@
-import { BufReader, BufWriter } from "../../deps/io.ts";
+import { BufReader, BufWriter } from "../../deps/std/io.ts";
 import { readReply } from "./reply.ts";
 import { ErrorReplyError } from "../../errors.ts";
 import type { RedisReply, RedisValue } from "../shared/types.ts";

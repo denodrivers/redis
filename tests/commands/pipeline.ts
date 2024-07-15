@@ -2,8 +2,8 @@ import { ErrorReplyError, Raw } from "../../mod.ts";
 import {
   assert,
   assertEquals,
-} from "../../deps/assert.ts";
-import { it } from "../../deps/testing.ts";
+} from "../../deps/std/assert.ts";
+import { it } from "../../deps/std/testing.ts";
 import type { Connector, TestServer } from "../test_util.ts";
 
 export function pipelineTests(

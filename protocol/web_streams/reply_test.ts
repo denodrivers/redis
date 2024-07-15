@@ -1,4 +1,4 @@
-import { assertEquals } from "../../deps/assert.ts";
+import { assertEquals } from "../../deps/std/assert.ts";
 import { readReply } from "./reply.ts";
 import { BufferedReadableStream } from "../../internal/buffered_readable_stream.ts";
 
