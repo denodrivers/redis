@@ -13,6 +13,7 @@
     "exclude": ["benchmark/", "tmp/", "vendor/"]
   },
   "tasks": {
+    "check:deno-json": "deno run --allow-read=deno.json tools/check_deno_json.js",
     "test": "DENO_FUTURE=1 deno test --allow-net --allow-read=tests --allow-write=tests/tmp --allow-run=redis-server,redis-cli --coverage=coverage --trace-leaks",
     "test:doc": "deno test --doc --no-run --import-map=import_map.test.json",
     "coverage": "deno coverage ./coverage --lcov --output=coverage/lcov.info",
