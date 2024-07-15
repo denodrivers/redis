@@ -76,7 +76,7 @@ jobs:
           path: |
             ~/.deno
             ~/.cache/deno
-          key: ${{ runner.os }}-deno-benchmark-${{ hashFiles('**/import_map.json', '**/.deno-version', '**/modules-lock.json') }}
+          key: ${{ runner.os }}-deno-benchmark-${{ hashFiles('**/import_map.json', '**/.deno-version', '**/deno.lock') }}
       - name: Set up Node.js
         uses: actions/setup-node@v2
         with:
