@@ -14,7 +14,7 @@ import {
   describe,
   it,
 } from "../../deps/std/testing.ts";
-import sample from "../../vendor/https/esm.sh/lodash-es/sample.js";
+import { sample } from "../../deps/lodash-es.js";
 import calculateSlot from "../../deps/cluster-key-slot.js";
 import { ErrorReplyError } from "../../errors.ts";
 import { connect, create } from "../../redis.ts";
