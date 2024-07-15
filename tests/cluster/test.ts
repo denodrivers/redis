@@ -6,16 +6,16 @@ import {
   assertArrayIncludes,
   assertEquals,
   assertRejects,
-} from "../../vendor/https/deno.land/std/assert/mod.ts";
+} from "../../deps/std/assert.ts";
 import {
   afterAll,
   afterEach,
   beforeAll,
   describe,
   it,
-} from "../../vendor/https/deno.land/std/testing/bdd.ts";
-import sample from "../../vendor/https/esm.sh/lodash-es/sample.js";
-import calculateSlot from "../../vendor/https/esm.sh/cluster-key-slot/lib/index.js";
+} from "../../deps/std/testing.ts";
+import { sample } from "../../deps/lodash-es.js";
+import { calculateSlot } from "../../deps/cluster-key-slot.js";
 import { ErrorReplyError } from "../../errors.ts";
 import { connect, create } from "../../redis.ts";
 import type { CommandExecutor } from "../../executor.ts";

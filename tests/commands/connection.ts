@@ -1,16 +1,7 @@
 import { createLazyClient } from "../../mod.ts";
-import {
-  assert,
-  assertEquals,
-  assertExists,
-} from "../../vendor/https/deno.land/std/assert/mod.ts";
-import {
-  afterAll,
-  beforeAll,
-  describe,
-  it,
-} from "../../vendor/https/deno.land/std/testing/bdd.ts";
-import { delay } from "../../vendor/https/deno.land/std/async/delay.ts";
+import { assert, assertEquals, assertExists } from "../../deps/std/assert.ts";
+import { afterAll, beforeAll, describe, it } from "../../deps/std/testing.ts";
+import { delay } from "../../deps/std/async.ts";
 import type { Connector, TestServer } from "../test_util.ts";
 import type { Redis } from "../../mod.ts";
 

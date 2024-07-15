@@ -1,5 +1,4 @@
-import { BufReader } from "../../vendor/https/deno.land/std/io/buf_reader.ts";
-import { BufWriter } from "../../vendor/https/deno.land/std/io/buf_writer.ts";
+import { BufReader, BufWriter } from "../../deps/std/io.ts";
 import { readReply } from "./reply.ts";
 import { ErrorReplyError } from "../../errors.ts";
 import type { RedisReply, RedisValue } from "../shared/types.ts";

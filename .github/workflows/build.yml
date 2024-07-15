@@ -29,7 +29,7 @@ jobs:
           path: |
             ~/.deno
             ~/.cache/deno
-          key: ${{ runner.os }}-deno-${{ hashFiles('**/import_map.json', '**/.deno-version', '**/modules-lock.json') }}
+          key: ${{ runner.os }}-deno-${{ hashFiles('deps/**', '.denov') }}
       - name: Check mod.ts
         run: |
           deno task make_mod

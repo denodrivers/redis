@@ -5,9 +5,9 @@ import {
   stopRedis,
 } from "../test_util.ts";
 import type { TestServer } from "../test_util.ts";
-import { readAll } from "../../vendor/https/deno.land/std/io/read_all.ts";
-import { readerFromStreamReader } from "../../vendor/https/deno.land/std/streams/reader_from_stream_reader.ts";
-import { delay } from "../../vendor/https/deno.land/std/async/delay.ts";
+import { readAll } from "../../deps/std/io.ts";
+import { readerFromStreamReader } from "../../deps/std/streams.ts";
+import { delay } from "../../deps/std/async.ts";
 
 export interface TestCluster {
   servers: TestServer[];

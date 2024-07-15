@@ -1,4 +1,4 @@
-import { BufReader } from "../../vendor/https/deno.land/std/io/buf_reader.ts";
+import { BufReader } from "../../deps/std/io.ts";
 import type * as types from "../shared/types.ts";
 import {
   ArrayReplyCode,

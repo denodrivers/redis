@@ -1,10 +1,5 @@
-import { assertEquals } from "../../vendor/https/deno.land/std/assert/mod.ts";
-import {
-  afterAll,
-  beforeAll,
-  describe,
-  it,
-} from "../../vendor/https/deno.land/std/testing/bdd.ts";
+import { assertEquals } from "../../deps/std/assert.ts";
+import { afterAll, beforeAll, describe, it } from "../../deps/std/testing.ts";
 import type { Connector, TestServer } from "../test_util.ts";
 import type { Redis } from "../../mod.ts";
 

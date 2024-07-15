@@ -1,11 +1,11 @@
 import type { Redis } from "../redis.ts";
-import { delay } from "../vendor/https/deno.land/std/async/delay.ts";
+import { delay } from "../deps/std/async.ts";
 import {
   assert,
   assertEquals,
   assertRejects,
   assertThrows,
-} from "../vendor/https/deno.land/std/assert/mod.ts";
+} from "../deps/std/assert.ts";
 import {
   afterAll,
   afterEach,
@@ -13,7 +13,7 @@ import {
   beforeEach,
   describe,
   it,
-} from "../vendor/https/deno.land/std/testing/bdd.ts";
+} from "../deps/std/testing.ts";
 import { newClient, nextPort, startRedis, stopRedis } from "./test_util.ts";
 import type { TestServer } from "./test_util.ts";
 

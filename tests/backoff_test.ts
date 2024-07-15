@@ -1,5 +1,5 @@
-import { assertEquals } from "../vendor/https/deno.land/std/assert/mod.ts";
-import { describe, it } from "../vendor/https/deno.land/std/testing/bdd.ts";
+import { assertEquals } from "../deps/std/assert.ts";
+import { describe, it } from "../deps/std/testing.ts";
 
 import { exponentialBackoff } from "../backoff.ts";
 
