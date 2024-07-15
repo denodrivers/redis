@@ -1,1 +1,1 @@
-export * from "https://deno.land/std@0.224.0/streams/reader_from_stream_reader.ts";
+export * from "jsr:@std/streams@0.224.0";
