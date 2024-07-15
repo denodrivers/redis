@@ -7,11 +7,7 @@ import {
   assertNotEquals,
   assertRejects,
 } from "../../deps/std/assert.ts";
-import {
-  afterAll,
-  beforeAll,
-  it,
-} from "../../deps/std/testing.ts";
+import { afterAll, beforeAll, it } from "../../deps/std/testing.ts";
 import type { Connector, TestServer } from "../test_util.ts";
 
 export function streamTests(

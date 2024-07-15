@@ -1,15 +1,6 @@
 import { createLazyClient } from "../../mod.ts";
-import {
-  assert,
-  assertEquals,
-  assertExists,
-} from "../../deps/std/assert.ts";
-import {
-  afterAll,
-  beforeAll,
-  describe,
-  it,
-} from "../../deps/std/testing.ts";
+import { assert, assertEquals, assertExists } from "../../deps/std/assert.ts";
+import { afterAll, beforeAll, describe, it } from "../../deps/std/testing.ts";
 import { delay } from "../../deps/std/async.ts";
 import type { Connector, TestServer } from "../test_util.ts";
 import type { Redis } from "../../mod.ts";

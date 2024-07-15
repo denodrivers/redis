@@ -1,9 +1,5 @@
 import { delay } from "../../deps/std/async.ts";
-import {
-  assert,
-  assertEquals,
-  assertRejects,
-} from "../../deps/std/assert.ts";
+import { assert, assertEquals, assertRejects } from "../../deps/std/assert.ts";
 import { describe, it } from "../../deps/std/testing.ts";
 import { nextPort, startRedis, stopRedis } from "../test_util.ts";
 import type { Connector, TestServer } from "../test_util.ts";

@@ -18,11 +18,7 @@ import { stringTests } from "./commands/string.ts";
 import { connect } from "../redis.ts";
 import { connect as connectWebStreamsConnection } from "../experimental/web_streams_connection/mod.ts";
 
-import {
-  afterAll,
-  beforeAll,
-  describe,
-} from "../deps/std/testing.ts";
+import { afterAll, beforeAll, describe } from "../deps/std/testing.ts";
 
 describe("commands", () => {
   let port!: number;

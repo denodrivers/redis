@@ -4,12 +4,7 @@ import {
   assertEquals,
   assertStringIncludes,
 } from "../deps/std/assert.ts";
-import {
-  afterAll,
-  beforeAll,
-  describe,
-  it,
-} from "../deps/std/testing.ts";
+import { afterAll, beforeAll, describe, it } from "../deps/std/testing.ts";
 import { newClient, nextPort, startRedis, stopRedis } from "./test_util.ts";
 import type { TestServer } from "./test_util.ts";
 

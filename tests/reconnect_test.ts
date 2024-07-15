@@ -1,9 +1,5 @@
 import { assertEquals } from "../deps/std/assert.ts";
-import {
-  beforeAll,
-  describe,
-  it,
-} from "../deps/std/testing.ts";
+import { beforeAll, describe, it } from "../deps/std/testing.ts";
 import { newClient, nextPort, startRedis, stopRedis } from "./test_util.ts";
 
 describe("reconnect", () => {

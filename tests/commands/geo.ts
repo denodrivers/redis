@@ -1,9 +1,5 @@
 import { assertEquals } from "../../deps/std/assert.ts";
-import {
-  afterAll,
-  beforeAll,
-  it,
-} from "../../deps/std/testing.ts";
+import { afterAll, beforeAll, it } from "../../deps/std/testing.ts";
 import type { Connector, TestServer } from "../test_util.ts";
 import type { Redis } from "../../mod.ts";
 

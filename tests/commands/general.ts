@@ -1,9 +1,6 @@
 import { ErrorReplyError } from "../../mod.ts";
 import type { Redis } from "../../mod.ts";
-import {
-  assertEquals,
-  assertRejects,
-} from "../../deps/std/assert.ts";
+import { assertEquals, assertRejects } from "../../deps/std/assert.ts";
 import {
   afterAll,
   beforeAll,
