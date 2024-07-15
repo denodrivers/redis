@@ -35,11 +35,11 @@ jobs:
           deno task make_mod
           git diff --exit-code
           deno check mod.ts
-
-      - name: Run lint
+      - name: Run linters
         run: |
           deno fmt --check
           deno lint
+          deno task check:deno-json
       - name: Set up Redis ${{ matrix.redis }}
         uses: shogo82148/actions-setup-redis@v1
         with:
