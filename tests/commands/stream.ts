@@ -1,17 +1,17 @@
 import { ErrorReplyError, Redis } from "../../mod.ts";
 import { parseXId } from "../../stream.ts";
-import { delay } from "../../vendor/https/deno.land/std/async/delay.ts";
+import { delay } from "../../deps/async.ts";
 import {
   assert,
   assertEquals,
   assertNotEquals,
   assertRejects,
-} from "../../vendor/https/deno.land/std/assert/mod.ts";
+} from "../../deps/assert.ts";
 import {
   afterAll,
   beforeAll,
   it,
-} from "../../vendor/https/deno.land/std/testing/bdd.ts";
+} from "../../deps/testing.ts";
 import type { Connector, TestServer } from "../test_util.ts";
 
 export function streamTests(

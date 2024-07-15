@@ -3,13 +3,13 @@ import {
   assert,
   assertEquals,
   assertStringIncludes,
-} from "../vendor/https/deno.land/std/assert/mod.ts";
+} from "../deps/assert.ts";
 import {
   afterAll,
   beforeAll,
   describe,
   it,
-} from "../vendor/https/deno.land/std/testing/bdd.ts";
+} from "../deps/testing.ts";
 import { newClient, nextPort, startRedis, stopRedis } from "./test_util.ts";
 import type { TestServer } from "./test_util.ts";
 

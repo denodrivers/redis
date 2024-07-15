@@ -1,7 +1,7 @@
 #!/usr/bin/env deno run --allow-read --allow-write --allow-run
 
 import { readAll } from "../vendor/https/deno.land/std/io/read_all.ts";
-import { readerFromStreamReader } from "../vendor/https/deno.land/std/streams/reader_from_stream_reader.ts";
+import { readerFromStreamReader } from "../deps/streams.ts";
 
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();

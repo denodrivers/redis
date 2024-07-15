@@ -2,8 +2,8 @@ import { ErrorReplyError, Raw } from "../../mod.ts";
 import {
   assert,
   assertEquals,
-} from "../../vendor/https/deno.land/std/assert/mod.ts";
-import { it } from "../../vendor/https/deno.land/std/testing/bdd.ts";
+} from "../../deps/assert.ts";
+import { it } from "../../deps/testing.ts";
 import type { Connector, TestServer } from "../test_util.ts";
 
 export function pipelineTests(

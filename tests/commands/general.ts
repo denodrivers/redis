@@ -3,14 +3,14 @@ import type { Redis } from "../../mod.ts";
 import {
   assertEquals,
   assertRejects,
-} from "../../vendor/https/deno.land/std/assert/mod.ts";
+} from "../../deps/assert.ts";
 import {
   afterAll,
   beforeAll,
   beforeEach,
   describe,
   it,
-} from "../../vendor/https/deno.land/std/testing/bdd.ts";
+} from "../../deps/testing.ts";
 import type { Connector, TestServer } from "../test_util.ts";
 
 export function generalTests(

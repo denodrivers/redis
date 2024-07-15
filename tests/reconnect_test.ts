@@ -1,9 +1,9 @@
-import { assertEquals } from "../vendor/https/deno.land/std/assert/mod.ts";
+import { assertEquals } from "../deps/assert.ts";
 import {
   beforeAll,
   describe,
   it,
-} from "../vendor/https/deno.land/std/testing/bdd.ts";
+} from "../deps/testing.ts";
 import { newClient, nextPort, startRedis, stopRedis } from "./test_util.ts";
 
 describe("reconnect", () => {

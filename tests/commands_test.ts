@@ -22,7 +22,7 @@ import {
   afterAll,
   beforeAll,
   describe,
-} from "../vendor/https/deno.land/std/testing/bdd.ts";
+} from "../deps/testing.ts";
 
 describe("commands", () => {
   let port!: number;

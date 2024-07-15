@@ -1,6 +1,6 @@
 import { parseURL } from "../mod.ts";
-import { assertEquals } from "../vendor/https/deno.land/std/assert/mod.ts";
-import { describe, it } from "../vendor/https/deno.land/std/testing/bdd.ts";
+import { assertEquals } from "../deps/assert.ts";
+import { describe, it } from "../deps/testing.ts";
 
 describe("util", {
   permissions: {

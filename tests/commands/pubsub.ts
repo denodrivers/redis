@@ -1,10 +1,10 @@
-import { delay } from "../../vendor/https/deno.land/std/async/delay.ts";
+import { delay } from "../../deps/async.ts";
 import {
   assert,
   assertEquals,
   assertRejects,
-} from "../../vendor/https/deno.land/std/assert/mod.ts";
-import { describe, it } from "../../vendor/https/deno.land/std/testing/bdd.ts";
+} from "../../deps/assert.ts";
+import { describe, it } from "../../deps/testing.ts";
 import { nextPort, startRedis, stopRedis } from "../test_util.ts";
 import type { Connector, TestServer } from "../test_util.ts";
 

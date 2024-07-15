@@ -6,14 +6,14 @@ import {
   assertArrayIncludes,
   assertEquals,
   assertRejects,
-} from "../../vendor/https/deno.land/std/assert/mod.ts";
+} from "../../deps/assert.ts";
 import {
   afterAll,
   afterEach,
   beforeAll,
   describe,
   it,
-} from "../../vendor/https/deno.land/std/testing/bdd.ts";
+} from "../../deps/testing.ts";
 import sample from "../../vendor/https/esm.sh/lodash-es/sample.js";
 import calculateSlot from "../../vendor/https/esm.sh/cluster-key-slot/lib/index.js";
 import { ErrorReplyError } from "../../errors.ts";

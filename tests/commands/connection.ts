@@ -3,14 +3,14 @@ import {
   assert,
   assertEquals,
   assertExists,
-} from "../../vendor/https/deno.land/std/assert/mod.ts";
+} from "../../deps/assert.ts";
 import {
   afterAll,
   beforeAll,
   describe,
   it,
-} from "../../vendor/https/deno.land/std/testing/bdd.ts";
-import { delay } from "../../vendor/https/deno.land/std/async/delay.ts";
+} from "../../deps/testing.ts";
+import { delay } from "../../deps/async.ts";
 import type { Connector, TestServer } from "../test_util.ts";
 import type { Redis } from "../../mod.ts";
 
