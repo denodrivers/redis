@@ -5,8 +5,7 @@ import {
   stopRedis,
 } from "../test_util.ts";
 import type { TestServer } from "../test_util.ts";
-import { readAll } from "../../deps/std/io.ts";
-import { readerFromStreamReader } from "../../deps/std/streams.ts";
+import { readAll, readerFromStreamReader } from "../../deps/std/io.ts";
 import { delay } from "../../deps/std/async.ts";
 
 export interface TestCluster {
