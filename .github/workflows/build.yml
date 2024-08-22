@@ -34,7 +34,7 @@ jobs:
         run: |
           deno task make_mod
           git diff --exit-code
-          deno check mod.ts
+          DENO_FUTURE=1 deno check mod.ts
       - name: Run linters
         run: |
           deno fmt --check
