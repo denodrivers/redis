@@ -2,25 +2,25 @@
   "version": "3",
   "packages": {
     "specifiers": {
-      "jsr:@std/assert@^1.0.0": "jsr:@std/assert@1.0.0",
-      "jsr:@std/async@1.0.0-rc.4": "jsr:@std/async@1.0.0-rc.4",
-      "jsr:@std/bytes@^1.0.1-rc.3": "jsr:@std/bytes@1.0.2",
+      "jsr:@std/assert@^1.0.2": "jsr:@std/assert@1.0.2",
+      "jsr:@std/async@^1.0.3": "jsr:@std/async@1.0.3",
       "jsr:@std/bytes@^1.0.2": "jsr:@std/bytes@1.0.2",
+      "jsr:@std/bytes@^1.0.2-rc.3": "jsr:@std/bytes@1.0.2",
       "jsr:@std/internal@^1.0.1": "jsr:@std/internal@1.0.1",
-      "jsr:@std/io@0.224.3": "jsr:@std/io@0.224.3",
-      "jsr:@std/testing@1.0.0-rc.4": "jsr:@std/testing@1.0.0-rc.4",
+      "jsr:@std/io@0.224.5": "jsr:@std/io@0.224.5",
+      "jsr:@std/testing@^1.0.0": "jsr:@std/testing@1.0.0",
       "npm:cluster-key-slot@1.1.0": "npm:cluster-key-slot@1.1.0",
       "npm:lodash-es@4.17.21": "npm:lodash-es@4.17.21"
     },
     "jsr": {
-      "@std/assert@1.0.0": {
-        "integrity": "0e4f6d873f7f35e2a1e6194ceee39686c996b9e5d134948e644d35d4c4df2008",
+      "@std/assert@1.0.2": {
+        "integrity": "ccacec332958126deaceb5c63ff8b4eaf9f5ed0eac9feccf124110435e59e49c",
         "dependencies": [
           "jsr:@std/internal@^1.0.1"
         ]
       },
-      "@std/async@1.0.0-rc.4": {
-        "integrity": "6d16ba99f2df32a7aa587c99e2a87140cc1eb8f38321dab3415b624bce90cc14"
+      "@std/async@1.0.3": {
+        "integrity": "6ed64678db43451683c6c176a21426a2ccd21ba0269ebb2c36133ede3f165792"
       },
       "@std/bytes@1.0.2": {
         "integrity": "fbdee322bbd8c599a6af186a1603b3355e59a5fb1baa139f8f4c3c9a1b3e3d57"
@@ -28,14 +28,14 @@
       "@std/internal@1.0.1": {
         "integrity": "6f8c7544d06a11dd256c8d6ba54b11ed870aac6c5aeafff499892662c57673e6"
       },
-      "@std/io@0.224.3": {
-        "integrity": "b402edeb99c6b3778d9ae3e9927bc9085b170b41e5a09bbb7064ab2ee394ae2f",
+      "@std/io@0.224.5": {
+        "integrity": "cb84fe655d1273fca94efcff411465027a8b0b4225203f19d6ee98d9c8920a2d",
         "dependencies": [
-          "jsr:@std/bytes@^1.0.1-rc.3"
+          "jsr:@std/bytes@^1.0.2-rc.3"
         ]
       },
-      "@std/testing@1.0.0-rc.4": {
-        "integrity": "d4881746a7a322dae16ab68a59f990a5ebb6f779d546eef0c627240016d39852"
+      "@std/testing@1.0.0": {
+        "integrity": "27cfc06392c69c2acffe54e6d0bcb5f961cf193f519255372bd4fff1481bfef8"
       }
     },
     "npm": {
