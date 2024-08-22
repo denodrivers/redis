@@ -13,7 +13,7 @@
     "exclude": ["benchmark/", "tmp/", "vendor/"]
   },
   "tasks": {
-    "lock": "rm deno.lock && deno cache --reload mod.ts experimental/**/mod.ts tests/**/*.ts",
+    "lock": "rm deno.lock && DENO_FUTURE=1 deno cache --reload mod.ts experimental/**/mod.ts tests/**/*.ts",
     "check:deno-json": "deno run --allow-read=deno.json tools/check_deno_json.js",
     "test": "DENO_FUTURE=1 deno test --allow-net --allow-read=tests --allow-write=tests/tmp --allow-run=redis-server,redis-cli --coverage=coverage --trace-leaks --frozen-lockfile",
     "test:doc": "deno test --doc --no-run --import-map=import_map.test.json",
