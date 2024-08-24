@@ -8,6 +8,11 @@ on:
     branches:
       - "**"
 
+env:
+  # TODO: Remove `DENO_FUTURE=1` once lockfile v4 is stabilized
+  # https://github.com/denoland/deno/pull/25059
+  DENO_FUTURE: 1
+
 jobs:
   test:
     runs-on: ubuntu-latest
