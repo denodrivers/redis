@@ -15,6 +15,8 @@ jobs:
       matrix:
         redis: [6.2]
     timeout-minutes: 15
+    env:
+      DENO_FUTURE: 1
     steps:
       - uses: actions/checkout@v2
       - name: Get Deno version
@@ -34,7 +36,7 @@ jobs:
         run: |
           deno task make_mod
           git diff --exit-code
-          DENO_FUTURE=1 deno check mod.ts
+          deno check mod.ts
       - name: Run linters
         run: |
           deno fmt --check

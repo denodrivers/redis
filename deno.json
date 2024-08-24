@@ -18,7 +18,7 @@
     "test": "DENO_FUTURE=1 deno test --allow-net --allow-read=tests --allow-write=tests/tmp --allow-run=redis-server,redis-cli --coverage=coverage --trace-leaks --frozen-lockfile",
     "test:doc": "deno test --doc --no-run --import-map=import_map.test.json",
     "coverage": "deno coverage ./coverage --lcov --output=coverage/lcov.info",
-    "make_mod": "DENO_FUTURE=1 deno run --allow-read --allow-write --allow-run --check tools/make_mod.ts",
+    "make_mod": "deno run --allow-read --allow-write --allow-run --check tools/make_mod.ts",
     "bench:deno-redis": "DENO_NO_PACKAGE_JSON=1 deno run --unstable --allow-net=127.0.0.1:6379 --allow-read --allow-env --allow-write=tmp --import-map=benchmark/import_map.json benchmark/deno-redis.ts",
     "bench:ioredis": "node benchmark/ioredis.js"
   }
