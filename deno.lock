@@ -1,15 +1,15 @@
 {
   "version": "4",
   "specifiers": {
-    "jsr:@std/assert@^1.0.0": "jsr:@std/assert@1.0.3",
-    "jsr:@std/async@^1.0.0": "jsr:@std/async@1.0.4",
-    "jsr:@std/bytes@^1.0.0": "jsr:@std/bytes@1.0.2",
-    "jsr:@std/bytes@^1.0.2-rc.3": "jsr:@std/bytes@1.0.2",
-    "jsr:@std/internal@^1.0.2": "jsr:@std/internal@1.0.2",
-    "jsr:@std/io@0.224.5": "jsr:@std/io@0.224.5",
-    "jsr:@std/testing@^1.0.0": "jsr:@std/testing@1.0.1",
-    "npm:cluster-key-slot@1.1.0": "npm:cluster-key-slot@1.1.0",
-    "npm:lodash-es@4.17.21": "npm:lodash-es@4.17.21"
+    "jsr:@std/assert@1": "1.0.3",
+    "jsr:@std/async@1": "1.0.4",
+    "jsr:@std/bytes@1": "1.0.2",
+    "jsr:@std/bytes@^1.0.2-rc.3": "1.0.2",
+    "jsr:@std/internal@^1.0.2": "1.0.2",
+    "jsr:@std/io@0.224.5": "0.224.5",
+    "jsr:@std/testing@1": "1.0.1",
+    "npm:cluster-key-slot@1.1.0": "1.1.0",
+    "npm:lodash-es@4.17.21": "4.17.21"
   },
   "jsr": {
     "@std/assert@1.0.3": {
