@@ -66,7 +66,7 @@ export async function ensureTerminated(
     await process.status;
   } catch (error) {
     const alreadyKilled = error instanceof TypeError &&
-      error.message === "Child process has already terminated.";
+      error.message === "Child process has already terminated";
     if (alreadyKilled) {
       return;
     }

@@ -136,7 +136,12 @@ class ClusterExecutor implements CommandExecutor {
         const reply = await r.sendCommand(command, args, options);
         return reply;
       } catch (err) {
-        lastError = err;
+        if (err instanceof Error) {
+          lastError = err;
+        } else {
+          throw err; // An unexpected error occurred.
+        }
+
         if (err instanceof Deno.errors.BadResource) {
           tryRandomNode = true;
           if (ttl < kRedisClusterRequestTTL / 2) {
