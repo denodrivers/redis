@@ -18,7 +18,7 @@ export class InvalidStateError extends Error {
   }
 }
 
-export function isRetriableError(error: Error): boolean {
+export function isRetriableError(error: unknown): boolean {
   return (error instanceof Deno.errors.BadResource ||
     error instanceof Deno.errors.BrokenPipe ||
     error instanceof Deno.errors.ConnectionAborted ||
