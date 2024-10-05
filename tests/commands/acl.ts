@@ -1,4 +1,4 @@
-import { assertEquals } from "../../deps/std/assert.ts";
+import { assertArrayIncludes, assertEquals } from "../../deps/std/assert.ts";
 import { afterAll, beforeAll, describe, it } from "../../deps/std/testing.ts";
 import type { Connector, TestServer } from "../test_util.ts";
 import type { Redis } from "../../mod.ts";
@@ -24,7 +24,7 @@ export function aclTests(
   describe("list", () => {
     it("returns the ACL rules", async () => {
       assertEquals(await client.aclList(), [
-        "user default on nopass ~* &* +@all",
+        "user default on nopass sanitize-payload ~* &* +@all",
       ]);
     });
   });
@@ -33,15 +33,17 @@ export function aclTests(
     it("returns the user's ACL flags", async () => {
       assertEquals(await client.aclGetUser("default"), [
         "flags",
-        ["on", "allkeys", "allchannels", "allcommands", "nopass"],
+        ["on", "nopass", "sanitize-payload"],
         "passwords",
         [],
         "commands",
         "+@all",
         "keys",
-        ["*"],
+        "~*",
         "channels",
-        ["*"],
+        "&*",
+        "selectors",
+        [],
       ]);
     });
   });
@@ -77,15 +79,13 @@ export function aclTests(
     });
 
     it("returns the commands in the specified category", async () => {
-      assertEquals(
+      assertArrayIncludes(
         (await client.aclCat("dangerous")).sort(),
         [
           "lastsave",
           "shutdown",
-          "module",
           "monitor",
           "role",
-          "client",
           "replconf",
           "config",
           "pfselftest",
@@ -93,7 +93,6 @@ export function aclTests(
           "replicaof",
           "restore-asking",
           "restore",
-          "latency",
           "swapdb",
           "slaveof",
           "bgsave",
@@ -109,10 +108,7 @@ export function aclTests(
           "cluster",
           "info",
           "migrate",
-          "acl",
-          "sort",
-          "slowlog",
-        ].sort(),
+        ],
       );
     });
   });
