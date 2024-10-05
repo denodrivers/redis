@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        redis: [6.2]
+        redis: [7.4]
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v2
@@ -65,7 +65,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        redis: [6.2]
+        redis: [7.4]
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v2
