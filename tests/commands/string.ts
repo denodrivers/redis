@@ -214,7 +214,10 @@ export function stringTests(
     assertEquals(v, "Hello, Redis!");
   });
 
-  it("stralgo", async () => {
+  it("stralgo", {
+    // NOTE(#454): STRALGO has been dropped
+    ignore: !Deno.env.get("REDIS_VERSION")?.startsWith("6."),
+  }, async () => {
     await client.set("a", "Hello");
     await client.set("b", "Deno!");
     const matches = [
