@@ -1364,14 +1364,20 @@ class RedisImpl implements Redis {
       | SetWithModeOpts,
   ) {
     const args: RedisValue[] = [key, value];
-    if (opts?.ex !== undefined) {
+    if (opts?.ex != null) {
       args.push("EX", opts.ex);
-    } else if (opts?.px !== undefined) {
+    } else if (opts?.px != null) {
       args.push("PX", opts.px);
+    } else if (opts?.exat != null) {
+      args.push("EXAT", opts.exat);
+    } else if (opts?.pxat != null) {
+      args.push("PXAT", opts.pxat);
     }
+    // TODO: Isn't `KEEPTTL` option exclusive with `EX`, `PX`, etc.?
     if (opts?.keepttl) {
       args.push("KEEPTTL");
     }
+
     let isAbleToReturnNil = false;
     if ((opts as SetWithModeOpts)?.mode) {
       args.push((opts as SetWithModeOpts).mode);

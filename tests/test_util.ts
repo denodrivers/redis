@@ -117,3 +117,7 @@ function tempPath(fileName: string): string {
   const url = new URL(`./tmp/${fileName}`, import.meta.url);
   return url.pathname;
 }
+
+export function usesRedisVersion(version: "6" | "7"): boolean {
+  return !!Deno.env.get("REDIS_VERSION")?.startsWith(`${version}.`);
+}
