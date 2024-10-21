@@ -118,6 +118,12 @@ export interface SetOpts {
   ex?: number;
   px?: number;
   keepttl?: boolean;
+  /**
+   * Enables `GET` option.
+   *
+   * `GET` option was added in Redis v6.2.
+   */
+  get?: boolean;
 }
 
 export interface SetWithModeOpts extends SetOpts {
@@ -327,12 +333,12 @@ export interface RedisCommands {
   set(
     key: string,
     value: RedisValue,
-    opts?: SetOpts,
+    opts?: Omit<SetOpts, "get"> & { get?: false | null },
   ): Promise<SimpleString>;
   set(
     key: string,
     value: RedisValue,
-    opts?: SetWithModeOpts,
+    opts?: (Omit<SetOpts, "get"> & { get: true }) | SetWithModeOpts,
   ): Promise<SimpleString | BulkNil>;
   setbit(key: string, offset: number, value: RedisValue): Promise<Integer>;
   setex(key: string, seconds: number, value: RedisValue): Promise<SimpleString>;

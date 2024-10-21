@@ -1,5 +1,13 @@
 import { assertEquals } from "../../deps/std/assert.ts";
-import { afterAll, beforeAll, beforeEach, it } from "../../deps/std/testing.ts";
+import type { IsExact, IsNullable } from "../../deps/std/testing.ts";
+import {
+  afterAll,
+  assertType,
+  beforeAll,
+  beforeEach,
+  describe,
+  it,
+} from "../../deps/std/testing.ts";
 import type { Connector, TestServer } from "../test_util.ts";
 import type { Redis } from "../../mod.ts";
 
@@ -165,18 +173,38 @@ export function stringTests(
     assertEquals(await client.get("key1"), "test");
   });
 
-  it("set", async () => {
-    const s = await client.set("key", "fuga你好こんにちは");
-    assertEquals(s, "OK");
-    const fuga = await client.get("key");
-    assertEquals(fuga, "fuga你好こんにちは");
-  });
+  describe("set", () => {
+    it("can set a key", async () => {
+      const s = await client.set("key", "fuga你好こんにちは");
+      assertEquals(s, "OK");
+      assertType<IsExact<typeof s, string>>(true);
+      const fuga = await client.get("key");
+      assertEquals(fuga, "fuga你好こんにちは");
+    });
 
-  it("set Number", async () => {
-    const s = await client.set("key", 123);
-    assertEquals(s, "OK");
-    const v = await client.get("key");
-    assertEquals(v, "123");
+    it("supports `Number`", async () => {
+      const s = await client.set("key", 123);
+      assertEquals(s, "OK");
+      const v = await client.get("key");
+      assertEquals(v, "123");
+    });
+
+    it("supports `GET` option", async () => {
+      const prev = "foobar";
+      await client.set("setWithGetOpt", prev);
+      const result = await client.set("setWithGetOpt", "baz", { get: true });
+      assertEquals(result, prev);
+      assertType<IsNullable<typeof result>>(true);
+    });
+
+    it("supports `NX` option", async () => {
+      const prev = "foo";
+      const v1 = await client.set("setWithNX", prev, { mode: "NX" });
+      assertEquals(v1, "OK");
+      const v2 = await client.set("setWithNX", "bar", { mode: "NX" });
+      assertEquals(v2, null);
+      assertType<IsNullable<typeof v2>>(true);
+    });
   });
 
   it("setbit", async () => {
