@@ -8,7 +8,11 @@ import {
   describe,
   it,
 } from "../../deps/std/testing.ts";
-import type { Connector, TestServer } from "../test_util.ts";
+import {
+  type Connector,
+  type TestServer,
+  usesRedisVersion,
+} from "../test_util.ts";
 import type { Redis } from "../../mod.ts";
 
 export function stringTests(
@@ -205,6 +209,20 @@ export function stringTests(
       assertEquals(v2, null);
       assertType<IsNullable<typeof v2>>(true);
     });
+
+    it("supports `EXAT` option", async () => {
+      const t = Math.floor(new Date().valueOf() / 1000);
+      await client.set("setWithEXAT", "foo", { exat: t });
+      const ttl = await client.ttl("setWithEXAT");
+      assertEquals(t, ttl);
+    });
+
+    it("supports `PXAT` option", async () => {
+      const t = new Date().valueOf();
+      await client.set("setWithPXAT", "bar", { pxat: t });
+      const ttl = await client.ttl("setWithPXAT");
+      assertEquals(t, ttl);
+    });
   });
 
   it("setbit", async () => {
@@ -244,7 +262,7 @@ export function stringTests(
 
   it("stralgo", {
     // NOTE(#454): STRALGO has been dropped
-    ignore: !Deno.env.get("REDIS_VERSION")?.startsWith("6."),
+    ignore: !usesRedisVersion("6"),
   }, async () => {
     await client.set("a", "Hello");
     await client.set("b", "Deno!");

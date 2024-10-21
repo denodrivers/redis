@@ -117,6 +117,18 @@ export type StralgoTarget = "KEYS" | "STRINGS";
 export interface SetOpts {
   ex?: number;
   px?: number;
+  /**
+   * Sets `EXAT` option.
+   *
+   * `EXAT` option was added in Redis v6.2.
+   */
+  exat?: number;
+  /**
+   * Sets `PXAT` option.
+   *
+   * `PXAT` option was added in Redis v6.2.
+   */
+  pxat?: number;
   keepttl?: boolean;
   /**
    * Enables `GET` option.
