@@ -1,4 +1,8 @@
-import { assertEquals } from "../../deps/std/assert.ts";
+import {
+  assertEquals,
+  assertGreater,
+  assertLessOrEqual,
+} from "../../deps/std/assert.ts";
 import type { IsExact, IsNullable } from "../../deps/std/testing.ts";
 import {
   afterAll,
@@ -8,7 +12,11 @@ import {
   describe,
   it,
 } from "../../deps/std/testing.ts";
-import type { Connector, TestServer } from "../test_util.ts";
+import {
+  type Connector,
+  type TestServer,
+  usesRedisVersion,
+} from "../test_util.ts";
 import type { Redis } from "../../mod.ts";
 
 export function stringTests(
@@ -205,6 +213,28 @@ export function stringTests(
       assertEquals(v2, null);
       assertType<IsNullable<typeof v2>>(true);
     });
+
+    it("supports `EXAT` option", async () => {
+      const date = new Date();
+      date.setDate(date.getDate() + 1);
+      await client.set("setWithEXAT", "foo", {
+        exat: Math.floor(date.valueOf() / 1000),
+      });
+      const ttl = await client.ttl("setWithEXAT");
+      const oneDay = 86400;
+      assertLessOrEqual(ttl, oneDay);
+      assertGreater(ttl, oneDay - 3);
+    });
+
+    it("supports `PXAT` option", async () => {
+      const date = new Date();
+      date.setDate(date.getDate() + 1);
+      await client.set("setWithPXAT", "bar", { pxat: date.valueOf() });
+      const ttl = await client.ttl("setWithPXAT");
+      const oneDay = 86400;
+      assertLessOrEqual(ttl, oneDay);
+      assertGreater(ttl, oneDay - 3);
+    });
   });
 
   it("setbit", async () => {
@@ -244,7 +274,7 @@ export function stringTests(
 
   it("stralgo", {
     // NOTE(#454): STRALGO has been dropped
-    ignore: !Deno.env.get("REDIS_VERSION")?.startsWith("6."),
+    ignore: !usesRedisVersion("6"),
   }, async () => {
     await client.set("a", "Hello");
     await client.set("b", "Deno!");
