@@ -1347,17 +1347,21 @@ class RedisImpl implements Redis {
   set(
     key: string,
     value: RedisValue,
-    opts?: SetOpts,
+    opts?: Omit<SetOpts, "get"> & { get?: false | null },
   ): Promise<SimpleString>;
   set(
     key: string,
     value: RedisValue,
-    opts?: SetWithModeOpts,
+    opts?: (Omit<SetOpts, "get"> & { get: true }) | SetWithModeOpts,
   ): Promise<SimpleString | BulkNil>;
   set(
     key: string,
     value: RedisValue,
-    opts?: SetOpts | SetWithModeOpts,
+    opts?:
+      | (Omit<SetOpts, "get"> & {
+        get?: true | false | null;
+      })
+      | SetWithModeOpts,
   ) {
     const args: RedisValue[] = [key, value];
     if (opts?.ex !== undefined) {
@@ -1368,11 +1372,17 @@ class RedisImpl implements Redis {
     if (opts?.keepttl) {
       args.push("KEEPTTL");
     }
+    let isAbleToReturnNil = false;
     if ((opts as SetWithModeOpts)?.mode) {
       args.push((opts as SetWithModeOpts).mode);
-      return this.execStatusOrNilReply("SET", ...args);
+      isAbleToReturnNil = true;
     }
-    return this.execStatusReply("SET", ...args);
+    if (opts?.get) {
+      args.push("GET");
+    }
+    return isAbleToReturnNil
+      ? this.execStatusOrNilReply("SET", ...args)
+      : this.execStatusReply("SET", ...args);
   }
 
   setbit(key: string, offset: number, value: RedisValue) {
