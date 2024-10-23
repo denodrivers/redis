@@ -117,6 +117,10 @@ export type StralgoTarget = "KEYS" | "STRINGS";
 export interface SetOpts {
   ex?: number;
   px?: number;
+  /** Sets `NX` option. */
+  nx?: boolean;
+  /** Sets `XX` option. */
+  xx?: boolean;
   /**
    * Sets `EXAT` option.
    *
@@ -138,7 +142,13 @@ export interface SetOpts {
   get?: boolean;
 }
 
+/**
+ * @deprecated Use {@linkcode SetOpts.nx}/{@linkcode SetOpts.xx} instead. This type will be removed in the future.
+ */
 export interface SetWithModeOpts extends SetOpts {
+  /**
+   * @deprecated Use {@linkcode SetOpts.nx}/{@linkcode SetOpts.xx} instead. This option will be removed in the future.
+   */
   mode: "NX" | "XX";
 }
 
@@ -345,12 +355,28 @@ export interface RedisCommands {
   set(
     key: string,
     value: RedisValue,
-    opts?: Omit<SetOpts, "get"> & { get?: false | null },
+    opts?: Omit<SetOpts, "get" | "nx" | "xx"> & {
+      get?: false | null;
+      nx?: false | null;
+      xx?: false | null;
+    },
   ): Promise<SimpleString>;
   set(
     key: string,
     value: RedisValue,
     opts?: (Omit<SetOpts, "get"> & { get: true }) | SetWithModeOpts,
+  ): Promise<SimpleString | BulkNil>;
+  /** Executes `SET` command with `NX` option enabled. */
+  set(
+    key: string,
+    value: RedisValue,
+    opts?: Omit<SetOpts, "nx"> & { nx: true },
+  ): Promise<SimpleString | BulkNil>;
+  /** Executes `SET` command with `XX` option enabled. */
+  set(
+    key: string,
+    value: RedisValue,
+    opts?: Omit<SetOpts, "xx"> & { xx: true },
   ): Promise<SimpleString | BulkNil>;
   setbit(key: string, offset: number, value: RedisValue): Promise<Integer>;
   setex(key: string, seconds: number, value: RedisValue): Promise<SimpleString>;

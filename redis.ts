@@ -1347,7 +1347,11 @@ class RedisImpl implements Redis {
   set(
     key: string,
     value: RedisValue,
-    opts?: Omit<SetOpts, "get"> & { get?: false | null },
+    opts?: Omit<SetOpts, "get" | "nx" | "xx"> & {
+      get?: false | null;
+      nx?: false | null;
+      xx?: false | null;
+    },
   ): Promise<SimpleString>;
   set(
     key: string,
@@ -1357,9 +1361,21 @@ class RedisImpl implements Redis {
   set(
     key: string,
     value: RedisValue,
+    opts?: Omit<SetOpts, "nx"> & { nx: true },
+  ): Promise<SimpleString | BulkNil>;
+  set(
+    key: string,
+    value: RedisValue,
+    opts?: Omit<SetOpts, "xx"> & { xx: true },
+  ): Promise<SimpleString | BulkNil>;
+  set(
+    key: string,
+    value: RedisValue,
     opts?:
-      | (Omit<SetOpts, "get"> & {
-        get?: true | false | null;
+      | (Omit<SetOpts, "get" | "nx" | "xx"> & {
+        get?: boolean | null;
+        nx?: boolean | null;
+        xx?: boolean | null;
       })
       | SetWithModeOpts,
   ) {
@@ -1379,7 +1395,13 @@ class RedisImpl implements Redis {
     }
 
     let isAbleToReturnNil = false;
-    if ((opts as SetWithModeOpts)?.mode) {
+    if (opts?.nx) {
+      args.push("NX");
+      isAbleToReturnNil = true;
+    } else if (opts?.xx) {
+      args.push("XX");
+      isAbleToReturnNil = true;
+    } else if ((opts as SetWithModeOpts)?.mode) {
       args.push((opts as SetWithModeOpts).mode);
       isAbleToReturnNil = true;
     }
