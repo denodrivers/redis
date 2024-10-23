@@ -209,7 +209,19 @@ export function stringTests(
       const prev = "foo";
       const v1 = await client.set("setWithNX", prev, { mode: "NX" });
       assertEquals(v1, "OK");
-      const v2 = await client.set("setWithNX", "bar", { mode: "NX" });
+      assertType<IsNullable<typeof v1>>(true);
+
+      const v2 = await client.set("setWithNX", "bar", { nx: true });
+      assertEquals(v2, null);
+      assertType<IsNullable<typeof v2>>(true);
+    });
+
+    it("supports `XX` option", async () => {
+      const v1 = await client.set("setWithXX", "foo", { mode: "XX" });
+      assertEquals(v1, null);
+      assertType<IsNullable<typeof v1>>(true);
+
+      const v2 = await client.set("setWithXX", "foo", { xx: true });
       assertEquals(v2, null);
       assertType<IsNullable<typeof v2>>(true);
     });
