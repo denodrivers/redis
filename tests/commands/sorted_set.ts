@@ -1,5 +1,13 @@
 import { assert, assertEquals } from "../../deps/std/assert.ts";
-import { afterAll, beforeAll, beforeEach, it } from "../../deps/std/testing.ts";
+import type { IsExact } from "../../deps/std/testing.ts";
+import {
+  afterAll,
+  assertType,
+  beforeAll,
+  beforeEach,
+  describe,
+  it,
+} from "../../deps/std/testing.ts";
 import type { Connector, TestServer } from "../test_util.ts";
 import type { Redis } from "../../mod.ts";
 
@@ -39,35 +47,58 @@ export function zsetTests(
     assertEquals(arr, null);
   });
 
-  it("zadd", async () => {
-    assertEquals(await client.zadd("key", { "1": 1, "2": 2 }), 2);
-    assertEquals(await client.zadd("key", 3, "3"), 1);
-    assertEquals(
-      await client.zadd("key", [
+  describe("zadd", () => {
+    it("adds specified members to a sorted set", async () => {
+      const v = await client.zadd("key", { "1": 1, "2": 2 });
+      assertEquals(v, 2);
+
+      const v2 = await client.zadd("key", 3, "3");
+      assertEquals(v2, 1);
+
+      const v3 = await client.zadd("key", [
         [4, "4"],
         [5, "5"],
-      ]),
-      2,
-    );
-  });
+      ]);
+      assertEquals(
+        v3,
+        2,
+      );
+      assertType<IsExact<typeof v3, number>>(true);
+    });
 
-  it("zaddWithMode", async () => {
-    assertEquals(await client.zadd("key", 1, "1", { mode: "NX" }), 1);
-    assertEquals(await client.zadd("key", { "1": 1 }, { mode: "XX" }), 0);
-    assertEquals(
-      await client.zadd("key", [[1, "1"], [2, "2"]], { mode: "NX" }),
-      1,
-    );
-  });
+    it("supports `NX` and `XX`", async () => {
+      const key = "zaddWithNXOrXX";
+      const v = await client.zadd(key, 1, "1", { nx: true });
+      assertEquals(v, 1);
+      assertType<IsExact<typeof v, number | null>>(true);
 
-  it("zaddWithCH", async () => {
-    assertEquals(await client.zadd("key", [[1, "foo"], [2, "bar"]]), 2);
-    assertEquals(
-      await client.zadd("key", { "foo": 1, "bar": 3, "baz": 4 }, { ch: true }),
-      2,
-    );
-  });
+      const v2 = await client.zadd(key, 2, "1", { mode: "NX" });
+      assertEquals(v2, 0); // NOTE: In RESP3, this seems to be `null`
 
+      const v3 = await client.zadd(key, 3, "1", { xx: true, ch: true });
+      assertEquals(v3, 1);
+      assertType<IsExact<typeof v3, number | null>>(true);
+
+      const v4 = await client.zadd(key, [[1, "2"]], {
+        mode: "XX",
+      });
+      assertEquals(v4, 0); // NOTE: In RESP3, this seems to be `null`
+    });
+
+    it("supports `CH`", async () => {
+      assertEquals(await client.zadd("keyWithCH", [[1, "foo"], [2, "bar"]]), 2);
+      const v = await client.zadd(
+        "keyWithCH",
+        { "foo": 1, "bar": 3, "baz": 4 },
+        { ch: true },
+      );
+      assertEquals(
+        v,
+        2,
+      );
+      assertType<IsExact<typeof v, number>>(true);
+    });
+  });
   it("zaddIncr", async () => {
     await client.zadd("key", 1, "a");
     await client.zaddIncr("key", 2, "a");

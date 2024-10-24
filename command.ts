@@ -178,9 +178,23 @@ export type SScanOpts = BaseScanOpts;
 export type ZScanOpts = BaseScanOpts;
 
 export interface ZAddOpts {
+  /** @deprecated Use {@linkcode ZAddOpts.nx}/{@linkcode ZAddOpts.xx} instead. This option will be removed in the future. */
   mode?: "NX" | "XX";
   ch?: boolean;
+  /** Enables `NX` option */
+  nx?: boolean;
+  /** Enables `XX` option */
+  xx?: boolean;
 }
+/** Return type for {@linkcode RedisCommands.zadd} */
+export type ZAddReply<T extends ZAddOpts> =
+  //  TODO: Uncomment the following:
+  //  T extends { mode: "NX" | "XX" }
+  //  ? Integer | BulkNil
+  //  :
+  T extends { nx: true } ? Integer | BulkNil
+    : T extends { xx: true } ? Integer | BulkNil
+    : Integer;
 
 interface ZStoreOpts {
   aggregate?: "SUM" | "MIN" | "MAX";
@@ -1006,22 +1020,22 @@ XRANGE somestream - +
     timeout: number,
     ...keys: string[]
   ): Promise<[BulkString, BulkString, BulkString] | BulkNil>;
-  zadd(
+  zadd<TZAddOpts extends ZAddOpts = ZAddOpts>(
     key: string,
     score: number,
     member: RedisValue,
-    opts?: ZAddOpts,
-  ): Promise<Integer>;
-  zadd(
+    opts?: TZAddOpts,
+  ): Promise<ZAddReply<TZAddOpts>>;
+  zadd<TZAddOpts extends ZAddOpts = ZAddOpts>(
     key: string,
     score_members: [number, RedisValue][],
-    opts?: ZAddOpts,
-  ): Promise<Integer>;
-  zadd(
+    opts?: TZAddOpts,
+  ): Promise<ZAddReply<TZAddOpts>>;
+  zadd<TZAddOpts extends ZAddOpts = ZAddOpts>(
     key: string,
     member_scores: Record<string | number, number>,
-    opts?: ZAddOpts,
-  ): Promise<Integer>;
+    opts?: TZAddOpts,
+  ): Promise<ZAddReply<TZAddOpts>>;
   zaddIncr(
     key: string,
     score: number,
