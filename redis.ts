@@ -33,6 +33,7 @@ import type {
   StralgoOpts,
   StralgoTarget,
   ZAddOpts,
+  ZAddReply,
   ZInterOpts,
   ZInterstoreOpts,
   ZRangeByLexOpts,
@@ -2095,22 +2096,22 @@ class RedisImpl implements Redis {
     return this.execIntegerReply("XTRIM", key, "MAXLEN", ...args);
   }
 
-  zadd(
+  zadd<TZAddOpts extends ZAddOpts = ZAddOpts>(
     key: string,
     score: number,
     member: string,
-    opts?: ZAddOpts,
-  ): Promise<Integer>;
-  zadd(
+    opts?: TZAddOpts,
+  ): Promise<ZAddReply<TZAddOpts>>;
+  zadd<TZAddOpts extends ZAddOpts = ZAddOpts>(
     key: string,
     scoreMembers: [number, string][],
-    opts?: ZAddOpts,
-  ): Promise<Integer>;
-  zadd(
+    opts?: TZAddOpts,
+  ): Promise<ZAddReply<TZAddOpts>>;
+  zadd<TZAddOpts extends ZAddOpts = ZAddOpts>(
     key: string,
     memberScores: Record<string, number>,
-    opts?: ZAddOpts,
-  ): Promise<Integer>;
+    opts?: TZAddOpts,
+  ): Promise<ZAddReply<TZAddOpts>>;
   zadd(
     key: string,
     param1: number | [number, string][] | Record<string, number>,
@@ -2118,32 +2119,44 @@ class RedisImpl implements Redis {
     opts?: ZAddOpts,
   ) {
     const args: (string | number)[] = [key];
+    let isAbleToReturnNil = false;
     if (Array.isArray(param1)) {
-      this.pushZAddOpts(args, param2 as ZAddOpts);
+      isAbleToReturnNil = this.pushZAddOpts(args, param2 as ZAddOpts);
       args.push(...param1.flatMap((e) => e));
       opts = param2 as ZAddOpts;
     } else if (typeof param1 === "object") {
-      this.pushZAddOpts(args, param2 as ZAddOpts);
+      isAbleToReturnNil = this.pushZAddOpts(args, param2 as ZAddOpts);
       for (const [member, score] of Object.entries(param1)) {
         args.push(score as number, member);
       }
     } else {
-      this.pushZAddOpts(args, opts);
+      isAbleToReturnNil = this.pushZAddOpts(args, opts);
       args.push(param1, param2 as string);
     }
-    return this.execIntegerReply("ZADD", ...args);
+    return isAbleToReturnNil
+      ? this.execIntegerOrNilReply("ZADD", ...args)
+      : this.execIntegerReply("ZADD", ...args);
   }
 
   private pushZAddOpts(
     args: (string | number)[],
     opts?: ZAddOpts,
-  ): void {
-    if (opts?.mode) {
+  ): boolean {
+    let isAbleToReturnNil = false;
+    if (opts?.nx) {
+      args.push("NX");
+      isAbleToReturnNil = true;
+    } else if (opts?.xx) {
+      args.push("XX");
+      isAbleToReturnNil = true;
+    } else if (opts?.mode) {
       args.push(opts.mode);
+      isAbleToReturnNil = true;
     }
     if (opts?.ch) {
       args.push("CH");
     }
+    return isAbleToReturnNil;
   }
 
   zaddIncr(
