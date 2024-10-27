@@ -141,6 +141,13 @@ export interface SetOpts {
    */
   get?: boolean;
 }
+/** Return type for {@linkcode RedisCommands.set} */
+export type SetReply<T extends SetOpts | SetWithModeOpts> = T extends
+  { get: true } ? SimpleString | BulkNil
+  : T extends { nx: true } ? SimpleString | BulkNil
+  : T extends { xx: true } ? SimpleString | BulkNil
+  : T extends SetWithModeOpts ? SimpleString | BulkNil
+  : SimpleString;
 
 /**
  * @deprecated Use {@linkcode SetOpts.nx}/{@linkcode SetOpts.xx} instead. This type will be removed in the future.
@@ -366,32 +373,11 @@ export interface RedisCommands {
     milliseconds: number,
     value: RedisValue,
   ): Promise<SimpleString>;
-  set(
+  set<TSetOpts extends SetOpts | SetWithModeOpts = SetOpts>(
     key: string,
     value: RedisValue,
-    opts?: Omit<SetOpts, "get" | "nx" | "xx"> & {
-      get?: false | null;
-      nx?: false | null;
-      xx?: false | null;
-    },
-  ): Promise<SimpleString>;
-  set(
-    key: string,
-    value: RedisValue,
-    opts?: (Omit<SetOpts, "get"> & { get: true }) | SetWithModeOpts,
-  ): Promise<SimpleString | BulkNil>;
-  /** Executes `SET` command with `NX` option enabled. */
-  set(
-    key: string,
-    value: RedisValue,
-    opts?: Omit<SetOpts, "nx"> & { nx: true },
-  ): Promise<SimpleString | BulkNil>;
-  /** Executes `SET` command with `XX` option enabled. */
-  set(
-    key: string,
-    value: RedisValue,
-    opts?: Omit<SetOpts, "xx"> & { xx: true },
-  ): Promise<SimpleString | BulkNil>;
+    opts?: TSetOpts,
+  ): Promise<SetReply<TSetOpts>>;
   setbit(key: string, offset: number, value: RedisValue): Promise<Integer>;
   setex(key: string, seconds: number, value: RedisValue): Promise<SimpleString>;
   setnx(key: string, value: RedisValue): Promise<Integer>;

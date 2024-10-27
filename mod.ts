@@ -37,6 +37,7 @@ export type {
   ScanOpts,
   ScriptDebugMode,
   SetOpts,
+  SetReply,
   SetWithModeOpts,
   ShutdownMode,
   SortOpts,
