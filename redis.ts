@@ -24,6 +24,7 @@ import type {
   ScanOpts,
   ScriptDebugMode,
   SetOpts,
+  SetReply,
   SetWithModeOpts,
   ShutdownMode,
   SortOpts,
@@ -1345,41 +1346,11 @@ class RedisImpl implements Redis {
     return this.execStatusReply("SELECT", index);
   }
 
-  set(
+  set<TSetOpts extends SetOpts | SetWithModeOpts = SetOpts>(
     key: string,
     value: RedisValue,
-    opts?: Omit<SetOpts, "get" | "nx" | "xx"> & {
-      get?: false | null;
-      nx?: false | null;
-      xx?: false | null;
-    },
-  ): Promise<SimpleString>;
-  set(
-    key: string,
-    value: RedisValue,
-    opts?: (Omit<SetOpts, "get"> & { get: true }) | SetWithModeOpts,
-  ): Promise<SimpleString | BulkNil>;
-  set(
-    key: string,
-    value: RedisValue,
-    opts?: Omit<SetOpts, "nx"> & { nx: true },
-  ): Promise<SimpleString | BulkNil>;
-  set(
-    key: string,
-    value: RedisValue,
-    opts?: Omit<SetOpts, "xx"> & { xx: true },
-  ): Promise<SimpleString | BulkNil>;
-  set(
-    key: string,
-    value: RedisValue,
-    opts?:
-      | (Omit<SetOpts, "get" | "nx" | "xx"> & {
-        get?: boolean | null;
-        nx?: boolean | null;
-        xx?: boolean | null;
-      })
-      | SetWithModeOpts,
-  ) {
+    opts?: TSetOpts,
+  ): Promise<SetReply<TSetOpts>> {
     const args: RedisValue[] = [key, value];
     if (opts?.ex != null) {
       args.push("EX", opts.ex);
@@ -1409,9 +1380,10 @@ class RedisImpl implements Redis {
     if (opts?.get) {
       args.push("GET");
     }
-    return isAbleToReturnNil
+    const promise = isAbleToReturnNil
       ? this.execStatusOrNilReply("SET", ...args)
       : this.execStatusReply("SET", ...args);
+    return promise as Promise<SetReply<TSetOpts>>;
   }
 
   setbit(key: string, offset: number, value: RedisValue) {
