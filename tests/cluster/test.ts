@@ -88,7 +88,7 @@ describe("experimental/cluster", () => {
               const slot = calculateSlot(key);
               manuallyRedirectedPort = sample(
                 ports.filter((x) => x !== opts.port),
-              );
+              )!;
               const error = new ErrorReplyError(
                 `-MOVED ${slot} ${opts.hostname}:${manuallyRedirectedPort}`,
               );
@@ -147,7 +147,7 @@ describe("experimental/cluster", () => {
               const slot = calculateSlot(key);
               manuallyRedirectedPort = sample(
                 ports.filter((x) => x !== opts.port),
-              );
+              )!;
               const error = new ErrorReplyError(
                 `-ASK ${slot} ${opts.hostname}:${manuallyRedirectedPort}`,
               );

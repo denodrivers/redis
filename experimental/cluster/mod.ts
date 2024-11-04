@@ -296,7 +296,7 @@ class ClusterExecutor implements CommandExecutor {
   async #closeExistingConnection() {
     const nodeNames = Object.keys(this.#connectionByNodeName);
     while (nodeNames.length >= this.#maxConnections) {
-      const nodeName = sample(nodeNames);
+      const nodeName = sample(nodeNames)!;
       const conn = this.#connectionByNodeName[nodeName];
       delete this.#connectionByNodeName[nodeName];
       try {
