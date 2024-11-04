@@ -31,8 +31,9 @@ import type { Redis } from "../../redis.ts";
 import type { RedisReply, RedisValue } from "../../protocol/shared/types.ts";
 import { ErrorReplyError } from "../../errors.ts";
 import { delay } from "../../deps/std/async.ts";
+import { distinctBy } from "../../deps/std/collections.ts";
+import { sample, shuffle } from "../../deps/std/random.ts";
 import { calculateSlot } from "../../deps/cluster-key-slot.js";
-import { sample, shuffle, uniqBy } from "../../deps/lodash-es.js";
 
 export interface ClusterConnectOptions {
   nodes: Array<NodeOptions>;
@@ -230,7 +231,7 @@ class ClusterExecutor implements CommandExecutor {
       this.#startupNodes.push(node);
     }
 
-    this.#startupNodes = uniqBy(
+    this.#startupNodes = distinctBy(
       this.#startupNodes,
       (node: ClusterNode) => node.name,
     );
@@ -295,7 +296,7 @@ class ClusterExecutor implements CommandExecutor {
   async #closeExistingConnection() {
     const nodeNames = Object.keys(this.#connectionByNodeName);
     while (nodeNames.length >= this.#maxConnections) {
-      const nodeName = sample(nodeNames);
+      const nodeName = sample(nodeNames)!;
       const conn = this.#connectionByNodeName[nodeName];
       delete this.#connectionByNodeName[nodeName];
       try {

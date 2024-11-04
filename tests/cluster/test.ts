@@ -7,6 +7,7 @@ import {
   assertEquals,
   assertRejects,
 } from "../../deps/std/assert.ts";
+import { sample } from "../../deps/std/random.ts";
 import {
   afterAll,
   afterEach,
@@ -14,7 +15,6 @@ import {
   describe,
   it,
 } from "../../deps/std/testing.ts";
-import { sample } from "../../deps/lodash-es.js";
 import { calculateSlot } from "../../deps/cluster-key-slot.js";
 import { ErrorReplyError } from "../../errors.ts";
 import { connect, create } from "../../redis.ts";
@@ -88,7 +88,7 @@ describe("experimental/cluster", () => {
               const slot = calculateSlot(key);
               manuallyRedirectedPort = sample(
                 ports.filter((x) => x !== opts.port),
-              );
+              )!;
               const error = new ErrorReplyError(
                 `-MOVED ${slot} ${opts.hostname}:${manuallyRedirectedPort}`,
               );
@@ -147,7 +147,7 @@ describe("experimental/cluster", () => {
               const slot = calculateSlot(key);
               manuallyRedirectedPort = sample(
                 ports.filter((x) => x !== opts.port),
-              );
+              )!;
               const error = new ErrorReplyError(
                 `-ASK ${slot} ${opts.hostname}:${manuallyRedirectedPort}`,
               );
