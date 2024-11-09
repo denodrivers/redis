@@ -40,11 +40,6 @@ jobs:
           deno task make_mod
           git diff --exit-code
           deno check mod.ts
-      - name: Run linters
-        run: |
-          deno fmt --check
-          deno lint
-          deno task check:deno-json
       - name: Set up Redis ${{ matrix.redis }}
         uses: shogo82148/actions-setup-redis@v1
         with:
@@ -62,6 +57,23 @@ jobs:
         run: |
           deno task coverage
       - uses: k1LoW/octocov-action@v0
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Get Deno version
+        run: |
+          echo "DENO_VERSION=$(cat .denov)" >> $GITHUB_ENV
+      - name: Set up Deno ${{ env.DENO_VERSION }}
+        uses: denoland/setup-deno@main
+        with:
+          deno-version: ${{ env.DENO_VERSION }}
+      - name: Run linters
+        run: |
+          deno fmt --check
+          deno lint
+          deno task check:deno-json
 
   benchmark:
     runs-on: ubuntu-latest
