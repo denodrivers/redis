@@ -46,7 +46,8 @@ import type {
 import { RedisConnection } from "./connection.ts";
 import type { Connection, SendCommandOptions } from "./connection.ts";
 import type { RedisConnectionOptions } from "./connection.ts";
-import { CommandExecutor, DefaultExecutor } from "./executor.ts";
+import type { CommandExecutor } from "./executor.ts";
+import { DefaultExecutor } from "./executor.ts";
 import type {
   Binary,
   Bulk,
@@ -62,6 +63,27 @@ import type {
 import { createRedisPipeline } from "./pipeline.ts";
 import type { RedisSubscription } from "./pubsub.ts";
 import { psubscribe, subscribe } from "./pubsub.ts";
+import type {
+  StartEndCount,
+  XAddFieldValues,
+  XClaimJustXId,
+  XClaimMessages,
+  XClaimOpts,
+  XId,
+  XIdAdd,
+  XIdInput,
+  XIdNeg,
+  XIdPos,
+  XKeyId,
+  XKeyIdGroup,
+  XKeyIdGroupLike,
+  XKeyIdLike,
+  XMaxlen,
+  XReadGroupOpts,
+  XReadIdData,
+  XReadOpts,
+  XReadStreamRaw,
+} from "./stream.ts";
 import {
   convertMap,
   isCondArray,
@@ -75,26 +97,7 @@ import {
   parseXReadReply,
   rawnum,
   rawstr,
-  StartEndCount,
-  XAddFieldValues,
-  XClaimJustXId,
-  XClaimMessages,
-  XClaimOpts,
-  XId,
-  XIdAdd,
-  XIdInput,
-  XIdNeg,
-  XIdPos,
   xidstr,
-  XKeyId,
-  XKeyIdGroup,
-  XKeyIdGroupLike,
-  XKeyIdLike,
-  XMaxlen,
-  XReadGroupOpts,
-  XReadIdData,
-  XReadOpts,
-  XReadStreamRaw,
 } from "./stream.ts";
 
 const binaryCommandOptions = {

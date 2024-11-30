@@ -1,4 +1,5 @@
-import { ErrorReplyError, Raw } from "../../mod.ts";
+import type { Raw } from "../../mod.ts";
+import { ErrorReplyError } from "../../mod.ts";
 import { assert, assertEquals } from "../../deps/std/assert.ts";
 import { it } from "../../deps/std/testing.ts";
 import type { Connector, TestServer } from "../test_util.ts";

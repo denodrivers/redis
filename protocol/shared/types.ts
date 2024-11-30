@@ -1,4 +1,4 @@
-import { ErrorReplyError } from "../../errors.ts";
+import type { ErrorReplyError } from "../../errors.ts";
 
 /**
  * @see https://redis.io/topics/protocol
