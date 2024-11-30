@@ -16,6 +16,18 @@
   "test": {
     "exclude": ["benchmark/", "vendor/"]
   },
+  "publish": {
+    "exclude": [
+      ".denov",
+      ".editorconfig",
+      ".octocov.yml",
+      ".github",
+      "import_map.test.json",
+      "benchmark/",
+      "tests/",
+      "tools/"
+    ]
+  },
   "tasks": {
     "lock": "rm deno.lock && DENO_FUTURE=1 deno cache --reload mod.ts experimental/**/mod.ts tests/**/*.ts",
     "check:deno-json": "deno run --allow-read=deno.json tools/check_deno_json.js",
