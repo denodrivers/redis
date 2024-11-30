@@ -1,4 +1,7 @@
 {
+  "name": "@TODO/redis",
+  "version": "0.34.0",
+  "exports": "./mod.ts",
   "exclude": [
     "benchmark/node_modules",
     "tmp"
@@ -12,6 +15,18 @@
   },
   "test": {
     "exclude": ["benchmark/", "vendor/"]
+  },
+  "publish": {
+    "exclude": [
+      ".denov",
+      ".editorconfig",
+      ".octocov.yml",
+      ".github",
+      "import_map.test.json",
+      "benchmark/",
+      "tests/",
+      "tools/"
+    ]
   },
   "tasks": {
     "lock": "rm deno.lock && DENO_FUTURE=1 deno cache --reload mod.ts experimental/**/mod.ts tests/**/*.ts",

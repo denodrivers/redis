@@ -3,8 +3,8 @@ import { readReply } from "./reply.ts";
 import { sendCommand, sendCommands, writeCommand } from "./command.ts";
 
 import type { Command, Protocol as BaseProtocol } from "../shared/protocol.ts";
-import { RedisReply, RedisValue } from "../shared/types.ts";
-import { ErrorReplyError } from "../../errors.ts";
+import type { RedisReply, RedisValue } from "../shared/types.ts";
+import type { ErrorReplyError } from "../../errors.ts";
 
 export class Protocol implements BaseProtocol {
   #reader: BufReader;

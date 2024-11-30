@@ -1,4 +1,5 @@
-import { connect, Redis, RedisConnectOptions } from "../mod.ts";
+import type { Redis, RedisConnectOptions } from "../mod.ts";
+import { connect } from "../mod.ts";
 import { delay } from "../deps/std/async.ts";
 
 export type Connector = typeof connect;

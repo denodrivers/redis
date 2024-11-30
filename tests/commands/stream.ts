@@ -1,4 +1,5 @@
-import { ErrorReplyError, Redis } from "../../mod.ts";
+import type { Redis } from "../../mod.ts";
+import { ErrorReplyError } from "../../mod.ts";
 import { parseXId } from "../../stream.ts";
 import { delay } from "../../deps/std/async.ts";
 import {
