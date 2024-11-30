@@ -1,6 +1,6 @@
 import type { BufReader, BufWriter } from "../../deps/std/io.ts";
 import { readReply } from "./reply.ts";
-import type { ErrorReplyError } from "../../errors.ts";
+import { ErrorReplyError } from "../../errors.ts";
 import type { RedisReply, RedisValue } from "../shared/types.ts";
 import { encodeCommand } from "../shared/command.ts";
 import type { Command } from "../shared/protocol.ts";
