@@ -1,4 +1,7 @@
 {
+  "name": "@TODO/redis",
+  "version": "0.34.0",
+  "exports": "./mod.ts",
   "exclude": [
     "benchmark/node_modules",
     "tmp"

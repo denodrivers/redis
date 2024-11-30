@@ -74,6 +74,9 @@ jobs:
           deno fmt --check
           deno lint
           deno task check:deno-json
+      - name: deno publish --dry-run
+        run:
+          deno publish --dry-run
 
   benchmark:
     runs-on: ubuntu-latest
