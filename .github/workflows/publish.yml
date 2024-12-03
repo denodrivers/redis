@@ -1,0 +1,24 @@
+name: Publish to JSR
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Get Deno version
+        run: |
+          echo "DENO_VERSION=$(cat .denov)" >> $GITHUB_ENV
+      - name: Set up Deno ${{ env.DENO_VERSION }}
+        uses: denoland/setup-deno@main
+        with:
+          deno-version: ${{ env.DENO_VERSION }}
+      - name: Publish packages
+        run:
+          deno publish
