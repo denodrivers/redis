@@ -1,21 +1,29 @@
 # deno-redis
 
+[![JSR](https://jsr.io/badges/@db/redis)](https://jsr.io/@db/redis)
 [![Build Status](https://github.com/denodrivers/redis/workflows/CI/badge.svg)](https://github.com/denodrivers/redis/actions)
 ![https://img.shields.io/github/tag/denodrivers/redis.svg](https://img.shields.io/github/tag/denodrivers/redis.svg)
 [![license](https://img.shields.io/github/license/denodrivers/redis.svg)](https://github.com/denodrivers/redis)
-[![deno doc](https://doc.deno.land/badge.svg)](https://doc.deno.land/https/deno.land/x/redis/mod.ts)
 [![Discord](https://img.shields.io/discord/768918486575480863?logo=discord)](https://discord.gg/QXuHBMcgWx)
 
 An experimental implementation of redis client for deno
 
 ## Usage
 
-needs `--allow-net` privilege
+**Installation**
+
+```shell
+$ deno add jsr:@db/redis
+```
+
+**Permissions**
+
+`deno-redis` needs `--allow-net` privilege
 
 **Stateless Commands**
 
 ```ts
-import { connect } from "https://deno.land/x/redis/mod.ts";
+import { connect } from "@db/redis";
 const redis = await connect({
   hostname: "127.0.0.1",
   port: 6379,
@@ -27,7 +35,7 @@ const fuga = await redis.get("hoge");
 **PubSub**
 
 ```ts
-import { connect } from "https://deno.land/x/redis/mod.ts";
+import { connect } from "@db/redis";
 
 const redis = await connect({ hostname: "127.0.0.1" });
 const sub = await redis.subscribe("channel");
@@ -41,7 +49,7 @@ const sub = await redis.subscribe("channel");
 **Streams**
 
 ```ts
-import { connect } from "https://deno.land/x/redis/mod.ts";
+import { connect } from "@db/redis";
 
 const redis = await connect({ hostname: "127.0.0.1" });
 await redis.xadd(
@@ -66,7 +74,7 @@ const thx = msgFV["no"];
 First, if you need to set up nodes into a working redis cluster:
 
 ```ts
-import { connect } from "https://deno.land/x/redis/mod.ts";
+import { connect } from "@db/redis";
 
 const redis = await connect({ hostname: "127.0.0.1", port: 6379 });
 
@@ -93,7 +101,7 @@ unavailable. You can change the maximum number of retries by setting
 `maxRetryCount` (It's default to `10`):
 
 ```ts
-import { connect } from "https://deno.land/x/redis/mod.ts";
+import { connect } from "@db/redis";
 
 const redis = await connect({ hostname: "127.0.0.1", maxRetryCount: 0 }); // Disable retries
 ```
@@ -105,7 +113,7 @@ const redis = await connect({ hostname: "127.0.0.1", maxRetryCount: 0 }); // Dis
 commands and receive replies.
 
 ```ts
-import { connect } from "https://deno.land/x/redis/mod.ts";
+import { connect } from "@db/redis";
 
 const redis = await connect({ hostname: "127.0.0.1" });
 
@@ -117,7 +125,7 @@ If `returnUint8Arrays` option is set to `true`, simple strings and bulk strings
 are returned as `Uint8Array`
 
 ```ts
-import { connect } from "https://deno.land/x/redis/mod.ts";
+import { connect } from "@db/redis";
 
 const redis = await connect({ hostname: "127.0.0.1" });
 
@@ -132,7 +140,7 @@ console.assert(reply instanceof Uint8Array);
 https://redis.io/topics/pipelining
 
 ```ts
-import { connect } from "https://deno.land/x/redis/mod.ts";
+import { connect } from "@db/redis";
 
 const redis = await connect({ hostname: "127.0.0.1" });
 const pl = redis.pipeline();
@@ -159,7 +167,7 @@ and no changes will happen during execution.
 See detail https://redis.io/topics/transactions
 
 ```ts
-import { connect } from "https://deno.land/x/redis/mod.ts";
+import { connect } from "@db/redis";
 
 const redis = await connect({ hostname: "127.0.0.1" });
 const tx = redis.tx();
@@ -179,7 +187,7 @@ await tx.flush();
 https://redis.io/topics/client-side-caching
 
 ```typescript
-import { connect } from "https://deno.land/x/redis/mod.ts";
+import { connect } from "@db/redis";
 
 const mainClient = await connect({ hostname: "127.0.0.1" });
 const cacheClient = await connect({ hostname: "127.0.0.1" });
