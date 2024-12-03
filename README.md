@@ -2,7 +2,6 @@
 
 [![JSR](https://jsr.io/badges/@db/redis)](https://jsr.io/@db/redis)
 [![Build Status](https://github.com/denodrivers/redis/workflows/CI/badge.svg)](https://github.com/denodrivers/redis/actions)
-![https://img.shields.io/github/tag/denodrivers/redis.svg](https://img.shields.io/github/tag/denodrivers/redis.svg)
 [![license](https://img.shields.io/github/license/denodrivers/redis.svg)](https://github.com/denodrivers/redis)
 [![Discord](https://img.shields.io/discord/768918486575480863?logo=discord)](https://discord.gg/QXuHBMcgWx)
 
