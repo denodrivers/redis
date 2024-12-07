@@ -1,4 +1,7 @@
 /**
+ * @module
+ * @experimental **NOTE**: This is an unstable module.
+ *
  * Based on https://github.com/antirez/redis-rb-cluster which is licensed as follows:
  *
  * Copyright (C) 2013 Salvatore Sanfilippo <antirez@gmail.com>

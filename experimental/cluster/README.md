@@ -11,7 +11,7 @@ The implementation is based on the
 ## Usage
 
 ```typescript
-import { connect } from "https://deno.land/x/redis/experimental/cluster/mod.ts";
+import { connect } from "@db/redis/experimental/cluster";
 
 const cluster = await connect({
   nodes: [
