@@ -34,6 +34,8 @@ export interface Connection {
   close(): void;
   connect(): Promise<void>;
   reconnect(): Promise<void>;
+  on<T extends ConnectionEventType>(eventType: T, callback: (_: ConnectionEventArg<T>) => void): void;
+  once<T extends ConnectionEventType>(eventType: T, callback: (_: ConnectionEventArg<T>) => void): void;
   sendCommand(
     command: string,
     args?: Array<RedisValue>,
@@ -83,6 +85,12 @@ export interface RedisConnectionOptions {
 
 export const kEmptyRedisArgs: Array<RedisValue> = [];
 
+export type ConnectionEventType = "error" | "connect" | "reconnecting" | "ready" | "close" | "end";
+export type ConnectionEventArg<T extends ConnectionEventType> = 
+  T extends "error" ? Error :
+  T extends "reconnecting" ? number 
+  : undefined;
+
 interface PendingCommand {
   execute: () => Promise<RedisReply>;
   resolve: (reply: RedisReply) => void;
@@ -102,6 +110,10 @@ export class RedisConnection implements Connection {
   private commandQueue: PendingCommand[] = [];
   #conn!: Deno.Conn;
   #protocol!: Protocol;
+
+  private events: { 
+    [K in ConnectionEventType]?: Map<(arg: ConnectionEventArg<K>) => void, string>
+  } = {};
 
   get isClosed(): boolean {
     return this._isClosed;
@@ -141,10 +153,13 @@ export class RedisConnection implements Connection {
         : await this.sendCommand("AUTH", [password], { inline: true });
     } catch (error) {
       if (error instanceof ErrorReplyError) {
-        throw new AuthenticationError("Authentication failed", {
+        const authError = new AuthenticationError("Authentication failed", {
           cause: error,
         });
+        this.fireEvent("error", authError);
+        throw authError;
       } else {
+        this.fireEvent("error", error as Error);
         throw error;
       }
     }
@@ -223,8 +238,10 @@ export class RedisConnection implements Connection {
       this.#conn = conn;
       this.#protocol = this.options?.[kUnstableCreateProtocol]?.(conn) ??
         new DenoStreamsProtocol(conn);
+      
       this._isClosed = false;
       this._isConnected = true;
+      this.fireEvent("connect", undefined);
 
       try {
         if (this.options.password != null) {
@@ -234,33 +251,57 @@ export class RedisConnection implements Connection {
           await this.selectDb(this.options.db);
         }
       } catch (error) {
-        this.close();
+        this.#close();
         throw error;
       }
+
+      this.fireEvent("ready", undefined);
 
       this.#enableHealthCheckIfNeeded();
     } catch (error) {
       if (error instanceof AuthenticationError) {
+        this.fireEvent("error", error);
+        this.fireEvent("end", undefined);
         throw (error.cause ?? error);
       }
 
       const backoff = this.backoff(retryCount);
       retryCount++;
       if (retryCount >= this.maxRetryCount) {
+        this.fireEvent("error", error as Error);
+        this.fireEvent("end", undefined);
         throw error;
       }
+      this.fireEvent("reconnecting", backoff);
       await delay(backoff);
       await this.#connect(retryCount);
     }
   }
 
   close() {
+    this.#close(false);
+  }
+
+  #close(canReconnect = false) {
+    const isClosedAlready = this._isClosed;
+    
     this._isClosed = true;
     this._isConnected = false;
     try {
       this.#conn!.close();
     } catch (error) {
-      if (!(error instanceof Deno.errors.BadResource)) throw error;
+      if (!(error instanceof Deno.errors.BadResource)) {
+        this.fireEvent("error", error as Error);
+        throw error;
+      }
+    } finally {
+      if (!isClosedAlready) {
+        this.fireEvent("close", undefined);
+
+        if (!canReconnect) {
+          this.fireEvent("end", undefined);
+        }
+      }
     }
   }
 
@@ -268,8 +309,9 @@ export class RedisConnection implements Connection {
     try {
       await this.sendCommand("PING");
       this._isConnected = true;
-    } catch (_error) { // TODO: Maybe we should log this error.
-      this.close();
+    } catch (error) { // TODO: Maybe we should log this error.
+      this.fireEvent("error", error as Error);
+      this.#close(true);
       await this.connect();
       await this.sendCommand("PING");
     }
@@ -287,12 +329,13 @@ export class RedisConnection implements Connection {
         !isRetriableError(error) ||
         this.isManuallyClosedByUser()
       ) {
+        this.fireEvent("error", error as Error);
         return command.reject(error);
       }
 
       for (let i = 0; i < this.maxRetryCount; i++) {
         // Try to reconnect to the server and retry the command
-        this.close();
+        this.#close(true);
         try {
           await this.connect();
           const reply = await command.execute();
@@ -303,6 +346,7 @@ export class RedisConnection implements Connection {
         }
       }
 
+      this.fireEvent("error", error as Error);
       command.reject(error);
     } finally {
       this.commandQueue.shift();
@@ -328,7 +372,7 @@ export class RedisConnection implements Connection {
       try {
         await this.sendCommand("PING");
         this._isConnected = true;
-      } catch {
+      } catch (_error) {
         // TODO: notify the user of an error
         this._isConnected = false;
       } finally {
@@ -337,6 +381,32 @@ export class RedisConnection implements Connection {
     };
 
     setTimeout(ping, healthCheckInterval);
+  }
+
+  private fireEvent<T extends ConnectionEventType>(eventType: T, eventArg: ConnectionEventArg<T>) {
+    const callbacks = this.events[eventType];
+    if (callbacks !== undefined && callbacks.size > 0) {
+      for (const [fn, mode] of callbacks) {
+        if (mode == "once") {
+          callbacks.delete(fn);
+        }
+        fn(eventArg);
+      }
+    }
+  }
+
+  on<T extends ConnectionEventType>(eventType: T, callback: (_: ConnectionEventArg<T>) => void) {
+    if (this.events[eventType] === undefined) {
+      this.events[eventType] = new Map();
+    }
+    this.events[eventType].set(callback, "on");
+  }
+
+  once<T extends ConnectionEventType>(eventType: T, callback: (_: ConnectionEventArg<T>) => void) {
+    if (this.events[eventType] === undefined) {
+      this.events[eventType] = new Map();
+    }
+    this.events[eventType].set(callback, "once");
   }
 }
 

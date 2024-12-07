@@ -129,6 +129,67 @@ export function connectionTests(
 
       client.close();
     });
+
+    it("fires events", async () => {
+      const client = await connect(getOpts());
+
+      let closeEventFired = false,
+        endEventFired = false;
+
+      client.on("close", () => {
+        closeEventFired = true;
+      });
+      client.on("end", () => {
+        endEventFired = true;
+      });
+
+      client.close();
+
+      assertEquals(closeEventFired, true);
+      assertEquals(endEventFired, true);
+    });
+
+    it("fires events with a lazy client", async () => {
+      const client = createLazyClient(getOpts());
+
+      let connectEventFired = false,
+        connectEventFiredTimes = 0,
+        readyEventFired = false,
+        readyEventFiredTimes = 0,
+        closeEventFired = false,
+        endEventFired = false;
+
+      client.on("connect", () => {
+        connectEventFired = true;
+        connectEventFiredTimes++;
+      });
+      client.once("ready", () => {
+        readyEventFired = true;
+        readyEventFiredTimes++;
+      });
+      
+      client.on("close", () => {
+        closeEventFired = true;
+      });
+      client.on("end", () => {
+        endEventFired = true;
+      });
+
+      await client.exists("foo");
+      client.close();
+
+      await client.connect();
+      await client.exists("foo");
+      client.close();
+
+      assertEquals(connectEventFired, true);
+      assertEquals(readyEventFired, true);
+      assertEquals(closeEventFired, true);
+      assertEquals(endEventFired, true);
+
+      assertEquals(connectEventFiredTimes, 2);
+      assertEquals(readyEventFiredTimes, 1);
+    });
   });
 
   describe("using", () => {
