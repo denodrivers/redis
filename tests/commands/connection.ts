@@ -167,7 +167,7 @@ export function connectionTests(
         readyEventFired = true;
         readyEventFiredTimes++;
       });
-      
+
       client.on("close", () => {
         closeEventFired = true;
       });

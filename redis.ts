@@ -44,7 +44,12 @@ import type {
   ZUnionstoreOpts,
 } from "./command.ts";
 import { RedisConnection } from "./connection.ts";
-import type { Connection, ConnectionEventArg, ConnectionEventType, SendCommandOptions } from "./connection.ts";
+import type {
+  Connection,
+  ConnectionEventArg,
+  ConnectionEventType,
+  SendCommandOptions,
+} from "./connection.ts";
 import type { RedisConnectionOptions } from "./connection.ts";
 import type { CommandExecutor } from "./executor.ts";
 import { DefaultExecutor } from "./executor.ts";
@@ -159,11 +164,17 @@ class RedisImpl implements Redis {
     return this.close();
   }
 
-  on<T extends ConnectionEventType>(eventType: T, callback: (_: ConnectionEventArg<T>) => void) {
+  on<T extends ConnectionEventType>(
+    eventType: T,
+    callback: (_: ConnectionEventArg<T>) => void,
+  ) {
     this.executor.connection.on(eventType, callback);
   }
 
-  once<T extends ConnectionEventType>(eventType: T, callback: (_: ConnectionEventArg<T>) => void) {
+  once<T extends ConnectionEventType>(
+    eventType: T,
+    callback: (_: ConnectionEventArg<T>) => void,
+  ) {
     this.executor.connection.once(eventType, callback);
   }
 

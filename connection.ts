@@ -34,8 +34,14 @@ export interface Connection {
   close(): void;
   connect(): Promise<void>;
   reconnect(): Promise<void>;
-  on<T extends ConnectionEventType>(eventType: T, callback: (_: ConnectionEventArg<T>) => void): void;
-  once<T extends ConnectionEventType>(eventType: T, callback: (_: ConnectionEventArg<T>) => void): void;
+  on<T extends ConnectionEventType>(
+    eventType: T,
+    callback: (_: ConnectionEventArg<T>) => void,
+  ): void;
+  once<T extends ConnectionEventType>(
+    eventType: T,
+    callback: (_: ConnectionEventArg<T>) => void,
+  ): void;
   sendCommand(
     command: string,
     args?: Array<RedisValue>,
@@ -85,10 +91,16 @@ export interface RedisConnectionOptions {
 
 export const kEmptyRedisArgs: Array<RedisValue> = [];
 
-export type ConnectionEventType = "error" | "connect" | "reconnecting" | "ready" | "close" | "end";
-export type ConnectionEventArg<T extends ConnectionEventType> = 
-  T extends "error" ? Error :
-  T extends "reconnecting" ? number 
+export type ConnectionEventType =
+  | "error"
+  | "connect"
+  | "reconnecting"
+  | "ready"
+  | "close"
+  | "end";
+export type ConnectionEventArg<T extends ConnectionEventType> = T extends
+  "error" ? Error
+  : T extends "reconnecting" ? number
   : undefined;
 
 interface PendingCommand {
@@ -111,8 +123,11 @@ export class RedisConnection implements Connection {
   #conn!: Deno.Conn;
   #protocol!: Protocol;
 
-  private events: { 
-    [K in ConnectionEventType]?: Map<(arg: ConnectionEventArg<K>) => void, string>
+  private events: {
+    [K in ConnectionEventType]?: Map<
+      (arg: ConnectionEventArg<K>) => void,
+      string
+    >;
   } = {};
 
   get isClosed(): boolean {
@@ -238,7 +253,7 @@ export class RedisConnection implements Connection {
       this.#conn = conn;
       this.#protocol = this.options?.[kUnstableCreateProtocol]?.(conn) ??
         new DenoStreamsProtocol(conn);
-      
+
       this._isClosed = false;
       this._isConnected = true;
       this.fireEvent("connect", undefined);
@@ -284,7 +299,7 @@ export class RedisConnection implements Connection {
 
   #close(canReconnect = false) {
     const isClosedAlready = this._isClosed;
-    
+
     this._isClosed = true;
     this._isConnected = false;
     try {
@@ -383,7 +398,10 @@ export class RedisConnection implements Connection {
     setTimeout(ping, healthCheckInterval);
   }
 
-  private fireEvent<T extends ConnectionEventType>(eventType: T, eventArg: ConnectionEventArg<T>) {
+  private fireEvent<T extends ConnectionEventType>(
+    eventType: T,
+    eventArg: ConnectionEventArg<T>,
+  ) {
     const callbacks = this.events[eventType];
     if (callbacks !== undefined && callbacks.size > 0) {
       for (const [fn, mode] of callbacks) {
@@ -395,14 +413,20 @@ export class RedisConnection implements Connection {
     }
   }
 
-  on<T extends ConnectionEventType>(eventType: T, callback: (_: ConnectionEventArg<T>) => void) {
+  on<T extends ConnectionEventType>(
+    eventType: T,
+    callback: (_: ConnectionEventArg<T>) => void,
+  ) {
     if (this.events[eventType] === undefined) {
       this.events[eventType] = new Map();
     }
     this.events[eventType].set(callback, "on");
   }
 
-  once<T extends ConnectionEventType>(eventType: T, callback: (_: ConnectionEventArg<T>) => void) {
+  once<T extends ConnectionEventType>(
+    eventType: T,
+    callback: (_: ConnectionEventArg<T>) => void,
+  ) {
     if (this.events[eventType] === undefined) {
       this.events[eventType] = new Map();
     }
