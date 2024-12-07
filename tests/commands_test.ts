@@ -41,9 +41,9 @@ describe("commands", () => {
     ]
   ) {
     describe(kind, () => {
-      //describe("acl", () => aclTests(connector, getServer));
+      describe("acl", () => aclTests(connector, getServer));
       describe("connection", () => connectionTests(connector, getServer));
-      /*describe("general", () => generalTests(connector, getServer));
+      describe("general", () => generalTests(connector, getServer));
       describe("geo", () => geoTests(connector, getServer));
       describe("hash", () => hashTests(connector, getServer));
       describe("hyperloglog", () => hyperloglogTests(connector, getServer));
@@ -55,7 +55,7 @@ describe("commands", () => {
       describe("zset", () => zsetTests(connector, getServer));
       describe("script", () => scriptTests(connector, getServer));
       describe("stream", () => streamTests(connector, getServer));
-      describe("string", () => stringTests(connector, getServer));*/
+      describe("string", () => stringTests(connector, getServer));
     });
   }
 });

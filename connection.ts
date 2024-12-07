@@ -205,7 +205,7 @@ export class RedisConnection implements Connection {
     return this.#protocol.readReply(returnsUint8Arrays);
   }
 
-  [kUnstablePipeline](commands: Array<Command>) {
+  [kUnstablePipeline](commands: Array<Command>): Promise<RedisReply[]> {
     const { promise, resolve, reject } = Promise.withResolvers<
       RedisReply[]
     >();
