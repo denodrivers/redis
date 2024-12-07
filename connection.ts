@@ -57,6 +57,7 @@ export interface Connection {
 
 export interface RedisConnectionOptions {
   tls?: boolean;
+  caCerts?: string[];
   db?: number;
   password?: string;
   username?: string;
@@ -213,7 +214,7 @@ export class RedisConnection implements Connection {
         port: parsePortLike(this.port),
       };
       const conn: Deno.Conn = this.options?.tls
-        ? await Deno.connectTls(dialOpts)
+        ? await Deno.connectTls({ ...dialOpts, caCerts: this.options?.caCerts })
         : await Deno.connect(dialOpts);
 
       this.#conn = conn;
