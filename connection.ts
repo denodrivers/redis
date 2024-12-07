@@ -57,6 +57,9 @@ export interface Connection {
 
 export interface RedisConnectionOptions {
   tls?: boolean;
+  /**
+   * A list of root certificates, implies {@linkcode RedisConnectionOptions.tls}
+   */
   caCerts?: string[];
   db?: number;
   password?: string;
@@ -213,7 +216,7 @@ export class RedisConnection implements Connection {
         hostname: this.hostname,
         port: parsePortLike(this.port),
       };
-      const conn: Deno.Conn = this.options?.tls
+      const conn: Deno.Conn = this.options?.tls || this.options?.caCerts != null
         ? await Deno.connectTls({ ...dialOpts, caCerts: this.options?.caCerts })
         : await Deno.connect(dialOpts);
 
