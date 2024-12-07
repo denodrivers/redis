@@ -1,3 +1,7 @@
+/**
+ * @module
+ * @experimental **NOTE**: This is an unstable module.
+ */
 import { kUnstableCreateProtocol } from "../../internal/symbols.ts";
 import type { RedisConnectOptions } from "../../redis.ts";
 import { connect as _connect } from "../../redis.ts";

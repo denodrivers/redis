@@ -1,7 +1,11 @@
 {
   "name": "@db/redis",
   "version": "0.35.0",
-  "exports": "./mod.ts",
+  "exports": {
+    ".": "./mod.ts",
+    "experimental/cluster": "./experimental/cluster/mod.ts",
+    "experimental/web-streams-connection": "./experimental/web_streams_connection/mod.ts"
+  },
   "exclude": [
     "benchmark/node_modules",
     "tmp"
