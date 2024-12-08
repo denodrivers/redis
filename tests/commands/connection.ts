@@ -136,43 +136,43 @@ export function connectionTests(
       let closeEventFired = false,
         endEventFired = false;
 
+      const firedEvents: Array<string> = [];
       client.addEventListener("close", () => {
         closeEventFired = true;
+        firedEvents.push("close");
       });
       client.addEventListener("end", () => {
         endEventFired = true;
+        firedEvents.push("end");
+      });
+      // @ts-expect-error unkwnon events should be denied
+      client.addEventListener("no-such-event", () => {
+        firedEvents.push("no-such-event");
       });
 
       client.close();
 
       assertEquals(closeEventFired, true);
       assertEquals(endEventFired, true);
+      assertEquals(firedEvents, ["close", "end"]);
     });
 
     it("fires events with a lazy client", async () => {
       const client = createLazyClient(getOpts());
-
-      let connectEventFired = false,
-        connectEventFiredTimes = 0,
-        readyEventFired = false,
-        readyEventFiredTimes = 0,
-        closeEventFired = false,
-        endEventFired = false;
+      const firedEvents: Array<string> = [];
 
       client.addEventListener("connect", () => {
-        connectEventFired = true;
-        connectEventFiredTimes++;
+        firedEvents.push("connect");
       });
       client.addEventListener("ready", () => {
-        readyEventFired = true;
-        readyEventFiredTimes++;
+        firedEvents.push("ready");
       }, { once: true });
 
       client.addEventListener("close", () => {
-        closeEventFired = true;
+        firedEvents.push("close");
       });
       client.addEventListener("end", () => {
-        endEventFired = true;
+        firedEvents.push("end");
       });
 
       await client.exists("foo");
@@ -182,13 +182,15 @@ export function connectionTests(
       await client.exists("foo");
       client.close();
 
-      assertEquals(connectEventFired, true);
-      assertEquals(readyEventFired, true);
-      assertEquals(closeEventFired, true);
-      assertEquals(endEventFired, true);
-
-      assertEquals(connectEventFiredTimes, 2);
-      assertEquals(readyEventFiredTimes, 1);
+      assertEquals(firedEvents, [
+        "connect",
+        "ready",
+        "close",
+        "end",
+        "connect",
+        "close",
+        "end",
+      ]);
     });
   });
 
