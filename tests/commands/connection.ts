@@ -136,10 +136,10 @@ export function connectionTests(
       let closeEventFired = false,
         endEventFired = false;
 
-      client.on("close", () => {
+      client.addEventListener("close", () => {
         closeEventFired = true;
       });
-      client.on("end", () => {
+      client.addEventListener("end", () => {
         endEventFired = true;
       });
 
@@ -159,19 +159,19 @@ export function connectionTests(
         closeEventFired = false,
         endEventFired = false;
 
-      client.on("connect", () => {
+      client.addEventListener("connect", () => {
         connectEventFired = true;
         connectEventFiredTimes++;
       });
-      client.once("ready", () => {
+      client.addEventListener("ready", () => {
         readyEventFired = true;
         readyEventFiredTimes++;
-      });
+      }, { once: true });
 
-      client.on("close", () => {
+      client.addEventListener("close", () => {
         closeEventFired = true;
       });
-      client.on("end", () => {
+      client.addEventListener("end", () => {
         endEventFired = true;
       });
 

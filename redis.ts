@@ -125,16 +125,6 @@ export interface Redis extends RedisCommands, EventTarget {
   connect(): Promise<void>;
   close(): void;
 
-  on<K extends ConnectionEventType>(
-    type: K,
-    callback: TypedEventListenerOrEventListenerObject<ConnectionEventMap[K]>,
-  ): void;
-
-  once<K extends ConnectionEventType>(
-    type: K,
-    callback: TypedEventListenerOrEventListenerObject<ConnectionEventMap[K]>,
-  ): void;
-
   [Symbol.dispose](): void;
 }
 
@@ -189,20 +179,6 @@ class RedisImpl extends (EventTarget as ConnectionEventTarget)
     const listener = callback as EventListenerOrEventListenerObject | null;
     this.executor.connection.removeEventListener(type, listener, options);
     super.removeEventListener(type, listener, options);
-  }
-
-  on<K extends ConnectionEventType>(
-    type: K,
-    callback: TypedEventListenerOrEventListenerObject<ConnectionEventMap[K]>,
-  ): void {
-    this.addEventListener(type, callback, { once: false });
-  }
-
-  once<K extends ConnectionEventType>(
-    type: K,
-    callback: TypedEventListenerOrEventListenerObject<ConnectionEventMap[K]>,
-  ): void {
-    this.addEventListener(type, callback, { once: true });
   }
 
   sendCommand(
