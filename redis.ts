@@ -46,7 +46,8 @@ import type {
 import { RedisConnection } from "./connection.ts";
 import type {
   Connection,
-  ConnectionEventArg,
+  ConnectionEventMap,
+  ConnectionEventTarget,
   ConnectionEventType,
   SendCommandOptions,
 } from "./connection.ts";
@@ -109,7 +110,7 @@ const binaryCommandOptions = {
   returnUint8Arrays: true,
 };
 
-export interface Redis extends RedisCommands {
+export interface Redis extends RedisCommands, EventTarget {
   readonly isClosed: boolean;
   readonly isConnected: boolean;
 
@@ -123,13 +124,34 @@ export interface Redis extends RedisCommands {
   ): Promise<RedisReply>;
   connect(): Promise<void>;
   close(): void;
-  on: typeof RedisConnection.prototype.on;
-  once: typeof RedisConnection.prototype.once;
+
+  on<K extends ConnectionEventType>(
+    type: K,
+    callback: TypedEventListenerOrEventListenerObject<ConnectionEventMap[K]>,
+  ): void;
+
+  once<K extends ConnectionEventType>(
+    type: K,
+    callback: TypedEventListenerOrEventListenerObject<ConnectionEventMap[K]>,
+  ): void;
 
   [Symbol.dispose](): void;
 }
 
-class RedisImpl implements Redis {
+interface TypedEventListener<E extends Event> {
+  (evt: E): void;
+}
+
+interface TypedEventListenerObject<E extends Event> {
+  handleEvent(evt: E): void;
+}
+
+type TypedEventListenerOrEventListenerObject<E extends Event> =
+  | TypedEventListener<E>
+  | TypedEventListenerObject<E>;
+
+class RedisImpl extends (EventTarget as ConnectionEventTarget)
+  implements Redis {
   private readonly executor: CommandExecutor;
 
   get isClosed() {
@@ -141,7 +163,46 @@ class RedisImpl implements Redis {
   }
 
   constructor(executor: CommandExecutor) {
+    super();
     this.executor = executor;
+  }
+
+  override addEventListener<K extends ConnectionEventType>(
+    type: K,
+    callback:
+      | TypedEventListenerOrEventListenerObject<ConnectionEventMap[K]>
+      | null,
+    options?: boolean | AddEventListenerOptions,
+  ): void {
+    const listener = callback as EventListenerOrEventListenerObject | null;
+    this.executor.connection.addEventListener(type, listener, options);
+    super.addEventListener(type, listener, options);
+  }
+
+  override removeEventListener<K extends ConnectionEventType>(
+    type: K,
+    callback:
+      | TypedEventListenerOrEventListenerObject<ConnectionEventMap[K]>
+      | null,
+    options?: boolean | EventListenerOptions,
+  ): void {
+    const listener = callback as EventListenerOrEventListenerObject | null;
+    this.executor.connection.removeEventListener(type, listener, options);
+    super.removeEventListener(type, listener, options);
+  }
+
+  on<K extends ConnectionEventType>(
+    type: K,
+    callback: TypedEventListenerOrEventListenerObject<ConnectionEventMap[K]>,
+  ): void {
+    this.addEventListener(type, callback, { once: false });
+  }
+
+  once<K extends ConnectionEventType>(
+    type: K,
+    callback: TypedEventListenerOrEventListenerObject<ConnectionEventMap[K]>,
+  ): void {
+    this.addEventListener(type, callback, { once: true });
   }
 
   sendCommand(
@@ -162,20 +223,6 @@ class RedisImpl implements Redis {
 
   [Symbol.dispose](): void {
     return this.close();
-  }
-
-  on<T extends ConnectionEventType>(
-    eventType: T,
-    callback: (_: ConnectionEventArg<T>) => void,
-  ) {
-    this.executor.connection.on(eventType, callback);
-  }
-
-  once<T extends ConnectionEventType>(
-    eventType: T,
-    callback: (_: ConnectionEventArg<T>) => void,
-  ) {
-    this.executor.connection.once(eventType, callback);
   }
 
   async execReply<T extends Raw = Raw>(

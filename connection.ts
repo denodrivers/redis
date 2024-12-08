@@ -12,6 +12,74 @@ import type { Command, Protocol } from "./protocol/shared/protocol.ts";
 import type { RedisReply, RedisValue } from "./protocol/shared/types.ts";
 import { delay } from "./deps/std/async.ts";
 
+type TypedEventTarget<EventMap extends object> = {
+  new (): IntermediateEventTarget<EventMap>;
+};
+
+interface IntermediateEventTarget<EventMap> extends EventTarget {
+  addEventListener<K extends keyof EventMap>(
+    type: K,
+    callback: (
+      event: EventMap[K] extends Event ? EventMap[K] : never,
+    ) => EventMap[K] extends Event ? void : never,
+    options?: AddEventListenerOptions | boolean,
+  ): void;
+
+  addEventListener(
+    type: string,
+    callback: EventListenerOrEventListenerObject | null,
+    options?: AddEventListenerOptions | boolean,
+  ): void;
+
+  removeEventListener<K extends keyof EventMap>(
+    type: K,
+    callback: (
+      event: EventMap[K] extends Event ? EventMap[K] : never,
+    ) => EventMap[K] extends Event ? void : never,
+    options?: EventListenerOptions | boolean,
+  ): void;
+
+  removeEventListener(
+    type: string,
+    callback: EventListenerOrEventListenerObject | null,
+    options?: EventListenerOptions | boolean,
+  ): void;
+}
+
+export type ConnectionEvent = Record<string, unknown>;
+
+export type ConnectionErrorEvent = {
+  error: Error;
+};
+
+export type ConnectionReconnectingEvent = {
+  delay: number;
+};
+
+export type ConnectionEventMap = {
+  error: CustomEvent<ConnectionErrorEvent>;
+  connect: CustomEvent<ConnectionEvent>;
+  reconnecting: CustomEvent<ConnectionReconnectingEvent>;
+  ready: CustomEvent<ConnectionEvent>;
+  close: CustomEvent<ConnectionEvent>;
+  end: CustomEvent<ConnectionEvent>;
+};
+
+export type ConnectionEventTarget = TypedEventTarget<ConnectionEventMap>;
+
+export type ConnectionEventType =
+  | "error"
+  | "connect"
+  | "reconnecting"
+  | "ready"
+  | "close"
+  | "end";
+
+export type ConnectionEventArg<T extends ConnectionEventType> = T extends
+  "error" ? Error
+  : T extends "reconnecting" ? number
+  : undefined;
+
 export interface SendCommandOptions {
   /**
    * When this option is set, simple or bulk string replies are returned as `Uint8Array` type.
@@ -28,20 +96,13 @@ export interface SendCommandOptions {
   inline?: boolean;
 }
 
-export interface Connection {
+export interface Connection extends EventTarget {
+  name: string | null;
   isClosed: boolean;
   isConnected: boolean;
   close(): void;
   connect(): Promise<void>;
   reconnect(): Promise<void>;
-  on<T extends ConnectionEventType>(
-    eventType: T,
-    callback: (_: ConnectionEventArg<T>) => void,
-  ): void;
-  once<T extends ConnectionEventType>(
-    eventType: T,
-    callback: (_: ConnectionEventArg<T>) => void,
-  ): void;
   sendCommand(
     command: string,
     args?: Array<RedisValue>,
@@ -91,25 +152,14 @@ export interface RedisConnectionOptions {
 
 export const kEmptyRedisArgs: Array<RedisValue> = [];
 
-export type ConnectionEventType =
-  | "error"
-  | "connect"
-  | "reconnecting"
-  | "ready"
-  | "close"
-  | "end";
-export type ConnectionEventArg<T extends ConnectionEventType> = T extends
-  "error" ? Error
-  : T extends "reconnecting" ? number
-  : undefined;
-
 interface PendingCommand {
   execute: () => Promise<RedisReply>;
   resolve: (reply: RedisReply) => void;
   reject: (error: unknown) => void;
 }
 
-export class RedisConnection implements Connection {
+export class RedisConnection extends (EventTarget as ConnectionEventTarget)
+  implements Connection {
   name: string | null = null;
   private maxRetryCount = 10;
 
@@ -122,13 +172,6 @@ export class RedisConnection implements Connection {
   private commandQueue: PendingCommand[] = [];
   #conn!: Deno.Conn;
   #protocol!: Protocol;
-
-  private events: {
-    [K in ConnectionEventType]?: Map<
-      (arg: ConnectionEventArg<K>) => void,
-      string
-    >;
-  } = {};
 
   get isClosed(): boolean {
     return this._isClosed;
@@ -147,6 +190,8 @@ export class RedisConnection implements Connection {
     port: number | string,
     private options: RedisConnectionOptions,
   ) {
+    super();
+
     this.hostname = hostname;
     this.port = port;
     if (options.name) {
@@ -401,36 +446,9 @@ export class RedisConnection implements Connection {
   private fireEvent<T extends ConnectionEventType>(
     eventType: T,
     eventArg: ConnectionEventArg<T>,
-  ) {
-    const callbacks = this.events[eventType];
-    if (callbacks !== undefined && callbacks.size > 0) {
-      for (const [fn, mode] of callbacks) {
-        if (mode == "once") {
-          callbacks.delete(fn);
-        }
-        fn(eventArg);
-      }
-    }
-  }
-
-  on<T extends ConnectionEventType>(
-    eventType: T,
-    callback: (_: ConnectionEventArg<T>) => void,
-  ) {
-    if (this.events[eventType] === undefined) {
-      this.events[eventType] = new Map();
-    }
-    this.events[eventType].set(callback, "on");
-  }
-
-  once<T extends ConnectionEventType>(
-    eventType: T,
-    callback: (_: ConnectionEventArg<T>) => void,
-  ) {
-    if (this.events[eventType] === undefined) {
-      this.events[eventType] = new Map();
-    }
-    this.events[eventType].set(callback, "once");
+  ): boolean {
+    const event = new CustomEvent(eventType, { detail: eventArg });
+    return this.dispatchEvent(event);
   }
 }
 
