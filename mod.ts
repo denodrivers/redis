@@ -58,16 +58,15 @@ export type {
 } from "./command.ts";
 export type {
   Connection,
-  ConnectionErrorEvent,
-  ConnectionEvent,
-  ConnectionEventArg,
-  ConnectionEventMap,
-  ConnectionEventTarget,
-  ConnectionEventType,
-  ConnectionReconnectingEvent,
   RedisConnectionOptions,
   SendCommandOptions,
 } from "./connection.ts";
+export type {
+  ConnectionErrorEventDetails,
+  ConnectionEvent,
+  ConnectionEventType,
+  ConnectionReconnectingEventDetails,
+} from "./events.ts";
 export type { CommandExecutor } from "./executor.ts";
 export type { RedisPipeline } from "./pipeline.ts";
 export type {
