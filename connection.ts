@@ -12,6 +12,74 @@ import type { Command, Protocol } from "./protocol/shared/protocol.ts";
 import type { RedisReply, RedisValue } from "./protocol/shared/types.ts";
 import { delay } from "./deps/std/async.ts";
 
+type TypedEventTarget<EventMap extends object> = {
+  new (): IntermediateEventTarget<EventMap>;
+};
+
+interface IntermediateEventTarget<EventMap> extends EventTarget {
+  addEventListener<K extends keyof EventMap>(
+    type: K,
+    callback: (
+      event: EventMap[K] extends Event ? EventMap[K] : never,
+    ) => EventMap[K] extends Event ? void : never,
+    options?: AddEventListenerOptions | boolean,
+  ): void;
+
+  addEventListener(
+    type: string,
+    callback: EventListenerOrEventListenerObject | null,
+    options?: AddEventListenerOptions | boolean,
+  ): void;
+
+  removeEventListener<K extends keyof EventMap>(
+    type: K,
+    callback: (
+      event: EventMap[K] extends Event ? EventMap[K] : never,
+    ) => EventMap[K] extends Event ? void : never,
+    options?: EventListenerOptions | boolean,
+  ): void;
+
+  removeEventListener(
+    type: string,
+    callback: EventListenerOrEventListenerObject | null,
+    options?: EventListenerOptions | boolean,
+  ): void;
+}
+
+export type ConnectionEvent = Record<string, unknown>;
+
+export type ConnectionErrorEvent = {
+  error: Error;
+};
+
+export type ConnectionReconnectingEvent = {
+  delay: number;
+};
+
+export type ConnectionEventMap = {
+  error: CustomEvent<ConnectionErrorEvent>;
+  connect: CustomEvent<ConnectionEvent>;
+  reconnecting: CustomEvent<ConnectionReconnectingEvent>;
+  ready: CustomEvent<ConnectionEvent>;
+  close: CustomEvent<ConnectionEvent>;
+  end: CustomEvent<ConnectionEvent>;
+};
+
+export type ConnectionEventTarget = TypedEventTarget<ConnectionEventMap>;
+
+export type ConnectionEventType =
+  | "error"
+  | "connect"
+  | "reconnecting"
+  | "ready"
+  | "close"
+  | "end";
+
+export type ConnectionEventArg<T extends ConnectionEventType> = T extends
+  "error" ? Error
+  : T extends "reconnecting" ? number
+  : undefined;
+
 export interface SendCommandOptions {
   /**
    * When this option is set, simple or bulk string replies are returned as `Uint8Array` type.
@@ -28,7 +96,8 @@ export interface SendCommandOptions {
   inline?: boolean;
 }
 
-export interface Connection {
+export interface Connection extends EventTarget {
+  name: string | null;
   isClosed: boolean;
   isConnected: boolean;
   close(): void;
@@ -89,7 +158,8 @@ interface PendingCommand {
   reject: (error: unknown) => void;
 }
 
-export class RedisConnection implements Connection {
+export class RedisConnection extends (EventTarget as ConnectionEventTarget)
+  implements Connection {
   name: string | null = null;
   private maxRetryCount = 10;
 
@@ -120,6 +190,8 @@ export class RedisConnection implements Connection {
     port: number | string,
     private options: RedisConnectionOptions,
   ) {
+    super();
+
     this.hostname = hostname;
     this.port = port;
     if (options.name) {
@@ -141,10 +213,13 @@ export class RedisConnection implements Connection {
         : await this.sendCommand("AUTH", [password], { inline: true });
     } catch (error) {
       if (error instanceof ErrorReplyError) {
-        throw new AuthenticationError("Authentication failed", {
+        const authError = new AuthenticationError("Authentication failed", {
           cause: error,
         });
+        this.fireEvent("error", authError);
+        throw authError;
       } else {
+        this.fireEvent("error", error as Error);
         throw error;
       }
     }
@@ -190,7 +265,7 @@ export class RedisConnection implements Connection {
     return this.#protocol.readReply(returnsUint8Arrays);
   }
 
-  [kUnstablePipeline](commands: Array<Command>) {
+  [kUnstablePipeline](commands: Array<Command>): Promise<RedisReply[]> {
     const { promise, resolve, reject } = Promise.withResolvers<
       RedisReply[]
     >();
@@ -223,8 +298,10 @@ export class RedisConnection implements Connection {
       this.#conn = conn;
       this.#protocol = this.options?.[kUnstableCreateProtocol]?.(conn) ??
         new DenoStreamsProtocol(conn);
+
       this._isClosed = false;
       this._isConnected = true;
+      this.fireEvent("connect", undefined);
 
       try {
         if (this.options.password != null) {
@@ -234,33 +311,57 @@ export class RedisConnection implements Connection {
           await this.selectDb(this.options.db);
         }
       } catch (error) {
-        this.close();
+        this.#close();
         throw error;
       }
+
+      this.fireEvent("ready", undefined);
 
       this.#enableHealthCheckIfNeeded();
     } catch (error) {
       if (error instanceof AuthenticationError) {
+        this.fireEvent("error", error);
+        this.fireEvent("end", undefined);
         throw (error.cause ?? error);
       }
 
       const backoff = this.backoff(retryCount);
       retryCount++;
       if (retryCount >= this.maxRetryCount) {
+        this.fireEvent("error", error as Error);
+        this.fireEvent("end", undefined);
         throw error;
       }
+      this.fireEvent("reconnecting", backoff);
       await delay(backoff);
       await this.#connect(retryCount);
     }
   }
 
   close() {
+    this.#close(false);
+  }
+
+  #close(canReconnect = false) {
+    const isClosedAlready = this._isClosed;
+
     this._isClosed = true;
     this._isConnected = false;
     try {
       this.#conn!.close();
     } catch (error) {
-      if (!(error instanceof Deno.errors.BadResource)) throw error;
+      if (!(error instanceof Deno.errors.BadResource)) {
+        this.fireEvent("error", error as Error);
+        throw error;
+      }
+    } finally {
+      if (!isClosedAlready) {
+        this.fireEvent("close", undefined);
+
+        if (!canReconnect) {
+          this.fireEvent("end", undefined);
+        }
+      }
     }
   }
 
@@ -268,8 +369,9 @@ export class RedisConnection implements Connection {
     try {
       await this.sendCommand("PING");
       this._isConnected = true;
-    } catch (_error) { // TODO: Maybe we should log this error.
-      this.close();
+    } catch (error) { // TODO: Maybe we should log this error.
+      this.fireEvent("error", error as Error);
+      this.#close(true);
       await this.connect();
       await this.sendCommand("PING");
     }
@@ -287,12 +389,13 @@ export class RedisConnection implements Connection {
         !isRetriableError(error) ||
         this.isManuallyClosedByUser()
       ) {
+        this.fireEvent("error", error as Error);
         return command.reject(error);
       }
 
       for (let i = 0; i < this.maxRetryCount; i++) {
         // Try to reconnect to the server and retry the command
-        this.close();
+        this.#close(true);
         try {
           await this.connect();
           const reply = await command.execute();
@@ -303,6 +406,7 @@ export class RedisConnection implements Connection {
         }
       }
 
+      this.fireEvent("error", error as Error);
       command.reject(error);
     } finally {
       this.commandQueue.shift();
@@ -328,7 +432,7 @@ export class RedisConnection implements Connection {
       try {
         await this.sendCommand("PING");
         this._isConnected = true;
-      } catch {
+      } catch (_error) {
         // TODO: notify the user of an error
         this._isConnected = false;
       } finally {
@@ -337,6 +441,14 @@ export class RedisConnection implements Connection {
     };
 
     setTimeout(ping, healthCheckInterval);
+  }
+
+  private fireEvent<T extends ConnectionEventType>(
+    eventType: T,
+    eventArg: ConnectionEventArg<T>,
+  ): boolean {
+    const event = new CustomEvent(eventType, { detail: eventArg });
+    return this.dispatchEvent(event);
   }
 }
 

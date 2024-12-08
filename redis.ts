@@ -44,7 +44,13 @@ import type {
   ZUnionstoreOpts,
 } from "./command.ts";
 import { RedisConnection } from "./connection.ts";
-import type { Connection, SendCommandOptions } from "./connection.ts";
+import type {
+  Connection,
+  ConnectionEventMap,
+  ConnectionEventTarget,
+  ConnectionEventType,
+  SendCommandOptions,
+} from "./connection.ts";
 import type { RedisConnectionOptions } from "./connection.ts";
 import type { CommandExecutor } from "./executor.ts";
 import { DefaultExecutor } from "./executor.ts";
@@ -104,7 +110,7 @@ const binaryCommandOptions = {
   returnUint8Arrays: true,
 };
 
-export interface Redis extends RedisCommands {
+export interface Redis extends RedisCommands, EventTarget {
   readonly isClosed: boolean;
   readonly isConnected: boolean;
 
@@ -118,10 +124,24 @@ export interface Redis extends RedisCommands {
   ): Promise<RedisReply>;
   connect(): Promise<void>;
   close(): void;
+
   [Symbol.dispose](): void;
 }
 
-class RedisImpl implements Redis {
+interface TypedEventListener<E extends Event> {
+  (evt: E): void;
+}
+
+interface TypedEventListenerObject<E extends Event> {
+  handleEvent(evt: E): void;
+}
+
+type TypedEventListenerOrEventListenerObject<E extends Event> =
+  | TypedEventListener<E>
+  | TypedEventListenerObject<E>;
+
+class RedisImpl extends (EventTarget as ConnectionEventTarget)
+  implements Redis {
   private readonly executor: CommandExecutor;
 
   get isClosed() {
@@ -133,7 +153,32 @@ class RedisImpl implements Redis {
   }
 
   constructor(executor: CommandExecutor) {
+    super();
     this.executor = executor;
+  }
+
+  override addEventListener<K extends ConnectionEventType>(
+    type: K,
+    callback:
+      | TypedEventListenerOrEventListenerObject<ConnectionEventMap[K]>
+      | null,
+    options?: boolean | AddEventListenerOptions,
+  ): void {
+    const listener = callback as EventListenerOrEventListenerObject | null;
+    this.executor.connection.addEventListener(type, listener, options);
+    super.addEventListener(type, listener, options);
+  }
+
+  override removeEventListener<K extends ConnectionEventType>(
+    type: K,
+    callback:
+      | TypedEventListenerOrEventListenerObject<ConnectionEventMap[K]>
+      | null,
+    options?: boolean | EventListenerOptions,
+  ): void {
+    const listener = callback as EventListenerOrEventListenerObject | null;
+    this.executor.connection.removeEventListener(type, listener, options);
+    super.removeEventListener(type, listener, options);
   }
 
   sendCommand(
