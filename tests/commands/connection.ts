@@ -1,5 +1,10 @@
 import { createLazyClient } from "../../mod.ts";
-import { assert, assertEquals, assertExists } from "../../deps/std/assert.ts";
+import {
+  assert,
+  assertEquals,
+  assertExists,
+  assertInstanceOf,
+} from "../../deps/std/assert.ts";
 import { afterAll, beforeAll, describe, it } from "../../deps/std/testing.ts";
 import { delay } from "../../deps/std/async.ts";
 import type { Connector, TestServer } from "../test_util.ts";
@@ -161,22 +166,28 @@ export function connectionTests(
       const client = createLazyClient(getOpts());
       const firedEvents: Array<string> = [];
 
-      client.addEventListener("connect", () => {
+      client.addEventListener("connect", (e) => {
         firedEvents.push("connect");
+        assertInstanceOf(e, CustomEvent);
       });
-      client.addEventListener("ready", () => {
+      client.addEventListener("ready", (e) => {
         firedEvents.push("ready");
+        assertInstanceOf(e, CustomEvent);
       }, { once: true });
 
-      client.addEventListener("close", () => {
+      client.addEventListener("close", (e) => {
         firedEvents.push("close");
+        assertInstanceOf(e, CustomEvent);
       });
-      client.addEventListener("end", () => {
+      client.addEventListener("end", (e) => {
         firedEvents.push("end");
+        assertInstanceOf(e, CustomEvent);
       });
 
       await client.exists("foo");
+      assertEquals(firedEvents, ["connect", "ready"]);
       client.close();
+      assertEquals(firedEvents, ["connect", "ready", "close", "end"]);
 
       await client.connect();
       await client.exists("foo");
