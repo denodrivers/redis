@@ -1,4 +1,4 @@
-import { assertEquals } from "../deps/std/assert.ts";
+import { assertEquals, assertInstanceOf } from "../deps/std/assert.ts";
 import { beforeAll, describe, it } from "../deps/std/testing.ts";
 import { newClient, nextPort, startRedis, stopRedis } from "./test_util.ts";
 
@@ -14,9 +14,15 @@ describe("reconnect", () => {
     assertEquals(await client.ping(), "PONG");
     await stopRedis(server);
     server = await startRedis({ port });
+    let reconnectingFired = 0;
+    client.addEventListener("reconnecting", (e) => {
+      reconnectingFired++;
+      assertInstanceOf(e, CustomEvent);
+    });
     assertEquals(await client.ping(), "PONG");
     client.close();
     await stopRedis(server);
+    assertEquals(reconnectingFired, 1);
   });
 
   it("auto reconnect, with db spec", async () => {
