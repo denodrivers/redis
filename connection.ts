@@ -360,15 +360,18 @@ export class RedisConnection
         return command.reject(error);
       }
 
+      let backoff = 0;
       for (let i = 0; i < this.maxRetryCount; i++) {
         // Try to reconnect to the server and retry the command
         this.#close(true);
         try {
+          this.#dispatchEvent("reconnecting", { delay: backoff });
           await this.connect();
           const reply = await command.execute();
           return command.resolve(reply);
-        } catch { // TODO: use `AggregateError`?
-          const backoff = this.backoff(i);
+        } catch (error) {
+          this.#dispatchEvent("error", { error }); // TODO: use `AggregateError`?
+          backoff = this.backoff(i);
           await delay(backoff);
         }
       }
