@@ -352,6 +352,7 @@ export class RedisConnection
       const reply = await command.execute();
       command.resolve(reply);
     } catch (error) {
+      console.error("failed", error);
       if (
         !isRetriableError(error) ||
         this.isManuallyClosedByUser()
