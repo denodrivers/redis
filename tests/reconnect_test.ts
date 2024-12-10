@@ -13,12 +13,12 @@ describe("reconnect", () => {
     const client = await newClient({ hostname: "127.0.0.1", port });
     assertEquals(await client.ping(), "PONG");
     await stopRedis(server);
-    server = await startRedis({ port });
     let reconnectingFired = 0;
     client.addEventListener("reconnecting", (e) => {
       reconnectingFired++;
       assertInstanceOf(e, CustomEvent);
     });
+    server = await startRedis({ port });
     assertEquals(await client.ping(), "PONG");
     client.close();
     await stopRedis(server);
