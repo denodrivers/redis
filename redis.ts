@@ -1121,7 +1121,7 @@ class RedisImpl implements Redis {
     const connection = this.executor.connection.duplicate();
     await connection.connect();
     const executor = new DefaultExecutor(connection);
-    await executor.sendCommand('MONITOR', [], { inline: true });
+    await executor.sendCommand("MONITOR", [], { inline: true });
 
     return new RedisMonitorImpl(executor);
   }

@@ -59,8 +59,10 @@ export class RedisMonitorImpl implements RedisMonitor {
           .slice(argIndex + 1, -1)
           .split('" "')
           .map((elem) => elem.replace(/\\"/g, '"'));
-        const [database, source] = reply.slice(len + 2, argIndex - 2).split(" ");
-        
+        const [database, source] = reply.slice(len + 2, argIndex - 2).split(
+          " ",
+        );
+
         yield { timestamp, args, source, database };
       } catch (error) {
         if (isRetriableError(error)) {
