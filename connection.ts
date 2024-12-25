@@ -40,6 +40,7 @@ export interface Connection extends TypedEventTarget<ConnectionEventMap> {
   close(): void;
   connect(): Promise<void>;
   reconnect(): Promise<void>;
+  duplicate(): RedisConnection;
   sendCommand(
     command: string,
     args?: Array<RedisValue>,
@@ -137,6 +138,10 @@ export class RedisConnection
       this.maxRetryCount = options.maxRetryCount;
     }
     this.backoff = options.backoff ?? exponentialBackoff();
+  }
+
+  duplicate(): RedisConnection {
+    return new RedisConnection(this.hostname, this.port, this.options);
   }
 
   private async authenticate(
