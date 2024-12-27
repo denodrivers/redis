@@ -131,12 +131,23 @@ async function tryReadErrorReply(reader: BufReader): Promise<never> {
 }
 
 async function readLine(reader: BufReader): Promise<Uint8Array> {
-  const result = await reader.readLine();
+  let result = await reader.readLine();
   if (result == null) {
     throw new InvalidStateError();
   }
 
-  const { line } = result;
+  let line = result.line;
+
+  while (result?.more) {
+    result = await reader.readLine();
+    if (result == null) {
+      throw new InvalidStateError();
+    }
+    const mergedLine = new Uint8Array(line.length + result.line.length);
+    mergedLine.set(line);
+    mergedLine.set(result.line, line.length);
+    line = mergedLine;
+  }
   return line;
 }
 
