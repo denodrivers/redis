@@ -34,10 +34,12 @@ export interface SendCommandOptions {
 }
 
 export interface Connection extends TypedEventTarget<ConnectionEventMap> {
+  /** @deprecated */
   name: string | null;
   isClosed: boolean;
   isConnected: boolean;
   close(): void;
+  [Symbol.dispose](): void;
   connect(): Promise<void>;
   reconnect(): Promise<void>;
   sendCommand(
@@ -95,7 +97,15 @@ interface PendingCommand {
   reject: (error: unknown) => void;
 }
 
-export class RedisConnection
+export function createRedisConnection(
+  hostname: string,
+  port: number | string | undefined,
+  options: RedisConnectionOptions,
+): Connection {
+  return new RedisConnection(hostname, port ?? 6379, options);
+}
+
+class RedisConnection
   implements Connection, TypedEventTarget<ConnectionEventMap> {
   name: string | null = null;
   private maxRetryCount = 10;
@@ -306,7 +316,11 @@ export class RedisConnection
   }
 
   close() {
-    this.#close(false);
+    return this[Symbol.dispose]();
+  }
+
+  [Symbol.dispose](): void {
+    return this.#close(false);
   }
 
   #close(canReconnect = false) {
