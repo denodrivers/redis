@@ -43,7 +43,7 @@ import type {
   ZScanOpts,
   ZUnionstoreOpts,
 } from "./command.ts";
-import { RedisConnection } from "./connection.ts";
+import { createRedisConnection } from "./connection.ts";
 import type { Connection, SendCommandOptions } from "./connection.ts";
 import type { RedisConnectionOptions } from "./connection.ts";
 import type { CommandExecutor } from "./executor.ts";
@@ -2452,7 +2452,8 @@ export interface RedisConnectOptions extends RedisConnectionOptions {
  * ```
  */
 export async function connect(options: RedisConnectOptions): Promise<Redis> {
-  const connection = createRedisConnection(options);
+  const { hostname, port, ...connectionOptions } = options;
+  const connection = createRedisConnection(hostname, port, connectionOptions);
   await connection.connect();
   const executor = new DefaultExecutor(connection);
   return create(executor);
@@ -2471,7 +2472,8 @@ export async function connect(options: RedisConnectOptions): Promise<Redis> {
  * ```
  */
 export function createLazyClient(options: RedisConnectOptions): Redis {
-  const connection = createRedisConnection(options);
+  const { hostname, port, ...connectionOptions } = options;
+  const connection = createRedisConnection(hostname, port, connectionOptions);
   const executor = createLazyExecutor(connection);
   return create(executor);
 }
@@ -2517,11 +2519,6 @@ export function parseURL(url: string): RedisConnectOptions {
       ? password
       : searchParams.get("password") ?? undefined,
   };
-}
-
-function createRedisConnection(options: RedisConnectOptions): Connection {
-  const { hostname, port = 6379, ...opts } = options;
-  return new RedisConnection(hostname, port, opts);
 }
 
 function createLazyExecutor(connection: Connection): CommandExecutor {

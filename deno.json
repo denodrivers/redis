@@ -3,6 +3,7 @@
   "version": "0.37.1",
   "exports": {
     ".": "./mod.ts",
+    "./experimental/pool": "./experimental/pool/mod.ts",
     "./experimental/cluster": "./experimental/cluster/mod.ts",
     "./experimental/web-streams-connection": "./experimental/web_streams_connection/mod.ts"
   },

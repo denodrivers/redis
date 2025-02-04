@@ -2,6 +2,9 @@ import type { Connection, SendCommandOptions } from "./connection.ts";
 import type { RedisReply, RedisValue } from "./protocol/shared/types.ts";
 
 export interface CommandExecutor {
+  /**
+   * @deprecated
+   */
   readonly connection: Connection;
   /**
    * @deprecated
