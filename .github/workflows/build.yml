@@ -52,6 +52,7 @@ jobs:
         run: |
           deno task coverage
       - uses: k1LoW/octocov-action@v1
+        if: ${{ github.event_name == 'pull_request' }}
 
   lint:
     runs-on: ubuntu-latest
