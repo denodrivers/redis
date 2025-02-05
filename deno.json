@@ -35,7 +35,12 @@
   },
   "tasks": {
     "lock": "rm deno.lock && DENO_FUTURE=1 deno cache --reload mod.ts experimental/**/mod.ts tests/**/*.ts",
-    "check:deno-json": "deno run --allow-read=deno.json tools/check_deno_json.js",
+    "check": {
+      "dependencies": ["check:lint", "check:deno.json", "typecheck"]
+    },
+    "check:lint": "deno lint && deno fmt --check",
+    "check:deno.json": "deno run --allow-read=deno.json tools/check_deno_json.js",
+    "typecheck": "cat deno.json | jq '.exports.[]' | xargs deno check",
     "test": "DENO_FUTURE=1 deno test --allow-net --allow-read=tests --allow-write=tests/tmp --allow-run=redis-server,redis-cli --allow-env=REDIS_VERSION --coverage=coverage --trace-leaks --frozen-lockfile",
     "test:doc": "deno check --doc-only --import-map=import_map.test.json README.md experimental/cluster/README.md",
     "coverage": "deno coverage ./coverage --lcov --output=coverage/lcov.info",

@@ -65,11 +65,15 @@ jobs:
         uses: denoland/setup-deno@main
         with:
           deno-version: ${{ env.DENO_VERSION }}
+      - uses: actions/cache@v3
+        with:
+          path: |
+            ~/.deno
+            ~/.cache/deno
+          key: ${{ runner.os }}-deno-lint-${{ hashFiles('deps/**', '.denov', 'deno.lock') }}
       - name: Run linters
         run: |
-          deno fmt --check
-          deno lint
-          deno task check:deno-json
+          deno task check
       - name: deno publish --dry-run
         run:
           deno publish --dry-run
