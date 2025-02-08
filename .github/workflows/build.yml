@@ -29,7 +29,7 @@ jobs:
         uses: denoland/setup-deno@main
         with:
           deno-version: ${{ env.DENO_VERSION }}
-      - uses: actions/cache@v3
+      - uses: actions/cache@v4
         with:
           path: |
             ~/.deno
@@ -65,7 +65,7 @@ jobs:
         uses: denoland/setup-deno@main
         with:
           deno-version: ${{ env.DENO_VERSION }}
-      - uses: actions/cache@v3
+      - uses: actions/cache@v4
         with:
           path: |
             ~/.deno
@@ -93,7 +93,7 @@ jobs:
         uses: denoland/setup-deno@main
         with:
           deno-version: ${{ env.DENO_VERSION }}
-      - uses: actions/cache@v3
+      - uses: actions/cache@v4
         with:
           path: |
             ~/.deno
