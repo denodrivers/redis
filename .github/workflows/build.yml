@@ -21,7 +21,7 @@ jobs:
         redis: [6.2, 7.4]
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Get Deno version
         run: |
           echo "DENO_VERSION=$(cat .denov)" >> $GITHUB_ENV
@@ -57,7 +57,7 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Get Deno version
         run: |
           echo "DENO_VERSION=$(cat .denov)" >> $GITHUB_ENV
@@ -85,7 +85,7 @@ jobs:
         redis: [7.4]
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Get Deno version
         run: |
           echo "DENO_VERSION=$(cat .denov)" >> $GITHUB_ENV
