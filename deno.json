@@ -30,6 +30,7 @@
       "import_map.test.json",
       "benchmark/",
       "tests/",
+      "**/*_test.ts",
       "tools/"
     ]
   },
