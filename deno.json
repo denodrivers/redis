@@ -1,6 +1,6 @@
 {
   "name": "@db/redis",
-  "version": "0.37.1",
+  "version": "0.38.0",
   "exports": {
     ".": "./mod.ts",
     "./experimental/pool": "./experimental/pool/mod.ts",
