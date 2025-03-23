@@ -1,0 +1,5 @@
+# pinact - https://github.com/suzuki-shunsuke/pinact
+files:
+  - pattern: "^\\.github/workflows/.*\\.ya?ml$"
+
+ignore_actions:

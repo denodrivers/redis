@@ -21,7 +21,7 @@ jobs:
         redis: [6.2, 7.4]
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - name: Get Deno version
         run: |
           echo "DENO_VERSION=$(cat .denov)" >> $GITHUB_ENV
@@ -29,14 +29,14 @@ jobs:
         uses: denoland/setup-deno@main
         with:
           deno-version: ${{ env.DENO_VERSION }}
-      - uses: actions/cache@v4
+      - uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
         with:
           path: |
             ~/.deno
             ~/.cache/deno
           key: ${{ runner.os }}-deno-${{ hashFiles('deps/**', '.denov', 'deno.lock') }}
       - name: Set up Redis ${{ matrix.redis }}
-        uses: shogo82148/actions-setup-redis@v1
+        uses: shogo82148/actions-setup-redis@49ae0a2fa2bd4b483efad9c869eb8d225032334e # v1.38.0
         with:
           redis-version: ${{ matrix.redis }}
           auto-start: "true"
@@ -51,13 +51,13 @@ jobs:
       - name: Generate an lcov report
         run: |
           deno task coverage
-      - uses: k1LoW/octocov-action@v1
+      - uses: k1LoW/octocov-action@73d561f65d59e66899ed5c87e4621a913b5d5c20 # v1.5.0
         if: ${{ github.event_name == 'pull_request' }}
 
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - name: Get Deno version
         run: |
           echo "DENO_VERSION=$(cat .denov)" >> $GITHUB_ENV
@@ -65,7 +65,7 @@ jobs:
         uses: denoland/setup-deno@main
         with:
           deno-version: ${{ env.DENO_VERSION }}
-      - uses: actions/cache@v4
+      - uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
         with:
           path: |
             ~/.deno
@@ -85,7 +85,7 @@ jobs:
         redis: [7.4]
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - name: Get Deno version
         run: |
           echo "DENO_VERSION=$(cat .denov)" >> $GITHUB_ENV
@@ -93,21 +93,21 @@ jobs:
         uses: denoland/setup-deno@main
         with:
           deno-version: ${{ env.DENO_VERSION }}
-      - uses: actions/cache@v4
+      - uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
         with:
           path: |
             ~/.deno
             ~/.cache/deno
           key: ${{ runner.os }}-deno-benchmark-${{ hashFiles('deps/**', '.denov', 'deno.lock') }}
       - name: Set up Node.js
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@7c12f8017d5436eb855f1ed4399f037a36fbd9e8 # v2.5.2
         with:
           node-version: "16"
-      - uses: bahmutov/npm-install@v1
+      - uses: bahmutov/npm-install@6cee6086f1bf4467050e9a51e94bfb71b44cbc39 # v1.10.8
         with:
           working-directory: benchmark
       - name: Set up Redis ${{ matrix.redis }}
-        uses: shogo82148/actions-setup-redis@v1
+        uses: shogo82148/actions-setup-redis@49ae0a2fa2bd4b483efad9c869eb8d225032334e # v1.38.0
         with:
           redis-version: ${{ matrix.redis }}
           auto-start: "true"
