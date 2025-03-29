@@ -3,10 +3,14 @@ import { connect } from "../mod.ts";
 import { delay } from "../deps/std/async.ts";
 
 export type Connector = typeof connect;
+interface Logger {
+  info(message: string): void;
+}
 export interface TestServer {
   path: string;
   port: number;
   process: Deno.ChildProcess;
+  logger: Logger;
 }
 
 const encoder = new TextEncoder();
@@ -15,6 +19,7 @@ export async function startRedis({
   port = 6379,
   clusterEnabled = false,
   makeClusterConfigFile = false,
+  logger = console,
 }): Promise<TestServer> {
   const path = tempPath(String(port));
   if (!(await exists(path))) {
@@ -34,7 +39,8 @@ export async function startRedis({
   }
   await Deno.writeFile(destPath, encoder.encode(config));
 
-  // Start redis server
+  // Start a redis server
+  logger.info(`Start a redis server at port ${port}`);
   const process = new Deno.Command("redis-server", {
     args: [`${path}/redis.conf`],
     stdin: "null",
@@ -43,7 +49,7 @@ export async function startRedis({
   }).spawn();
 
   await waitForPort(port);
-  return { path, port, process };
+  return { path, port, process, logger };
 }
 
 export async function stopRedis(server: TestServer): Promise<void> {
@@ -55,6 +61,7 @@ export async function stopRedis(server: TestServer): Promise<void> {
     }
   }
 
+  server.logger.info(`Stop a redis server running in port ${server.port}`);
   await ensureTerminated(server.process);
 }
 
