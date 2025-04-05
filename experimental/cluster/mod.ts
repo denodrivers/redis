@@ -28,7 +28,7 @@
 
 import { connect, create } from "../../redis.ts";
 import type { RedisConnectOptions } from "../../redis.ts";
-import type { CommandExecutor } from "../../executor.ts";
+import type { Client } from "../../client.ts";
 import type { Connection, SendCommandOptions } from "../../connection.ts";
 import type { Redis } from "../../redis.ts";
 import type { RedisReply, RedisValue } from "../../protocol/shared/types.ts";
@@ -74,7 +74,7 @@ const kRedisClusterRequestTTL = 16;
 
 class ClusterError extends Error {}
 
-class ClusterExecutor implements CommandExecutor {
+class ClusterClient implements Client {
   #nodeBySlot!: SlotMap;
   #startupNodes: ClusterNode[];
   #refreshTableASAP?: boolean;
@@ -338,9 +338,9 @@ function getKeyFromCommand(command: string, args: RedisValue[]): string | null {
  * @see https://redis.io/topics/cluster-spec
  */
 async function connectToCluster(opts: ClusterConnectOptions): Promise<Redis> {
-  const executor = new ClusterExecutor(opts);
-  await executor.initializeSlotsCache();
-  return create(executor);
+  const client = new ClusterClient(opts);
+  await client.initializeSlotsCache();
+  return create(client);
 }
 
 export { connectToCluster as connect };

@@ -67,6 +67,7 @@ export type {
   ConnectionEventType,
   ConnectionReconnectingEventDetails,
 } from "./events.ts";
+export type { Client } from "./client.ts";
 export type { CommandExecutor } from "./executor.ts";
 export type { RedisPipeline } from "./pipeline.ts";
 export type {

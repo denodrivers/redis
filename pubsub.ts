@@ -1,4 +1,4 @@
-import type { CommandExecutor } from "./executor.ts";
+import type { Client } from "./client.ts";
 import { isRetriableError } from "./errors.ts";
 import type { Binary } from "./protocol/shared/types.ts";
 import { decoder } from "./internal/encoding.ts";
@@ -33,17 +33,17 @@ class RedisSubscriptionImpl<
   TMessage extends ValidMessageType = DefaultMessageType,
 > implements RedisSubscription<TMessage> {
   get isConnected(): boolean {
-    return this.executor.connection.isConnected;
+    return this.client.connection.isConnected;
   }
 
   get isClosed(): boolean {
-    return this.executor.connection.isClosed;
+    return this.client.connection.isClosed;
   }
 
   private channels = Object.create(null);
   private patterns = Object.create(null);
 
-  constructor(private executor: CommandExecutor) {}
+  constructor(private client: Client) {}
 
   async psubscribe(...patterns: string[]) {
     await this.#writeCommand("PSUBSCRIBE", patterns);
@@ -89,7 +89,7 @@ class RedisSubscriptionImpl<
     RedisPubSubMessage<T>
   > {
     let forceReconnect = false;
-    const connection = this.executor.connection;
+    const connection = this.client.connection;
     while (this.isConnected) {
       try {
         let rep: [string | Binary, string | Binary, T] | [
@@ -156,21 +156,21 @@ class RedisSubscriptionImpl<
   }
 
   close() {
-    this.executor.connection.close();
+    this.client.connection.close();
   }
 
   async #writeCommand(command: string, args: Array<string>): Promise<void> {
-    await this.executor.connection[kUnstableWriteCommand]({ command, args });
+    await this.client.connection[kUnstableWriteCommand]({ command, args });
   }
 }
 
 export async function subscribe<
   TMessage extends ValidMessageType = DefaultMessageType,
 >(
-  executor: CommandExecutor,
+  client: Client,
   ...channels: string[]
 ): Promise<RedisSubscription<TMessage>> {
-  const sub = new RedisSubscriptionImpl<TMessage>(executor);
+  const sub = new RedisSubscriptionImpl<TMessage>(client);
   await sub.subscribe(...channels);
   return sub;
 }
@@ -178,10 +178,10 @@ export async function subscribe<
 export async function psubscribe<
   TMessage extends ValidMessageType = DefaultMessageType,
 >(
-  executor: CommandExecutor,
+  client: Client,
   ...patterns: string[]
 ): Promise<RedisSubscription<TMessage>> {
-  const sub = new RedisSubscriptionImpl<TMessage>(executor);
+  const sub = new RedisSubscriptionImpl<TMessage>(client);
   await sub.psubscribe(...patterns);
   return sub;
 }

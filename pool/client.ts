@@ -1,21 +1,21 @@
 import type { Connection, SendCommandOptions } from "../connection.ts";
 import type { Pool } from "./pool.ts";
-import type { CommandExecutor } from "../executor.ts";
-import { DefaultExecutor } from "../executor.ts";
+import type { Client } from "../client.ts";
+import { DefaultClient } from "../client.ts";
 import type { RedisReply, RedisValue } from "../protocol/shared/types.ts";
 
-export function createPooledExecutor(pool: Pool<Connection>): CommandExecutor {
-  return new PooledExecutor(pool);
+export function createPoolClient(pool: Pool<Connection>): Client {
+  return new PoolClient(pool);
 }
 
-class PooledExecutor implements CommandExecutor {
+class PoolClient implements Client {
   readonly #pool: Pool<Connection>;
   constructor(pool: Pool<Connection>) {
     this.#pool = pool;
   }
 
   get connection(): Connection {
-    throw new Error("PooledExecutor.connection is not supported");
+    throw new Error("PoolClient.connection is not supported");
   }
 
   async exec(
@@ -24,8 +24,8 @@ class PooledExecutor implements CommandExecutor {
   ): Promise<RedisReply> {
     const connection = await this.#pool.acquire();
     try {
-      const executor = new DefaultExecutor(connection);
-      return await executor.exec(command, ...args);
+      const client = new DefaultClient(connection);
+      return await client.exec(command, ...args);
     } finally {
       this.#pool.release(connection);
     }
@@ -38,8 +38,8 @@ class PooledExecutor implements CommandExecutor {
   ): Promise<RedisReply> {
     const connection = await this.#pool.acquire();
     try {
-      const executor = new DefaultExecutor(connection);
-      return await executor.sendCommand(command, args, options);
+      const client = new DefaultClient(connection);
+      return await client.sendCommand(command, args, options);
     } finally {
       this.#pool.release(connection);
     }
