@@ -109,6 +109,9 @@ const binaryCommandOptions = {
   returnUint8Arrays: true,
 };
 
+/**
+ * A high-level client for Redis.
+ */
 export interface Redis
   extends RedisCommands, TypedEventTarget<ConnectionEventMap> {
   readonly isClosed: boolean;

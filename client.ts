@@ -1,6 +1,9 @@
 import type { Connection, SendCommandOptions } from "./connection.ts";
 import type { RedisReply, RedisValue } from "./protocol/shared/types.ts";
 
+/**
+ * A low-level client for Redis.
+ */
 export interface Client {
   /**
    * @deprecated
