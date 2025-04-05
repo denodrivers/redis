@@ -1,6 +1,6 @@
 import type { Connection, SendCommandOptions } from "./connection.ts";
 import { kEmptyRedisArgs } from "./connection.ts";
-import type { CommandExecutor } from "./executor.ts";
+import type { Client } from "./client.ts";
 import type {
   RawOrError,
   RedisReply,
@@ -19,15 +19,15 @@ export function createRedisPipeline(
   connection: Connection,
   tx = false,
 ): RedisPipeline {
-  const executor = new PipelineExecutor(connection, tx);
+  const pipeline = new PipelineClient(connection, tx);
   function flush(): Promise<RawOrError[]> {
-    return executor.flush();
+    return pipeline.flush();
   }
-  const client = create(executor);
+  const client = create(pipeline);
   return Object.assign(client, { flush });
 }
 
-export class PipelineExecutor implements CommandExecutor {
+class PipelineClient implements Client {
   private commands: {
     command: string;
     args: RedisValue[];

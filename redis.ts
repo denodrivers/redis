@@ -46,8 +46,8 @@ import type {
 import { createRedisConnection } from "./connection.ts";
 import type { Connection, SendCommandOptions } from "./connection.ts";
 import type { RedisConnectionOptions } from "./connection.ts";
-import type { CommandExecutor } from "./executor.ts";
-import { DefaultExecutor } from "./executor.ts";
+import type { Client } from "./client.ts";
+import { DefaultClient } from "./client.ts";
 import type {
   ConnectionEventMap,
   ConnectionEventType,
@@ -109,6 +109,9 @@ const binaryCommandOptions = {
   returnUint8Arrays: true,
 };
 
+/**
+ * A high-level client for Redis.
+ */
 export interface Redis
   extends RedisCommands, TypedEventTarget<ConnectionEventMap> {
   readonly isClosed: boolean;
@@ -129,18 +132,18 @@ export interface Redis
 }
 
 class RedisImpl implements Redis {
-  private readonly executor: CommandExecutor;
+  private readonly client: Client;
 
   get isClosed() {
-    return this.executor.connection.isClosed;
+    return this.client.connection.isClosed;
   }
 
   get isConnected() {
-    return this.executor.connection.isConnected;
+    return this.client.connection.isConnected;
   }
 
-  constructor(executor: CommandExecutor) {
-    this.executor = executor;
+  constructor(client: Client) {
+    this.client = client;
   }
 
   addEventListener<K extends ConnectionEventType>(
@@ -148,7 +151,7 @@ class RedisImpl implements Redis {
     callback: (event: CustomEvent<ConnectionEventMap[K]>) => void,
     options?: boolean | AddEventListenerOptions,
   ): void {
-    return this.executor.connection.addEventListener(
+    return this.client.connection.addEventListener(
       type,
       callback,
       options,
@@ -160,7 +163,7 @@ class RedisImpl implements Redis {
     callback: (event: CustomEvent<ConnectionEventMap[K]>) => void,
     options?: boolean | EventListenerOptions,
   ): void {
-    return this.executor.connection.removeEventListener(
+    return this.client.connection.removeEventListener(
       type,
       callback,
       options,
@@ -172,15 +175,15 @@ class RedisImpl implements Redis {
     args?: RedisValue[],
     options?: SendCommandOptions,
   ) {
-    return this.executor.sendCommand(command, args, options);
+    return this.client.sendCommand(command, args, options);
   }
 
   connect(): Promise<void> {
-    return this.executor.connection.connect();
+    return this.client.connection.connect();
   }
 
   close(): void {
-    return this.executor.close();
+    return this.client.close();
   }
 
   [Symbol.dispose](): void {
@@ -191,7 +194,7 @@ class RedisImpl implements Redis {
     command: string,
     ...args: RedisValue[]
   ): Promise<T> {
-    const reply = await this.executor.exec(
+    const reply = await this.client.exec(
       command,
       ...args,
     );
@@ -202,7 +205,7 @@ class RedisImpl implements Redis {
     command: string,
     ...args: RedisValue[]
   ): Promise<SimpleString> {
-    const reply = await this.executor.exec(command, ...args);
+    const reply = await this.client.exec(command, ...args);
     return reply as SimpleString;
   }
 
@@ -210,7 +213,7 @@ class RedisImpl implements Redis {
     command: string,
     ...args: RedisValue[]
   ): Promise<Integer> {
-    const reply = await this.executor.exec(command, ...args);
+    const reply = await this.client.exec(command, ...args);
     return reply as Integer;
   }
 
@@ -218,7 +221,7 @@ class RedisImpl implements Redis {
     command: string,
     ...args: RedisValue[]
   ): Promise<Binary | BulkNil> {
-    const reply = await this.executor.sendCommand(
+    const reply = await this.client.sendCommand(
       command,
       args,
       binaryCommandOptions,
@@ -230,7 +233,7 @@ class RedisImpl implements Redis {
     command: string,
     ...args: RedisValue[]
   ): Promise<T> {
-    const reply = await this.executor.exec(command, ...args);
+    const reply = await this.client.exec(command, ...args);
     return reply as T;
   }
 
@@ -238,7 +241,7 @@ class RedisImpl implements Redis {
     command: string,
     ...args: RedisValue[]
   ): Promise<T[]> {
-    const reply = await this.executor.exec(command, ...args);
+    const reply = await this.client.exec(command, ...args);
     return reply as Array<T>;
   }
 
@@ -246,7 +249,7 @@ class RedisImpl implements Redis {
     command: string,
     ...args: RedisValue[]
   ): Promise<Integer | BulkNil> {
-    const reply = await this.executor.exec(command, ...args);
+    const reply = await this.client.exec(command, ...args);
     return reply as Integer | BulkNil;
   }
 
@@ -254,7 +257,7 @@ class RedisImpl implements Redis {
     command: string,
     ...args: RedisValue[]
   ): Promise<SimpleString | BulkNil> {
-    const reply = await this.executor.exec(command, ...args);
+    const reply = await this.client.exec(command, ...args);
     return reply as SimpleString | BulkNil;
   }
 
@@ -1226,7 +1229,7 @@ class RedisImpl implements Redis {
       await this.#subscription.subscribe(...channels);
       return this.#subscription;
     }
-    const subscription = await subscribe<TMessage>(this.executor, ...channels);
+    const subscription = await subscribe<TMessage>(this.client, ...channels);
     this.#subscription = subscription;
     return subscription;
   }
@@ -1238,7 +1241,7 @@ class RedisImpl implements Redis {
       await this.#subscription.psubscribe(...patterns);
       return this.#subscription;
     }
-    const subscription = await psubscribe<TMessage>(this.executor, ...patterns);
+    const subscription = await psubscribe<TMessage>(this.client, ...patterns);
     this.#subscription = subscription;
     return subscription;
   }
@@ -2428,11 +2431,11 @@ class RedisImpl implements Redis {
   }
 
   tx() {
-    return createRedisPipeline(this.executor.connection, true);
+    return createRedisPipeline(this.client.connection, true);
   }
 
   pipeline() {
-    return createRedisPipeline(this.executor.connection);
+    return createRedisPipeline(this.client.connection);
   }
 }
 
@@ -2455,8 +2458,8 @@ export async function connect(options: RedisConnectOptions): Promise<Redis> {
   const { hostname, port, ...connectionOptions } = options;
   const connection = createRedisConnection(hostname, port, connectionOptions);
   await connection.connect();
-  const executor = new DefaultExecutor(connection);
-  return create(executor);
+  const client = new DefaultClient(connection);
+  return create(client);
 }
 
 /**
@@ -2474,15 +2477,17 @@ export async function connect(options: RedisConnectOptions): Promise<Redis> {
 export function createLazyClient(options: RedisConnectOptions): Redis {
   const { hostname, port, ...connectionOptions } = options;
   const connection = createRedisConnection(hostname, port, connectionOptions);
-  const executor = createLazyExecutor(connection);
-  return create(executor);
+  const baseClient = createBaseLazyClient(connection);
+  return create(baseClient);
 }
 
 /**
- * Create a redis client from `CommandExecutor`
+ * Create {@linkcode Redis} from {@linkcode Client}.
+ *
+ * @deprecated This is an experimental API and may possibly be removed in the future.
  */
-export function create(executor: CommandExecutor): Redis {
-  return new RedisImpl(executor);
+export function create(client: Client): Redis {
+  return new RedisImpl(client);
 }
 
 /**
@@ -2521,8 +2526,8 @@ export function parseURL(url: string): RedisConnectOptions {
   };
 }
 
-function createLazyExecutor(connection: Connection): CommandExecutor {
-  let executor: CommandExecutor | null = null;
+function createBaseLazyClient(connection: Connection): Client {
+  let client: Client | null = null;
   return {
     get connection() {
       return connection;
@@ -2531,17 +2536,17 @@ function createLazyExecutor(connection: Connection): CommandExecutor {
       return this.sendCommand(command, args);
     },
     async sendCommand(command, args, options) {
-      if (!executor) {
-        executor = new DefaultExecutor(connection);
+      if (!client) {
+        client = new DefaultClient(connection);
         if (!connection.isConnected) {
           await connection.connect();
         }
       }
-      return executor.sendCommand(command, args, options);
+      return client.sendCommand(command, args, options);
     },
     close() {
-      if (executor) {
-        return executor.close();
+      if (client) {
+        return client.close();
       }
     },
   };

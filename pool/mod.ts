@@ -3,7 +3,7 @@ import { create } from "../redis.ts";
 import type { Connection } from "../connection.ts";
 import { createRedisConnection } from "../connection.ts";
 import { createDefaultPool } from "./default_pool.ts";
-import { createPooledExecutor } from "./executor.ts";
+import { createPoolClient as baseCreatePoolClient } from "./client.ts";
 
 export interface CreatePoolClientOptions {
   connection: RedisConnectOptions;
@@ -17,8 +17,7 @@ export function createPoolClient(
     acquire,
     maxConnections: options.maxConnections ?? 8,
   });
-  const executor = createPooledExecutor(pool);
-  const client = create(executor);
+  const client = create(baseCreatePoolClient(pool));
   return Promise.resolve(client);
 
   async function acquire(): Promise<Connection> {
