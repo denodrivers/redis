@@ -2482,7 +2482,7 @@ export function createLazyClient(options: RedisConnectOptions): Redis {
 }
 
 /**
- * Create a redis client from {@linkcode Client}.
+ * Create {@linkcode Redis} from {@linkcode Client}.
  *
  * @deprecated This is an experimental API and may possibly be removed in the future.
  */
