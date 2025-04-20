@@ -1,6 +1,12 @@
 import type { Connection, SendCommandOptions } from "./connection.ts";
 import { kEmptyRedisArgs } from "./connection.ts";
-import type { Client } from "./client.ts";
+import type {
+  Client,
+  DefaultPubSubMessageType,
+  PubSubMessageType,
+  RedisSubscription,
+  SubscribeCommand,
+} from "./client.ts";
 import type {
   RawOrError,
   RedisReply,
@@ -71,6 +77,13 @@ class PipelineClient implements Client {
 
   close(): void {
     return this.connection.close();
+  }
+
+  subscribe<TMessage extends PubSubMessageType = DefaultPubSubMessageType>(
+    command: SubscribeCommand,
+    ...channelsOrPatterns: Array<string>
+  ): Promise<RedisSubscription<TMessage>> {
+    return Promise.reject(new Error("Pub/Sub cannot be used with a pipeline"));
   }
 
   flush(): Promise<RawOrError[]> {
