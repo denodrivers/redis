@@ -46,7 +46,7 @@ import type {
 import { createRedisConnection } from "./connection.ts";
 import type { Connection, SendCommandOptions } from "./connection.ts";
 import type { RedisConnectionOptions } from "./connection.ts";
-import type { Client } from "./client.ts";
+import type { Client, RedisSubscription } from "./client.ts";
 import { DefaultClient } from "./client.ts";
 import type {
   ConnectionEventMap,
@@ -66,8 +66,6 @@ import type {
   SimpleString,
 } from "./protocol/shared/types.ts";
 import { createRedisPipeline } from "./pipeline.ts";
-import type { RedisSubscription } from "./pubsub.ts";
-import { psubscribe, subscribe } from "./pubsub.ts";
 import type {
   StartEndCount,
   XAddFieldValues,
@@ -1229,7 +1227,10 @@ class RedisImpl implements Redis {
       await this.#subscription.subscribe(...channels);
       return this.#subscription;
     }
-    const subscription = await subscribe<TMessage>(this.client, ...channels);
+    const subscription = await this.client.subscribe<TMessage>(
+      "SUBSCRIBE",
+      ...channels,
+    );
     this.#subscription = subscription;
     return subscription;
   }
@@ -1241,7 +1242,10 @@ class RedisImpl implements Redis {
       await this.#subscription.psubscribe(...patterns);
       return this.#subscription;
     }
-    const subscription = await psubscribe<TMessage>(this.client, ...patterns);
+    const subscription = await this.client.subscribe<TMessage>(
+      "PSUBSCRIBE",
+      ...patterns,
+    );
     this.#subscription = subscription;
     return subscription;
   }
@@ -2528,6 +2532,15 @@ export function parseURL(url: string): RedisConnectOptions {
 
 function createBaseLazyClient(connection: Connection): Client {
   let client: Client | null = null;
+  async function ensureClient(): Promise<Client> {
+    if (!client) {
+      client = new DefaultClient(connection);
+      if (!connection.isConnected) {
+        await connection.connect();
+      }
+    }
+    return client;
+  }
   return {
     get connection() {
       return connection;
@@ -2535,13 +2548,14 @@ function createBaseLazyClient(connection: Connection): Client {
     exec(command, ...args) {
       return this.sendCommand(command, args);
     },
+    async subscribe(command, ...channelsOrPatterns) {
+      return (client ?? await ensureClient()).subscribe(
+        command,
+        ...channelsOrPatterns,
+      );
+    },
     async sendCommand(command, args, options) {
-      if (!client) {
-        client = new DefaultClient(connection);
-        if (!connection.isConnected) {
-          await connection.connect();
-        }
-      }
+      const client = await ensureClient();
       return client.sendCommand(command, args, options);
     },
     close() {

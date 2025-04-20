@@ -67,7 +67,11 @@ export type {
   ConnectionEventType,
   ConnectionReconnectingEventDetails,
 } from "./events.ts";
-export type { Client } from "./client.ts";
+export type {
+  Client,
+  RedisPubSubMessage,
+  RedisSubscription,
+} from "./client.ts";
 export type { CommandExecutor } from "./executor.ts";
 export type { RedisPipeline } from "./pipeline.ts";
 export type {
@@ -83,7 +87,6 @@ export type {
   RedisValue,
   SimpleString,
 } from "./protocol/shared/types.ts";
-export type { RedisPubSubMessage, RedisSubscription } from "./pubsub.ts";
 export type { Redis, RedisConnectOptions } from "./redis.ts";
 export type {
   StartEndCount,

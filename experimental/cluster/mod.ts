@@ -28,11 +28,17 @@
 
 import { connect, create } from "../../redis.ts";
 import type { RedisConnectOptions } from "../../redis.ts";
-import type { Client } from "../../client.ts";
+import type {
+  Client,
+  DefaultPubSubMessageType,
+  PubSubMessageType,
+  RedisSubscription,
+  SubscribeCommand,
+} from "../../client.ts";
 import type { Connection, SendCommandOptions } from "../../connection.ts";
 import type { Redis } from "../../redis.ts";
 import type { RedisReply, RedisValue } from "../../protocol/shared/types.ts";
-import { ErrorReplyError } from "../../errors.ts";
+import { ErrorReplyError, NotImplementedError } from "../../errors.ts";
 import { delay } from "../../deps/std/async.ts";
 import { distinctBy } from "../../deps/std/collections.ts";
 import { sample, shuffle } from "../../deps/std/random.ts";
@@ -91,7 +97,7 @@ class ClusterClient implements Client {
   }
 
   get connection(): Connection {
-    throw new Error("Not implemented yet");
+    throw new NotImplementedError("Not implemented yet");
   }
 
   exec(command: string, ...args: RedisValue[]): Promise<RedisReply> {
@@ -183,6 +189,13 @@ class ClusterClient implements Client {
           ""
       })`,
     );
+  }
+
+  subscribe<TMessage extends PubSubMessageType = DefaultPubSubMessageType>(
+    _command: SubscribeCommand,
+    ..._channelsOrPatterns: Array<string>
+  ): Promise<RedisSubscription<TMessage>> {
+    return Promise.reject(new NotImplementedError("ClusterClient#subscribe"));
   }
 
   close(): void {
