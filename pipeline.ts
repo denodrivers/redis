@@ -80,8 +80,8 @@ class PipelineClient implements Client {
   }
 
   subscribe<TMessage extends PubSubMessageType = DefaultPubSubMessageType>(
-    command: SubscribeCommand,
-    ...channelsOrPatterns: Array<string>
+    _command: SubscribeCommand,
+    ..._channelsOrPatterns: Array<string>
   ): Promise<RedisSubscription<TMessage>> {
     return Promise.reject(new Error("Pub/Sub cannot be used with a pipeline"));
   }

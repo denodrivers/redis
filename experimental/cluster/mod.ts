@@ -192,8 +192,8 @@ class ClusterClient implements Client {
   }
 
   subscribe<TMessage extends PubSubMessageType = DefaultPubSubMessageType>(
-    command: SubscribeCommand,
-    ...channelsOrPatterns: Array<string>
+    _command: SubscribeCommand,
+    ..._channelsOrPatterns: Array<string>
   ): Promise<RedisSubscription<TMessage>> {
     return Promise.reject(new NotImplementedError("ClusterClient#subscribe"));
   }
