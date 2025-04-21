@@ -67,7 +67,7 @@ export interface Client {
   close(): void;
 }
 
-export class DefaultClient implements Client {
+class DefaultClient implements Client {
   constructor(readonly connection: Connection) {}
 
   exec(
@@ -241,4 +241,8 @@ class DefaultRedisSubscription<
   async #writeCommand(command: string, args: Array<string>): Promise<void> {
     await this.client.connection[kUnstableWriteCommand]({ command, args });
   }
+}
+
+export function createDefaultClient(connection: Connection): Client {
+  return new DefaultClient(connection);
 }
