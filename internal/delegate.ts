@@ -1,6 +1,9 @@
 type Delegate<TObject, TMethods extends keyof TObject> =
-  Pick<TObject, TMethods> extends Record<string | symbol, Function>
-    ? Pick<TObject, TMethods>
+  Pick<TObject, TMethods> extends Record<
+    string | symbol,
+    // deno-lint-ignore ban-types -- This is used only as a constraint on the type argument
+    Function
+  > ? Pick<TObject, TMethods>
     : never;
 
 export function delegate<

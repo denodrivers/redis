@@ -8,7 +8,6 @@ import type {
   SubscribeCommand,
 } from "../client.ts";
 import { createDefaultClient } from "../client.ts";
-import { ErrorReplyError, NotImplementedError } from "../errors.ts";
 import {
   kUnstablePipeline,
   kUnstableReadReply,
