@@ -7,8 +7,13 @@ import type {
   RedisSubscription,
   SubscribeCommand,
 } from "../client.ts";
-import { DefaultClient } from "../client.ts";
-import { NotImplementedError } from "../errors.ts";
+import { createDefaultClient } from "../client.ts";
+import {
+  kUnstablePipeline,
+  kUnstableReadReply,
+  kUnstableWriteCommand,
+} from "../internal/symbols.ts";
+import { delegate } from "../internal/delegate.ts";
 import type { RedisReply, RedisValue } from "../protocol/shared/types.ts";
 
 export function createPoolClient(pool: Pool<Connection>): Client {
@@ -31,7 +36,7 @@ class PoolClient implements Client {
   ): Promise<RedisReply> {
     const connection = await this.#pool.acquire();
     try {
-      const client = new DefaultClient(connection);
+      const client = createDefaultClient(connection);
       return await client.exec(command, ...args);
     } finally {
       this.#pool.release(connection);
@@ -45,21 +50,68 @@ class PoolClient implements Client {
   ): Promise<RedisReply> {
     const connection = await this.#pool.acquire();
     try {
-      const client = new DefaultClient(connection);
+      const client = createDefaultClient(connection);
       return await client.sendCommand(command, args, options);
     } finally {
       this.#pool.release(connection);
     }
   }
 
-  subscribe<TMessage extends PubSubMessageType = DefaultPubSubMessageType>(
-    _command: SubscribeCommand,
-    ..._channelsOrPatterns: Array<string>
+  async subscribe<
+    TMessage extends PubSubMessageType = DefaultPubSubMessageType,
+  >(
+    command: SubscribeCommand,
+    ...channelsOrPatterns: Array<string>
   ): Promise<RedisSubscription<TMessage>> {
-    return Promise.reject(new NotImplementedError("PoolClient#subscribe"));
+    const connection = await this.#pool.acquire();
+    const client = createDefaultClient(
+      createPoolConnection(this.#pool, connection),
+    );
+    try {
+      const subscription = await client.subscribe<TMessage>(
+        command,
+        ...channelsOrPatterns,
+      );
+      return subscription;
+    } catch (error) {
+      this.#pool.release(connection);
+      throw error;
+    }
   }
 
   close(): void {
     return this.#pool.close();
   }
+}
+
+function createPoolConnection(
+  pool: Pool<Connection>,
+  connection: Connection,
+): Connection {
+  function close(): void {
+    return pool.release(connection);
+  }
+  return {
+    ...delegate(connection, [
+      "connect",
+      "reconnect",
+      "sendCommand",
+      "addEventListener",
+      "removeEventListener",
+      Symbol.dispose,
+      kUnstableReadReply,
+      kUnstableWriteCommand,
+      kUnstablePipeline,
+    ]),
+    close,
+    get name() {
+      return connection.name;
+    },
+    get isConnected() {
+      return connection.isConnected;
+    },
+    get isClosed() {
+      return connection.isClosed;
+    },
+  };
 }

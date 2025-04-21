@@ -47,7 +47,7 @@ import { createRedisConnection } from "./connection.ts";
 import type { Connection, SendCommandOptions } from "./connection.ts";
 import type { RedisConnectionOptions } from "./connection.ts";
 import type { Client, RedisSubscription } from "./client.ts";
-import { DefaultClient } from "./client.ts";
+import { createDefaultClient } from "./client.ts";
 import type {
   ConnectionEventMap,
   ConnectionEventType,
@@ -2462,7 +2462,7 @@ export async function connect(options: RedisConnectOptions): Promise<Redis> {
   const { hostname, port, ...connectionOptions } = options;
   const connection = createRedisConnection(hostname, port, connectionOptions);
   await connection.connect();
-  const client = new DefaultClient(connection);
+  const client = createDefaultClient(connection);
   return create(client);
 }
 
@@ -2534,7 +2534,7 @@ function createBaseLazyClient(connection: Connection): Client {
   let client: Client | null = null;
   async function ensureClient(): Promise<Client> {
     if (!client) {
-      client = new DefaultClient(connection);
+      client = createDefaultClient(connection);
       if (!connection.isConnected) {
         await connection.connect();
       }
