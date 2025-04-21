@@ -9,17 +9,17 @@ An experimental implementation of redis client for deno
 
 ## Usage
 
-**Installation**
+### Installation
 
 ```shell
 $ deno add jsr:@db/redis
 ```
 
-**Permissions**
+### Permissions
 
 `deno-redis` needs `--allow-net` privilege
 
-**Stateless Commands**
+### Stateless Commands
 
 ```ts
 import { connect } from "@db/redis";
@@ -31,7 +31,7 @@ const ok = await redis.set("hoge", "fuga");
 const fuga = await redis.get("hoge");
 ```
 
-**PubSub**
+### Pub/Sub
 
 ```ts
 import { connect } from "@db/redis";
@@ -45,7 +45,7 @@ const sub = await redis.subscribe("channel");
 })();
 ```
 
-**Streams**
+### Streams
 
 ```ts
 import { connect } from "@db/redis";
@@ -68,7 +68,7 @@ const plz = msgFV["yes"];
 const thx = msgFV["no"];
 ```
 
-**Cluster**
+### Cluster
 
 First, if you need to set up nodes into a working redis cluster:
 
@@ -203,6 +203,26 @@ const sub = await cacheClient.subscribe<string[]>("__redis__:invalidate");
     // Handle invalidation messages...
   }
 })();
+```
+
+### Connection pooling
+
+> [!WARNING]
+> This feature is still experimental and may change in the future.
+
+`@db/redis/experimental/pool` module provides connection pooling:
+
+```typescript
+import { createPoolClient } from "@db/redis/experimental/pool";
+
+const redis = await createPoolClient({
+  connection: {
+    hostname: "127.0.0.1",
+    port: 6379,
+  },
+});
+await redis.set("foo", "bar");
+await redis.get("foo");
 ```
 
 ### Experimental features
