@@ -36,7 +36,7 @@ jobs:
             ~/.cache/deno
           key: ${{ runner.os }}-deno-${{ hashFiles('deps/**', '.denov', 'deno.lock') }}
       - name: Set up Redis ${{ matrix.redis }}
-        uses: shogo82148/actions-setup-redis@49ae0a2fa2bd4b483efad9c869eb8d225032334e # v1.38.0
+        uses: shogo82148/actions-setup-redis@d31b14af2e31afa082d0b82dd37888cb804cfa4c # v1.39.0
         with:
           redis-version: ${{ matrix.redis }}
           auto-start: "true"
@@ -107,7 +107,7 @@ jobs:
         with:
           working-directory: benchmark
       - name: Set up Redis ${{ matrix.redis }}
-        uses: shogo82148/actions-setup-redis@49ae0a2fa2bd4b483efad9c869eb8d225032334e # v1.38.0
+        uses: shogo82148/actions-setup-redis@d31b14af2e31afa082d0b82dd37888cb804cfa4c # v1.39.0
         with:
           redis-version: ${{ matrix.redis }}
           auto-start: "true"
