@@ -92,6 +92,19 @@ To consume a redis cluster, you can use
 
 ## Advanced Usage
 
+### Handle connection timeout
+
+Connection timeout handling can be implemented with `signal` option:
+
+```ts
+import { connect } from "@db/redis";
+
+using redis = await connect({
+  hostname: "127.0.0.1",
+  signal: () => AbortSignal.timeout(5_000),
+});
+```
+
 ### Retriable connection
 
 By default, a client's connection will retry a command execution based on

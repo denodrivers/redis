@@ -4,6 +4,7 @@ import {
   assertEquals,
   assertExists,
   assertInstanceOf,
+  assertRejects,
 } from "../../deps/std/assert.ts";
 import { afterAll, beforeAll, describe, it } from "../../deps/std/testing.ts";
 import { delay } from "../../deps/std/async.ts";
@@ -121,6 +122,17 @@ export function connectionTests(
       assertEquals(await client.ping(), "PONG");
 
       client.close();
+    });
+
+    it("supports AbortSignal", async () => {
+      const ac = new AbortController();
+      ac.abort();
+      const error = await assertRejects(async () =>
+        await connect({
+          ...getOpts(),
+          signal: () => ac.signal,
+        }), DOMException);
+      assertEquals(error.name, "AbortError");
     });
 
     it("works with a lazy client", async () => {
