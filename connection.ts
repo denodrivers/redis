@@ -271,7 +271,7 @@ class RedisConnection
 
   async #connect(retryCount: number) {
     try {
-      let signal: AbortSignal | undefined = this.options?.signal?.() ??
+      const signal: AbortSignal | undefined = this.options?.signal?.() ??
         undefined;
       const dialOpts: Deno.ConnectOptions = {
         hostname: this.hostname,
