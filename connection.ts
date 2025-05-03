@@ -84,6 +84,13 @@ export interface RedisConnectionOptions {
   healthCheckInterval?: number;
 
   /**
+   * An {@linkcode AbortSignal} which is returned by this function is used to abort an ongoing connection process. With this option, you can implement connection timeout, etc.
+   *
+   * Works only in Deno v2.3 or later.
+   */
+  signal?: () => AbortSignal;
+
+  /**
    * @private
    */
   [kUnstableCreateProtocol]?: (conn: Deno.Conn) => Protocol;
@@ -264,9 +271,12 @@ class RedisConnection
 
   async #connect(retryCount: number) {
     try {
+      let signal: AbortSignal | undefined = this.options?.signal?.() ??
+        undefined;
       const dialOpts: Deno.ConnectOptions = {
         hostname: this.hostname,
         port: parsePortLike(this.port),
+        signal,
       };
       const conn: Deno.Conn = this.options?.tls || this.options?.caCerts != null
         ? await Deno.connectTls({ ...dialOpts, caCerts: this.options?.caCerts })
