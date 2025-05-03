@@ -48,9 +48,6 @@ jobs:
       - name: Run doc tests
         run: |
           deno task test:doc
-      - name: Generate an lcov report
-        run: |
-          deno task coverage
       - uses: k1LoW/octocov-action@73d561f65d59e66899ed5c87e4621a913b5d5c20 # v1.5.0
         if: ${{ github.event_name == 'pull_request' }}
 
