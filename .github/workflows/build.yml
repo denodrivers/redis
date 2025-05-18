@@ -26,15 +26,11 @@ jobs:
         run: |
           echo "DENO_VERSION=$(cat .denov)" >> $GITHUB_ENV
       - name: Set up Deno ${{ env.DENO_VERSION }}
-        uses: denoland/setup-deno@909cc5acb0fdd60627fb858598759246509fa755 # v2.0.2
+        uses: denoland/setup-deno@e95548e56dfa95d4e1a28d6f422fafe75c4c26fb # v2.0.3
         with:
           deno-version: ${{ env.DENO_VERSION }}
-      - uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
-        with:
-          path: |
-            ~/.deno
-            ~/.cache/deno
-          key: ${{ runner.os }}-deno-${{ hashFiles('deps/**', '.denov', 'deno.lock') }}
+          cache: true
+          cache-hash: ${{ hashFiles('.denov', 'deno.lock') }}
       - name: Set up Redis ${{ matrix.redis }}
         uses: shogo82148/actions-setup-redis@d31b14af2e31afa082d0b82dd37888cb804cfa4c # v1.39.0
         with:
@@ -59,15 +55,11 @@ jobs:
         run: |
           echo "DENO_VERSION=$(cat .denov)" >> $GITHUB_ENV
       - name: Set up Deno ${{ env.DENO_VERSION }}
-        uses: denoland/setup-deno@909cc5acb0fdd60627fb858598759246509fa755 # v2.0.2
+        uses: denoland/setup-deno@e95548e56dfa95d4e1a28d6f422fafe75c4c26fb # v2.0.3
         with:
           deno-version: ${{ env.DENO_VERSION }}
-      - uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
-        with:
-          path: |
-            ~/.deno
-            ~/.cache/deno
-          key: ${{ runner.os }}-deno-lint-${{ hashFiles('deps/**', '.denov', 'deno.lock') }}
+          cache: true
+          cache-hash: ${{ hashFiles('.denov', 'deno.lock') }}
       - name: Run linters
         run: |
           deno task check
@@ -87,15 +79,11 @@ jobs:
         run: |
           echo "DENO_VERSION=$(cat .denov)" >> $GITHUB_ENV
       - name: Set up Deno ${{ env.DENO_VERSION }}
-        uses: denoland/setup-deno@909cc5acb0fdd60627fb858598759246509fa755 # v2.0.2
+        uses: denoland/setup-deno@e95548e56dfa95d4e1a28d6f422fafe75c4c26fb # v2.0.3
         with:
           deno-version: ${{ env.DENO_VERSION }}
-      - uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
-        with:
-          path: |
-            ~/.deno
-            ~/.cache/deno
-          key: ${{ runner.os }}-deno-benchmark-${{ hashFiles('deps/**', '.denov', 'deno.lock') }}
+          cache: true
+          cache-hash: ${{ hashFiles('.denov', 'deno.lock') }}
       - name: Set up Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
