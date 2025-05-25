@@ -11,6 +11,7 @@
     "jsr:@std/io@0.224.5": "0.224.5",
     "jsr:@std/random@0.1.0": "0.1.0",
     "jsr:@std/testing@1": "1.0.11",
+    "jsr:@uki00a/deno-lint-plugin-extra-rules@0.9.0": "0.9.0",
     "npm:cluster-key-slot@1.1.0": "1.1.0"
   },
   "jsr": {
@@ -47,6 +48,9 @@
         "jsr:@std/assert@^1.0.12",
         "jsr:@std/internal"
       ]
+    },
+    "@uki00a/deno-lint-plugin-extra-rules@0.9.0": {
+      "integrity": "6b1ae489c30b02bf592fa9c433e29dd0c1fb791c808674b280056541b55e109f"
     }
   },
   "npm": {

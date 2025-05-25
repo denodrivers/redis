@@ -1,3 +1,4 @@
+// deno-lint-ignore-file no-console -- This file is a script, not a library module.
 import { join } from "node:path";
 
 function formatResultsAsMarkdown({ name, results }) {
@@ -34,6 +35,5 @@ const paths = Array.from(Deno.readDirSync(resultsDir)).map((x) =>
 for (const path of paths) {
   const results = JSON.parse(await Deno.readTextFile(path));
   const markdown = formatResultsAsMarkdown(results);
-  // deno-lint-ignore no-console
   console.log(markdown);
 }

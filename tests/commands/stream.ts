@@ -32,8 +32,7 @@ export function streamTests(
   };
 
   const withConsumerGroup = async (
-    // deno-lint-ignore no-explicit-any
-    fn: (stream: string, group: string) => any,
+    fn: (stream: string, group: string) => Promise<unknown>,
   ) => {
     const rn = Math.floor(Math.random() * 1000);
     const stream = randomStream();
