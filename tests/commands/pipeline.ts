@@ -131,14 +131,13 @@ export function pipelineTests(
         await client.rpush(key, ...values);
       }
 
-      // deno-lint-ignore no-inner-declarations
-      async function task() {
+      const task = async () => {
         const tx = client.pipeline();
         for (let i = 0; i < 10; i++) {
           tx.lrange(`list_${i}`, 0, -1);
         }
         return await tx.flush();
-      }
+      };
 
       const res = await Promise.all([task(), task()]);
       assertEquals(res, [randomValues, randomValues]);
