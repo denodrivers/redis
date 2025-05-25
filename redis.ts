@@ -757,7 +757,7 @@ class RedisImpl implements Redis {
     return this.execStatusReply("FLUSHDB");
   }
 
-  // deno-lint-ignore no-explicit-any
+  // deno-lint-ignore no-explicit-any -- TODO: improve the signature not to use `any`
   geoadd(key: string, ...params: any[]) {
     const args: (string | number)[] = [key];
     if (Array.isArray(params[0])) {
@@ -905,7 +905,7 @@ class RedisImpl implements Redis {
     return this.execArrayReply<Bulk>("HMGET", key, ...fields);
   }
 
-  // deno-lint-ignore no-explicit-any
+  // deno-lint-ignore no-explicit-any -- TODO: improve the signature not to use `any`
   hmset(key: string, ...params: any[]) {
     const args = [key] as RedisValue[];
     if (Array.isArray(params[0])) {
@@ -920,7 +920,7 @@ class RedisImpl implements Redis {
     return this.execStatusReply("HMSET", ...args);
   }
 
-  // deno-lint-ignore no-explicit-any
+  // deno-lint-ignore no-explicit-any -- TODO: improve the signature not to use `any`
   hset(key: string, ...params: any[]) {
     const args = [key] as RedisValue[];
     if (Array.isArray(params[0])) {
@@ -1125,7 +1125,7 @@ class RedisImpl implements Redis {
     return this.execIntegerReply("MOVE", key, db);
   }
 
-  // deno-lint-ignore no-explicit-any
+  // deno-lint-ignore no-explicit-any -- TODO: improve the signature not to use `any`
   mset(...params: any[]) {
     const args: RedisValue[] = [];
     if (Array.isArray(params[0])) {
@@ -1140,7 +1140,7 @@ class RedisImpl implements Redis {
     return this.execStatusReply("MSET", ...args);
   }
 
-  // deno-lint-ignore no-explicit-any
+  // deno-lint-ignore no-explicit-any -- TODO: improve the signature not to use `any`
   msetnx(...params: any[]) {
     const args: RedisValue[] = [];
     if (Array.isArray(params[0])) {
@@ -1218,7 +1218,7 @@ class RedisImpl implements Redis {
     return this.execIntegerReply("PUBLISH", channel, message);
   }
 
-  // deno-lint-ignore no-explicit-any
+  // deno-lint-ignore no-explicit-any -- This is a private property.
   #subscription?: RedisSubscription<any>;
   async subscribe<TMessage extends string | string[] = string>(
     ...channels: string[]

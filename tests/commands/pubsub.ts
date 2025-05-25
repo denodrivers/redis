@@ -186,7 +186,7 @@ export function pubsubTests(
       const redis = await connect(opts);
       const sub = await redis.subscribe("test");
       const subscriptionPromise = (async () => {
-        // deno-lint-ignore no-empty
+        // deno-lint-ignore no-empty -- Verifying that no exceptions are thrown.
         for await (const _ of sub.receive()) {}
       })();
       redis.close();

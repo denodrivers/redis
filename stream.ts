@@ -371,12 +371,12 @@ export function rawnum(raw: Raw): number {
 export function rawstr(raw: Raw): string {
   return raw ? raw.toString() : "";
 }
-// deno-lint-ignore no-explicit-any
+// deno-lint-ignore no-explicit-any -- intended to be used as a type guard
 export function isString(x: any): x is string {
   return typeof x === "string";
 }
 
-// deno-lint-ignore no-explicit-any
+// deno-lint-ignore no-explicit-any -- intended to be used as a type guard.
 export function isNumber(x: any): x is number {
   return typeof x === "number";
 }
