@@ -16,6 +16,7 @@
       "benchmark/benchmark.js",
       "benchmark/ioredis.js"
     ],
+    "plugins": ["jsr:@uki00a/deno-lint-plugin-extra-rules@0.9.0"],
     "rules": { "include": ["no-console"] }
   },
   "test": {
