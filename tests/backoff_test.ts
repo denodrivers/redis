@@ -7,7 +7,9 @@ describe("backoff", {
   permissions: "none",
 }, () => {
   describe("exponentialBackoff", () => {
-    it("should return exponentially increasing backoff intervals", () => {
+    it("should return exponentially increasing backoff intervals", {
+      permissions: "none",
+    }, () => {
       const backoff = exponentialBackoff({
         multiplier: 2,
         maxInterval: 5000,
