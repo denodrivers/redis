@@ -3,10 +3,7 @@ import { assertEquals } from "../deps/std/assert.ts";
 import { describe, it } from "../deps/std/testing.ts";
 
 describe("util", {
-  permissions: {
-    net: false,
-    run: false,
-  },
+  permissions: "none",
 }, () => {
   describe("parseURL", () => {
     it("parses basic URL", () => {
