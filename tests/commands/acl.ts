@@ -172,5 +172,14 @@ export function aclTests(
         assertEquals(await client.moduleList(), []);
       },
     );
+
+    it(
+      "returns `vectorset` module by default",
+      { ignore: !usesRedisVersion("8") },
+      async () => {
+        const moduleList = await client.moduleList();
+        assertStringIncludes(JSON.stringify(moduleList[0]), "vectorset");
+      },
+    );
   });
 }

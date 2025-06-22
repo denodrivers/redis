@@ -1,6 +1,7 @@
 import { assertEquals } from "../../deps/std/assert.ts";
 import { afterAll, beforeAll, it } from "../../deps/std/testing.ts";
 import type { Connector, TestServer } from "../test_util.ts";
+import { usesRedisVersion } from "../test_util.ts";
 import type { Redis } from "../../mod.ts";
 
 export function geoTests(
@@ -55,9 +56,14 @@ export function geoTests(
       Catania: [15.087269, 37.502669],
     });
     const resp = await client.geopos("Sicily", "Palermo", "Catania", "Enna");
+    const usesRedis8 = usesRedisVersion("8");
     assertEquals(resp, [
-      ["13.36138933897018433", "38.11555639549629859"],
-      ["15.08726745843887329", "37.50266842333162032"],
+      usesRedis8
+        ? ["13.361389338970184", "38.1155563954963"]
+        : ["13.36138933897018433", "38.11555639549629859"],
+      usesRedis8
+        ? ["15.087267458438873", "37.50266842333162"]
+        : ["15.08726745843887329", "37.50266842333162032"],
       null,
     ]);
   });
