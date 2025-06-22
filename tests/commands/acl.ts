@@ -5,6 +5,7 @@ import {
 } from "../../deps/std/assert.ts";
 import { afterAll, beforeAll, describe, it } from "../../deps/std/testing.ts";
 import type { Connector, TestServer } from "../test_util.ts";
+import { usesRedisVersion } from "../test_util.ts";
 import type { Redis } from "../../mod.ts";
 
 export function aclTests(
@@ -164,8 +165,21 @@ export function aclTests(
   });
 
   describe("module list", () => {
-    it("returns the list of loaded modules", async () => {
-      assertEquals(await client.moduleList(), []);
-    });
+    it(
+      "returns an empty array by default",
+      { ignore: usesRedisVersion("8") },
+      async () => {
+        assertEquals(await client.moduleList(), []);
+      },
+    );
+
+    it(
+      "returns `vectorset` module by default",
+      { ignore: !usesRedisVersion("8") },
+      async () => {
+        const moduleList = await client.moduleList();
+        assertStringIncludes(JSON.stringify(moduleList[0]), "vectorset");
+      },
+    );
   });
 }
