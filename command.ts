@@ -105,7 +105,7 @@ export interface RestoreOpts {
 }
 
 export interface HelloOpts {
-  protover?: 2;
+  protover: 2;
   auth?: {
     username: string;
     password: string;

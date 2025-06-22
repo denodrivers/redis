@@ -69,13 +69,15 @@ export function connectionTests(
 
     it("supports AUTH", async () => {
       const reply = await client.hello({
+        protover: 2,
         auth: { username: "default", password: "" },
       });
       assertArrayIncludes(reply, ["redis"]);
     });
 
     it("supports SETNAME", async () => {
-      const reply = await client.hello({
+      await client.hello({
+        protover: 2,
         clientName: "deno-redis",
       });
       assertEquals(await client.clientGetName(), "deno-redis");
