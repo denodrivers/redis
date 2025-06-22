@@ -13,6 +13,7 @@ import type {
   ClusterSetSlotSubcommand,
   GeoRadiusOpts,
   GeoUnit,
+  HelloOpts,
   HScanOpts,
   LInsertLocation,
   LPosOpts,
@@ -1385,6 +1386,20 @@ class RedisImpl implements Redis {
 
   select(index: number) {
     return this.execStatusReply("SELECT", index);
+  }
+
+  hello(opts?: HelloOpts): Promise<ConditionalArray> {
+    const args: Array<RedisValue> = [];
+    if (opts.protover != null) {
+      args.push(opts.protover);
+    }
+    if (opts.auth != null) {
+      args.push("AUTH", opts.auth.username, opts.auth.password);
+    }
+    if (opts.clientName != null) {
+      args.push("SETNAME", opts.clientName);
+    }
+    return this.execArrayReply("HELLO", ...args);
   }
 
   set<TSetOpts extends SetOpts | SetWithModeOpts = SetOpts>(
