@@ -26,6 +26,7 @@ export type {
   ClusterSetSlotSubcommand,
   GeoRadiusOpts,
   GeoUnit,
+  HelloOpts,
   HScanOpts,
   LInsertLocation,
   LPosOpts,

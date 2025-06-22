@@ -104,6 +104,15 @@ export interface RestoreOpts {
   freq?: number;
 }
 
+export interface HelloOpts {
+  protover: 2;
+  auth?: {
+    username: string;
+    password: string;
+  };
+  clientName?: string;
+}
+
 export interface StralgoOpts {
   idx?: boolean;
   len?: boolean;
@@ -276,6 +285,7 @@ export interface RedisCommands {
   ping(message: RedisValue): Promise<BulkString>;
   quit(): Promise<SimpleString>;
   select(index: number): Promise<SimpleString>;
+  hello(opts?: HelloOpts): Promise<ConditionalArray>;
 
   // Keys
   del(...keys: string[]): Promise<Integer>;

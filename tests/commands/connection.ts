@@ -1,6 +1,7 @@
 import { createLazyClient } from "../../mod.ts";
 import {
   assert,
+  assertArrayIncludes,
   assertEquals,
   assertExists,
   assertInstanceOf,
@@ -57,6 +58,29 @@ export function connectionTests(
   describe("select", () => {
     it("returns `OK` on success", async () => {
       assertEquals(await client.select(1), "OK");
+    });
+  });
+
+  describe("hello", () => {
+    it("works with no args", async () => {
+      const reply = await client.hello();
+      assertArrayIncludes(reply, ["redis"]);
+    });
+
+    it("supports AUTH", async () => {
+      const reply = await client.hello({
+        protover: 2,
+        auth: { username: "default", password: "" },
+      });
+      assertArrayIncludes(reply, ["redis"]);
+    });
+
+    it("supports SETNAME", async () => {
+      await client.hello({
+        protover: 2,
+        clientName: "deno-redis",
+      });
+      assertEquals(await client.clientGetName(), "deno-redis");
     });
   });
 
