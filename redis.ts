@@ -1390,13 +1390,13 @@ class RedisImpl implements Redis {
 
   hello(opts?: HelloOpts): Promise<ConditionalArray> {
     const args: Array<RedisValue> = [];
-    if (opts.protover != null) {
+    if (opts?.protover != null) {
       args.push(opts.protover);
     }
-    if (opts.auth != null) {
+    if (opts?.auth != null) {
       args.push("AUTH", opts.auth.username, opts.auth.password);
     }
-    if (opts.clientName != null) {
+    if (opts?.clientName != null) {
       args.push("SETNAME", opts.clientName);
     }
     return this.execArrayReply("HELLO", ...args);

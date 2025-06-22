@@ -106,7 +106,10 @@ export interface RestoreOpts {
 
 export interface HelloOpts {
   protover?: 2;
-  auth?: [username: string, password: string];
+  auth?: {
+    username: string;
+    password: string;
+  };
   clientName?: string;
 }
 
