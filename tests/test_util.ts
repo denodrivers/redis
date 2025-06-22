@@ -127,5 +127,7 @@ function tempPath(fileName: string): string {
 }
 
 export function usesRedisVersion(version: "6" | "7" | "8"): boolean {
-  return !!Deno.env.get("REDIS_VERSION")?.startsWith(`${version}.`);
+  const redisVersion = Deno.env.get("REDIS_VERSION");
+  if (redisVersion == null) return false;
+  return redisVersion.startsWith(`${version}.`) || redisVersion === version;
 }
