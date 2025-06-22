@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        redis: [6.2, 7.4, 8.0.2]
+        redis: [6.2, 7.4, 8.0]
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -32,7 +32,7 @@ jobs:
           cache: true
           cache-hash: ${{ hashFiles('.denov', 'deno.lock') }}
       - name: Set up Redis ${{ matrix.redis }}
-        uses: shogo82148/actions-setup-redis@d31b14af2e31afa082d0b82dd37888cb804cfa4c # v1.39.0
+        uses: shogo82148/actions-setup-redis@a0e29510c6aa657b2758044fe2df292505d4ab69 # v1.41.0
         with:
           redis-version: ${{ matrix.redis }}
           auto-start: "true"
@@ -92,7 +92,7 @@ jobs:
         with:
           working-directory: benchmark
       - name: Set up Redis ${{ matrix.redis }}
-        uses: shogo82148/actions-setup-redis@d31b14af2e31afa082d0b82dd37888cb804cfa4c # v1.39.0
+        uses: shogo82148/actions-setup-redis@a0e29510c6aa657b2758044fe2df292505d4ab69 # v1.41.0
         with:
           redis-version: ${{ matrix.redis }}
           auto-start: "true"
