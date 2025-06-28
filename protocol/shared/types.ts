@@ -48,3 +48,5 @@ export type RedisReply = Raw | ConditionalArray;
 export type RawOrError = Raw | ErrorReplyError;
 
 export const okReply = "OK";
+
+export type Protover = 2 | 3;

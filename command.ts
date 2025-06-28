@@ -5,6 +5,7 @@ import type {
   BulkString,
   ConditionalArray,
   Integer,
+  Protover,
   Raw,
   RedisValue,
   SimpleString,
@@ -105,7 +106,7 @@ export interface RestoreOpts {
 }
 
 export interface HelloOpts {
-  protover: 2;
+  protover: Protover;
   auth?: {
     username: string;
     password: string;

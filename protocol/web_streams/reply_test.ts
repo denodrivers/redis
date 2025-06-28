@@ -31,6 +31,14 @@ Deno.test({
       const reply = await readReply(new BufferedReadableStream(readable));
       assertEquals(reply, ["foo", [456, "OK"], 78]);
     });
+
+    await t.step("map", async () => {
+      const readable = createReadableByteStream(
+        "%2\r\n+foo\r\n:1\r\n+bar\r\n:2\r\n",
+      );
+      const reply = await readReply(new BufferedReadableStream(readable));
+      assertEquals(reply, ["foo", 1, "bar", 2]);
+    });
   },
 });
 

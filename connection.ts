@@ -9,12 +9,17 @@ import type {
 import {
   kUnstableCreateProtocol,
   kUnstablePipeline,
+  kUnstableProtover,
   kUnstableReadReply,
   kUnstableWriteCommand,
 } from "./internal/symbols.ts";
 import { Protocol as DenoStreamsProtocol } from "./protocol/deno_streams/mod.ts";
 import type { Command, Protocol } from "./protocol/shared/protocol.ts";
-import type { RedisReply, RedisValue } from "./protocol/shared/types.ts";
+import type {
+  Protover,
+  RedisReply,
+  RedisValue,
+} from "./protocol/shared/types.ts";
 import { delay } from "./deps/std/async.ts";
 
 export interface SendCommandOptions {
@@ -94,6 +99,11 @@ export interface RedisConnectionOptions {
    * @private
    */
   [kUnstableCreateProtocol]?: (conn: Deno.Conn) => Protocol;
+
+  /**
+   * @private
+   */
+  [kUnstableProtover]?: Protover;
 }
 
 export const kEmptyRedisArgs: Array<RedisValue> = [];
@@ -161,6 +171,7 @@ class RedisConnection
     password: string,
   ): Promise<void> {
     try {
+      // TODO: Use `HELLO` instead of `AUTH`
       password && username
         ? await this.sendCommand("AUTH", [username, password], { inline: true })
         : await this.sendCommand("AUTH", [password], { inline: true });
@@ -293,6 +304,11 @@ class RedisConnection
       try {
         if (this.options.password != null) {
           await this.authenticate(this.options.username, this.options.password);
+        }
+        if (this.options[kUnstableProtover] != null) {
+          await this.sendCommand("HELLO", [this.options[kUnstableProtover]], {
+            inline: true,
+          });
         }
         if (this.options.db) {
           await this.selectDb(this.options.db);

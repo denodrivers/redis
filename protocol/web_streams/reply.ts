@@ -4,6 +4,7 @@ import {
   BulkReplyCode,
   ErrorReplyCode,
   IntegerReplyCode,
+  MapReplyCode,
   SimpleStringCode,
 } from "../shared/reply.ts";
 import { ErrorReplyError, NotImplementedError } from "../../errors.ts";
@@ -48,6 +49,20 @@ export async function readReply(
         array.push(await readReply(readable, returnUint8Arrays));
       }
       return array;
+    }
+    case MapReplyCode: {
+      // NOTE: We treat a map type as an array to keep backward compatibility.
+      const numberOfFieldValuePairs = Number.parseInt(
+        decoder.decode(line.slice(1)),
+      );
+      if (numberOfFieldValuePairs === -1) {
+        return null;
+      }
+      const entries: Array<types.RedisReply> = [];
+      for (let i = 0; i < (numberOfFieldValuePairs * 2); i++) {
+        entries.push(await readReply(readable, returnUint8Arrays));
+      }
+      return entries;
     }
     default:
       throw new NotImplementedError(
