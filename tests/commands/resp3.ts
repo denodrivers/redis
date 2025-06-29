@@ -1,4 +1,4 @@
-import { assertEquals } from "../../deps/std/assert.ts";
+import { assertEquals, assertStrictEquals } from "../../deps/std/assert.ts";
 import { afterAll, beforeAll, beforeEach, it } from "../../deps/std/testing.ts";
 import type { Connector, TestServer } from "../test_util.ts";
 import type { Redis } from "../../mod.ts";
@@ -27,5 +27,10 @@ export function resp3Tests(
     await client.hset("key", "foo", "1");
     await client.hset("key", "bar", "2");
     assertEquals(await client.hgetall("key"), ["foo", "1", "bar", "2"]);
+  });
+
+  it("returns a null reply as `null`", async () => {
+    const reply = await client.get("no-such-key");
+    assertStrictEquals(reply, null);
   });
 }

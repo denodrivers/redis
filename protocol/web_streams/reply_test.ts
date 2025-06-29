@@ -26,10 +26,10 @@ Deno.test({
 
     await t.step("array", async () => {
       const readable = createReadableByteStream(
-        "*3\r\n$3\r\nfoo\r\n*2\r\n:456\r\n+OK\r\n:78\r\n",
+        "*4\r\n$3\r\nfoo\r\n*2\r\n:456\r\n+OK\r\n_\r\n:78\r\n",
       );
       const reply = await readReply(new BufferedReadableStream(readable));
-      assertEquals(reply, ["foo", [456, "OK"], 78]);
+      assertEquals(reply, ["foo", [456, "OK"], null, 78]);
     });
 
     await t.step("map", async () => {
@@ -38,6 +38,14 @@ Deno.test({
       );
       const reply = await readReply(new BufferedReadableStream(readable));
       assertEquals(reply, ["foo", 1, "bar", 2]);
+    });
+
+    await t.step("null", async () => {
+      const readable = createReadableByteStream(
+        "_\r\n",
+      );
+      const reply = await readReply(new BufferedReadableStream(readable));
+      assertEquals(reply, null);
     });
   },
 });

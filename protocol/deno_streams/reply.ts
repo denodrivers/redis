@@ -6,6 +6,7 @@ import {
   ErrorReplyCode,
   IntegerReplyCode,
   MapReplyCode,
+  NullReplyCode,
   SimpleStringCode,
 } from "../shared/reply.ts";
 import { EOFError, ErrorReplyError, InvalidStateError } from "../../errors.ts";
@@ -36,6 +37,8 @@ export async function readReply(
       return readArrayReply(reader, returnUint8Arrays);
     case MapReplyCode:
       return readMapReply(reader, returnUint8Arrays);
+    case NullReplyCode:
+      return readNullReply(reader);
     default:
       throw new InvalidStateError(
         `unknown code: '${String.fromCharCode(code)}' (${code})`,
@@ -120,7 +123,7 @@ export async function readArrayReply(
 /**
  * NOTE: We treat a map type as an array to keep backward compatibility.
  */
-export async function readMapReply(
+async function readMapReply(
   reader: BufReader,
   returnUint8Arrays?: boolean,
 ): Promise<Array<types.RedisReply> | null> {
@@ -138,6 +141,12 @@ export async function readMapReply(
     entries.push(await readReply(reader, returnUint8Arrays));
   }
   return entries;
+}
+
+async function readNullReply(reader: BufReader): Promise<null> {
+  // Discards the current line
+  await readLine(reader);
+  return null;
 }
 
 function tryParseErrorReply(line: Uint8Array): never {

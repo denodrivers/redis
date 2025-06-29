@@ -5,6 +5,7 @@ import {
   ErrorReplyCode,
   IntegerReplyCode,
   MapReplyCode,
+  NullReplyCode,
   SimpleStringCode,
 } from "../shared/reply.ts";
 import { ErrorReplyError, NotImplementedError } from "../../errors.ts";
@@ -63,6 +64,9 @@ export async function readReply(
         entries.push(await readReply(readable, returnUint8Arrays));
       }
       return entries;
+    }
+    case NullReplyCode: {
+      return null;
     }
     default:
       throw new NotImplementedError(
