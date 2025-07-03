@@ -7,6 +7,7 @@ import {
   IntegerReplyCode,
   MapReplyCode,
   NullReplyCode,
+  SetReplyCode,
   SimpleStringCode,
 } from "../shared/reply.ts";
 import { EOFError, ErrorReplyError, InvalidStateError } from "../../errors.ts";
@@ -37,6 +38,8 @@ export async function readReply(
       return readArrayReply(reader, returnUint8Arrays);
     case MapReplyCode:
       return readMapReply(reader, returnUint8Arrays);
+    case SetReplyCode:
+      return readSetReply(reader, returnUint8Arrays);
     case NullReplyCode:
       return readNullReply(reader);
     default:
@@ -118,6 +121,31 @@ export async function readArrayReply(
     array.push(await readReply(reader, returnUint8Arrays));
   }
   return array;
+}
+
+/**
+ * NOTE: We treat a set type as an array to keep backward compatibility.
+ */
+export async function readSetReply(
+  reader: BufReader,
+  returnUint8Arrays?: boolean,
+): Promise<Array<types.RedisReply> | null> {
+  const line = await readLine(reader);
+  if (line == null) {
+    throw new InvalidStateError();
+  }
+
+  const size = parseSize(line);
+  if (size === -1) {
+    // `-1` indicates a null set
+    return null;
+  }
+
+  const set: Array<types.RedisReply> = [];
+  for (let i = 0; i < size; i++) {
+    set.push(await readReply(reader, returnUint8Arrays));
+  }
+  return set;
 }
 
 /**

@@ -40,6 +40,14 @@ Deno.test({
       assertEquals(reply, ["foo", 1, "bar", 2]);
     });
 
+    await t.step("set", async () => {
+      const readable = createReadableByteStream(
+        "~3\r\n+foo\r\n:5\r\n$3\r\nbar\r\n",
+      );
+      const reply = await readReply(new BufferedReadableStream(readable));
+      assertEquals(reply, ["foo", 5, "bar"]);
+    });
+
     await t.step("null", async () => {
       const readable = createReadableByteStream(
         "_\r\n",
