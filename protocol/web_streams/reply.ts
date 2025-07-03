@@ -6,6 +6,7 @@ import {
   IntegerReplyCode,
   MapReplyCode,
   NullReplyCode,
+  SetReplyCode,
   SimpleStringCode,
 } from "../shared/reply.ts";
 import { ErrorReplyError, NotImplementedError } from "../../errors.ts";
@@ -64,6 +65,19 @@ export async function readReply(
         entries.push(await readReply(readable, returnUint8Arrays));
       }
       return entries;
+    }
+    case SetReplyCode: {
+      // NOTE: We treat a set type as an array to keep backward compatibility.
+      const size = Number.parseInt(decoder.decode(line.slice(1)));
+      if (size === -1) {
+        // `-1` indicates a null set
+        return null;
+      }
+      const set: Array<types.RedisReply> = [];
+      for (let i = 0; i < size; i++) {
+        set.push(await readReply(readable, returnUint8Arrays));
+      }
+      return set;
     }
     case NullReplyCode: {
       return null;
