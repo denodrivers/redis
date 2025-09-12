@@ -20,7 +20,22 @@
     "rules": { "include": ["no-console"] }
   },
   "test": {
-    "exclude": ["benchmark/", "vendor/"]
+    "exclude": ["benchmark/", "vendor/"],
+    "permissions": {
+      "net": true,
+      "read": ["tests"],
+      "write": ["tests/tmp"],
+      "run": ["redis-server", "redis-cli"],
+      "env": ["REDIS_VERSION"]
+    }
+  },
+  "permissions": {
+    "bench:deno-redis": {
+      "net": ["127.0.0.1:6379"],
+      "read": true,
+      "env": true,
+      "write": ["tmp"]
+    }
   },
   "publish": {
     "exclude": [
@@ -43,9 +58,9 @@
     "check:lint": "deno lint && deno fmt --check",
     "check:deno.json": "deno run --allow-read=deno.json tools/check_deno_json.js",
     "typecheck": "cat deno.json | jq '.exports.[]' | xargs deno check",
-    "test": "DENO_FUTURE=1 deno test --allow-net --allow-read=tests --allow-write=tests/tmp --allow-run=redis-server,redis-cli --allow-env=REDIS_VERSION --coverage=coverage --trace-leaks --frozen-lockfile",
+    "test": "DENO_FUTURE=1 deno test --permission-set --coverage=coverage --trace-leaks --frozen-lockfile",
     "test:doc": "deno check --doc-only --import-map=import_map.test.json README.md experimental/cluster/README.md",
-    "bench:deno-redis": "DENO_NO_PACKAGE_JSON=1 deno run --unstable --allow-net=127.0.0.1:6379 --allow-read --allow-env --allow-write=tmp --import-map=benchmark/import_map.json benchmark/deno-redis.ts",
+    "bench:deno-redis": "DENO_NO_PACKAGE_JSON=1 deno run --unstable --permission-set=bench:deno-redis --import-map=benchmark/import_map.json benchmark/deno-redis.ts",
     "bench:ioredis": "node benchmark/ioredis.js"
   }
 }
