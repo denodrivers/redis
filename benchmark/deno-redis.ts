@@ -3,7 +3,10 @@ import { connect } from "../mod.ts";
 import { connect as connectWebStreams } from "../experimental/web_streams_connection/mod.ts";
 
 {
-  const redis = await connect({ hostname: "127.0.0.1" });
+  const redis = await connect({
+    hostname: "127.0.0.1",
+    noDelay: true,
+  });
   try {
     await run({
       client: redis,
