@@ -96,6 +96,13 @@ export interface RedisConnectionOptions {
   signal?: () => AbortSignal;
 
   /**
+   * If `true`, disables Nagle's algorithm.
+   *
+   * @default false
+   */
+  noDelay?: boolean;
+
+  /**
    * @private
    */
   [kUnstableCreateProtocol]?: (conn: Deno.Conn) => Protocol;
@@ -289,9 +296,15 @@ class RedisConnection
         port: parsePortLike(this.port),
         signal,
       };
-      const conn: Deno.Conn = this.options?.tls || this.options?.caCerts != null
-        ? await Deno.connectTls({ ...dialOpts, caCerts: this.options?.caCerts })
+      const conn = this.options?.tls || this.options?.caCerts != null
+        ? await Deno.connectTls({
+          ...dialOpts,
+          caCerts: this.options?.caCerts,
+        })
         : await Deno.connect(dialOpts);
+      if (this.options?.noDelay && "setNoDelay" in conn) {
+        conn.setNoDelay();
+      }
 
       this.#conn = conn;
       this.#protocol = this.options?.[kUnstableCreateProtocol]?.(conn) ??
