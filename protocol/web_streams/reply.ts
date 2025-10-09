@@ -1,6 +1,7 @@
 import type * as types from "../shared/types.ts";
 import {
   ArrayReplyCode,
+  BooleanReplyCode,
   BulkReplyCode,
   ErrorReplyCode,
   IntegerReplyCode,
@@ -78,6 +79,12 @@ export async function readReply(
         set.push(await readReply(readable, returnUint8Arrays));
       }
       return set;
+    }
+    case BooleanReplyCode: {
+      const isTrue = line[1] === 116;
+      return isTrue
+        ? 1 // `#t`
+        : 0; // `#f`
     }
     case NullReplyCode: {
       return null;

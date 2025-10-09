@@ -45,8 +45,15 @@ export function resp3Tests(
     assertStrictEquals(reply, null);
   });
 
-  it("TODO: boolean", async () => {
-    const reply = await client.eval("redis.setresp(3); return true", [], []);
-    assertStrictEquals(reply, true);
+  it("returns a boolean reply as 0 or 1", async () => {
+    {
+      const reply = await client.eval("redis.setresp(3); return true", [], []);
+      assertStrictEquals(reply, 1);
+    }
+
+    {
+      const reply = await client.eval("redis.setresp(3); return false", [], []);
+      assertStrictEquals(reply, 0);
+    }
   });
 }
