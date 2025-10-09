@@ -46,7 +46,7 @@ export function resp3Tests(
   });
 
   it("TODO: boolean", async () => {
-    const reply = await client.eval("return true", []);
+    const reply = await client.eval("return true", [], []);
     assertStrictEquals(reply, true);
   });
 }
