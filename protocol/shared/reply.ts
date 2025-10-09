@@ -16,5 +16,7 @@ export const ErrorReplyCode = "-".charCodeAt(0);
 export const MapReplyCode = "%".charCodeAt(0);
 /** Represents a set which is introduced in RESP3. */
 export const SetReplyCode = "~".charCodeAt(0);
+/** Represents a boolean which is introduced in RESP3. */
+export const BooleanReplyCode = "#".charCodeAt(0);
 /** Represents the null type which is introduced in RESP3. */
 export const NullReplyCode = "_".charCodeAt(0);

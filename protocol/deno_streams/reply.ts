@@ -2,6 +2,7 @@ import type { BufReader } from "../../deps/std/io.ts";
 import type * as types from "../shared/types.ts";
 import {
   ArrayReplyCode,
+  BooleanReplyCode,
   BulkReplyCode,
   ErrorReplyCode,
   IntegerReplyCode,
@@ -40,6 +41,8 @@ export async function readReply(
       return readMapReply(reader, returnUint8Arrays);
     case SetReplyCode:
       return readSetReply(reader, returnUint8Arrays);
+    case BooleanReplyCode:
+      return readBooleanReply(reader);
     case NullReplyCode:
       return readNullReply(reader);
     default:
@@ -169,6 +172,17 @@ async function readMapReply(
     entries.push(await readReply(reader, returnUint8Arrays));
   }
   return entries;
+}
+
+async function readBooleanReply(reader: BufReader): Promise<1 | 0> {
+  const line = await readLine(reader);
+  if (line == null) {
+    throw new InvalidStateError();
+  }
+  const isTrue = line[1] === 116;
+  return isTrue
+    ? 1 // `#t`
+    : 0; // `#f`
 }
 
 async function readNullReply(reader: BufReader): Promise<null> {

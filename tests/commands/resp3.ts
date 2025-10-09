@@ -44,4 +44,16 @@ export function resp3Tests(
     const reply = await client.get("no-such-key");
     assertStrictEquals(reply, null);
   });
+
+  it("returns a boolean reply as 0 or 1", async () => {
+    {
+      const reply = await client.eval("redis.setresp(3); return true", [], []);
+      assertStrictEquals(reply, 1);
+    }
+
+    {
+      const reply = await client.eval("redis.setresp(3); return false", [], []);
+      assertStrictEquals(reply, 0);
+    }
+  });
 }
