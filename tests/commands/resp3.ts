@@ -44,4 +44,9 @@ export function resp3Tests(
     const reply = await client.get("no-such-key");
     assertStrictEquals(reply, null);
   });
+
+  it("TODO: boolean", async () => {
+    const reply = await client.eval("return true", []);
+    assertStrictEquals(reply, true);
+  });
 }
