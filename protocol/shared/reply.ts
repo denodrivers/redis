@@ -3,6 +3,10 @@
  */
 export const IntegerReplyCode = ":".charCodeAt(0);
 /**
+ * Represents a double which is introduced in RESP3.
+ */
+export const DoubleReplyCode = ",".charCodeAt(0);
+/**
  * Represents a blob string in RESP2/RESP3.
  */
 export const BulkReplyCode = "$".charCodeAt(0);

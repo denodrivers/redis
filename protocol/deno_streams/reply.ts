@@ -4,6 +4,7 @@ import {
   ArrayReplyCode,
   BooleanReplyCode,
   BulkReplyCode,
+  DoubleReplyCode,
   ErrorReplyCode,
   IntegerReplyCode,
   MapReplyCode,
@@ -43,6 +44,8 @@ export async function readReply(
       return readSetReply(reader, returnUint8Arrays);
     case BooleanReplyCode:
       return readBooleanReply(reader);
+    case DoubleReplyCode:
+      return readDoubleReply(reader, returnUint8Arrays);
     case NullReplyCode:
       return readNullReply(reader);
     default:
@@ -183,6 +186,22 @@ async function readBooleanReply(reader: BufReader): Promise<1 | 0> {
   return isTrue
     ? 1 // `#t`
     : 0; // `#f`
+}
+
+async function readDoubleReply(
+  reader: BufReader,
+  returnUint8Arrays?: boolean,
+): Promise<string | types.Binary> {
+  const line = await readLine(reader);
+  if (line == null) {
+    throw new InvalidStateError();
+  }
+
+  if (line[0] !== DoubleReplyCode) {
+    tryParseErrorReply(line);
+  }
+  const body = line.subarray(1);
+  return returnUint8Arrays ? body : decoder.decode(body);
 }
 
 async function readNullReply(reader: BufReader): Promise<null> {

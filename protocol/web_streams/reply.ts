@@ -3,6 +3,7 @@ import {
   ArrayReplyCode,
   BooleanReplyCode,
   BulkReplyCode,
+  DoubleReplyCode,
   ErrorReplyCode,
   IntegerReplyCode,
   MapReplyCode,
@@ -85,6 +86,10 @@ export async function readReply(
       return isTrue
         ? 1 // `#t`
         : 0; // `#f`
+    }
+    case DoubleReplyCode: {
+      const body = line.subarray(1, -2);
+      return returnUint8Arrays ? body : decoder.decode(body);
     }
     case NullReplyCode: {
       return null;
