@@ -27,6 +27,11 @@ export function resp3Tests(
     await client.flushdb();
   });
 
+  it("returns a double reply as a string", async () => {
+    client.zadd("key", { one: 123, two: 2 });
+    assertEquals(await client.zscore("key", "one"), "123");
+  });
+
   it("returns a map reply as an array", async () => {
     await client.hset("key", "foo", "1");
     await client.hset("key", "bar", "2");
