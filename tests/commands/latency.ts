@@ -1,14 +1,5 @@
-import { createLazyClient } from "../../mod.ts";
-import {
-  assert,
-  assertArrayIncludes,
-  assertEquals,
-  assertExists,
-  assertInstanceOf,
-  assertRejects,
-} from "../../deps/std/assert.ts";
+import { assertStringIncludes } from "../../deps/std/assert.ts";
 import { afterAll, beforeAll, describe, it } from "../../deps/std/testing.ts";
-import { delay } from "../../deps/std/async.ts";
 import type { Connector, TestServer } from "../test_util.ts";
 import type { Redis } from "../../mod.ts";
 
@@ -29,8 +20,10 @@ export function latencyTests(
   describe("latencyDoctor", () => {
     it("executes `LATENCY DOCTOR`", async () => {
       const report = await client.latencyDoctor();
-      console.info(report);
-      assertEquals(typeof report, "string");
+      assertStringIncludes(
+        report,
+        "Latency monitoring is disabled in this Redis instance.",
+      );
     });
   });
 }
