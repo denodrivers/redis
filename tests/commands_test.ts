@@ -15,6 +15,7 @@ import { zsetTests } from "./commands/sorted_set.ts";
 import { scriptTests } from "./commands/script.ts";
 import { streamTests } from "./commands/stream.ts";
 import { stringTests } from "./commands/string.ts";
+import { latencyTests } from "./commands/latency.ts";
 import { resp3Tests } from "./commands/resp3.ts";
 import { connect } from "../redis.ts";
 import { connect as connectWebStreamsConnection } from "../experimental/web_streams_connection/mod.ts";
@@ -57,6 +58,7 @@ describe("commands", () => {
       describe("script", () => scriptTests(connector, getServer));
       describe("stream", () => streamTests(connector, getServer));
       describe("string", () => stringTests(connector, getServer));
+      describe("latency", () => latencyTests(connector, getServer));
       describe("RESP3", () => resp3Tests(connector, getServer));
     });
   }

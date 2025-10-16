@@ -1327,6 +1327,9 @@ XRANGE somestream - +
   unwatch(): Promise<SimpleString>;
   watch(...keys: string[]): Promise<SimpleString>;
 
+  // Latency
+  latencyDoctor(): Promise<BulkString>;
+
   // Pipeline
   tx(): RedisPipeline;
   pipeline(): RedisPipeline;
