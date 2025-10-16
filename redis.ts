@@ -2449,6 +2449,10 @@ class RedisImpl implements Redis {
     return args;
   }
 
+  latencyDoctor() {
+    return this.execBulkReply<BulkString>("LATENCY", "DOCTOR");
+  }
+
   tx() {
     return createRedisPipeline(this.client.connection, true);
   }
