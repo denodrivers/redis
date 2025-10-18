@@ -11,6 +11,7 @@ import {
   NullReplyCode,
   SetReplyCode,
   SimpleStringCode,
+  VerbatimStringCode,
 } from "../shared/reply.ts";
 import { EOFError, ErrorReplyError, InvalidStateError } from "../../errors.ts";
 import { decoder } from "../../internal/encoding.ts";
@@ -46,6 +47,8 @@ export async function readReply(
       return readBooleanReply(reader);
     case DoubleReplyCode:
       return readDoubleReply(reader, returnUint8Arrays);
+    case VerbatimStringCode:
+      return readVerbatimStringReply(reader, returnUint8Arrays);
     case NullReplyCode:
       return readNullReply(reader);
     default:
@@ -85,6 +88,26 @@ async function readBulkReply(
     return null;
   }
 
+  const dest = new Uint8Array(size + 2);
+  await reader.readFull(dest);
+  const body = dest.subarray(0, dest.length - 2); // Strip CR and LF
+  return returnUint8Arrays ? body : decoder.decode(body);
+}
+
+async function readVerbatimStringReply(
+  reader: BufReader,
+  returnUint8Arrays?: boolean,
+): Promise<string | types.Binary> {
+  const line = await readLine(reader);
+  if (line == null) {
+    throw new InvalidStateError();
+  }
+
+  if (line[0] !== VerbatimStringCode) {
+    tryParseErrorReply(line);
+  }
+
+  const size = parseSize(line);
   const dest = new Uint8Array(size + 2);
   await reader.readFull(dest);
   const body = dest.subarray(0, dest.length - 2); // Strip CR and LF

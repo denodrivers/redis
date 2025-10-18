@@ -10,6 +10,7 @@ import {
   NullReplyCode,
   SetReplyCode,
   SimpleStringCode,
+  VerbatimStringCode,
 } from "../shared/reply.ts";
 import { ErrorReplyError, NotImplementedError } from "../../errors.ts";
 import { decoder } from "../../internal/encoding.ts";
@@ -32,7 +33,8 @@ export async function readReply(
       const body = line.slice(1, -2);
       return returnUint8Arrays ? body : decoder.decode(body);
     }
-    case BulkReplyCode: {
+    case BulkReplyCode:
+    case VerbatimStringCode: {
       const size = Number.parseInt(decoder.decode(line.subarray(1)));
       if (size < 0) {
         // nil bulk reply

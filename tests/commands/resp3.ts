@@ -1,4 +1,5 @@
 import {
+  assert,
   assertArrayIncludes,
   assertEquals,
   assertStrictEquals,
@@ -60,5 +61,11 @@ export function resp3Tests(
       const reply = await client.eval("redis.setresp(3); return false", [], []);
       assertStrictEquals(reply, 0);
     }
+  });
+
+  it("supports a verbatim string", async () => {
+    const reply = await client.latencyDoctor();
+    assertStrictEquals(typeof reply, "string");
+    assert(reply.startsWith("txt:"), `"${reply}" should start with "txt:"`);
   });
 }

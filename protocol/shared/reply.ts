@@ -11,6 +11,8 @@ export const DoubleReplyCode = ",".charCodeAt(0);
  */
 export const BulkReplyCode = "$".charCodeAt(0);
 export const SimpleStringCode = "+".charCodeAt(0);
+/** Represents a verbatim string in RESP3. */
+export const VerbatimStringCode = "=".charCodeAt(0);
 export const ArrayReplyCode = "*".charCodeAt(0);
 /**
  * Represents a simple error in RESP2/RESP3.
