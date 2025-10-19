@@ -45,7 +45,7 @@ jobs:
         run: |
           deno task test:doc
       - uses: k1LoW/octocov-action@73d561f65d59e66899ed5c87e4621a913b5d5c20 # v1.5.0
-        if: ${{ github.event_name == 'pull_request' }}
+        if: ${{ github.event_name == 'pull_request' && matrix.redis == 8 }}
 
   lint:
     runs-on: ubuntu-latest
