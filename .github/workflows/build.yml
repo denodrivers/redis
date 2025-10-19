@@ -71,7 +71,8 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        redis: [7.4]
+        redis: [8.0]
+        driver: [deno-redis, ioredis]
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
@@ -85,10 +86,12 @@ jobs:
           cache: true
           cache-hash: ${{ hashFiles('.denov', 'deno.lock') }}
       - name: Set up Node.js
+        if: matrix.driver == 'ioredis'
         uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
         with:
           node-version: "16"
       - uses: bahmutov/npm-install@4488656f8e90d3c85e3a964db0018dd624f340e7 # v1.11.1
+        if: matrix.driver == 'ioredis'
         with:
           working-directory: benchmark
       - name: Set up Redis ${{ matrix.redis }}
@@ -96,12 +99,9 @@ jobs:
         with:
           redis-version: ${{ matrix.redis }}
           auto-start: "true"
-      - name: Run benchmarks (ioredis)
+      - name: Run benchmarks
         run: |
-          deno task bench:ioredis
-      - name: Run benchmarks (deno-redis)
-        run: |
-          deno task bench:deno-redis
+          deno task bench:${{ matrix.driver }}
       - name: Output results as a job summary
         run: |
           deno run --allow-read=tmp tools/format-benchmark-results.js >> $GITHUB_STEP_SUMMARY
