@@ -24,5 +24,7 @@ export const MapReplyCode = "%".charCodeAt(0);
 export const SetReplyCode = "~".charCodeAt(0);
 /** Represents a boolean which is introduced in RESP3. */
 export const BooleanReplyCode = "#".charCodeAt(0);
+/** Represents a big number which is introduced in RESP3. */
+export const BigNumberReplyCode = "(".charCodeAt(0);
 /** Represents the null type which is introduced in RESP3. */
 export const NullReplyCode = "_".charCodeAt(0);

@@ -68,4 +68,7 @@ export function resp3Tests(
     assertStrictEquals(typeof reply, "string");
     assert(reply.startsWith("txt:"), `"${reply}" should start with "txt:"`);
   });
+
+  // deno-lint-ignore deno-lint-plugin-extra-rules/no-disabled-tests -- TODO: Currently, there is no command that returns a big number.
+  it.skip("supports a big number", () => {});
 }

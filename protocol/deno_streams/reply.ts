@@ -2,6 +2,7 @@ import type { BufReader } from "../../deps/std/io.ts";
 import type * as types from "../shared/types.ts";
 import {
   ArrayReplyCode,
+  BigNumberReplyCode,
   BooleanReplyCode,
   BulkReplyCode,
   DoubleReplyCode,
@@ -47,6 +48,8 @@ export async function readReply(
       return readBooleanReply(reader);
     case DoubleReplyCode:
       return readDoubleReply(reader, returnUint8Arrays);
+    case BigNumberReplyCode:
+      return readBigNumberReply(reader, returnUint8Arrays);
     case VerbatimStringCode:
       return readVerbatimStringReply(reader, returnUint8Arrays);
     case NullReplyCode:
@@ -114,20 +117,11 @@ async function readVerbatimStringReply(
   return returnUint8Arrays ? body : decoder.decode(body);
 }
 
-async function readSimpleStringReply(
+function readSimpleStringReply(
   reader: BufReader,
   returnUint8Arrays?: boolean,
 ): Promise<string | types.Binary> {
-  const line = await readLine(reader);
-  if (line == null) {
-    throw new InvalidStateError();
-  }
-
-  if (line[0] !== SimpleStringCode) {
-    tryParseErrorReply(line);
-  }
-  const body = line.subarray(1, line.length);
-  return returnUint8Arrays ? body : decoder.decode(body);
+  return readSingleLineReply(reader, SimpleStringCode, returnUint8Arrays);
 }
 
 export async function readArrayReply(
@@ -211,8 +205,29 @@ async function readBooleanReply(reader: BufReader): Promise<1 | 0> {
     : 0; // `#f`
 }
 
-async function readDoubleReply(
+function readDoubleReply(
   reader: BufReader,
+  returnUint8Arrays?: boolean,
+): Promise<string | types.Binary> {
+  return readSingleLineReply(reader, DoubleReplyCode, returnUint8Arrays);
+}
+
+function readBigNumberReply(
+  reader: BufReader,
+  returnUint8Arrays?: boolean,
+): Promise<string | types.Binary> {
+  return readSingleLineReply(reader, BigNumberReplyCode, returnUint8Arrays);
+}
+
+async function readNullReply(reader: BufReader): Promise<null> {
+  // Discards the current line
+  await readLine(reader);
+  return null;
+}
+
+async function readSingleLineReply(
+  reader: BufReader,
+  expectedCode: number,
   returnUint8Arrays?: boolean,
 ): Promise<string | types.Binary> {
   const line = await readLine(reader);
@@ -220,17 +235,11 @@ async function readDoubleReply(
     throw new InvalidStateError();
   }
 
-  if (line[0] !== DoubleReplyCode) {
+  if (line[0] !== expectedCode) {
     tryParseErrorReply(line);
   }
   const body = line.subarray(1);
   return returnUint8Arrays ? body : decoder.decode(body);
-}
-
-async function readNullReply(reader: BufReader): Promise<null> {
-  // Discards the current line
-  await readLine(reader);
-  return null;
 }
 
 function tryParseErrorReply(line: Uint8Array): never {

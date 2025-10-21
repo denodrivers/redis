@@ -1,6 +1,7 @@
 import type * as types from "../shared/types.ts";
 import {
   ArrayReplyCode,
+  BigNumberReplyCode,
   BooleanReplyCode,
   BulkReplyCode,
   DoubleReplyCode,
@@ -89,6 +90,7 @@ export async function readReply(
         ? 1 // `#t`
         : 0; // `#f`
     }
+    case BigNumberReplyCode:
     case DoubleReplyCode: {
       const body = line.subarray(1, -2);
       return returnUint8Arrays ? body : decoder.decode(body);
