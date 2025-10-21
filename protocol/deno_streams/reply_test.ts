@@ -8,13 +8,13 @@ Deno.test({
   fn: async (t) => {
     await t.step("array", async () => {
       const encoder = new TextEncoder();
-      const rawReply = "*3\r\n$3\r\nfoo\r\n_\r\n:456\r\n";
+      const rawReply = "*4\r\n$3\r\nfoo\r\n_\r\n(123456789\r\n:456\r\n";
       const readable = ReadableStream.from([encoder.encode(rawReply)]);
       const reader = readable.getReader();
       const reply = await readReply(
         BufReader.create(readerFromStreamReader(reader)),
       );
-      assertEquals(reply, ["foo", null, 456]);
+      assertEquals(reply, ["foo", null, "123456789", 456]);
     });
   },
 });
