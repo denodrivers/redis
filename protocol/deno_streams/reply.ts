@@ -3,6 +3,7 @@ import type * as types from "../shared/types.ts";
 import {
   ArrayReplyCode,
   BigNumberReplyCode,
+  BlobErrorReplyCode,
   BooleanReplyCode,
   BulkReplyCode,
   DoubleReplyCode,
@@ -28,9 +29,8 @@ export async function readReply(
 
   const code = res[0];
   if (code === ErrorReplyCode) {
-    await tryReadErrorReply(reader);
+    await readErrorReplyOrFail(reader);
   }
-
   switch (code) {
     case IntegerReplyCode:
       return readIntegerReply(reader);
@@ -54,6 +54,10 @@ export async function readReply(
       return readVerbatimStringReply(reader, returnUint8Arrays);
     case NullReplyCode:
       return readNullReply(reader);
+    case BlobErrorReplyCode: {
+      const body = (await readBlobReply(reader, BlobErrorReplyCode)) as string;
+      throw new ErrorReplyError(body);
+    }
     default:
       throw new InvalidStateError(
         `unknown code: '${String.fromCharCode(code)}' (${code})`,
@@ -72,49 +76,18 @@ async function readIntegerReply(
   return Number.parseInt(decoder.decode(line.subarray(1, line.length)));
 }
 
-async function readBulkReply(
+function readBulkReply(
   reader: BufReader,
   returnUint8Arrays?: boolean,
-): Promise<string | types.Binary | null> {
-  const line = await readLine(reader);
-  if (line == null) {
-    throw new InvalidStateError();
-  }
-
-  if (line[0] !== BulkReplyCode) {
-    tryParseErrorReply(line);
-  }
-
-  const size = parseSize(line);
-  if (size < 0) {
-    // nil bulk reply
-    return null;
-  }
-
-  const dest = new Uint8Array(size + 2);
-  await reader.readFull(dest);
-  const body = dest.subarray(0, dest.length - 2); // Strip CR and LF
-  return returnUint8Arrays ? body : decoder.decode(body);
+): Promise<BlobLikeReply> {
+  return readBlobReply(reader, BulkReplyCode, returnUint8Arrays);
 }
 
-async function readVerbatimStringReply(
+function readVerbatimStringReply(
   reader: BufReader,
   returnUint8Arrays?: boolean,
-): Promise<string | types.Binary> {
-  const line = await readLine(reader);
-  if (line == null) {
-    throw new InvalidStateError();
-  }
-
-  if (line[0] !== VerbatimStringCode) {
-    tryParseErrorReply(line);
-  }
-
-  const size = parseSize(line);
-  const dest = new Uint8Array(size + 2);
-  await reader.readFull(dest);
-  const body = dest.subarray(0, dest.length - 2); // Strip CR and LF
-  return returnUint8Arrays ? body : decoder.decode(body);
+): Promise<BlobLikeReply> {
+  return readBlobReply(reader, VerbatimStringCode, returnUint8Arrays);
 }
 
 function readSimpleStringReply(
@@ -236,13 +209,39 @@ async function readSingleLineReply(
   }
 
   if (line[0] !== expectedCode) {
-    tryParseErrorReply(line);
+    parseErrorReplyOrFail(line);
   }
   const body = line.subarray(1);
   return returnUint8Arrays ? body : decoder.decode(body);
 }
 
-function tryParseErrorReply(line: Uint8Array): never {
+type BlobLikeReply = string | types.Binary | null;
+async function readBlobReply(
+  reader: BufReader,
+  expectedCode: number,
+  returnUint8Arrays?: boolean,
+): Promise<BlobLikeReply> {
+  const line = await readLine(reader);
+  if (line == null) {
+    throw new InvalidStateError();
+  }
+
+  if (line[0] !== expectedCode) {
+    parseErrorReplyOrFail(line);
+  }
+
+  const size = parseSize(line);
+  if (size < 0) {
+    // nil bulk reply
+    return null;
+  }
+  const dest = new Uint8Array(size + 2);
+  await reader.readFull(dest);
+  const body = dest.subarray(0, dest.length - 2); // Strip CR and LF
+  return returnUint8Arrays ? body : decoder.decode(body);
+}
+
+function parseErrorReplyOrFail(line: Uint8Array): never {
   const code = line[0];
   if (code === ErrorReplyCode) {
     throw new ErrorReplyError(decoder.decode(line));
@@ -250,12 +249,12 @@ function tryParseErrorReply(line: Uint8Array): never {
   throw new Error(`invalid line: ${line}`);
 }
 
-async function tryReadErrorReply(reader: BufReader): Promise<never> {
+async function readErrorReplyOrFail(reader: BufReader): Promise<never> {
   const line = await readLine(reader);
   if (line == null) {
     throw new InvalidStateError();
   }
-  tryParseErrorReply(line);
+  parseErrorReplyOrFail(line);
 }
 
 async function readLine(reader: BufReader): Promise<Uint8Array> {

@@ -1,6 +1,7 @@
-import { assertEquals } from "../../deps/std/assert.ts";
+import { assertEquals, assertRejects } from "../../deps/std/assert.ts";
 import { readReply } from "./reply.ts";
 import { BufferedReadableStream } from "../../internal/buffered_readable_stream.ts";
+import { ErrorReplyError } from "../../errors.ts";
 
 Deno.test({
   name: "readReply",
@@ -54,6 +55,21 @@ Deno.test({
       );
       const reply = await readReply(new BufferedReadableStream(readable));
       assertEquals(reply, null);
+    });
+
+    await t.step("blob error", async () => {
+      const readable = createReadableByteStream(
+        "!21\r\nSYNTAX invalid syntax\r\n_\r\n",
+      );
+      const buf = new BufferedReadableStream(readable);
+
+      await assertRejects(
+        () => readReply(buf),
+        ErrorReplyError,
+        "SYNTAX invalid syntax",
+      );
+
+      assertEquals(await readReply(buf), null);
     });
   },
 });

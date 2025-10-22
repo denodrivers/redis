@@ -18,6 +18,8 @@ export const ArrayReplyCode = "*".charCodeAt(0);
  * Represents a simple error in RESP2/RESP3.
  */
 export const ErrorReplyCode = "-".charCodeAt(0);
+/** Represents a blob error which is introduced in RESP3. */
+export const BlobErrorReplyCode = "!".charCodeAt(0);
 /** Represents a map which is introduced in RESP3. */
 export const MapReplyCode = "%".charCodeAt(0);
 /** Represents a set which is introduced in RESP3. */

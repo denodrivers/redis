@@ -71,4 +71,7 @@ export function resp3Tests(
 
   // deno-lint-ignore deno-lint-plugin-extra-rules/no-disabled-tests -- TODO: Currently, there is no command that returns a big number.
   it.skip("supports a big number", () => {});
+
+  // deno-lint-ignore deno-lint-plugin-extra-rules/no-disabled-tests -- TODO: Currently, there doesn't seem to be any command that returns a blob error.
+  it.skip("supports a blob error", () => {});
 }
