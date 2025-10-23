@@ -2,6 +2,7 @@ import type * as types from "../shared/types.ts";
 import {
   ArrayReplyCode,
   BigNumberReplyCode,
+  BlobErrorReplyCode,
   BooleanReplyCode,
   BulkReplyCode,
   DoubleReplyCode,
@@ -44,6 +45,12 @@ export async function readReply(
       const buf = await readable.readN(size + 2);
       const body = buf.subarray(0, size); // Strip CR and LF.
       return returnUint8Arrays ? body : decoder.decode(body);
+    }
+    case BlobErrorReplyCode: {
+      const size = Number.parseInt(decoder.decode(line.subarray(1)));
+      const buf = await readable.readN(size + 2);
+      const body = buf.subarray(0, size); // Strip CR and LF.
+      throw new ErrorReplyError(decoder.decode(body));
     }
     case ArrayReplyCode: {
       const size = Number.parseInt(decoder.decode(line.slice(1)));
