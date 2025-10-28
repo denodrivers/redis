@@ -1,6 +1,7 @@
 import type * as types from "../shared/types.ts";
 import {
   ArrayReplyCode,
+  AttributeReplyCode,
   BigNumberReplyCode,
   BlobErrorReplyCode,
   BooleanReplyCode,
@@ -104,6 +105,22 @@ export async function readReply(
     }
     case NullReplyCode: {
       return null;
+    }
+    case AttributeReplyCode: {
+      // NOTE: Currently, we simply drop attributes.
+      // TODO: Provide a way for users to capture attributes.
+      const numberOfAttributes = Number.parseInt(
+        decoder.decode(line.slice(1)),
+      );
+      if (numberOfAttributes === -1) {
+        return readReply(readable, returnUint8Arrays); // Reads the next reply.
+      }
+      for (let i = 0; i < numberOfAttributes; i++) {
+        await readReply(readable, returnUint8Arrays); // Reads a key
+        await readReply(readable, returnUint8Arrays); // Reads a value
+      }
+
+      return readReply(readable, returnUint8Arrays); // Reads the next reply.
     }
     default:
       throw new NotImplementedError(
