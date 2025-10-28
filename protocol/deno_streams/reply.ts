@@ -2,6 +2,7 @@ import type { BufReader } from "../../deps/std/io.ts";
 import type * as types from "../shared/types.ts";
 import {
   ArrayReplyCode,
+  AttributeReplyCode,
   BigNumberReplyCode,
   BlobErrorReplyCode,
   BooleanReplyCode,
@@ -54,6 +55,10 @@ export async function readReply(
       return readVerbatimStringReply(reader, returnUint8Arrays);
     case NullReplyCode:
       return readNullReply(reader);
+    case AttributeReplyCode: {
+      await readAttributeReply(reader);
+      return readReply(reader, returnUint8Arrays);
+    }
     case BlobErrorReplyCode: {
       const body = (await readBlobReply(reader, BlobErrorReplyCode)) as string;
       throw new ErrorReplyError(body);
@@ -165,6 +170,28 @@ async function readMapReply(
     entries.push(await readReply(reader, returnUint8Arrays));
   }
   return entries;
+}
+
+/**
+ * NOTE: Currently, we simply drop attributes.
+ * TODO: Provide a way for users to capture attributes.
+ */
+async function readAttributeReply(
+  reader: BufReader,
+): Promise<void> {
+  const line = await readLine(reader);
+  if (line == null) {
+    throw new InvalidStateError();
+  }
+  const numberOfAttributes = parseSize(line);
+  if (numberOfAttributes === -1) {
+    return;
+  }
+
+  for (let i = 0; i < numberOfAttributes; i++) {
+    await readReply(reader); // Reads a key
+    await readReply(reader); // Raads a value
+  }
 }
 
 async function readBooleanReply(reader: BufReader): Promise<1 | 0> {

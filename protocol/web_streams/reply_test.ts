@@ -2,6 +2,7 @@ import { assertEquals, assertRejects } from "../../deps/std/assert.ts";
 import { readReply } from "./reply.ts";
 import { BufferedReadableStream } from "../../internal/buffered_readable_stream.ts";
 import { ErrorReplyError } from "../../errors.ts";
+import type { RedisReply } from "../shared/types.ts";
 
 Deno.test({
   name: "readReply",
@@ -70,6 +71,27 @@ Deno.test({
       );
 
       assertEquals(await readReply(buf), null);
+    });
+
+    await t.step("attribute", async () => {
+      const cases: Array<[given: string, expected: RedisReply]> = [
+        [
+          "|1\r\n+foo\r\n%2\r\n$3\r\nbar\r\n:123\r\n$1\r\na\r\n,1.23\r\n+Hello World\r\n",
+          "Hello World",
+        ],
+        [
+          "*3\r\n:123\r\n|2\r\n+foo\r\n:1\r\n+bar\r\n:45\r\n+str\r\n,1.23\r\n",
+          [123, "str", "1.23"],
+        ],
+      ];
+      for (
+        const [given, expected] of cases
+      ) {
+        const readable = createReadableByteStream(given);
+        const buf = new BufferedReadableStream(readable);
+        const actual = await readReply(buf);
+        assertEquals(actual, expected);
+      }
     });
   },
 });
