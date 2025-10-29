@@ -12,6 +12,7 @@ import {
   IntegerReplyCode,
   MapReplyCode,
   NullReplyCode,
+  PushReplyCode,
   SetReplyCode,
   SimpleStringCode,
   VerbatimStringCode,
@@ -55,6 +56,8 @@ export async function readReply(
       return readVerbatimStringReply(reader, returnUint8Arrays);
     case NullReplyCode:
       return readNullReply(reader);
+    case PushReplyCode:
+      return readPushReply(reader, returnUint8Arrays);
     case AttributeReplyCode: {
       await readAttributeReply(reader);
       return readReply(reader, returnUint8Arrays);
@@ -102,7 +105,21 @@ function readSimpleStringReply(
   return readSingleLineReply(reader, SimpleStringCode, returnUint8Arrays);
 }
 
-export async function readArrayReply(
+export function readArrayReply(
+  reader: BufReader,
+  returnUint8Arrays?: boolean,
+): Promise<Array<types.RedisReply> | null> {
+  return readArrayLikeReply(reader, returnUint8Arrays);
+}
+
+function readPushReply(
+  reader: BufReader,
+  returnUint8Arrays?: boolean,
+): Promise<Array<types.RedisReply> | null> {
+  return readArrayLikeReply(reader, returnUint8Arrays);
+}
+
+async function readArrayLikeReply(
   reader: BufReader,
   returnUint8Arrays?: boolean,
 ): Promise<Array<types.RedisReply> | null> {

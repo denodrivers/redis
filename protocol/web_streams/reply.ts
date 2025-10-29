@@ -11,6 +11,7 @@ import {
   IntegerReplyCode,
   MapReplyCode,
   NullReplyCode,
+  PushReplyCode,
   SetReplyCode,
   SimpleStringCode,
   VerbatimStringCode,
@@ -53,7 +54,8 @@ export async function readReply(
       const body = buf.subarray(0, size); // Strip CR and LF.
       throw new ErrorReplyError(decoder.decode(body));
     }
-    case ArrayReplyCode: {
+    case ArrayReplyCode:
+    case PushReplyCode: {
       const size = Number.parseInt(decoder.decode(line.slice(1)));
       if (size === -1) {
         // `-1` indicates a null array
