@@ -10,17 +10,18 @@ import type { Redis } from "../../mod.ts";
 import { kUnstableProtover } from "../../internal/symbols.ts";
 
 export function resp3Tests(
-  connect: Connector,
+  _connect: Connector,
   getServer: () => TestServer,
 ): void {
   let client!: Redis;
-  beforeAll(async () => {
-    const server = getServer();
-    client = await connect({
+  const connect = () =>
+    _connect({
       hostname: "127.0.0.1",
-      port: server.port,
+      port: getServer().port,
       [kUnstableProtover]: 3,
     });
+  beforeAll(async () => {
+    client = await connect();
   });
 
   afterAll(() => client.close());
@@ -68,6 +69,21 @@ export function resp3Tests(
     assertStrictEquals(typeof reply, "string");
     assert(reply.startsWith("txt:"), `"${reply}" should start with "txt:"`);
   });
+
+  it("supports a push reply", async () => {
+    using client = await connect();
+    const channel = "testing";
+    const sub = await client.subscribe(channel);
+    const it = sub.receive();
+    const payload = "foobar";
+    await client.publish(channel, payload);
+    const result = await it.next();
+    assert(!result.done);
+    assertEquals(result.value, { channel, message: payload });
+  });
+
+  // deno-lint-ignore deno-lint-plugin-extra-rules/no-disabled-tests -- TODO: Support the execution of a regular command in a push-mode connection.
+  it.skip("supports executing a regular command in a push-mode connection", () => {});
 
   // deno-lint-ignore deno-lint-plugin-extra-rules/no-disabled-tests -- TODO: Currently, there is no command that returns a big number.
   it.skip("supports a big number", () => {});

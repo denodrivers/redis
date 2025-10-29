@@ -32,3 +32,5 @@ export const BigNumberReplyCode = "(".charCodeAt(0);
 export const NullReplyCode = "_".charCodeAt(0);
 /** Represents the attribute type which is introduced in RESP3. */
 export const AttributeReplyCode = "|".charCodeAt(0);
+/** Represents the push type which is introduced in RESP3. */
+export const PushReplyCode = ">".charCodeAt(0);
