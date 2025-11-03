@@ -50,6 +50,7 @@
       "tools/"
     ]
   },
+  "minimumDependencyAge": 1440,
   "tasks": {
     "lock": "rm deno.lock && DENO_FUTURE=1 deno cache --reload mod.ts experimental/**/mod.ts tests/**/*.ts",
     "check": {
