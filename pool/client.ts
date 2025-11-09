@@ -7,7 +7,7 @@ import type {
   RedisSubscription,
   SubscribeCommand,
 } from "../client.ts";
-import { createDefaultClient } from "../client.ts";
+import { createDefaultClient } from "../default_client.ts";
 import {
   kUnstablePipeline,
   kUnstableReadReply,
