@@ -22,7 +22,7 @@
   "test": {
     "exclude": ["benchmark/", "vendor/"],
     "permissions": {
-      "net": true,
+      "net": ["127.0.0.1"],
       "read": ["tests"],
       "write": ["tests/tmp"],
       "run": ["redis-server", "redis-cli"],
