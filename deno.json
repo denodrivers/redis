@@ -32,8 +32,13 @@
   "permissions": {
     "bench:deno-redis": {
       "net": ["127.0.0.1:6379"],
-      "read": true,
-      "env": true,
+      "env": [
+        "NODE_DISABLE_COLORS",
+        "TERM",
+        "TERM_PROGRAM",
+        "GRACEFUL_FS_PLATFORM",
+        "TEST_GRACEFUL_FS_GLOBAL_PATCH"
+      ],
       "write": ["tmp"]
     }
   },
