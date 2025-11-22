@@ -48,6 +48,7 @@
       ".editorconfig",
       ".octocov.yml",
       ".github",
+      "import_map.dev.json",
       "import_map.test.json",
       "benchmark/",
       "tests/",
@@ -57,7 +58,7 @@
   },
   "minimumDependencyAge": 1440,
   "tasks": {
-    "lock": "rm deno.lock && DENO_FUTURE=1 deno cache --reload mod.ts experimental/**/mod.ts tests/**/*.ts",
+    "lock": "deno cache --reload --import-map=import_map.dev.json mod.ts experimental/**/mod.ts tests/**/*.ts benchmark/*.ts",
     "check": {
       "dependencies": ["check:lint", "check:deno.json", "typecheck"]
     },
@@ -66,7 +67,7 @@
     "typecheck": "cat deno.json | jq '.exports.[]' | xargs deno check",
     "test": "DENO_FUTURE=1 deno test --permission-set --coverage=coverage --trace-leaks --frozen-lockfile",
     "test:doc": "deno check --doc-only --import-map=import_map.test.json README.md experimental/cluster/README.md",
-    "bench:deno-redis": "DENO_NO_PACKAGE_JSON=1 deno run --unstable --permission-set=bench:deno-redis --import-map=benchmark/import_map.json benchmark/deno-redis.ts",
+    "bench:deno-redis": "DENO_NO_PACKAGE_JSON=1 deno run --unstable --permission-set=bench:deno-redis --import-map=import_map.dev.json benchmark/deno-redis.ts",
     "bench:ioredis": "node benchmark/ioredis.js"
   }
 }
