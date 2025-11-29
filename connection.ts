@@ -1,6 +1,10 @@
 import type { Backoff } from "./backoff.ts";
 import { exponentialBackoff } from "./backoff.ts";
-import { ErrorReplyError, isRetriableError } from "./errors.ts";
+import {
+  ErrorReplyError,
+  InvalidStateError,
+  isRetriableError,
+} from "./errors.ts";
 import type {
   ConnectionEventMap,
   ConnectionEventType,
@@ -29,13 +33,6 @@ export interface SendCommandOptions {
    * @default false
    */
   returnUint8Arrays?: boolean;
-
-  /**
-   * When this option is set, the command is executed directly without queueing.
-   *
-   * @default false
-   */
-  inline?: boolean;
 }
 
 export interface Connection extends TypedEventTarget<ConnectionEventMap> {
@@ -144,6 +141,7 @@ class RedisConnection
   #conn!: Deno.Conn;
   #protocol!: Protocol;
   #eventTarget = new EventTarget();
+  #connectingPromise?: PromiseWithResolvers<void>;
 
   get isClosed(): boolean {
     return this._isClosed;
@@ -180,8 +178,8 @@ class RedisConnection
     try {
       // TODO: Use `HELLO` instead of `AUTH`
       password && username
-        ? await this.sendCommand("AUTH", [username, password], { inline: true })
-        : await this.sendCommand("AUTH", [password], { inline: true });
+        ? await this.#sendCommandImmediately("AUTH", [username, password])
+        : await this.#sendCommandImmediately("AUTH", [password]);
     } catch (error) {
       if (error instanceof ErrorReplyError) {
         const authError = new AuthenticationError("Authentication failed", {
@@ -200,14 +198,15 @@ class RedisConnection
     db: number | undefined = this.options.db,
   ): Promise<void> {
     if (!db) throw new Error("The database index is undefined.");
-    await this.sendCommand("SELECT", [db], { inline: true });
+    await this.#sendCommandImmediately("SELECT", [db]);
   }
 
   private enqueueCommand(
     command: PendingCommand,
   ) {
     this.commandQueue.push(command);
-    if (this.commandQueue.length === 1) {
+    if (!this.#isProcessingQueuedCommands) {
+      this.#isProcessingQueuedCommands = true;
       this.processCommandQueue();
     }
   }
@@ -223,13 +222,31 @@ class RedisConnection
         args ?? kEmptyRedisArgs,
         options?.returnUint8Arrays,
       );
-    if (options?.inline) {
-      return execute();
-    }
     const { promise, resolve, reject } = Promise.withResolvers<RedisReply>();
     this.enqueueCommand({ execute, resolve, reject });
 
     return promise;
+  }
+
+  /**
+   * Executes a command immediately, bypassing the queue.
+   */
+  #sendCommandImmediately(
+    command: string,
+    args?: Array<RedisValue>,
+  ): Promise<RedisReply> {
+    const isConnecting = this.#connectingPromise != null;
+    if (!isConnecting) {
+      return Promise.reject(
+        new InvalidStateError(
+          `Unexpected inline command execution detected (command: ${command})`,
+        ),
+      );
+    }
+    return this.#protocol.sendCommand(
+      command,
+      args ?? kEmptyRedisArgs,
+    );
   }
 
   addEventListener<K extends keyof ConnectionEventMap>(
@@ -283,8 +300,23 @@ class RedisConnection
   /**
    * Connect to Redis server
    */
-  async connect(): Promise<void> {
-    await this.#connect(0);
+  connect(): Promise<void> {
+    if (this.#connectingPromise) {
+      return this.#connectingPromise.promise;
+    }
+    const promiseWithResolvers = Promise.withResolvers<void>();
+    this.#connectingPromise = promiseWithResolvers;
+    (async () => {
+      try {
+        await this.#connect(0);
+        promiseWithResolvers.resolve();
+        this.#connectingPromise = undefined;
+      } catch (error) {
+        promiseWithResolvers.reject(error);
+        this.#connectingPromise = undefined;
+      }
+    })();
+    return promiseWithResolvers.promise;
   }
 
   async #connect(retryCount: number) {
@@ -319,9 +351,9 @@ class RedisConnection
           await this.authenticate(this.options.username, this.options.password);
         }
         if (this.options[kUnstableProtover] != null) {
-          await this.sendCommand("HELLO", [this.options[kUnstableProtover]], {
-            inline: true,
-          });
+          await this.#sendCommandImmediately("HELLO", [
+            this.options[kUnstableProtover],
+          ]);
         }
         if (this.options.db) {
           await this.selectDb(this.options.db);
@@ -397,9 +429,13 @@ class RedisConnection
     }
   }
 
+  #isProcessingQueuedCommands = false;
   private async processCommandQueue() {
     const [command] = this.commandQueue;
-    if (!command) return;
+    if (!command) {
+      this.#isProcessingQueuedCommands = false;
+      return;
+    }
 
     try {
       const reply = await command.execute();

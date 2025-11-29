@@ -11,6 +11,7 @@ export interface TestServer {
   port: number;
   process: Deno.ChildProcess;
   logger: Logger;
+  [Symbol.asyncDispose](): Promise<void>;
 }
 
 const encoder = new TextEncoder();
@@ -49,7 +50,16 @@ export async function startRedis({
   }).spawn();
 
   await waitForPort(port);
-  return { path, port, process, logger };
+  const testServer = {
+    path,
+    port,
+    process,
+    logger,
+    [Symbol.asyncDispose]: () => {
+      return stopRedis(testServer);
+    },
+  };
+  return testServer;
 }
 
 export async function stopRedis(server: TestServer): Promise<void> {
@@ -130,4 +140,25 @@ export function usesRedisVersion(version: "6" | "7" | "8"): boolean {
   const redisVersion = Deno.env.get("REDIS_VERSION");
   if (redisVersion == null) return false;
   return redisVersion.startsWith(`${version}.`) || redisVersion === version;
+}
+
+export function withTimeout(
+  timeout: number,
+  thunk: () => Promise<void>,
+): () => Promise<void> {
+  async function thunkWithTimeout(): Promise<void> {
+    const { resolve, reject, promise } = Promise.withResolvers<void>();
+    const timer = setTimeout(() => {
+      reject(new Error("Timeout"));
+    }, timeout);
+    try {
+      await Promise.race([
+        thunk().then(() => resolve()),
+        promise,
+      ]);
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+  return thunkWithTimeout;
 }
