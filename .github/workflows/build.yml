@@ -16,7 +16,7 @@ jobs:
         redis: [6.2, 7.4, 8.0]
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
       - name: Get Deno version
         run: |
           echo "DENO_VERSION=$(cat .denov)" >> $GITHUB_ENV
@@ -45,7 +45,7 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
       - name: Get Deno version
         run: |
           echo "DENO_VERSION=$(cat .denov)" >> $GITHUB_ENV
@@ -70,7 +70,7 @@ jobs:
         driver: [deno-redis, ioredis]
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
       - name: Get Deno version
         run: |
           echo "DENO_VERSION=$(cat .denov)" >> $GITHUB_ENV
