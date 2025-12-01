@@ -27,7 +27,7 @@ jobs:
           cache: true
           cache-hash: ${{ hashFiles('.denov', 'deno.lock') }}
       - name: Set up Redis ${{ matrix.redis }}
-        uses: shogo82148/actions-setup-redis@30eda5a8d2b309c784b5dffcc0090f3442ee7f03 # v1.44.0
+        uses: shogo82148/actions-setup-redis@cff708d63a30aebc0bfaa7276fb709d173f36cb6 # v1.45.0
         with:
           redis-version: ${{ matrix.redis }}
           auto-start: "true"
@@ -90,7 +90,7 @@ jobs:
         with:
           working-directory: benchmark
       - name: Set up Redis ${{ matrix.redis }}
-        uses: shogo82148/actions-setup-redis@30eda5a8d2b309c784b5dffcc0090f3442ee7f03 # v1.44.0
+        uses: shogo82148/actions-setup-redis@cff708d63a30aebc0bfaa7276fb709d173f36cb6 # v1.45.0
         with:
           redis-version: ${{ matrix.redis }}
           auto-start: "true"
