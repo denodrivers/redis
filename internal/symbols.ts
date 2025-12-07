@@ -22,3 +22,8 @@ export const kUnstableCreateProtocol = Symbol("deno-redis.createProtocol");
  * @private
  */
 export const kUnstableProtover = Symbol("deno-redis.protover");
+
+/**
+ * @private
+ */
+export const kUnstableStartReadLoop = Symbol("deno-redis.startReadLoop");

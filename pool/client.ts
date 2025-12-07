@@ -11,6 +11,7 @@ import { createDefaultClient } from "../default_client.ts";
 import {
   kUnstablePipeline,
   kUnstableReadReply,
+  kUnstableStartReadLoop,
   kUnstableWriteCommand,
 } from "../internal/symbols.ts";
 import { delegate } from "../internal/delegate.ts";
@@ -102,6 +103,7 @@ function createPoolConnection(
       kUnstableReadReply,
       kUnstableWriteCommand,
       kUnstablePipeline,
+      kUnstableStartReadLoop,
     ]),
     close,
     get name() {

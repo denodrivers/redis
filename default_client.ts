@@ -1,6 +1,6 @@
 import { decoder } from "./internal/encoding.ts";
 import {
-  kUnstableReadReply,
+  kUnstableStartReadLoop,
   kUnstableWriteCommand,
 } from "./internal/symbols.ts";
 import type {
@@ -12,7 +12,6 @@ import type {
   SubscribeCommand,
 } from "./client.ts";
 import type { Connection, SendCommandOptions } from "./connection.ts";
-import { isRetriableError } from "./errors.ts";
 import type {
   Binary,
   RedisReply,
@@ -123,30 +122,27 @@ class DefaultRedisSubscription<
   ): AsyncIterableIterator<
     RedisPubSubMessage<T>
   > {
-    let forceReconnect = false;
-    const connection = this.client.connection;
-    while (this.isConnected) {
-      try {
-        let rep: [string | Binary, string | Binary, T] | [
+    const onConnectionRecovered = async () => {
+      if (Object.keys(this.channels).length > 0) {
+        await this.subscribe(...Object.keys(this.channels));
+      }
+      if (Object.keys(this.patterns).length > 0) {
+        await this.psubscribe(...Object.keys(this.patterns));
+      }
+    };
+    this.client.connection.addEventListener("connect", onConnectionRecovered);
+    const iter = this.client.connection[kUnstableStartReadLoop](binaryMode);
+    try {
+      for await (const _rep of iter) {
+        const rep = _rep as ([string | Binary, string | Binary, T] | [
           string | Binary,
           string | Binary,
           string | Binary,
           T,
-        ];
-        try {
-          rep = await connection[kUnstableReadReply](binaryMode) as typeof rep;
-        } catch (err) {
-          if (this.isClosed) {
-            // Connection already closed by the user.
-            break;
-          }
-          throw err; // Connection may have been unintentionally closed.
-        }
-
+        ]);
         const event = rep[0] instanceof Uint8Array
           ? decoder.decode(rep[0])
           : rep[0];
-
         if (event === "message" && rep.length === 3) {
           const channel = rep[1] instanceof Uint8Array
             ? decoder.decode(rep[1])
@@ -170,23 +166,12 @@ class DefaultRedisSubscription<
             message,
           };
         }
-      } catch (error) {
-        if (isRetriableError(error)) {
-          forceReconnect = true;
-        } else throw error;
-      } finally {
-        if ((!this.isClosed && !this.isConnected) || forceReconnect) {
-          forceReconnect = false;
-          await connection.reconnect();
-
-          if (Object.keys(this.channels).length > 0) {
-            await this.subscribe(...Object.keys(this.channels));
-          }
-          if (Object.keys(this.patterns).length > 0) {
-            await this.psubscribe(...Object.keys(this.patterns));
-          }
-        }
       }
+    } finally {
+      this.client.connection.removeEventListener(
+        "connect",
+        onConnectionRecovered,
+      );
     }
   }
 

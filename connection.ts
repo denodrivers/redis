@@ -15,6 +15,7 @@ import {
   kUnstablePipeline,
   kUnstableProtover,
   kUnstableReadReply,
+  kUnstableStartReadLoop,
   kUnstableWriteCommand,
 } from "./internal/symbols.ts";
 import { Protocol as DenoStreamsProtocol } from "./protocol/deno_streams/mod.ts";
@@ -63,6 +64,12 @@ export interface Connection extends TypedEventTarget<ConnectionEventMap> {
   [kUnstablePipeline](
     commands: Array<Command>,
   ): Promise<Array<RedisReply | ErrorReplyError>>;
+  /**
+   * @private
+   */
+  [kUnstableStartReadLoop](
+    binaryMode?: boolean,
+  ): AsyncIterableIterator<RedisReply>;
 }
 
 export interface RedisConnectionOptions {
@@ -295,6 +302,36 @@ class RedisConnection
 
   [kUnstableWriteCommand](command: Command): Promise<void> {
     return this.#protocol.writeCommand(command);
+  }
+
+  async *[kUnstableStartReadLoop](
+    binaryMode?: boolean,
+  ): AsyncIterableIterator<RedisReply> {
+    let forceReconnect = false;
+    while (this.isConnected) {
+      try {
+        let rep: RedisReply;
+        try {
+          rep = await this[kUnstableReadReply](binaryMode);
+        } catch (err) {
+          if (this.isClosed) {
+            // Connection already closed by the user.
+            break;
+          }
+          throw err; // Connection may have been unintentionally closed.
+        }
+        yield rep;
+      } catch (error) {
+        if (isRetriableError(error)) {
+          forceReconnect = true;
+        } else throw error;
+      } finally {
+        if ((!this.isClosed && !this.isConnected) || forceReconnect) {
+          forceReconnect = false;
+          await this.reconnect();
+        }
+      }
+    }
   }
 
   /**
