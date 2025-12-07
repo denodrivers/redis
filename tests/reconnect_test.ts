@@ -31,11 +31,17 @@ describe("auto reconnection", () => {
         reconnectingFired++;
         assertInstanceOf(e, CustomEvent);
       });
+      let connectFired = 0;
+      client.addEventListener("connect", (e) => {
+        connectFired++;
+        assertInstanceOf(e, CustomEvent);
+      });
       await using server2 = await startRedis({ port });
       assertEquals(await client.ping(), "PONG");
       client.close();
       await stopRedis(server2);
       assertEquals(reconnectingFired, 1);
+      assertEquals(connectFired, 1);
     }),
   );
 
