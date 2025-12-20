@@ -5,11 +5,8 @@ import {
   InvalidStateError,
   isRetriableError,
 } from "./errors.ts";
-import type {
-  ConnectionEventMap,
-  ConnectionEventType,
-  TypedEventTarget,
-} from "./events.ts";
+import type { ConnectionEventMap, TypedEventTarget } from "./events.ts";
+import { createTypedEventTarget, dispatchEvent } from "./events.ts";
 import {
   kUnstableCreateProtocol,
   kUnstablePipeline,
@@ -147,7 +144,7 @@ class RedisConnection
   private commandQueue: PendingCommand[] = [];
   #conn!: Deno.Conn;
   #protocol!: Protocol;
-  #eventTarget = new EventTarget();
+  #eventTarget = createTypedEventTarget<ConnectionEventMap>();
   #connectingPromise?: PromiseWithResolvers<void>;
 
   get isClosed(): boolean {
@@ -192,10 +189,10 @@ class RedisConnection
         const authError = new AuthenticationError("Authentication failed", {
           cause: error,
         });
-        this.#dispatchEvent("error", { error: authError });
+        dispatchEvent(this.#eventTarget, "error", { error: authError });
         throw authError;
       } else {
-        this.#dispatchEvent("error", { error });
+        dispatchEvent(this.#eventTarget, "error", { error });
         throw error;
       }
     }
@@ -278,13 +275,6 @@ class RedisConnection
       callback as (event: Event) => void,
       options,
     );
-  }
-
-  #dispatchEvent<K extends ConnectionEventType>(
-    type: K,
-    detail: ConnectionEventMap[K],
-  ): boolean {
-    return this.#eventTarget.dispatchEvent(new CustomEvent(type, { detail }));
   }
 
   [kUnstableReadReply](returnsUint8Arrays?: boolean): Promise<RedisReply> {
@@ -381,7 +371,7 @@ class RedisConnection
 
       this._isClosed = false;
       this._isConnected = true;
-      this.#dispatchEvent("connect", undefined);
+      dispatchEvent(this.#eventTarget, "connect", undefined);
 
       try {
         if (this.options.password != null) {
@@ -400,24 +390,24 @@ class RedisConnection
         throw error;
       }
 
-      this.#dispatchEvent("ready", undefined);
+      dispatchEvent(this.#eventTarget, "ready", undefined);
 
       this.#enableHealthCheckIfNeeded();
     } catch (error) {
       if (error instanceof AuthenticationError) {
-        this.#dispatchEvent("error", { error });
-        this.#dispatchEvent("end", undefined);
+        dispatchEvent(this.#eventTarget, "error", { error });
+        dispatchEvent(this.#eventTarget, "end", undefined);
         throw (error.cause ?? error);
       }
 
       const backoff = this.backoff(retryCount);
       retryCount++;
       if (retryCount >= this.maxRetryCount) {
-        this.#dispatchEvent("error", { error: error as Error });
-        this.#dispatchEvent("end", undefined);
+        dispatchEvent(this.#eventTarget, "error", { error: error as Error });
+        dispatchEvent(this.#eventTarget, "end", undefined);
         throw error;
       }
-      this.#dispatchEvent("reconnecting", { delay: backoff });
+      dispatchEvent(this.#eventTarget, "reconnecting", { delay: backoff });
       await delay(backoff);
       await this.#connect(retryCount);
     }
@@ -440,15 +430,15 @@ class RedisConnection
       this.#conn!.close();
     } catch (error) {
       if (!(error instanceof Deno.errors.BadResource)) {
-        this.#dispatchEvent("error", { error: error as Error });
+        dispatchEvent(this.#eventTarget, "error", { error: error as Error });
         throw error;
       }
     } finally {
       if (!isClosedAlready) {
-        this.#dispatchEvent("close", undefined);
+        dispatchEvent(this.#eventTarget, "close", undefined);
 
         if (!canReconnect) {
-          this.#dispatchEvent("end", undefined);
+          dispatchEvent(this.#eventTarget, "end", undefined);
         }
       }
     }
@@ -459,7 +449,7 @@ class RedisConnection
       await this.sendCommand("PING");
       this._isConnected = true;
     } catch (error) {
-      this.#dispatchEvent("error", { error });
+      dispatchEvent(this.#eventTarget, "error", { error });
       this.#close(true);
       await this.connect();
       await this.sendCommand("PING");
@@ -482,7 +472,7 @@ class RedisConnection
         !isRetriableError(error) ||
         this.isManuallyClosedByUser()
       ) {
-        this.#dispatchEvent("error", { error });
+        dispatchEvent(this.#eventTarget, "error", { error });
         return command.reject(error);
       }
 
@@ -491,18 +481,18 @@ class RedisConnection
         // Try to reconnect to the server and retry the command
         this.#close(true);
         try {
-          this.#dispatchEvent("reconnecting", { delay: backoff });
+          dispatchEvent(this.#eventTarget, "reconnecting", { delay: backoff });
           await this.connect();
           const reply = await command.execute();
           return command.resolve(reply);
         } catch (error) {
-          this.#dispatchEvent("error", { error }); // TODO: use `AggregateError`?
+          dispatchEvent(this.#eventTarget, "error", { error }); // TODO: use `AggregateError`?
           backoff = this.backoff(i);
           await delay(backoff);
         }
       }
 
-      this.#dispatchEvent("error", { error });
+      dispatchEvent(this.#eventTarget, "error", { error });
       command.reject(error);
     } finally {
       this.commandQueue.shift();
