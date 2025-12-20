@@ -21,6 +21,27 @@ export interface TypedEventTarget<TEventMap extends Record<string, unknown>>
   ): void;
 }
 
+export function createTypedEventTarget<
+  TEventMap extends Record<string, unknown>,
+>(): TypedEventTarget<TEventMap> {
+  return new EventTarget() as TypedEventTarget<TEventMap>;
+}
+
+export function dispatchEvent<
+  TEventMap extends Record<string, unknown>,
+  TKey extends Extract<keyof TEventMap, string>,
+>(
+  eventTarget: TypedEventTarget<TEventMap>,
+  event: TKey,
+  detail: TEventMap[TKey],
+): boolean {
+  return (eventTarget as EventTarget).dispatchEvent(
+    new CustomEvent(event, {
+      detail,
+    }),
+  );
+}
+
 export type ConnectionEvent = Record<string, unknown>;
 
 export type ConnectionErrorEventDetails = {
