@@ -1,5 +1,6 @@
 import type { BufReader } from "../../deps/std/io.ts";
 import type * as types from "../shared/types.ts";
+import type { ProtocolEvents } from "../shared/types.ts";
 import {
   ArrayReplyCode,
   AttributeReplyCode,
@@ -19,17 +20,32 @@ import {
 } from "../shared/reply.ts";
 import { EOFError, ErrorReplyError, InvalidStateError } from "../../errors.ts";
 import { decoder } from "../../internal/encoding.ts";
+import type { TypedEventTarget } from "../../internal/typed_event_target.ts";
+import { dispatchEvent } from "../../internal/typed_event_target.ts";
+
+export async function readOrEmitReply(
+  reader: BufReader,
+  eventTarget: TypedEventTarget<ProtocolEvents>,
+  returnUint8Arrays?: boolean,
+): Promise<types.RedisReply> {
+  const code = await peekReplyCode(reader);
+  if (code === ErrorReplyCode) {
+    await readErrorReplyOrFail(reader);
+  }
+
+  if (code === PushReplyCode) {
+    const reply = await readPushReply(reader, returnUint8Arrays);
+    dispatchEvent(eventTarget, "push", reply ?? []);
+    return readOrEmitReply(reader, eventTarget, returnUint8Arrays);
+  }
+  return readReply(reader, returnUint8Arrays);
+}
 
 export async function readReply(
   reader: BufReader,
   returnUint8Arrays?: boolean,
 ): Promise<types.RedisReply> {
-  const res = await reader.peek(1);
-  if (res == null) {
-    throw new EOFError();
-  }
-
-  const code = res[0];
+  const code = await peekReplyCode(reader);
   if (code === ErrorReplyCode) {
     await readErrorReplyOrFail(reader);
   }
@@ -71,6 +87,15 @@ export async function readReply(
         `unknown code: '${String.fromCharCode(code)}' (${code})`,
       );
   }
+}
+
+async function peekReplyCode(reader: BufReader): Promise<number> {
+  const res = await reader.peek(1);
+  if (res == null) {
+    throw new EOFError();
+  }
+  const code = res[0];
+  return code;
 }
 
 async function readIntegerReply(
