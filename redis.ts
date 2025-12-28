@@ -49,11 +49,8 @@ import type { Connection, SendCommandOptions } from "./connection.ts";
 import type { RedisConnectionOptions } from "./connection.ts";
 import type { Client, RedisSubscription } from "./client.ts";
 import { createDefaultClient } from "./default_client.ts";
-import type {
-  ConnectionEventMap,
-  ConnectionEventType,
-  TypedEventTarget,
-} from "./events.ts";
+import type { ConnectionEventMap, ConnectionEventType } from "./events.ts";
+import type { TypedEventTarget } from "./internal/typed_event_target.ts";
 import type {
   Binary,
   Bulk,
