@@ -27,3 +27,10 @@ export const kUnstableProtover = Symbol("deno-redis.protover");
  * @private
  */
 export const kUnstableStartReadLoop = Symbol("deno-redis.startReadLoop");
+
+/**
+ * @private
+ */
+export const kUnstableCreateSubscription = Symbol(
+  "deno-redis.createSubscription",
+);
