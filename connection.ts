@@ -5,8 +5,12 @@ import {
   InvalidStateError,
   isRetriableError,
 } from "./errors.ts";
-import type { ConnectionEventMap, TypedEventTarget } from "./events.ts";
-import { createTypedEventTarget, dispatchEvent } from "./events.ts";
+import type { ConnectionEventMap } from "./events.ts";
+import type { TypedEventTarget } from "./internal/typed_event_target.ts";
+import {
+  createTypedEventTarget,
+  dispatchEvent,
+} from "./internal/typed_event_target.ts";
 import {
   kUnstableCreateProtocol,
   kUnstablePipeline,
