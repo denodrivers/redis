@@ -1,9 +1,14 @@
 import { sendCommand, sendCommands, writeCommand } from "./command.ts";
-import { readReply } from "./reply.ts";
+import { readOrEmitReply, readReply } from "./reply.ts";
 import type { Command, Protocol as BaseProtocol } from "../shared/protocol.ts";
-import type { RedisReply, RedisValue } from "../shared/types.ts";
+import type {
+  ProtocolEvents,
+  RedisReply,
+  RedisValue,
+} from "../shared/types.ts";
 import type { ErrorReplyError } from "../../errors.ts";
 import { BufferedReadableStream } from "../../internal/buffered_readable_stream.ts";
+import type { TypedEventTarget } from "../../internal/typed_event_target.ts";
 
 export class Protocol implements BaseProtocol {
   #readable: BufferedReadableStream;
@@ -28,6 +33,13 @@ export class Protocol implements BaseProtocol {
 
   readReply(returnsUint8Arrays?: boolean): Promise<RedisReply> {
     return readReply(this.#readable, returnsUint8Arrays);
+  }
+
+  readOrEmitReply(
+    eventTarget: TypedEventTarget<ProtocolEvents>,
+    returnsUint8Arrays?: boolean,
+  ): Promise<RedisReply> {
+    return readOrEmitReply(this.#readable, eventTarget, returnsUint8Arrays);
   }
 
   writeCommand(command: Command): Promise<void> {

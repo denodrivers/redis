@@ -6,7 +6,7 @@ import type {
   SubscribeCommand,
 } from "./subscription.ts";
 import type { Connection, SendCommandOptions } from "./connection.ts";
-import { DefaultRedisSubscription } from "./default_subscription.ts";
+import { kUnstableCreateSubscription } from "./internal/symbols.ts";
 import type { RedisReply, RedisValue } from "./protocol/shared/types.ts";
 
 export function createDefaultClient(connection: Connection): Client {
@@ -37,9 +37,9 @@ class DefaultClient implements Client {
     command: SubscribeCommand,
     ...channelsOrPatterns: Array<string>
   ): Promise<RedisSubscription<TMessage>> {
-    const subscription = new DefaultRedisSubscription<TMessage>(
-      this.connection,
-    );
+    const subscription = this.connection[kUnstableCreateSubscription]<
+      TMessage
+    >();
     switch (command) {
       case "SUBSCRIBE":
         await subscription.subscribe(...channelsOrPatterns);

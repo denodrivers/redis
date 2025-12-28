@@ -1,10 +1,15 @@
 import { BufReader, BufWriter } from "../../deps/std/io.ts";
-import { readReply } from "./reply.ts";
+import { readOrEmitReply, readReply } from "./reply.ts";
 import { sendCommand, sendCommands, writeCommand } from "./command.ts";
 
 import type { Command, Protocol as BaseProtocol } from "../shared/protocol.ts";
-import type { RedisReply, RedisValue } from "../shared/types.ts";
+import type {
+  ProtocolEvents,
+  RedisReply,
+  RedisValue,
+} from "../shared/types.ts";
 import type { ErrorReplyError } from "../../errors.ts";
+import type { TypedEventTarget } from "../../internal/typed_event_target.ts";
 
 export class Protocol implements BaseProtocol {
   #reader: BufReader;
@@ -31,6 +36,13 @@ export class Protocol implements BaseProtocol {
 
   readReply(returnsUint8Arrays?: boolean): Promise<RedisReply> {
     return readReply(this.#reader, returnsUint8Arrays);
+  }
+
+  readOrEmitReply(
+    eventTarget: TypedEventTarget<ProtocolEvents>,
+    returnsUint8Arrays?: boolean,
+  ): Promise<RedisReply> {
+    return readOrEmitReply(this.#reader, eventTarget, returnsUint8Arrays);
   }
 
   async writeCommand(command: Command): Promise<void> {

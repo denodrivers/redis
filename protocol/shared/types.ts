@@ -50,3 +50,19 @@ export type RawOrError = Raw | ErrorReplyError;
 export const okReply = "OK";
 
 export type Protover = 2 | 3;
+
+export type ProtocolEvents = {
+  push: Array<RedisReply>;
+};
+
+/**
+ * TODO: This is a dirty hack to distinguish push replies from regular array replies.
+ */
+class PushReply extends Array<RedisReply> {}
+
+export function newPushReply(size: number): Array<RedisReply> {
+  return new PushReply(size);
+}
+export function isPushReply(reply: RedisReply): reply is Array<RedisReply> {
+  return reply instanceof PushReply;
+}
