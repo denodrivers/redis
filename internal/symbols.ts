@@ -26,4 +26,19 @@ export const kUnstableProtover = Symbol("deno-redis.protover");
 /**
  * @private
  */
-export const kUnstableStartReadLoop = Symbol("deno-redis.startReadLoop");
+export const kUnstableStartSubscriptionLoop = Symbol(
+  "deno-redis.startSubscriptionLoop",
+);
+
+/**
+ * @private
+ */
+export const kUnstableEnterSubscriptionMode = Symbol(
+  "deno-redis.enterSubscriptionMode",
+);
+/**
+ * @private
+ */
+export const kUnstableLeaveSubscriptionMode = Symbol(
+  "deno-redis.leaveSubscriptionMode",
+);

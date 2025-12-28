@@ -82,8 +82,52 @@ export function resp3Tests(
     assertEquals(result.value, { channel, message: payload });
   });
 
-  // deno-lint-ignore deno-lint-plugin-extra-rules/no-disabled-tests -- TODO: Support the execution of a regular command in a push-mode connection.
-  it.skip("supports executing a regular command in a push-mode connection", () => {});
+  it("supports executing regular commands in a push-mode connection", async () => {
+    using client = await connect();
+    const channel = "testing";
+    const sub = await client.subscribe(channel);
+    const it = sub.receive();
+    const messageToPublish = "foobar";
+    const message1 = "bar";
+    const message2 = "baz";
+
+    const echoPromise = client.echo(message1);
+    const publishPromise = client.publish(channel, messageToPublish);
+    const echoPromise2 = client.echo(message2);
+    await publishPromise;
+
+    const result = await it.next();
+    assert(!result.done);
+    assertEquals(result.value, { channel, message: messageToPublish });
+
+    // Replies to regular commands should be returned successfully.
+    assertEquals(await echoPromise, message1);
+    assertEquals(await echoPromise2, message2);
+  });
+
+  it("supports a pipeline in a push-mode connection", async () => {
+    using client = await connect();
+    const channel = "testing";
+    const sub = await client.subscribe(channel);
+    const it = sub.receive();
+
+    const pipeline = client.pipeline();
+    pipeline.set("foo", "123");
+    pipeline.get("foo");
+    const pipelinePromise = pipeline.flush();
+
+    const message = "Hello, World!";
+    await client.publish(channel, message);
+    await pipelinePromise;
+
+    const result = await it.next();
+    assert(!result.done);
+    assertEquals(result.value, { channel, message: message });
+
+    // Replies to regular commands should be returned successfully.
+    const replies = await pipelinePromise;
+    assertEquals(replies, ["OK", "123"]);
+  });
 
   // deno-lint-ignore deno-lint-plugin-extra-rules/no-disabled-tests -- TODO: Currently, there is no command that returns a big number.
   it.skip("supports a big number", () => {});

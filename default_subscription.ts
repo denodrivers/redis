@@ -1,6 +1,7 @@
 import { decoder } from "./internal/encoding.ts";
 import {
-  kUnstableStartReadLoop,
+  kUnstableEnterSubscriptionMode,
+  kUnstableStartSubscriptionLoop,
   kUnstableWriteCommand,
 } from "./internal/symbols.ts";
 import type {
@@ -29,6 +30,7 @@ export class DefaultRedisSubscription<
   constructor(private readonly connection: Connection) {}
 
   async psubscribe(...patterns: string[]) {
+    this.connection[kUnstableEnterSubscriptionMode]();
     await this.#writeCommand("PSUBSCRIBE", patterns);
     for (const pat of patterns) {
       this.patterns[pat] = true;
@@ -43,6 +45,7 @@ export class DefaultRedisSubscription<
   }
 
   async subscribe(...channels: string[]) {
+    this.connection[kUnstableEnterSubscriptionMode]();
     await this.#writeCommand("SUBSCRIBE", channels);
     for (const chan of channels) {
       this.channels[chan] = true;
@@ -72,15 +75,10 @@ export class DefaultRedisSubscription<
     RedisPubSubMessage<T>
   > {
     const onConnectionRecovered = async () => {
-      if (Object.keys(this.channels).length > 0) {
-        await this.subscribe(...Object.keys(this.channels));
-      }
-      if (Object.keys(this.patterns).length > 0) {
-        await this.psubscribe(...Object.keys(this.patterns));
-      }
+      await this.#resumeSubscriptions();
     };
     this.connection.addEventListener("connect", onConnectionRecovered);
-    const iter = this.connection[kUnstableStartReadLoop](binaryMode);
+    const iter = this.connection[kUnstableStartSubscriptionLoop](binaryMode);
     try {
       for await (const _rep of iter) {
         const rep = _rep as ([string | Binary, string | Binary, T] | [
@@ -130,5 +128,15 @@ export class DefaultRedisSubscription<
 
   async #writeCommand(command: string, args: Array<string>): Promise<void> {
     await this.connection[kUnstableWriteCommand]({ command, args });
+  }
+
+  async #resumeSubscriptions(): Promise<void> {
+    this.connection[kUnstableEnterSubscriptionMode]();
+    if (Object.keys(this.channels).length > 0) {
+      await this.subscribe(...Object.keys(this.channels));
+    }
+    if (Object.keys(this.patterns).length > 0) {
+      await this.psubscribe(...Object.keys(this.patterns));
+    }
   }
 }

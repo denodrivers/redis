@@ -4,10 +4,12 @@ import type { ErrorReplyError } from "./errors.ts";
 import type { TypedEventTarget } from "./internal/typed_event_target.ts";
 import type {
   kUnstableCreateProtocol,
+  kUnstableEnterSubscriptionMode,
+  kUnstableLeaveSubscriptionMode,
   kUnstablePipeline,
   kUnstableProtover,
   kUnstableReadReply,
-  kUnstableStartReadLoop,
+  kUnstableStartSubscriptionLoop,
   kUnstableWriteCommand,
 } from "./internal/symbols.ts";
 import type { Command, Protocol } from "./protocol/shared/protocol.ts";
@@ -54,10 +56,9 @@ export interface Connection extends TypedEventTarget<ConnectionEventMap> {
   [kUnstablePipeline](
     commands: Array<Command>,
   ): Promise<Array<RedisReply | ErrorReplyError>>;
-  /**
-   * @private
-   */
-  [kUnstableStartReadLoop](
+  [kUnstableEnterSubscriptionMode](): void;
+  [kUnstableLeaveSubscriptionMode](): void;
+  [kUnstableStartSubscriptionLoop](
     binaryMode?: boolean,
   ): AsyncIterableIterator<RedisReply>;
 }

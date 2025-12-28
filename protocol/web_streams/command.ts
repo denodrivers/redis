@@ -18,6 +18,19 @@ export async function writeCommand(
   }
 }
 
+export async function writeCommands(
+  writable: WritableStream<Uint8Array>,
+  commands: Array<Command>,
+): Promise<void> {
+  const request = encodeCommands(commands);
+  const writer = writable.getWriter();
+  try {
+    await writer.write(request);
+  } finally {
+    writer.releaseLock();
+  }
+}
+
 export async function sendCommand(
   writable: WritableStream<Uint8Array>,
   readable: BufferedReadableStream,

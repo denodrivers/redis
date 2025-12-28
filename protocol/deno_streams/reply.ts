@@ -20,16 +20,30 @@ import {
 import { EOFError, ErrorReplyError, InvalidStateError } from "../../errors.ts";
 import { decoder } from "../../internal/encoding.ts";
 
+export async function tryToReadPushReply(
+  reader: BufReader,
+  returnUint8Arrays?: boolean,
+): Promise<types.MaybePushReply> {
+  const code = await peekReplyCode(reader);
+  if (code === ErrorReplyCode) {
+    await readErrorReplyOrFail(reader);
+  }
+
+  if (code === PushReplyCode) {
+    const reply = await readPushReply(reader, returnUint8Arrays);
+    return { isPushReply: true, reply };
+  }
+  return {
+    isPushReply: false,
+    reply: await readReply(reader, returnUint8Arrays),
+  };
+}
+
 export async function readReply(
   reader: BufReader,
   returnUint8Arrays?: boolean,
 ): Promise<types.RedisReply> {
-  const res = await reader.peek(1);
-  if (res == null) {
-    throw new EOFError();
-  }
-
-  const code = res[0];
+  const code = await peekReplyCode(reader);
   if (code === ErrorReplyCode) {
     await readErrorReplyOrFail(reader);
   }
@@ -71,6 +85,15 @@ export async function readReply(
         `unknown code: '${String.fromCharCode(code)}' (${code})`,
       );
   }
+}
+
+async function peekReplyCode(reader: BufReader): Promise<number> {
+  const res = await reader.peek(1);
+  if (res == null) {
+    throw new EOFError();
+  }
+  const code = res[0];
+  return code;
 }
 
 async function readIntegerReply(

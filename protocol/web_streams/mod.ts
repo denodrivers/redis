@@ -1,7 +1,16 @@
-import { sendCommand, sendCommands, writeCommand } from "./command.ts";
-import { readReply } from "./reply.ts";
+import {
+  sendCommand,
+  sendCommands,
+  writeCommand,
+  writeCommands,
+} from "./command.ts";
+import { readReply, tryToReadPushReply } from "./reply.ts";
 import type { Command, Protocol as BaseProtocol } from "../shared/protocol.ts";
-import type { RedisReply, RedisValue } from "../shared/types.ts";
+import type {
+  MaybePushReply,
+  RedisReply,
+  RedisValue,
+} from "../shared/types.ts";
 import type { ErrorReplyError } from "../../errors.ts";
 import { BufferedReadableStream } from "../../internal/buffered_readable_stream.ts";
 
@@ -30,8 +39,18 @@ export class Protocol implements BaseProtocol {
     return readReply(this.#readable, returnsUint8Arrays);
   }
 
+  tryToReadPushReply(
+    returnsUint8Arrays?: boolean,
+  ): Promise<MaybePushReply> {
+    return tryToReadPushReply(this.#readable, returnsUint8Arrays);
+  }
+
   writeCommand(command: Command): Promise<void> {
     return writeCommand(this.#writable, command.command, command.args);
+  }
+
+  writeCommands(commands: Array<Command>): Promise<void> {
+    return writeCommands(this.#writable, commands);
   }
 
   pipeline(commands: Command[]): Promise<Array<RedisReply | ErrorReplyError>> {

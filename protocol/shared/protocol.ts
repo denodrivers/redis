@@ -1,4 +1,4 @@
-import type { RedisReply, RedisValue } from "./types.ts";
+import type { MaybePushReply, RedisReply, RedisValue } from "./types.ts";
 import type { ErrorReplyError } from "../../errors.ts";
 
 export interface Command {
@@ -14,7 +14,9 @@ export interface Protocol {
     returnsUint8Arrays?: boolean,
   ): Promise<RedisReply>;
   readReply(returnsUint8Array?: boolean): Promise<RedisReply>;
+  tryToReadPushReply(returnsUint8Array?: boolean): Promise<MaybePushReply>;
   writeCommand(command: Command): Promise<void>;
+  writeCommands(commands: Array<Command>): Promise<void>;
   pipeline(
     commands: Array<Command>,
   ): Promise<Array<RedisReply | ErrorReplyError>>;
