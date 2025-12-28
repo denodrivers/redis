@@ -105,7 +105,7 @@ function readSimpleStringReply(
   return readSingleLineReply(reader, SimpleStringCode, returnUint8Arrays);
 }
 
-export function readArrayReply(
+function readArrayReply(
   reader: BufReader,
   returnUint8Arrays?: boolean,
 ): Promise<Array<types.RedisReply> | null> {
@@ -144,7 +144,7 @@ async function readArrayLikeReply(
 /**
  * NOTE: We treat a set type as an array to keep backward compatibility.
  */
-export async function readSetReply(
+async function readSetReply(
   reader: BufReader,
   returnUint8Arrays?: boolean,
 ): Promise<Array<types.RedisReply> | null> {
