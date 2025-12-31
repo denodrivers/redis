@@ -1,5 +1,6 @@
 {
   "imports": {
-    "benny": "npm:benny@3.7.1"
+    "benny": "npm:benny@3.7.1",
+    "@uki00a/deno-json-lint": "jsr:@uki00a/deno-json-lint@^0.4.0"
   }
 }
