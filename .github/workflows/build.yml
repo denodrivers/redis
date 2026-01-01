@@ -82,7 +82,7 @@ jobs:
           cache-hash: ${{ hashFiles('.denov', 'deno.lock') }}
       - name: Set up Node.js
         if: matrix.driver == 'ioredis'
-        uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # v6.0.0
+        uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v6.1.0
         with:
           node-version: "16"
       - uses: bahmutov/npm-install@3e063b974f0d209807684aa23e534b3dde517fd9 # v1.11.2
