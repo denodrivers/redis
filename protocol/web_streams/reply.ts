@@ -1,4 +1,5 @@
 import type * as types from "../shared/types.ts";
+import type { ProtocolEvents } from "../shared/types.ts";
 import {
   ArrayReplyCode,
   AttributeReplyCode,
@@ -19,12 +20,38 @@ import {
 import { ErrorReplyError, NotImplementedError } from "../../errors.ts";
 import { decoder } from "../../internal/encoding.ts";
 import type { BufferedReadableStream } from "../../internal/buffered_readable_stream.ts";
+import type { TypedEventTarget } from "../../internal/typed_event_target.ts";
+import { dispatchEvent } from "../../internal/typed_event_target.ts";
+
+export async function readOrEmitReply(
+  readable: BufferedReadableStream,
+  eventTarget: TypedEventTarget<ProtocolEvents>,
+  returnUint8Arrays?: boolean,
+): Promise<types.RedisReply> {
+  const line = await readable.readLine();
+  const code = line[0];
+  if (code === PushReplyCode) {
+    const reply = await parseArrayLikeReply(line, readable, returnUint8Arrays);
+    dispatchEvent(eventTarget, "push", reply ?? []);
+    return readOrEmitReply(readable, eventTarget, returnUint8Arrays);
+  } else {
+    return parseLine(line, readable, returnUint8Arrays);
+  }
+}
 
 export async function readReply(
   readable: BufferedReadableStream,
   returnUint8Arrays?: boolean,
-) {
+): Promise<types.RedisReply> {
   const line = await readable.readLine();
+  return parseLine(line, readable, returnUint8Arrays);
+}
+
+async function parseLine(
+  line: Uint8Array,
+  readable: BufferedReadableStream,
+  returnUint8Arrays?: boolean,
+): Promise<types.RedisReply> {
   const code = line[0];
   switch (code) {
     case ErrorReplyCode: {
@@ -56,16 +83,7 @@ export async function readReply(
     }
     case ArrayReplyCode:
     case PushReplyCode: {
-      const size = Number.parseInt(decoder.decode(line.slice(1)));
-      if (size === -1) {
-        // `-1` indicates a null array
-        return null;
-      }
-      const array: Array<types.RedisReply> = [];
-      for (let i = 0; i < size; i++) {
-        array.push(await readReply(readable, returnUint8Arrays));
-      }
-      return array;
+      return parseArrayLikeReply(line, readable, returnUint8Arrays);
     }
     case MapReplyCode: {
       // NOTE: We treat a map type as an array to keep backward compatibility.
@@ -129,4 +147,21 @@ export async function readReply(
         `'${String.fromCharCode(code)}' reply is not implemented`,
       );
   }
+}
+
+async function parseArrayLikeReply(
+  line: Uint8Array,
+  readable: BufferedReadableStream,
+  returnUint8Arrays?: boolean,
+): Promise<Array<types.RedisReply> | null> {
+  const size = Number.parseInt(decoder.decode(line.slice(1)));
+  if (size === -1) {
+    // `-1` indicates a null array
+    return null;
+  }
+  const array: Array<types.RedisReply> = [];
+  for (let i = 0; i < size; i++) {
+    array.push(await readReply(readable, returnUint8Arrays));
+  }
+  return array;
 }
