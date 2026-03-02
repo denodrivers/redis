@@ -46,7 +46,9 @@ class DefaultClient implements Client {
     command: SubscribeCommand,
     ...channelsOrPatterns: Array<string>
   ): Promise<RedisSubscription<TMessage>> {
-    const subscription = new DefaultRedisSubscription<TMessage>(this);
+    const subscription = new DefaultRedisSubscription<TMessage>(
+      this.connection,
+    );
     switch (command) {
       case "SUBSCRIBE":
         await subscription.subscribe(...channelsOrPatterns);
@@ -67,17 +69,17 @@ class DefaultRedisSubscription<
   TMessage extends PubSubMessageType = DefaultPubSubMessageType,
 > implements RedisSubscription<TMessage> {
   get isConnected(): boolean {
-    return this.client.connection.isConnected;
+    return this.connection.isConnected;
   }
 
   get isClosed(): boolean {
-    return this.client.connection.isClosed;
+    return this.connection.isClosed;
   }
 
   private channels = Object.create(null);
   private patterns = Object.create(null);
 
-  constructor(private client: Client) {}
+  constructor(private readonly connection: Connection) {}
 
   async psubscribe(...patterns: string[]) {
     await this.#writeCommand("PSUBSCRIBE", patterns);
@@ -130,8 +132,8 @@ class DefaultRedisSubscription<
         await this.psubscribe(...Object.keys(this.patterns));
       }
     };
-    this.client.connection.addEventListener("connect", onConnectionRecovered);
-    const iter = this.client.connection[kUnstableStartReadLoop](binaryMode);
+    this.connection.addEventListener("connect", onConnectionRecovered);
+    const iter = this.connection[kUnstableStartReadLoop](binaryMode);
     try {
       for await (const _rep of iter) {
         const rep = _rep as ([string | Binary, string | Binary, T] | [
@@ -168,7 +170,7 @@ class DefaultRedisSubscription<
         }
       }
     } finally {
-      this.client.connection.removeEventListener(
+      this.connection.removeEventListener(
         "connect",
         onConnectionRecovered,
       );
@@ -176,10 +178,10 @@ class DefaultRedisSubscription<
   }
 
   close() {
-    this.client.connection.close();
+    this.connection.close();
   }
 
   async #writeCommand(command: string, args: Array<string>): Promise<void> {
-    await this.client.connection[kUnstableWriteCommand]({ command, args });
+    await this.connection[kUnstableWriteCommand]({ command, args });
   }
 }
