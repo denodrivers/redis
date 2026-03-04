@@ -44,7 +44,7 @@ import type {
   ZScanOpts,
   ZUnionstoreOpts,
 } from "./command.ts";
-import { createRedisConnection } from "./connection.ts";
+import { createRedisConnection } from "./default_connection.ts";
 import type { Connection, SendCommandOptions } from "./connection.ts";
 import type { RedisConnectionOptions } from "./connection.ts";
 import type { Client, RedisSubscription } from "./client.ts";

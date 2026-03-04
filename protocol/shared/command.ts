@@ -8,6 +8,7 @@ const ArrayCode = encoder.encode("*");
 const BulkCode = encoder.encode("$");
 
 const kEmptyBuffer = new Uint8Array(0);
+export const kEmptyRedisArgs: Array<RedisValue> = [];
 
 export function encodeCommand(
   command: string,
