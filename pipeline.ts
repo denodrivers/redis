@@ -1,5 +1,5 @@
 import type { Connection, SendCommandOptions } from "./connection.ts";
-import { kEmptyRedisArgs } from "./connection.ts";
+import { kEmptyRedisArgs } from "./protocol/shared/command.ts";
 import type {
   Client,
   DefaultPubSubMessageType,
