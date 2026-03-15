@@ -47,7 +47,8 @@ import type {
 import { createRedisConnection } from "./default_connection.ts";
 import type { Connection, SendCommandOptions } from "./connection.ts";
 import type { RedisConnectionOptions } from "./connection.ts";
-import type { Client, RedisSubscription } from "./client.ts";
+import type { Client } from "./client.ts";
+import type { RedisSubscription } from "./subscription.ts";
 import { createDefaultClient } from "./default_client.ts";
 import type { ConnectionEventMap, ConnectionEventType } from "./events.ts";
 import type { TypedEventTarget } from "./internal/typed_event_target.ts";

@@ -68,11 +68,8 @@ export type {
   ConnectionEventType,
   ConnectionReconnectingEventDetails,
 } from "./events.ts";
-export type {
-  Client,
-  RedisPubSubMessage,
-  RedisSubscription,
-} from "./client.ts";
+export type { Client } from "./client.ts";
+export type { RedisPubSubMessage, RedisSubscription } from "./subscription.ts";
 export type { CommandExecutor } from "./executor.ts";
 export type { RedisPipeline } from "./pipeline.ts";
 export type {

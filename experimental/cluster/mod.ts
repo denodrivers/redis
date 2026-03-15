@@ -28,13 +28,13 @@
 
 import { connect, create } from "../../redis.ts";
 import type { RedisConnectOptions } from "../../redis.ts";
+import type { Client } from "../../client.ts";
 import type {
-  Client,
   DefaultPubSubMessageType,
   PubSubMessageType,
   RedisSubscription,
   SubscribeCommand,
-} from "../../client.ts";
+} from "../../subscription.ts";
 import type { Connection, SendCommandOptions } from "../../connection.ts";
 import type { Redis } from "../../redis.ts";
 import type { RedisReply, RedisValue } from "../../protocol/shared/types.ts";

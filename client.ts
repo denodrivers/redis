@@ -1,32 +1,11 @@
 import type { Connection, SendCommandOptions } from "./connection.ts";
+import type { RedisReply, RedisValue } from "./protocol/shared/types.ts";
 import type {
-  Binary,
-  RedisReply,
-  RedisValue,
-} from "./protocol/shared/types.ts";
-
-export type DefaultPubSubMessageType = string;
-export type PubSubMessageType = string | string[];
-export type SubscribeCommand = "SUBSCRIBE" | "PSUBSCRIBE";
-
-export interface RedisSubscription<
-  TMessage extends PubSubMessageType = DefaultPubSubMessageType,
-> {
-  readonly isClosed: boolean;
-  receive(): AsyncIterableIterator<RedisPubSubMessage<TMessage>>;
-  receiveBuffers(): AsyncIterableIterator<RedisPubSubMessage<Binary>>;
-  psubscribe(...patterns: string[]): Promise<void>;
-  subscribe(...channels: string[]): Promise<void>;
-  punsubscribe(...patterns: string[]): Promise<void>;
-  unsubscribe(...channels: string[]): Promise<void>;
-  close(): void;
-}
-
-export interface RedisPubSubMessage<TMessage = DefaultPubSubMessageType> {
-  pattern?: string;
-  channel: string;
-  message: TMessage;
-}
+  DefaultPubSubMessageType,
+  PubSubMessageType,
+  RedisSubscription,
+  SubscribeCommand,
+} from "./subscription.ts";
 
 /**
  * A low-level client for Redis.

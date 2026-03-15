@@ -1,10 +1,10 @@
+import type { Client } from "./client.ts";
 import type {
-  Client,
   DefaultPubSubMessageType,
   PubSubMessageType,
   RedisSubscription,
   SubscribeCommand,
-} from "./client.ts";
+} from "./subscription.ts";
 import type { Connection, SendCommandOptions } from "./connection.ts";
 import { DefaultRedisSubscription } from "./default_subscription.ts";
 import type { RedisReply, RedisValue } from "./protocol/shared/types.ts";

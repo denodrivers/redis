@@ -1,4 +1,7 @@
-import type { DefaultPubSubMessageType, RedisSubscription } from "../client.ts";
+import type {
+  DefaultPubSubMessageType,
+  RedisSubscription,
+} from "../subscription.ts";
 import { createPoolClient } from "../pool/mod.ts";
 import { assert, assertEquals } from "../deps/std/assert.ts";
 import { afterAll, beforeAll, describe, it } from "../deps/std/testing.ts";
