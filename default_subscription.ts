@@ -8,7 +8,7 @@ import type {
   PubSubMessageType,
   RedisPubSubMessage,
   RedisSubscription,
-} from "./client.ts";
+} from "./subscription.ts";
 import type { Connection } from "./connection.ts";
 import type { Binary } from "./protocol/shared/types.ts";
 

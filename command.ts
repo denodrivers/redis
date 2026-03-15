@@ -11,7 +11,7 @@ import type {
   SimpleString,
 } from "./protocol/shared/types.ts";
 import type { RedisPipeline } from "./pipeline.ts";
-import type { RedisSubscription } from "./client.ts";
+import type { RedisSubscription } from "./subscription.ts";
 import type {
   StartEndCount,
   XAddFieldValues,

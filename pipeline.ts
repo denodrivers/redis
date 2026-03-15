@@ -1,12 +1,12 @@
 import type { Connection, SendCommandOptions } from "./connection.ts";
 import { kEmptyRedisArgs } from "./protocol/shared/command.ts";
+import type { Client } from "./client.ts";
 import type {
-  Client,
   DefaultPubSubMessageType,
   PubSubMessageType,
   RedisSubscription,
   SubscribeCommand,
-} from "./client.ts";
+} from "./subscription.ts";
 import type {
   RawOrError,
   RedisReply,
