@@ -1,5 +1,11 @@
 import { assertEquals } from "../../deps/std/assert.ts";
-import { afterAll, beforeAll, beforeEach, it } from "../../deps/std/testing.ts";
+import {
+  afterAll,
+  beforeAll,
+  beforeEach,
+  describe,
+  it,
+} from "../../deps/std/testing.ts";
 import type { Connector, TestServer } from "../test_util.ts";
 import type { Redis } from "../../mod.ts";
 
@@ -62,9 +68,16 @@ export function listTests(
     assertEquals(await client.llen("list"), 2);
   });
 
-  it("lpop", async () => {
-    await client.rpush("list", "1", "2");
-    assertEquals(await client.lpop("list"), "1");
+  describe("lpop", () => {
+    it("pops the first element of the list", async () => {
+      await client.rpush("list", "1", "2");
+      assertEquals(await client.lpop("list"), "1");
+    });
+
+    it("supports the `count` argument", async () => {
+      await client.rpush("list", "foo", "bar", "baz");
+      assertEquals(await client.lpop("list", 2), ["foo", "bar"]);
+    });
   });
 
   it("lpos", async () => {
