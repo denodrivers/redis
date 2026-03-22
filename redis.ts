@@ -985,8 +985,14 @@ class RedisImpl implements Redis {
     return this.execIntegerReply("LLEN", key);
   }
 
-  lpop(key: string) {
-    return this.execBulkReply("LPOP", key);
+  lpop(key: string): Promise<Bulk>;
+  lpop(key: string, count: number): Promise<Array<BulkString>>;
+  lpop(key: string, count?: number): Promise<Bulk | Array<BulkString>> {
+    if (count == null) {
+      return this.execBulkReply("LPOP", key);
+    } else {
+      return this.execArrayReply("LPOP", key, count);
+    }
   }
 
   lpos(

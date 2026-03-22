@@ -582,6 +582,7 @@ export interface RedisCommands {
   ): Promise<Integer>;
   llen(key: string): Promise<Integer>;
   lpop(key: string): Promise<Bulk>;
+  lpop(key: string, count: number): Promise<Array<BulkString>>;
 
   /**
    * Returns the index of the first matching element inside a list.
