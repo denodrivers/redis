@@ -5,14 +5,21 @@ import type {
   RedisConnectionOptions,
   SendCommandOptions,
 } from "./connection.ts";
+import { DefaultRedisSubscription } from "./default_subscription.ts";
 import {
   ErrorReplyError,
   InvalidStateError,
   isRetriableError,
 } from "./errors.ts";
 import type { ConnectionEventMap } from "./events.ts";
+import type {
+  DefaultPubSubMessageType,
+  PubSubMessageType,
+  RedisSubscription,
+} from "./subscription.ts";
 import {
   kUnstableCreateProtocol,
+  kUnstableCreateSubscription,
   kUnstablePipeline,
   kUnstableProtover,
   kUnstableReadReply,
@@ -27,7 +34,11 @@ import {
 import { kEmptyRedisArgs } from "./protocol/shared/command.ts";
 import type { Command, Protocol } from "./protocol/shared/protocol.ts";
 import { Protocol as DenoStreamsProtocol } from "./protocol/deno_streams/mod.ts";
-import type { RedisReply, RedisValue } from "./protocol/shared/types.ts";
+import type {
+  Protover,
+  RedisReply,
+  RedisValue,
+} from "./protocol/shared/types.ts";
 import { delay } from "./deps/std/async.ts";
 
 export function createRedisConnection(
@@ -58,6 +69,8 @@ class RedisConnection
   private commandQueue: PendingCommand[] = [];
   #conn!: Deno.Conn;
   #protocol!: Protocol;
+  /** @default {2} */
+  #protover?: Protover;
   #eventTarget = createTypedEventTarget<ConnectionEventMap>();
   #connectingPromise?: PromiseWithResolvers<void>;
 
@@ -191,6 +204,12 @@ class RedisConnection
     );
   }
 
+  [kUnstableCreateSubscription]<
+    TMessage extends PubSubMessageType = DefaultPubSubMessageType,
+  >(): RedisSubscription<TMessage> {
+    return new DefaultRedisSubscription<TMessage>(this);
+  }
+
   [kUnstableReadReply](returnsUint8Arrays?: boolean): Promise<RedisReply> {
     return this.#protocol.readReply(returnsUint8Arrays);
   }
@@ -292,9 +311,11 @@ class RedisConnection
           await this.authenticate(this.options.username, this.options.password);
         }
         if (this.options[kUnstableProtover] != null) {
-          await this.#sendCommandImmediately("HELLO", [
-            this.options[kUnstableProtover],
-          ]);
+          const protover = this.options[kUnstableProtover];
+          await this.#sendCommandImmediately("HELLO", [protover]);
+          if (protover !== 2) {
+            this.#protover = protover;
+          }
         }
         if (this.options.db) {
           await this.selectDb(this.options.db);
