@@ -14,6 +14,7 @@ import {
   beforeAll,
   describe,
   it,
+  spy,
 } from "../../deps/std/testing.ts";
 import { calculateSlot } from "../../deps/cluster-key-slot.js";
 import { ErrorReplyError } from "../../errors.ts";
@@ -41,6 +42,47 @@ describe("experimental/cluster", () => {
   afterAll(() => stopRedisCluster(cluster));
 
   afterEach(() => client.close());
+
+  it("correctly passes ConnectionOptions to newRedis", async () => {
+    {
+      const newRedis = spy(connect);
+      const clientWithOptions = await connectToCluster({
+        newRedis,
+        nodes,
+      });
+      assertEquals(
+        newRedis.calls.at(-1)?.args[0].noDelay,
+        undefined,
+        "should not pass `noDelay` option if absent (shared RedisConnectionOption)",
+      );
+      assertEquals(
+        (newRedis.calls.at(-1)?.args[0] as any).nodes,
+        undefined,
+        "should never pass `nodes` option (exclusive of ClusterConnectionOption)",
+      );
+      clientWithOptions.close();
+    }
+
+    {
+      const newRedis = spy(connect);
+      const clientWithOptions = await connectToCluster({
+        newRedis,
+        nodes,
+        noDelay: true,
+      });
+      assertEquals(
+        newRedis.calls.at(-1)?.args[0].noDelay,
+        true,
+        "should pass `noDelay` option if present (shared RedisConnectionOption)",
+      );
+      assertEquals(
+        (newRedis.calls.at(-1)?.args[0] as any).nodes,
+        undefined,
+        "should never pass `nodes` option (exclusive of ClusterConnectionOption)",
+      );
+      clientWithOptions.close();
+    }
+  });
 
   it("del multiple keys in the same hash slot", async () => {
     await client.set("{hoge}foo", "a");

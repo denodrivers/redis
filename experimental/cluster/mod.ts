@@ -26,7 +26,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import { connect, create } from "../../redis.ts";
+import { connect as defaultConnect, create } from "../../redis.ts";
 import type { RedisConnectOptions } from "../../redis.ts";
 import type { Client } from "../../client.ts";
 import type {
@@ -35,7 +35,11 @@ import type {
   RedisSubscription,
   SubscribeCommand,
 } from "../../subscription.ts";
-import type { Connection, SendCommandOptions } from "../../connection.ts";
+import type {
+  Connection,
+  RedisConnectionOptions,
+  SendCommandOptions,
+} from "../../connection.ts";
 import type { Redis } from "../../redis.ts";
 import type { RedisReply, RedisValue } from "../../protocol/shared/types.ts";
 import { ErrorReplyError, NotImplementedError } from "../../errors.ts";
@@ -44,7 +48,7 @@ import { distinctBy } from "../../deps/std/collections.ts";
 import { sample, shuffle } from "../../deps/std/random.ts";
 import { calculateSlot } from "../../deps/cluster-key-slot.js";
 
-export interface ClusterConnectOptions {
+export interface ClusterConnectOptions extends RedisConnectionOptions {
   nodes: Array<NodeOptions>;
   maxConnections?: number;
   newRedis?: (opts: RedisConnectOptions) => Promise<Redis>;
@@ -93,7 +97,15 @@ class ClusterClient implements Client {
       new ClusterNode(node.hostname, node.port ?? 6379)
     );
     this.#maxConnections = opts.maxConnections ?? 50; // TODO(uki00a): To be honest, I'm not sure if this default value is appropriate...
-    this.#newRedis = opts.newRedis ?? connect;
+    const connect = opts.newRedis ?? defaultConnect;
+    const {
+      nodes: _nodes,
+      maxConnections: _maxConnections,
+      newRedis: _newRedis,
+      ...sharedConnectOptions
+    } = opts;
+    this.#newRedis = (connectOptions: RedisConnectOptions) =>
+      connect({ ...sharedConnectOptions, ...connectOptions });
   }
 
   get connection(): Connection {
