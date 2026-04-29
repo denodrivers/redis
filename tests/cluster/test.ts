@@ -1,5 +1,6 @@
 import { nextPorts, startRedisCluster, stopRedisCluster } from "./test_util.ts";
 import type { TestCluster } from "./test_util.ts";
+import type { ClusterConnectOptions } from "../../experimental/cluster/mod.ts";
 import { connect as connectToCluster } from "../../experimental/cluster/mod.ts";
 import {
   assert,
@@ -19,8 +20,9 @@ import {
 import { calculateSlot } from "../../deps/cluster-key-slot.js";
 import { ErrorReplyError } from "../../errors.ts";
 import { connect, create } from "../../redis.ts";
+import type { RedisConnectOptions } from "../../redis.ts";
 import type { CommandExecutor } from "../../executor.ts";
-import type { Connection } from "../../connection.ts";
+import type { Connection, RedisConnectionOptions } from "../../connection.ts";
 import type { Redis } from "../../mod.ts";
 
 describe("experimental/cluster", () => {
@@ -43,9 +45,17 @@ describe("experimental/cluster", () => {
 
   afterEach(() => client.close());
 
-  it("correctly passes ConnectionOptions to newRedis", async () => {
+  it("correctly passes connection options to newRedis", async () => {
     {
-      const newRedis = spy(connect);
+      const newRedis = spy<
+        unknown,
+        [
+          options:
+            & RedisConnectOptions
+            & Partial<ClusterConnectOptions & RedisConnectionOptions>,
+        ],
+        Promise<Redis>
+      >(connect);
       const clientWithOptions = await connectToCluster({
         newRedis,
         nodes,
@@ -53,18 +63,26 @@ describe("experimental/cluster", () => {
       assertEquals(
         newRedis.calls.at(-1)?.args[0].noDelay,
         undefined,
-        "should not pass `noDelay` option if absent (shared RedisConnectionOption)",
+        "should not pass `noDelay` option if absent (shared RedisConnectionOptions)",
       );
       assertEquals(
-        (newRedis.calls.at(-1)?.args[0] as any).nodes,
+        newRedis.calls.at(-1)?.args[0].nodes,
         undefined,
-        "should never pass `nodes` option (exclusive of ClusterConnectionOption)",
+        "should never pass `nodes` option (exclusive of ClusterConnectOptions)",
       );
       clientWithOptions.close();
     }
 
     {
-      const newRedis = spy(connect);
+      const newRedis = spy<
+        unknown,
+        [
+          options:
+            & RedisConnectOptions
+            & Partial<ClusterConnectOptions & RedisConnectionOptions>,
+        ],
+        Promise<Redis>
+      >(connect);
       const clientWithOptions = await connectToCluster({
         newRedis,
         nodes,
@@ -73,12 +91,12 @@ describe("experimental/cluster", () => {
       assertEquals(
         newRedis.calls.at(-1)?.args[0].noDelay,
         true,
-        "should pass `noDelay` option if present (shared RedisConnectionOption)",
+        "should pass `noDelay` option if present (shared RedisConnectionOptions)",
       );
       assertEquals(
-        (newRedis.calls.at(-1)?.args[0] as any).nodes,
+        newRedis.calls.at(-1)?.args[0].nodes,
         undefined,
-        "should never pass `nodes` option (exclusive of ClusterConnectionOption)",
+        "should never pass `nodes` option (exclusive of ClusterConnectOptions)",
       );
       clientWithOptions.close();
     }
