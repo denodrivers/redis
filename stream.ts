@@ -221,7 +221,7 @@ export function parseXMessage(raw: XReadIdData): XMessage {
   for (const data of raw[1]) {
     if (m % 2 === 0) {
       f = data;
-    } else if (f) {
+    } else if (f !== undefined) {
       fieldValues[f] = data;
     }
     m++;
@@ -238,7 +238,7 @@ export function convertMap(raw: ConditionalArray): Map<string, Raw> {
   for (const data of raw) {
     if (m % 2 === 0 && typeof data === "string") {
       f = data;
-    } else if (m % 2 === 1 && f) {
+    } else if (m % 2 === 1 && f !== undefined) {
       fieldValues.set(f, data);
     }
     m++;
