@@ -27,7 +27,9 @@
       "write": ["tests/tmp"],
       "run": ["redis-server", "redis-cli"],
       "env": ["REDIS_VERSION"]
-    }
+    },
+    "sanitizeOps": true,
+    "sanitizeResources": true
   },
   "permissions": {
     "bench:deno-redis": {
