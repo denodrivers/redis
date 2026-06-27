@@ -1,9 +1,15 @@
 import type { Backoff } from "./backoff.ts";
 import type { ConnectionEventMap } from "./events.ts";
 import type { ErrorReplyError } from "./errors.ts";
+import type {
+  DefaultPubSubMessageType,
+  PubSubMessageType,
+  RedisSubscription,
+} from "./subscription.ts";
 import type { TypedEventTarget } from "./internal/typed_event_target.ts";
 import type {
   kUnstableCreateProtocol,
+  kUnstableCreateSubscription,
   kUnstablePipeline,
   kUnstableProtover,
   kUnstableReadReply,
@@ -40,6 +46,12 @@ export interface Connection extends TypedEventTarget<ConnectionEventMap> {
     args?: Array<RedisValue>,
     options?: SendCommandOptions,
   ): Promise<RedisReply>;
+  /**
+   * @private
+   */
+  [kUnstableCreateSubscription]<
+    TMessage extends PubSubMessageType = DefaultPubSubMessageType,
+  >(): RedisSubscription<TMessage>;
   /**
    * @private
    */
