@@ -39,7 +39,7 @@ jobs:
       - name: Run doc tests
         run: |
           deno task test:doc
-      - uses: k1LoW/octocov-action@b3b6ee60482a667950f87553abf1df63217235d9 # v1.5.1
+      - uses: k1LoW/octocov-action@a167dc0dee441b7ffc45e1b862ab55ec0d87f278 # v1.5.2
         if: ${{ github.event_name == 'pull_request' && matrix.redis == 8 }}
 
   lint:
