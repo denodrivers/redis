@@ -49,4 +49,9 @@ export type RawOrError = Raw | ErrorReplyError;
 
 export const okReply = "OK";
 
+export interface MaybePushReply {
+  /** If this is `true`, {@linkcode reply} is of type PUSH. Otherwise, {@linkcode reply} is of another type. */
+  isPushReply: boolean;
+  reply: RedisReply;
+}
 export type Protover = 2 | 3;

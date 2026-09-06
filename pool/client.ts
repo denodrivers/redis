@@ -9,9 +9,11 @@ import type {
 } from "../subscription.ts";
 import { createDefaultClient } from "../default_client.ts";
 import {
+  kUnstableEnterSubscriptionMode,
+  kUnstableLeaveSubscriptionMode,
   kUnstablePipeline,
   kUnstableReadReply,
-  kUnstableStartReadLoop,
+  kUnstableStartSubscriptionLoop,
   kUnstableWriteCommand,
 } from "../internal/symbols.ts";
 import { delegate } from "../internal/delegate.ts";
@@ -100,10 +102,12 @@ function createPoolConnection(
       "addEventListener",
       "removeEventListener",
       Symbol.dispose,
+      kUnstableEnterSubscriptionMode,
+      kUnstableLeaveSubscriptionMode,
       kUnstableReadReply,
       kUnstableWriteCommand,
       kUnstablePipeline,
-      kUnstableStartReadLoop,
+      kUnstableStartSubscriptionLoop,
     ]),
     close,
     get name() {

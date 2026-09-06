@@ -1,9 +1,18 @@
 import { BufReader, BufWriter } from "../../deps/std/io.ts";
-import { readReply } from "./reply.ts";
-import { sendCommand, sendCommands, writeCommand } from "./command.ts";
+import { readReply, tryToReadPushReply } from "./reply.ts";
+import {
+  sendCommand,
+  sendCommands,
+  writeCommand,
+  writeCommands,
+} from "./command.ts";
 
 import type { Command, Protocol as BaseProtocol } from "../shared/protocol.ts";
-import type { RedisReply, RedisValue } from "../shared/types.ts";
+import type {
+  MaybePushReply,
+  RedisReply,
+  RedisValue,
+} from "../shared/types.ts";
 import type { ErrorReplyError } from "../../errors.ts";
 
 export class Protocol implements BaseProtocol {
@@ -33,8 +42,19 @@ export class Protocol implements BaseProtocol {
     return readReply(this.#reader, returnsUint8Arrays);
   }
 
+  tryToReadPushReply(
+    returnsUint8Arrays?: boolean,
+  ): Promise<MaybePushReply> {
+    return tryToReadPushReply(this.#reader, returnsUint8Arrays);
+  }
+
   async writeCommand(command: Command): Promise<void> {
     await writeCommand(this.#writer, command.command, command.args);
+    await this.#writer.flush();
+  }
+
+  async writeCommands(commands: Array<Command>): Promise<void> {
+    await writeCommands(this.#writer, commands);
     await this.#writer.flush();
   }
 

@@ -2,7 +2,7 @@ import type { BufReader, BufWriter } from "../../deps/std/io.ts";
 import { readReply } from "./reply.ts";
 import { ErrorReplyError } from "../../errors.ts";
 import type { RedisReply, RedisValue } from "../shared/types.ts";
-import { encodeCommand } from "../shared/command.ts";
+import { encodeCommand, encodeCommands } from "../shared/command.ts";
 import type { Command } from "../shared/protocol.ts";
 
 export async function writeCommand(
@@ -11,6 +11,14 @@ export async function writeCommand(
   args: RedisValue[],
 ) {
   const request = encodeCommand(command, args);
+  await writer.write(request);
+}
+
+export async function writeCommands(
+  writer: BufWriter,
+  commands: Command[],
+): Promise<void> {
+  const request = encodeCommands(commands);
   await writer.write(request);
 }
 

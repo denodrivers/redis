@@ -11,12 +11,16 @@ import {
   isRetriableError,
 } from "./errors.ts";
 import type { ConnectionEventMap } from "./events.ts";
+import type { Channel } from "./internal/channel.ts";
+import { createChannel } from "./internal/channel.ts";
 import {
   kUnstableCreateProtocol,
+  kUnstableEnterSubscriptionMode,
+  kUnstableLeaveSubscriptionMode,
   kUnstablePipeline,
   kUnstableProtover,
   kUnstableReadReply,
-  kUnstableStartReadLoop,
+  kUnstableStartSubscriptionLoop,
   kUnstableWriteCommand,
 } from "./internal/symbols.ts";
 import type { TypedEventTarget } from "./internal/typed_event_target.ts";
@@ -27,7 +31,11 @@ import {
 import { kEmptyRedisArgs } from "./protocol/shared/command.ts";
 import type { Command, Protocol } from "./protocol/shared/protocol.ts";
 import { Protocol as DenoStreamsProtocol } from "./protocol/deno_streams/mod.ts";
-import type { RedisReply, RedisValue } from "./protocol/shared/types.ts";
+import type {
+  Protover,
+  RedisReply,
+  RedisValue,
+} from "./protocol/shared/types.ts";
 import { delay } from "./deps/std/async.ts";
 
 export function createRedisConnection(
@@ -58,6 +66,8 @@ class RedisConnection
   private commandQueue: PendingCommand[] = [];
   #conn!: Deno.Conn;
   #protocol!: Protocol;
+  /** @default {2} */
+  #protover?: Protover;
   #eventTarget = createTypedEventTarget<ConnectionEventMap>();
   #connectingPromise?: PromiseWithResolvers<void>;
 
@@ -134,12 +144,24 @@ class RedisConnection
     args?: Array<RedisValue>,
     options?: SendCommandOptions,
   ): Promise<RedisReply> {
-    const execute = () =>
-      this.#protocol.sendCommand(
-        command,
-        args ?? kEmptyRedisArgs,
-        options?.returnUint8Arrays,
-      );
+    const execute = this.#isRESP3SubscriptionActive
+      ? async () => {
+        if (this.#regularReplies == null) {
+          throw new InvalidStateError("regularReplies should be defined");
+        }
+        await this.#protocol.writeCommand({
+          command,
+          args: args ?? kEmptyRedisArgs,
+        });
+        const reply = await this.#regularReplies.receive();
+        return reply;
+      }
+      : () =>
+        this.#protocol.sendCommand(
+          command,
+          args ?? kEmptyRedisArgs,
+          options?.returnUint8Arrays,
+        );
     const { promise, resolve, reject } = Promise.withResolvers<RedisReply>();
     this.enqueueCommand({ execute, resolve, reject });
 
@@ -199,7 +221,21 @@ class RedisConnection
     const { promise, resolve, reject } = Promise.withResolvers<
       RedisReply[]
     >();
-    const execute = () => this.#protocol.pipeline(commands);
+    const execute = this.#isRESP3SubscriptionActive
+      ? async () => {
+        if (this.#regularReplies == null) {
+          throw new InvalidStateError("regularReplies should be defined");
+        }
+        const nCommands = commands.length;
+        const replies: Array<RedisReply> = [];
+        await this.#protocol.writeCommands(commands);
+        for (let i = 0; i < nCommands; i++) {
+          const reply = await this.#regularReplies.receive();
+          replies.push(reply);
+        }
+        return replies;
+      }
+      : () => this.#protocol.pipeline(commands);
     this.enqueueCommand({ execute, resolve, reject } as PendingCommand);
     return promise;
   }
@@ -208,33 +244,103 @@ class RedisConnection
     return this.#protocol.writeCommand(command);
   }
 
-  async *[kUnstableStartReadLoop](
+  #isRESP3SubscriptionActive = false;
+  #regularReplies?: Channel<RedisReply>;
+  #pushReplies?: Channel<RedisReply>;
+  #resp3SubscriptionAbortController?: AbortController;
+  [kUnstableEnterSubscriptionMode](): void {
+    this.#isRESP3SubscriptionActive = this.#protover === 3;
+    if (!this.#isRESP3SubscriptionActive) {
+      return;
+    }
+
+    if (
+      this.#regularReplies || this.#pushReplies ||
+      this.#resp3SubscriptionAbortController
+    ) {
+      throw new InvalidStateError("Already entered subscription mode");
+    }
+
+    this.#regularReplies = createChannel();
+    this.#pushReplies = createChannel();
+    const abortController = new AbortController();
+    this.#resp3SubscriptionAbortController = abortController;
+
+    const readNextReply = async () => {
+      if (abortController.signal.aborted) return;
+      try {
+        const { isPushReply, reply } = await this.#protocol
+          .tryToReadPushReply();
+
+        if (isPushReply) {
+          await this.#pushReplies?.send(reply);
+        } else {
+          await this.#regularReplies?.send(reply);
+        }
+      } catch (error) {
+        const wasSubscriptionModeLeaved = (error instanceof DOMException &&
+          error.name === "AbortError") ||
+          error instanceof Deno.errors.Interrupted;
+        if (wasSubscriptionModeLeaved) {
+          return;
+        }
+        throw error;
+      }
+      return readNextReply();
+    };
+    readNextReply();
+  }
+
+  [kUnstableLeaveSubscriptionMode](): void {
+    this.#isRESP3SubscriptionActive = false;
+    this.#regularReplies?.close();
+    this.#regularReplies = undefined;
+    this.#pushReplies?.close();
+    this.#pushReplies = undefined;
+    this.#resp3SubscriptionAbortController?.abort();
+    this.#resp3SubscriptionAbortController = undefined;
+  }
+
+  async *[kUnstableStartSubscriptionLoop](
     binaryMode?: boolean,
   ): AsyncIterableIterator<RedisReply> {
     let forceReconnect = false;
-    while (this.isConnected) {
-      try {
-        let rep: RedisReply;
+    const resp3Reader = async () => {
+      if (this.#pushReplies == null) {
+        throw new InvalidStateError("Subscription mode has not started");
+      }
+      const reply = await this.#pushReplies.receive();
+      return reply;
+    };
+    const resp2Reader = () => this[kUnstableReadReply](binaryMode);
+    const reader = this.#protover === 3 ? resp3Reader : resp2Reader;
+    try {
+      while (this.isConnected) {
         try {
-          rep = await this[kUnstableReadReply](binaryMode);
-        } catch (err) {
-          if (this.isClosed) {
-            // Connection already closed by the user.
-            break;
+          let pushReply: RedisReply;
+          try {
+            pushReply = await reader();
+          } catch (err) {
+            if (this.isClosed) {
+              // Connection already closed by the user.
+              break;
+            }
+            throw err; // Connection may have been unintentionally closed.
           }
-          throw err; // Connection may have been unintentionally closed.
-        }
-        yield rep;
-      } catch (error) {
-        if (isRetriableError(error)) {
-          forceReconnect = true;
-        } else throw error;
-      } finally {
-        if ((!this.isClosed && !this.isConnected) || forceReconnect) {
-          forceReconnect = false;
-          await this.reconnect();
+          yield pushReply;
+        } catch (error) {
+          if (isRetriableError(error)) {
+            forceReconnect = true;
+          } else throw error;
+        } finally {
+          if ((!this.isClosed && !this.isConnected) || forceReconnect) {
+            forceReconnect = false;
+            await this.reconnect();
+          }
         }
       }
+    } finally {
+      this[kUnstableLeaveSubscriptionMode]();
     }
   }
 
@@ -292,9 +398,11 @@ class RedisConnection
           await this.authenticate(this.options.username, this.options.password);
         }
         if (this.options[kUnstableProtover] != null) {
-          await this.#sendCommandImmediately("HELLO", [
-            this.options[kUnstableProtover],
-          ]);
+          const protover = this.options[kUnstableProtover];
+          await this.#sendCommandImmediately("HELLO", [protover]);
+          if (protover !== 2) {
+            this.#protover = protover;
+          }
         }
         if (this.options.db) {
           await this.selectDb(this.options.db);
@@ -356,6 +464,7 @@ class RedisConnection
         }
       }
     }
+    this[kUnstableLeaveSubscriptionMode]();
   }
 
   async reconnect(): Promise<void> {
