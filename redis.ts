@@ -641,6 +641,10 @@ class RedisImpl implements Redis {
     return this.execIntegerReply("COMMAND", "COUNT");
   }
 
+  commandDocs(...commandNames: Array<string>) {
+    return this.execArrayReply("COMMAND", "DOCS", ...commandNames);
+  }
+
   commandGetKeys() {
     return this.execArrayReply<BulkString>("COMMAND", "GETKEYS");
   }
