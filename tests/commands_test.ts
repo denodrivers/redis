@@ -1,6 +1,7 @@
 import { nextPort, startRedis, stopRedis } from "./test_util.ts";
 import type { TestServer } from "./test_util.ts";
 import { aclTests } from "./commands/acl.ts";
+import { commandTests } from "./commands/command.ts";
 import { connectionTests } from "./commands/connection.ts";
 import { generalTests } from "./commands/general.ts";
 import { geoTests } from "./commands/geo.ts";
@@ -44,6 +45,7 @@ describe("commands", () => {
   ) {
     describe(kind, () => {
       describe("acl", () => aclTests(connector, getServer));
+      describe("command", () => commandTests(connector, getServer));
       describe("connection", () => connectionTests(connector, getServer));
       describe("general", () => generalTests(connector, getServer));
       describe("geo", () => geoTests(connector, getServer));

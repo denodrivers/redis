@@ -1273,6 +1273,8 @@ XRANGE somestream - +
     [BulkString, Integer, BulkString[], Integer, Integer, Integer][]
   >;
   commandCount(): Promise<Integer>;
+  /** @since Redis 7.0.0 */
+  commandDocs(...commandNames: Array<string>): Promise<ConditionalArray>;
   commandGetKeys(): Promise<BulkString[]>;
   commandInfo(
     ...command_names: string[]
