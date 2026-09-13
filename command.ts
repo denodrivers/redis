@@ -1249,7 +1249,10 @@ XRANGE somestream - +
     node_id?: string,
   ): Promise<SimpleString>;
   clusterSlaves(node_id: string): Promise<BulkString[]>;
+  /** Deprecated since Redis 7.0.0. Use {@linkcode clusterShards} instead. */
   clusterSlots(): Promise<ConditionalArray>;
+  /** @since Redis 7.0.0 */
+  clusterShards(): Promise<ConditionalArray>;
   readonly(): Promise<SimpleString>;
   readwrite(): Promise<SimpleString>;
 

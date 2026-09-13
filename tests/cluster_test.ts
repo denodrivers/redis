@@ -1,11 +1,18 @@
 import type { Redis } from "../mod.ts";
 import {
   assert,
+  assertArrayIncludes,
   assertEquals,
   assertStringIncludes,
 } from "../deps/std/assert.ts";
 import { afterAll, beforeAll, describe, it } from "../deps/std/testing.ts";
-import { newClient, nextPort, startRedis, stopRedis } from "./test_util.ts";
+import {
+  newClient,
+  nextPort,
+  startRedis,
+  stopRedis,
+  usesRedisVersion,
+} from "./test_util.ts";
 import type { TestServer } from "./test_util.ts";
 
 describe("cluster", () => {
@@ -111,6 +118,18 @@ describe("cluster", () => {
 
   it("slots", async () => {
     assert(Array.isArray(await client.clusterSlots()));
+  });
+
+  describe("shards", () => {
+    it(
+      "returns details about the shards",
+      { ignore: usesRedisVersion("6") },
+      async () => {
+        const reply = await client.clusterShards();
+        assert(Array.isArray(reply[0]));
+        assertArrayIncludes(reply[0], ["slots", "nodes"]);
+      },
+    );
   });
 
   it("replicate", async () => {
