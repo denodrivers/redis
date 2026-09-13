@@ -631,6 +631,10 @@ class RedisImpl implements Redis {
     return this.execArrayReply("CLUSTER", "SLOTS");
   }
 
+  clusterShards() {
+    return this.execArrayReply("CLUSTER", "SHARDS");
+  }
+
   command() {
     return this.execArrayReply("COMMAND") as Promise<
       [BulkString, Integer, BulkString[], Integer, Integer, Integer][]
