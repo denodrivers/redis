@@ -1279,6 +1279,11 @@ XRANGE somestream - +
   /** @since Redis 7.0.0 */
   commandDocs(...commandNames: Array<string>): Promise<ConditionalArray>;
   commandGetKeys(): Promise<BulkString[]>;
+  /** @since Redis 7.0.0 */
+  commandGetKeysAndFlags(
+    command: string,
+    ...args: Array<string>
+  ): Promise<ConditionalArray>;
   commandInfo(
     ...command_names: string[]
   ): Promise<
