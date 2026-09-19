@@ -1,6 +1,11 @@
 import type { Redis, RedisConnectOptions } from "../mod.ts";
 import { connect } from "../mod.ts";
+import { assert } from "../deps/std/assert.ts";
 import { delay } from "../deps/std/async.ts";
+
+export function assertIsArray(x: unknown): asserts x is Array<unknown> {
+  assert(Array.isArray(x), `${x} should be an array`);
+}
 
 export type Connector = typeof connect;
 interface Logger {

@@ -653,6 +653,18 @@ class RedisImpl implements Redis {
     return this.execArrayReply<BulkString>("COMMAND", "GETKEYS");
   }
 
+  commandGetKeysAndFlags(
+    command: string,
+    ...args: Array<string>
+  ): Promise<ConditionalArray> {
+    return this.execArrayReply(
+      "COMMAND",
+      "GETKEYSANDFLAGS",
+      command,
+      ...args,
+    );
+  }
+
   commandInfo(...commandNames: string[]) {
     return this.execArrayReply("COMMAND", "INFO", ...commandNames) as Promise<
       (

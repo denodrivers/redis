@@ -1,7 +1,7 @@
-import { assert, assertEquals, assertGreater } from "../../deps/std/assert.ts";
+import { assertEquals, assertGreater } from "../../deps/std/assert.ts";
 import { afterAll, beforeAll, describe, it } from "../../deps/std/testing.ts";
 import type { Connector, TestServer } from "../test_util.ts";
-import { usesRedisVersion } from "../test_util.ts";
+import { assertIsArray, usesRedisVersion } from "../test_util.ts";
 import type { Redis } from "../../mod.ts";
 
 export function commandTests(
@@ -37,8 +37,22 @@ export function commandTests(
         const j = i * 2;
         assertEquals(reply[j], given[i]);
         const documentation = reply[j + 1];
-        assert(Array.isArray(documentation));
+        assertIsArray(documentation);
       }
+    });
+  });
+
+  describe("getKeysAndFlags", () => {
+    it("returns a list of keys and flags for the given command", {
+      ignore: usesRedisVersion("6"),
+    }, async () => {
+      const command = "SET";
+      const args = ["foo", "bar", "NX"];
+      const reply = await client.commandGetKeysAndFlags(command, ...args);
+      assertIsArray(reply);
+      assertIsArray(reply[0]);
+      assertEquals(reply[0][0], "foo");
+      assertIsArray(reply[0][1]);
     });
   });
 }
