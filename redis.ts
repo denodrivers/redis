@@ -978,9 +978,13 @@ class RedisImpl implements Redis {
     return this.execBulkReply<BulkString>("INCRBYFLOAT", key, increment);
   }
 
-  info(section?: string) {
+  info(section?: string): Promise<BulkString>;
+  info(sections: Array<string>): Promise<BulkString>;
+  info(section?: string | Array<string>) {
     if (section !== undefined) {
-      return this.execStatusReply("INFO", section);
+      return Array.isArray(section)
+        ? this.execStatusReply("INFO", ...section)
+        : this.execStatusReply("INFO", section);
     }
     return this.execStatusReply("INFO");
   }

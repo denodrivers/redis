@@ -1299,6 +1299,8 @@ XRANGE somestream - +
   flushall(async?: boolean): Promise<SimpleString>;
   flushdb(async?: boolean): Promise<SimpleString>;
   info(section?: string): Promise<BulkString>;
+  /** @since Redis 7.0.0 */
+  info(sections: Array<string>): Promise<BulkString>;
   lastsave(): Promise<Integer>;
   memoryDoctor(): Promise<BulkString>;
   memoryHelp(): Promise<BulkString[]>;

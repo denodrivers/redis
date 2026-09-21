@@ -5,11 +5,17 @@ import {
   assertEquals,
   assertExists,
   assertInstanceOf,
+  assertNotMatch,
   assertRejects,
+  assertStringIncludes,
 } from "../../deps/std/assert.ts";
 import { afterAll, beforeAll, describe, it } from "../../deps/std/testing.ts";
 import { delay } from "../../deps/std/async.ts";
-import type { Connector, TestServer } from "../test_util.ts";
+import {
+  type Connector,
+  type TestServer,
+  usesRedisVersion,
+} from "../test_util.ts";
 import type { Redis } from "../../mod.ts";
 
 export function connectionTests(
@@ -87,6 +93,29 @@ export function connectionTests(
   describe("swapdb", () => {
     it("returns `OK` on success", async () => {
       assertEquals(await client.swapdb(0, 1), "OK");
+    });
+  });
+
+  describe("info", () => {
+    it("returns the `default` set of sections by default", async () => {
+      const reply = await client.info();
+      assertStringIncludes(reply, "# Clients");
+      assertStringIncludes(reply, "# Memory");
+    });
+
+    it("returns only information for the specified section", async () => {
+      const reply = await client.info("server");
+      assertStringIncludes(reply, "# Server");
+      assertNotMatch(reply, /# Memory/);
+    });
+
+    it("supports multiple section arguments", {
+      ignore: usesRedisVersion("6"),
+    }, async () => {
+      const reply = await client.info(["cpu", "server"]);
+      assertStringIncludes(reply, "# CPU");
+      assertStringIncludes(reply, "# Server");
+      assertNotMatch(reply, /# Memory/);
     });
   });
 
