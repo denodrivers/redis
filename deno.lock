@@ -7,13 +7,14 @@
     "jsr:@std/bytes@1": "1.0.5",
     "jsr:@std/bytes@^1.0.2-rc.3": "1.0.5",
     "jsr:@std/collections@1": "1.0.11",
-    "jsr:@std/collections@^1.1.3": "1.1.3",
-    "jsr:@std/fmt@^1.0.8": "1.0.8",
+    "jsr:@std/collections@^1.1.3": "1.4.0",
+    "jsr:@std/fmt@^1.0.8": "1.0.10",
     "jsr:@std/internal@^1.0.6": "1.0.6",
     "jsr:@std/io@0.224.5": "0.224.5",
     "jsr:@std/random@0.1.0": "0.1.0",
+    "jsr:@std/semver@^1.0.8": "1.0.8",
     "jsr:@std/testing@1": "1.0.11",
-    "jsr:@uki00a/deno-json-lint@0.4": "0.4.0",
+    "jsr:@uki00a/deno-json-lint@0.7": "0.7.0",
     "jsr:@uki00a/deno-lint-plugin-extra-rules@0.9.0": "0.9.0",
     "npm:benny@3.7.1": "3.7.1",
     "npm:cluster-key-slot@1.1.0": "1.1.0",
@@ -37,11 +38,11 @@
     "@std/collections@1.0.11": {
       "integrity": "2f62cf9587484b1fff364f6c3e1f83478eea53dbb6faed6ffeda92ddb6b172f0"
     },
-    "@std/collections@1.1.3": {
-      "integrity": "bf8b0818886df6a32b64c7d3b037a425111f28278d69fd0995aeb62777c986b0"
+    "@std/collections@1.4.0": {
+      "integrity": "bd7f74966e11de11b1f0420b7e8cb7bb381d8af7872b738443b92050db28c9c0"
     },
-    "@std/fmt@1.0.8": {
-      "integrity": "71e1fc498787e4434d213647a6e43e794af4fd393ef8f52062246e06f7e372b7"
+    "@std/fmt@1.0.10": {
+      "integrity": "90dfba288802ac6de82fb31d0917eb9e4450b9925b954d5e51fc29ac07419db5"
     },
     "@std/internal@1.0.6": {
       "integrity": "9533b128f230f73bd209408bb07a4b12f8d4255ab2a4d22a1fd6d87304aca9a4"
@@ -55,6 +56,9 @@
     "@std/random@0.1.0": {
       "integrity": "70a006be0ffb77d036bab54aa8ae6bd0119ba77ace0f2f56f63273d4262a5667"
     },
+    "@std/semver@1.0.8": {
+      "integrity": "dc830e8b8b6a380c895d53fbfd1258dc253704ca57bbe1629ac65fd7830179b7"
+    },
     "@std/testing@1.0.11": {
       "integrity": "12b3db12d34f0f385a26248933bde766c0f8c5ad8b6ab34d4d38f528ab852f48",
       "dependencies": [
@@ -62,11 +66,12 @@
         "jsr:@std/internal"
       ]
     },
-    "@uki00a/deno-json-lint@0.4.0": {
-      "integrity": "a8f8f19e259fa66ff21a0c5d63d1de6152973ab3c93c73e07a017de1d44b6edd",
+    "@uki00a/deno-json-lint@0.7.0": {
+      "integrity": "264d36c82d0cf16d72f5b47578257ef14f7566f7f9a6140c42143efdd3e1b3c4",
       "dependencies": [
         "jsr:@std/collections@^1.1.3",
         "jsr:@std/fmt",
+        "jsr:@std/semver",
         "npm:jsonc-parser",
         "npm:lines-and-columns",
         "npm:string-argv"
@@ -298,7 +303,7 @@
   },
   "workspace": {
     "dependencies": [
-      "jsr:@uki00a/deno-json-lint@0.4",
+      "jsr:@uki00a/deno-json-lint@0.7",
       "npm:benny@3.7.1"
     ]
   }

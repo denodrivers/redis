@@ -60,7 +60,7 @@
   "minimumDependencyAge": 1440,
   "imports": {
     "benny": "npm:benny@3.7.1",
-    "@uki00a/deno-json-lint": "jsr:@uki00a/deno-json-lint@^0.4.0"
+    "@uki00a/deno-json-lint": "jsr:@uki00a/deno-json-lint@^0.7.0"
   },
   "tasks": {
     "lock": "deno cache --reload mod.ts experimental/**/mod.ts tests/**/*.ts benchmark/*.ts",
@@ -74,5 +74,15 @@
     "test:doc": "deno check --doc-only --import-map=import_map.test.json README.md experimental/cluster/README.md",
     "bench:deno-redis": "DENO_NO_PACKAGE_JSON=1 deno run --unstable --permission-set=bench:deno-redis benchmark/deno-redis.ts",
     "bench:ioredis": "node benchmark/ioredis.js"
+  },
+  "deno-json-lint": {
+    "rules": {
+      "import-allowlist": ["error", {
+        "allowlist": [
+          "benny",
+          "@uki00a/deno-json-lint"
+        ]
+      }]
+    }
   }
 }
