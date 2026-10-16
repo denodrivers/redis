@@ -79,7 +79,7 @@ export interface RedisConnectionOptions {
   maxRetryCount?: number;
   backoff?: Backoff;
   /**
-   * When this option is set, a `PING` command is sent every specified number of seconds.
+   * When this option is set, a `PING` command is sent every specified number of milliseconds.
    */
   healthCheckInterval?: number;
 
