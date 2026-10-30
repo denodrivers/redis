@@ -34,6 +34,26 @@ Deno.test({
       assertEquals(await readReply(buf), null);
     });
 
+    await t.step("long line (large payload)", async () => {
+      const payload = "a".repeat(8192);
+      const rawReply = `+${payload}\r\n`;
+      const encoder = new TextEncoder();
+      const encoded = encoder.encode(rawReply);
+      const readable = new ReadableStream({
+        start(controller) {
+          for (let i = 0; i < encoded.length; i++) {
+            controller.enqueue(encoded.subarray(i, i + 1));
+          }
+          controller.close();
+        },
+      });
+      const reader = readable.getReader();
+      const reply = await readReply(
+        BufReader.create(readerFromStreamReader(reader)),
+      );
+      assertEquals(reply, payload);
+    });
+
     await t.step("attribute", async () => {
       const encoder = new TextEncoder();
       const cases: Array<[given: string, expected: RedisReply]> = [
