@@ -171,6 +171,14 @@ export interface XGroupDetail {
   pending: XPendingCount[];
   consumers: XConsumerDetail[];
 }
+export interface XGroupCreateOpts {
+  /** If `true`, `MKSTREAM` is set. */
+  mkstream?: boolean;
+  /**
+   * @since Redis 7.0
+   */
+  entriesRead?: number;
+}
 /** Child of XINFO STREAMS FULL response */
 export interface XConsumerDetail {
   name: string;

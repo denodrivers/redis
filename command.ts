@@ -17,6 +17,7 @@ import type {
   XAddFieldValues,
   XClaimOpts,
   XClaimReply,
+  XGroupCreateOpts,
   XId,
   XIdAdd,
   XIdInput,
@@ -798,13 +799,13 @@ XCLAIM mystream mygroup Alice 3600000 1526569498055-0
    *            want consumers to fetch the whole stream
    *            history, use zero as the starting XId for
    *            the consumer group
-   * @param mkstream You can use the optional MKSTREAM subcommand as the last argument after the XId to automatically create the stream, if it doesn't exist. Note that if the stream is created in this way it will have a length of 0.
+   * @param mkstreamOrOpts You can set this to `true` to automatically create the stream, if it doesn't exist. You can also specify more detailed options using an object format.
    */
   xgroupCreate(
     key: string,
     groupName: string,
     xid: XIdInput | "$",
-    mkstream?: boolean,
+    mkstreamOrOpts?: boolean | XGroupCreateOpts,
   ): Promise<SimpleString>;
   /**
    * Delete a specific consumer from a group, leaving

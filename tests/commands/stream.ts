@@ -8,8 +8,15 @@ import {
   assertNotEquals,
   assertRejects,
 } from "../../deps/std/assert.ts";
-import { afterAll, beforeAll, it } from "../../deps/std/testing.ts";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  describe,
+  it,
+} from "../../deps/std/testing.ts";
 import type { Connector, TestServer } from "../test_util.ts";
+import { usesRedisVersion } from "../test_util.ts";
 
 export function streamTests(
   connect: Connector,
@@ -20,7 +27,9 @@ export function streamTests(
     const server = getServer();
     client = await connect({ hostname: "127.0.0.1", port: server.port });
   });
-
+  afterEach(async () => {
+    await client.flushdb();
+  });
   afterAll(() => client.close());
 
   const rnum = () => Math.floor(Math.random() * 1000);
@@ -210,6 +219,31 @@ export function streamTests(
     );
 
     assertEquals(await client.xgroupDestroy(key, groupName), 1);
+  });
+
+  describe("xgroupCreate", () => {
+    it("supports ENTRIESREAD", { ignore: usesRedisVersion("6") }, async () => {
+      const key = randomStream();
+      const groupName = "test-group";
+      const invalidEntriesRead = -2;
+      await assertRejects(
+        async () => {
+          await client.xgroupCreate(key, groupName, "$", {
+            entriesRead: invalidEntriesRead,
+            mkstream: true,
+          });
+        },
+        ErrorReplyError,
+        "ENTRIESREAD",
+      );
+
+      const validEntriesRead = -1;
+      const reply = await client.xgroupCreate(key, groupName, "$", {
+        entriesRead: validEntriesRead,
+        mkstream: true,
+      });
+      assertEquals(reply, "OK");
+    });
   });
 
   it("xgroup setid and delconsumer", async () => {
