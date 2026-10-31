@@ -71,6 +71,7 @@ import type {
   XClaimJustXId,
   XClaimMessages,
   XClaimOpts,
+  XGroupCreateOpts,
   XId,
   XIdAdd,
   XIdInput,
@@ -1835,9 +1836,16 @@ class RedisImpl implements Redis {
     key: string,
     groupName: string,
     xid: XIdInput | "$",
-    mkstream?: boolean,
+    mkstreamOrOpts?: boolean | XGroupCreateOpts,
   ) {
     const args = [];
+    const opts = typeof mkstreamOrOpts === "object"
+      ? mkstreamOrOpts
+      : undefined;
+    if (opts?.entriesRead != null) {
+      args.push("ENTRIESREAD", opts.entriesRead);
+    }
+    const mkstream = mkstreamOrOpts === true || opts?.mkstream === true;
     if (mkstream) {
       args.push("MKSTREAM");
     }
