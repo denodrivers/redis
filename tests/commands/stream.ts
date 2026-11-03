@@ -14,6 +14,7 @@ import {
   beforeAll,
   describe,
   it,
+  test,
 } from "../../deps/std/testing.ts";
 import type { Connector, TestServer } from "../test_util.ts";
 import { usesRedisVersion } from "../test_util.ts";
@@ -246,30 +247,60 @@ export function streamTests(
     });
   });
 
-  it("xgroup setid and delconsumer", async () => {
-    const key = randomStream();
-    const group = "test-group";
-    const consumer = "test-consumer";
+  describe("xgroupSetID", () => {
+    it("supports ENTRIESREAD", { ignore: usesRedisVersion("6") }, async () => {
+      const key = randomStream();
+      const group = "test-group";
 
-    const created = await client.xgroupCreate(key, group, "$", true);
-    assertEquals(created, "OK");
+      assertEquals(
+        await client.xgroupCreate(key, group, "$", true),
+        "OK",
+      );
 
-    const addedId = await client.xadd(key, "*", { anyfield: "anyval" });
+      const invalidEntriesRead = -2;
+      await assertRejects(
+        async () => {
+          await client.xgroupSetID(key, group, "$", {
+            entriesRead: invalidEntriesRead,
+          });
+        },
+        ErrorReplyError,
+        "ENTRIESREAD",
+      );
 
-    assert(addedId);
+      const validEntriesRead = 0;
+      assertEquals(
+        await client.xgroupSetID(key, group, "$", {
+          entriesRead: validEntriesRead,
+        }),
+        "OK",
+      );
+    });
+    test("xgroup setid and delconsumer", async () => {
+      const key = randomStream();
+      const group = "test-group";
+      const consumer = "test-consumer";
 
-    //  must read from a given stream to create the
-    //  consumer
-    const xid = ">";
-    const data = await client.xreadgroup([{ key, xid }], { group, consumer });
+      const created = await client.xgroupCreate(key, group, "$", true);
+      assertEquals(created, "OK");
 
-    assertEquals(data.length, 1);
+      const addedId = await client.xadd(key, "*", { anyfield: "anyval" });
 
-    assertEquals(await client.xgroupSetID(key, group, 0), "OK");
+      assert(addedId);
 
-    assertEquals(await client.xgroupDelConsumer(key, group, consumer), 1);
+      //  must read from a given stream to create the
+      //  consumer
+      const xid = ">";
+      const data = await client.xreadgroup([{ key, xid }], { group, consumer });
 
-    await cleanupStream(client, key);
+      assertEquals(data.length, 1);
+
+      assertEquals(await client.xgroupSetID(key, group, 0), "OK");
+
+      assertEquals(await client.xgroupDelConsumer(key, group, consumer), 1);
+
+      await cleanupStream(client, key);
+    });
   });
 
   it("xreadgroup but no ack", async () => {

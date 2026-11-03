@@ -179,6 +179,12 @@ export interface XGroupCreateOpts {
    */
   entriesRead?: number;
 }
+export interface XGroupSetIDOpts {
+  /**
+   * @since Redis 7.0
+   */
+  entriesRead?: number;
+}
 /** Child of XINFO STREAMS FULL response */
 export interface XConsumerDetail {
   name: string;

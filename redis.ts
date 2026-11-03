@@ -72,6 +72,7 @@ import type {
   XClaimMessages,
   XClaimOpts,
   XGroupCreateOpts,
+  XGroupSetIDOpts,
   XId,
   XIdAdd,
   XIdInput,
@@ -1886,13 +1887,18 @@ class RedisImpl implements Redis {
     key: string,
     groupName: string,
     xid: XId,
+    opts?: XGroupSetIDOpts,
   ) {
+    const args = opts?.entriesRead != null
+      ? ["ENTRIESREAD", opts.entriesRead]
+      : [];
     return this.execStatusReply(
       "XGROUP",
       "SETID",
       key,
       groupName,
       xidstr(xid),
+      ...args,
     );
   }
 
