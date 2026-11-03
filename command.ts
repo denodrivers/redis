@@ -18,6 +18,7 @@ import type {
   XClaimOpts,
   XClaimReply,
   XGroupCreateOpts,
+  XGroupSetIDOpts,
   XId,
   XIdAdd,
   XIdInput,
@@ -858,11 +859,13 @@ XGROUP SETID mystream consumer-group-name 0
      * @param key  stream key
      * @param groupName   the consumer group
      * @param xid the XId to use for the next message delivered
+     * @param opts see {@linkcode XGroupSetIDOpts}
      */
   xgroupSetID(
     key: string,
     groupName: string,
     xid: XIdInput,
+    opts?: XGroupSetIDOpts,
   ): Promise<SimpleString>;
   xinfoStream(key: string): Promise<XInfoStreamReply>;
   /**
