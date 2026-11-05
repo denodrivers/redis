@@ -116,6 +116,17 @@ export interface HelloOpts {
   clientName?: string;
 }
 
+export interface LcsOpts {
+  /** Return the length of the longest common subsequence instead of the subsequence itself. */
+  len?: boolean;
+  /** Return the positions of the matching ranges in both strings. */
+  idx?: boolean;
+  /** Only return matches that are at least this long. Requires {@linkcode LcsOpts.idx}. */
+  minmatchlen?: number;
+  /** Include the length of each match. Requires {@linkcode LcsOpts.idx}. */
+  withmatchlen?: boolean;
+}
+
 export interface StralgoOpts {
   idx?: boolean;
   len?: boolean;
@@ -374,6 +385,53 @@ export interface RedisCommands {
   incr(key: string): Promise<Integer>;
   incrby(key: string, increment: number): Promise<Integer>;
   incrbyfloat(key: string, increment: number): Promise<BulkString>;
+
+  /**
+   * Finds the longest common subsequence of the strings stored at `key1` and `key2`.
+   *
+   * Requires Redis 7.0 or later.
+   *
+   * @see https://redis.io/docs/latest/commands/lcs/
+   */
+  lcs(key1: string, key2: string): Promise<BulkString>;
+  lcs(key1: string, key2: string, opts: { len: true }): Promise<Integer>;
+  lcs(
+    key1: string,
+    key2: string,
+    opts: { idx: true; minmatchlen?: number; withmatchlen?: false },
+  ): Promise<
+    [
+      string, // `"matches"`
+      Array<[[number, number], [number, number]]>,
+      string, // `"len"`
+      Integer,
+    ]
+  >;
+  lcs(
+    key1: string,
+    key2: string,
+    opts: { idx: true; minmatchlen?: number; withmatchlen: true },
+  ): Promise<
+    [
+      string, // `"matches"`
+      Array<[[number, number], [number, number], number]>,
+      string, // `"len"`
+      Integer,
+    ]
+  >;
+  lcs(
+    key1: string,
+    key2: string,
+    opts?: LcsOpts,
+  ): Promise<
+    BulkString | Integer | [
+      string, // `"matches"`
+      Array<[[number, number], [number, number], number | undefined]>,
+      string, // `"len"`
+      Integer,
+    ]
+  >;
+
   mget(...keys: string[]): Promise<Bulk[]>;
   mset(key: string, value: RedisValue): Promise<SimpleString>;
   mset(...key_values: [string, RedisValue][]): Promise<SimpleString>;
@@ -396,6 +454,9 @@ export interface RedisCommands {
   setnx(key: string, value: RedisValue): Promise<Integer>;
   setrange(key: string, offset: number, value: RedisValue): Promise<Integer>;
 
+  /**
+   * @deprecated `STRALGO` was removed in Redis 7.0. Use {@linkcode RedisCommands.lcs} instead.
+   */
   stralgo(
     algorithm: StralgoAlgorithm,
     target: StralgoTarget,
@@ -403,6 +464,9 @@ export interface RedisCommands {
     b: string,
   ): Promise<Bulk>;
 
+  /**
+   * @deprecated `STRALGO` was removed in Redis 7.0. Use {@linkcode RedisCommands.lcs} instead.
+   */
   stralgo(
     algorithm: StralgoAlgorithm,
     target: StralgoTarget,
@@ -411,6 +475,9 @@ export interface RedisCommands {
     opts?: { len: true },
   ): Promise<Integer>;
 
+  /**
+   * @deprecated `STRALGO` was removed in Redis 7.0. Use {@linkcode RedisCommands.lcs} instead.
+   */
   stralgo(
     algorithm: StralgoAlgorithm,
     target: StralgoTarget,
@@ -426,6 +493,9 @@ export interface RedisCommands {
     ]
   >;
 
+  /**
+   * @deprecated `STRALGO` was removed in Redis 7.0. Use {@linkcode RedisCommands.lcs} instead.
+   */
   stralgo(
     algorithm: StralgoAlgorithm,
     target: StralgoTarget,
@@ -441,6 +511,9 @@ export interface RedisCommands {
     ]
   >;
 
+  /**
+   * @deprecated `STRALGO` was removed in Redis 7.0. Use {@linkcode RedisCommands.lcs} instead.
+   */
   stralgo(
     algorithm: StralgoAlgorithm,
     target: StralgoTarget,
