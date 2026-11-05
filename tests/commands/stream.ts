@@ -729,10 +729,13 @@ export function streamTests(
     });
   });
 
-  it("xinfo", async () => {
+  test("xinfoStream, xinfoStreamFull, xinfoGroups, and xinfoConsumers", async () => {
     await withConsumerGroup(async (key, group) => {
+      const isRedisV7OrHigher = !usesRedisVersion("6");
       await client.xadd(key, 1, { hello: "no" });
+      await client.xadd(key, "1-1", { hello: "world" });
       await client.xadd(key, 2, { hello: "yes" });
+      await client.xdel(key, "1-1");
 
       const basicStreamInfo = await client.xinfoStream(key);
       assertEquals(basicStreamInfo.length, 2);
@@ -748,6 +751,23 @@ export function streamTests(
         xid: { unixMs: 2, seqNo: 0 },
         fieldValues: { hello: "yes" },
       });
+      assertEquals(
+        basicStreamInfo.maxDeletedEntryId,
+        isRedisV7OrHigher
+          ? {
+            unixMs: 1,
+            seqNo: 1,
+          }
+          : undefined,
+      );
+      assertEquals(
+        basicStreamInfo.entriesAdded,
+        isRedisV7OrHigher ? 3 : undefined,
+      );
+      assertEquals(
+        basicStreamInfo.recordedFirstEntryId,
+        isRedisV7OrHigher ? { unixMs: 1, seqNo: 0 } : undefined,
+      );
 
       // Let's do an XREADGROUP so that we see some entries in the PEL
       const _ = client.xreadgroup([[key, ">"]], { group, consumer: "someone" });

@@ -150,6 +150,12 @@ export interface XInfoStreamReply {
   lastGeneratedId: XId;
   firstEntry: XMessage;
   lastEntry: XMessage;
+  /** @since Redis 7.0 */
+  maxDeletedEntryId?: XId;
+  /** @since Redis 7.0 */
+  entriesAdded?: number;
+  /** @since Redis 7.0 */
+  recordedFirstEntryId?: XId;
 }
 
 export interface XInfoStreamFullReply {
