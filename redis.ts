@@ -1916,6 +1916,9 @@ class RedisImpl implements Redis {
         const lastEntry = parseXMessage(
           data.get("last-entry") as XReadIdData,
         );
+        const maybeMaxDeletedEntryId = data.get("max-deleted-entry-id");
+        const maybeEntriesAdded = data.get("entries-added");
+        const maybeRecordedFirstEntryId = data.get("recorded-first-entry-id");
 
         return {
           length: rawnum(data.get("length") ?? null),
@@ -1927,6 +1930,15 @@ class RedisImpl implements Redis {
           ),
           firstEntry,
           lastEntry,
+          maxDeletedEntryId: maybeMaxDeletedEntryId
+            ? parseXId(rawstr(maybeMaxDeletedEntryId))
+            : undefined,
+          entriesAdded: maybeEntriesAdded
+            ? rawnum(maybeEntriesAdded)
+            : undefined,
+          recordedFirstEntryId: maybeRecordedFirstEntryId
+            ? parseXId(rawstr(maybeRecordedFirstEntryId))
+            : undefined,
         };
       },
     );
