@@ -28,6 +28,7 @@ export type {
   GeoUnit,
   HelloOpts,
   HScanOpts,
+  LcsOpts,
   LInsertLocation,
   LPosOpts,
   LPosWithCountOpts,

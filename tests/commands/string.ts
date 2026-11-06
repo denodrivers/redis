@@ -284,6 +284,62 @@ export function stringTests(
     assertEquals(v, "Hello, Redis!");
   });
 
+  it("lcs", {
+    // NOTE: LCS was added in Redis 7.0
+    ignore: usesRedisVersion("6"),
+  }, async () => {
+    await client.set("lcs-a", "ohmytext");
+    await client.set("lcs-b", "mynewtext");
+
+    const lcs = await client.lcs("lcs-a", "lcs-b");
+    assertEquals(lcs, "mytext");
+    assertType<IsExact<typeof lcs, string>>(true);
+
+    const len = await client.lcs("lcs-a", "lcs-b", { len: true });
+    assertEquals(len, 6);
+    assertType<IsExact<typeof len, number>>(true);
+
+    const idx = await client.lcs("lcs-a", "lcs-b", { idx: true });
+    assertEquals(idx, [
+      "matches",
+      [
+        [[4, 7], [5, 8]],
+        [[2, 3], [0, 1]],
+      ],
+      "len",
+      6,
+    ]);
+    assertType<
+      IsExact<
+        typeof idx[1],
+        Array<[[number, number], [number, number]]>
+      >
+    >(true);
+
+    const withMatchLen = await client.lcs("lcs-a", "lcs-b", {
+      idx: true,
+      minmatchlen: 4,
+      withmatchlen: true,
+    });
+    assertEquals(withMatchLen, [
+      "matches",
+      [
+        [[4, 7], [5, 8], 4],
+      ],
+      "len",
+      6,
+    ]);
+    assertType<
+      IsExact<
+        typeof withMatchLen[1],
+        Array<[[number, number], [number, number], number]>
+      >
+    >(true);
+
+    // Missing keys are treated as empty strings.
+    assertEquals(await client.lcs("lcs-a", "lcs-missing"), "");
+  });
+
   it("stralgo", {
     // NOTE(#454): STRALGO has been dropped
     ignore: !usesRedisVersion("6"),

@@ -15,6 +15,7 @@ import type {
   GeoUnit,
   HelloOpts,
   HScanOpts,
+  LcsOpts,
   LInsertLocation,
   LPosOpts,
   LPosWithCountOpts,
@@ -978,6 +979,54 @@ class RedisImpl implements Redis {
 
   incrbyfloat(key: string, increment: number) {
     return this.execBulkReply<BulkString>("INCRBYFLOAT", key, increment);
+  }
+
+  lcs(key1: string, key2: string): Promise<BulkString>;
+  lcs(key1: string, key2: string, opts: { len: true }): Promise<Integer>;
+  lcs(
+    key1: string,
+    key2: string,
+    opts: { idx: true; minmatchlen?: number; withmatchlen?: false },
+  ): Promise<
+    [
+      string, // `"matches"`
+      Array<[[number, number], [number, number]]>,
+      string, // `"len"`
+      Integer,
+    ]
+  >;
+  lcs(
+    key1: string,
+    key2: string,
+    opts: { idx: true; minmatchlen?: number; withmatchlen: true },
+  ): Promise<
+    [
+      string, // `"matches"`
+      Array<[[number, number], [number, number], number]>,
+      string, // `"len"`
+      Integer,
+    ]
+  >;
+  lcs(key1: string, key2: string, opts?: LcsOpts) {
+    const args: (number | string)[] = [];
+    if (opts?.len) {
+      args.push("LEN");
+    }
+    if (opts?.idx) {
+      args.push("IDX");
+    }
+    if (opts?.minmatchlen) {
+      args.push("MINMATCHLEN", opts.minmatchlen);
+    }
+    if (opts?.withmatchlen) {
+      args.push("WITHMATCHLEN");
+    }
+    return this.execReply<BulkString | Integer | ConditionalArray>(
+      "LCS",
+      key1,
+      key2,
+      ...args,
+    );
   }
 
   info(section?: string): Promise<BulkString>;
