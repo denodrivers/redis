@@ -165,10 +165,16 @@ export interface XInfoStreamFullReply {
   lastGeneratedId: XId;
   entries: XMessage[];
   groups: XGroupDetail[];
+  /** @since Redis 7.0 */
+  maxDeletedEntryId?: XId;
+  /** @since Redis 7.0 */
+  entriesAdded?: number;
+  /** @since Redis 7.0 */
+  recordedFirstEntryId?: XId;
 }
 
 /**
- * Child of the return type for xinfo_stream_full
+ * Child of the return type for `XINFO STREAM <key> FULL`
  */
 export interface XGroupDetail {
   name: string;
@@ -176,6 +182,10 @@ export interface XGroupDetail {
   pelCount: number;
   pending: XPendingCount[];
   consumers: XConsumerDetail[];
+  /** @since Redis 7.0 */
+  entriesRead?: number;
+  /** @since Redis 7.0 */
+  lag?: number;
 }
 export interface XGroupCreateOpts {
   /** If `true`, `MKSTREAM` is set. */
@@ -331,6 +341,8 @@ export function parseXGroupDetail(rawGroups: ConditionalArray): XGroupDetail[] {
       // array of arrays
       const consDeets = data.get("consumers") as ConditionalArray[];
 
+      const maybeEntriesRead = data.get("entries-read");
+      const maybeLag = data.get("lag");
       out.push({
         name: rawstr(data.get("name") ?? null),
         lastDeliveredId: parseXId(
@@ -339,6 +351,10 @@ export function parseXGroupDetail(rawGroups: ConditionalArray): XGroupDetail[] {
         pelCount: rawnum(data.get("pel-count") ?? null),
         pending: parseXPendingCounts(data.get("pending") as ConditionalArray),
         consumers: parseXConsumerDetail(consDeets),
+        entriesRead: maybeEntriesRead != null
+          ? rawnum(maybeEntriesRead)
+          : undefined,
+        lag: maybeLag != null ? rawnum(maybeLag) : undefined,
       });
     }
   }

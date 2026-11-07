@@ -737,90 +737,124 @@ export function streamTests(
       await client.xadd(key, 2, { hello: "yes" });
       await client.xdel(key, "1-1");
 
-      const basicStreamInfo = await client.xinfoStream(key);
-      assertEquals(basicStreamInfo.length, 2);
-      assertEquals(basicStreamInfo.groups, 1);
-      assert(basicStreamInfo.radixTreeKeys > 0);
-      assert(basicStreamInfo.radixTreeNodes > 0);
-      assertEquals(basicStreamInfo.lastGeneratedId, { unixMs: 2, seqNo: 0 });
-      assertEquals(basicStreamInfo.firstEntry, {
-        xid: { unixMs: 1, seqNo: 0 },
-        fieldValues: { hello: "no" },
-      });
-      assertEquals(basicStreamInfo.lastEntry, {
-        xid: { unixMs: 2, seqNo: 0 },
-        fieldValues: { hello: "yes" },
-      });
-      assertEquals(
-        basicStreamInfo.maxDeletedEntryId,
-        isRedisV7OrHigher
-          ? {
-            unixMs: 1,
-            seqNo: 1,
-          }
-          : undefined,
-      );
-      assertEquals(
-        basicStreamInfo.entriesAdded,
-        isRedisV7OrHigher ? 3 : undefined,
-      );
-      assertEquals(
-        basicStreamInfo.recordedFirstEntryId,
-        isRedisV7OrHigher ? { unixMs: 1, seqNo: 0 } : undefined,
-      );
+      {
+        const basicStreamInfo = await client.xinfoStream(key);
+        assertEquals(basicStreamInfo.length, 2);
+        assertEquals(basicStreamInfo.groups, 1);
+        assert(basicStreamInfo.radixTreeKeys > 0);
+        assert(basicStreamInfo.radixTreeNodes > 0);
+        assertEquals(basicStreamInfo.lastGeneratedId, { unixMs: 2, seqNo: 0 });
+        assertEquals(basicStreamInfo.firstEntry, {
+          xid: { unixMs: 1, seqNo: 0 },
+          fieldValues: { hello: "no" },
+        });
+        assertEquals(basicStreamInfo.lastEntry, {
+          xid: { unixMs: 2, seqNo: 0 },
+          fieldValues: { hello: "yes" },
+        });
+        assertEquals(
+          basicStreamInfo.maxDeletedEntryId,
+          isRedisV7OrHigher
+            ? {
+              unixMs: 1,
+              seqNo: 1,
+            }
+            : undefined,
+        );
+        assertEquals(
+          basicStreamInfo.entriesAdded,
+          isRedisV7OrHigher ? 3 : undefined,
+        );
+        assertEquals(
+          basicStreamInfo.recordedFirstEntryId,
+          isRedisV7OrHigher ? { unixMs: 1, seqNo: 0 } : undefined,
+        );
+      }
 
       // Let's do an XREADGROUP so that we see some entries in the PEL
       const _ = client.xreadgroup([[key, ">"]], { group, consumer: "someone" });
 
-      const fullStreamInfo = await client.xinfoStreamFull(key);
-      assertEquals(fullStreamInfo.length, 2);
-      assert(fullStreamInfo.radixTreeKeys > 0);
-      assert(fullStreamInfo.radixTreeNodes > 0);
-      assertEquals(fullStreamInfo.groups.length, 1);
-      assertEquals(fullStreamInfo.groups[0].consumers.length, 1);
+      {
+        const fullStreamInfo = await client.xinfoStreamFull(key);
+        assertEquals(fullStreamInfo.length, 2);
+        assert(fullStreamInfo.radixTreeKeys > 0);
+        assert(fullStreamInfo.radixTreeNodes > 0);
+        assertEquals(
+          fullStreamInfo.maxDeletedEntryId,
+          isRedisV7OrHigher
+            ? {
+              unixMs: 1,
+              seqNo: 1,
+            }
+            : undefined,
+        );
+        assertEquals(
+          fullStreamInfo.entriesAdded,
+          isRedisV7OrHigher ? 3 : undefined,
+        );
+        assertEquals(
+          fullStreamInfo.recordedFirstEntryId,
+          isRedisV7OrHigher ? { unixMs: 1, seqNo: 0 } : undefined,
+        );
+        assertEquals(fullStreamInfo.groups.length, 1);
+        assertEquals(fullStreamInfo.groups[0].consumers.length, 1);
 
-      const cc = fullStreamInfo.groups[0].consumers[0];
-      assertEquals(cc.name, "someone");
-      assert(cc.seenTime > 0);
-      assertEquals(cc.pelCount, 2);
-      assertEquals(cc.pending.length, 2);
-      for (const msg of cc.pending) {
-        assertEquals(msg.timesDelivered, 1);
+        const cc = fullStreamInfo.groups[0].consumers[0];
+        assertEquals(cc.name, "someone");
+        assert(cc.seenTime > 0);
+        assertEquals(cc.pelCount, 2);
+        assertEquals(cc.pending.length, 2);
+        for (const msg of cc.pending) {
+          assertEquals(msg.timesDelivered, 1);
+        }
+        assertEquals(
+          fullStreamInfo.groups[0].entriesRead,
+          isRedisV7OrHigher ? 3 : undefined,
+        );
+        assertEquals(
+          fullStreamInfo.groups[0].lag,
+          isRedisV7OrHigher ? 0 : undefined,
+        );
+
+        assertEquals(fullStreamInfo.entries.length, 2);
       }
-      assertEquals(fullStreamInfo.entries.length, 2);
 
-      const limitWithCount = await client.xinfoStreamFull(key, 1);
-      assertEquals(limitWithCount.length, 2);
-      assert(limitWithCount.radixTreeKeys > 0);
-      assert(limitWithCount.radixTreeNodes > 0);
-      assertEquals(limitWithCount.groups.length, 1);
-      assertEquals(limitWithCount.groups[0].consumers.length, 1);
+      {
+        const limitWithCount = await client.xinfoStreamFull(key, 1);
+        assertEquals(limitWithCount.length, 2);
+        assert(limitWithCount.radixTreeKeys > 0);
+        assert(limitWithCount.radixTreeNodes > 0);
+        assertEquals(limitWithCount.groups.length, 1);
+        assertEquals(limitWithCount.groups[0].consumers.length, 1);
 
-      const c = limitWithCount.groups[0].consumers[0];
-      assertEquals(c.name, "someone");
-      assert(c.seenTime > 0);
-      assertEquals(c.pelCount, 2);
-      // The COUNT option limits this array to a single entry!
-      assertEquals(c.pending.length, 1);
-      for (const msg of c.pending) {
-        assertEquals(msg.timesDelivered, 1);
+        const c = limitWithCount.groups[0].consumers[0];
+        assertEquals(c.name, "someone");
+        assert(c.seenTime > 0);
+        assertEquals(c.pelCount, 2);
+        // The COUNT option limits this array to a single entry!
+        assertEquals(c.pending.length, 1);
+        for (const msg of c.pending) {
+          assertEquals(msg.timesDelivered, 1);
+        }
+        // The COUNT option limits this array to a single entry!
+        assertEquals(limitWithCount.entries.length, 1);
       }
-      // The COUNT option limits this array to a single entry!
-      assertEquals(limitWithCount.entries.length, 1);
 
       // Let's make another group and see more stats
       await client.xgroupCreate(key, "newgroup", "$", true);
 
-      const groupInfos = await client.xinfoGroups(key);
-      assertEquals(groupInfos.length, 2);
+      {
+        const groupInfos = await client.xinfoGroups(key);
+        assertEquals(groupInfos.length, 2);
 
-      const newGroup = groupInfos.find((g) => g.name === "newgroup");
-      const oldGroup = groupInfos.find((g) => g.name === group);
-      assert(newGroup);
-      assert(oldGroup);
+        const newGroup = groupInfos.find((g) => g.name === "newgroup");
+        const oldGroup = groupInfos.find((g) => g.name === group);
+        assert(newGroup);
+        assert(oldGroup);
 
-      assertEquals(oldGroup.pending, 2);
-      assertEquals(newGroup.pending, 0);
+        assertEquals(oldGroup.pending, 2);
+        assertEquals(newGroup.pending, 0);
+      }
 
       // Add one more record and read it with a new consumer,
       // so that we can check the parsing of deno-redis xinfo_consumers
@@ -829,20 +863,23 @@ export function streamTests(
 
       // Increase the idle time by falling asleep
       await delay(2);
-      const consumerInfos = await client.xinfoConsumers(key, group);
-      assertEquals(consumerInfos.length, 2);
-      const newConsumer = consumerInfos.find((c) => c.name === "newbie");
-      const oldConsumer = consumerInfos.find((c) => c.name === "someone");
-      assert(newConsumer);
-      assert(oldConsumer);
-      assert(newConsumer.idle > 1);
-      assert(oldConsumer.idle > 1);
-      // New consumer read one message with ">"
-      assertEquals(newConsumer.pending, 1);
-      // Old consumer read two messages with ">"
-      assertEquals(oldConsumer.pending, 2);
 
-      assertEquals(await client.xgroupDestroy(key, "newgroup"), 1);
+      {
+        const consumerInfos = await client.xinfoConsumers(key, group);
+        assertEquals(consumerInfos.length, 2);
+        const newConsumer = consumerInfos.find((c) => c.name === "newbie");
+        const oldConsumer = consumerInfos.find((c) => c.name === "someone");
+        assert(newConsumer);
+        assert(oldConsumer);
+        assert(newConsumer.idle > 1);
+        assert(oldConsumer.idle > 1);
+        // New consumer read one message with ">"
+        assertEquals(newConsumer.pending, 1);
+        // Old consumer read two messages with ">"
+        assertEquals(oldConsumer.pending, 2);
+
+        assertEquals(await client.xgroupDestroy(key, "newgroup"), 1);
+      }
     });
   });
 }
