@@ -165,10 +165,16 @@ export interface XInfoStreamFullReply {
   lastGeneratedId: XId;
   entries: XMessage[];
   groups: XGroupDetail[];
+  /** @since Redis 7.0 */
+  maxDeletedEntryId?: XId;
+  /** @since Redis 7.0 */
+  entriesAdded?: number;
+  /** @since Redis 7.0 */
+  recordedFirstEntryId?: XId;
 }
 
 /**
- * Child of the return type for xinfo_stream_full
+ * Child of the return type for `XINFO STREAM <key> FULL`
  */
 export interface XGroupDetail {
   name: string;
@@ -176,6 +182,10 @@ export interface XGroupDetail {
   pelCount: number;
   pending: XPendingCount[];
   consumers: XConsumerDetail[];
+  /** @since Redis 7.0 */
+  entriesRead?: number;
+  /** @since Redis 7.0 */
+  lag?: number;
 }
 export interface XGroupCreateOpts {
   /** If `true`, `MKSTREAM` is set. */
