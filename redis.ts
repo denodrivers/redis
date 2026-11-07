@@ -2013,6 +2013,9 @@ class RedisImpl implements Redis {
           const entries = (data.get("entries") as ConditionalArray).map((
             raw: Raw,
           ) => parseXMessage(raw as XReadIdData));
+          const maybeMaxDeletedEntryId = data.get("max-deleted-entry-id");
+          const maybeEntriesAdded = data.get("entries-added");
+          const maybeRecordedFirstEntryId = data.get("recorded-first-entry-id");
           return {
             length: rawnum(data.get("length") ?? null),
             radixTreeKeys: rawnum(data.get("radix-tree-keys") ?? null),
@@ -2022,6 +2025,15 @@ class RedisImpl implements Redis {
             ),
             entries,
             groups: parseXGroupDetail(data.get("groups") as ConditionalArray),
+            maxDeletedEntryId: maybeMaxDeletedEntryId
+              ? parseXId(rawstr(maybeMaxDeletedEntryId))
+              : undefined,
+            entriesAdded: maybeEntriesAdded
+              ? rawnum(maybeEntriesAdded)
+              : undefined,
+            recordedFirstEntryId: maybeRecordedFirstEntryId
+              ? parseXId(rawstr(maybeRecordedFirstEntryId))
+              : undefined,
           };
         },
       );
