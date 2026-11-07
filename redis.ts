@@ -1982,7 +1982,7 @@ class RedisImpl implements Redis {
           maxDeletedEntryId: maybeMaxDeletedEntryId
             ? parseXId(rawstr(maybeMaxDeletedEntryId))
             : undefined,
-          entriesAdded: maybeEntriesAdded
+          entriesAdded: maybeEntriesAdded != null
             ? rawnum(maybeEntriesAdded)
             : undefined,
           recordedFirstEntryId: maybeRecordedFirstEntryId
@@ -2028,7 +2028,7 @@ class RedisImpl implements Redis {
             maxDeletedEntryId: maybeMaxDeletedEntryId
               ? parseXId(rawstr(maybeMaxDeletedEntryId))
               : undefined,
-            entriesAdded: maybeEntriesAdded
+            entriesAdded: maybeEntriesAdded != null
               ? rawnum(maybeEntriesAdded)
               : undefined,
             recordedFirstEntryId: maybeRecordedFirstEntryId
