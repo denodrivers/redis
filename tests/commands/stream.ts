@@ -854,6 +854,22 @@ export function streamTests(
 
         assertEquals(oldGroup.pending, 2);
         assertEquals(newGroup.pending, 0);
+        assertEquals(
+          oldGroup.entriesRead,
+          isRedisV7OrHigher ? 3 : undefined,
+        );
+        assertEquals(
+          newGroup.entriesRead,
+          undefined,
+        );
+        assertEquals(
+          oldGroup.lag,
+          isRedisV7OrHigher ? 0 : undefined,
+        );
+        assertEquals(
+          newGroup.lag,
+          isRedisV7OrHigher ? 0 : undefined,
+        );
       }
 
       // Add one more record and read it with a new consumer,
