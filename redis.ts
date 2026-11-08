@@ -2044,6 +2044,8 @@ class RedisImpl implements Redis {
       (raws) =>
         raws.map((raw) => {
           const data = convertMap(raw);
+          const maybeEntriesRead = data.get("entries-read");
+          const maybeLag = data.get("lag");
           return {
             name: rawstr(data.get("name") ?? null),
             consumers: rawnum(data.get("consumers") ?? null),
@@ -2051,6 +2053,10 @@ class RedisImpl implements Redis {
             lastDeliveredId: parseXId(
               rawstr(data.get("last-delivered-id") ?? null),
             ),
+            entriesRead: maybeEntriesRead != null
+              ? rawnum(maybeEntriesRead)
+              : undefined,
+            lag: maybeLag != null ? rawnum(maybeLag) : undefined,
           };
         }),
     );

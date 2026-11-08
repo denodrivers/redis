@@ -230,6 +230,10 @@ export interface XInfoGroup {
   consumers: number;
   pending: number;
   lastDeliveredId: XId;
+  /** @since Redis 7.0 */
+  entriesRead?: number;
+  /** @since Redis 7.0 */
+  lag?: number;
 }
 
 export interface XClaimOpts {
