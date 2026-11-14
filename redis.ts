@@ -69,6 +69,8 @@ import { createRedisPipeline } from "./pipeline.ts";
 import type {
   StartEndCount,
   XAddFieldValues,
+  XAutoClaimOpts,
+  XAutoClaimReply,
   XClaimJustXId,
   XClaimMessages,
   XClaimOpts,
@@ -84,6 +86,7 @@ import type {
   XKeyIdGroupLike,
   XKeyIdLike,
   XMaxlen,
+  XMessage,
   XReadGroupOpts,
   XReadIdData,
   XReadOpts,
@@ -1868,6 +1871,68 @@ class RedisImpl implements Redis {
       const payload: XClaimMessages = { kind: "messages", messages };
       return payload;
     });
+  }
+
+  xautoClaim(
+    key: string,
+    group: string,
+    consumer: string,
+    minIdleTime: number,
+    start: XIdInput,
+    opts: Omit<XAutoClaimOpts, "justid"> & { justid: true },
+  ): Promise<XAutoClaimReply<XId>>;
+  xautoClaim(
+    key: string,
+    group: string,
+    consumer: string,
+    minIdleTime: number,
+    start: XIdInput,
+    opts?: Omit<XAutoClaimOpts, "justid"> & { justid?: false },
+  ): Promise<XAutoClaimReply<XMessage>>;
+  async xautoClaim(
+    key: string,
+    group: string,
+    consumer: string,
+    minIdleTime: number,
+    start: XIdInput,
+    opts?: XAutoClaimOpts,
+  ): Promise<XAutoClaimReply> {
+    const args: Array<RedisValue> = [];
+    if (opts?.count != null) {
+      args.push("COUNT", opts.count);
+    }
+    if (opts?.justid) {
+      args.push("JUSTID");
+    }
+    const reply = await this.execReply<
+      [string, Array<XReadIdData | string>, Array<string>]
+    >(
+      "XAUTOCLAIM",
+      key,
+      group,
+      consumer,
+      minIdleTime,
+      xidstr(start),
+      ...args,
+    ).then(([streamID, rawClaimedMessages, deletedMessageIds]) => {
+      const claimedMessages = [];
+      for (const x of rawClaimedMessages) {
+        claimedMessages.push(
+          x == null
+            ? x
+            : typeof x === "string"
+            ? parseXId(x)
+            : parseXMessage(x),
+        );
+      }
+      const reply: XAutoClaimReply = [
+        parseXId(streamID),
+        claimedMessages,
+        deletedMessageIds?.map(parseXId) ?? [],
+      ];
+      return reply;
+    });
+    return reply;
   }
 
   xdel(key: string, ...xids: XIdInput[]) {

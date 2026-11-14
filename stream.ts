@@ -96,6 +96,17 @@ export interface XClaimJustXId {
   kind: "justxid";
   xids: XId[];
 }
+export type XAutoClaimReply<T extends XMessage | XId = XMessage | XId> = [
+  /** A stream ID. */
+  streamID: XId,
+  /** Successfully claimed messages. */
+  claimedMessages: Array<
+    | null // In Redis v6, it appears that deleted messages are reported as `nil`. See [#10227](https://github.com/redis/redis/pull/10227).
+    | T
+  >,
+  /** Message IDs that no longer exist in the stream. */
+  deletedMessageIDs: Array<XId>,
+];
 
 /**
  * @param count Limit on the number of messages to return per call.
@@ -245,6 +256,12 @@ export interface XClaimOpts {
   retryCount?: number;
   force?: boolean;
   justXId?: boolean;
+}
+export interface XAutoClaimOpts {
+  /** The value set for the `COUNT` argument. */
+  count?: number;
+  /** If `true`, `JUSTID` argument is set. */
+  justid?: boolean;
 }
 
 export function parseXMessage(raw: XReadIdData): XMessage {
