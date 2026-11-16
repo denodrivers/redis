@@ -15,6 +15,8 @@ import type { RedisSubscription } from "./subscription.ts";
 import type {
   StartEndCount,
   XAddFieldValues,
+  XAutoClaimOpts,
+  XAutoClaimReply,
   XClaimOpts,
   XClaimReply,
   XGroupCreateOpts,
@@ -839,6 +841,37 @@ XCLAIM mystream mygroup Alice 3600000 1526569498055-0
     opts: XClaimOpts,
     ...xids: XIdInput[]
   ): Promise<XClaimReply>;
+
+  xautoClaim(
+    key: string,
+    group: string,
+    consumer: string,
+    minIdleTime: number,
+    start: XIdInput,
+    opts: Omit<XAutoClaimOpts, "justid"> & { justid: true },
+  ): Promise<XAutoClaimReply<XId>>;
+
+  xautoClaim(
+    key: string,
+    group: string,
+    consumer: string,
+    minIdleTime: number,
+    start: XIdInput,
+    opts?: Omit<XAutoClaimOpts, "justid"> & { justid?: false },
+  ): Promise<XAutoClaimReply<XMessage>>;
+
+  /**
+   * @see {@link https://redis.io/docs/latest/commands/xautoclaim | XAUTOCLAIM}
+   * @since Redis 6.2.0
+   */
+  xautoClaim(
+    key: string,
+    group: string,
+    consumer: string,
+    minIdleTime: number,
+    start: XIdInput,
+    opts?: XAutoClaimOpts,
+  ): Promise<XAutoClaimReply>;
   /**
    * Removes the specified entries from a stream,
    * and returns the number of entries deleted,

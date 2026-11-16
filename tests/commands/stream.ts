@@ -550,7 +550,7 @@ export function streamTests(
     await cleanupStream(client, key);
   });
 
-  it("xclaim and xpending, all options", async () => {
+  test("xclaim and xpending, all options", async () => {
     await withConsumerGroup(async (key, group) => {
       // xclaim test basic idea:
       // 1. add messages to a group
@@ -725,6 +725,136 @@ export function streamTests(
       assertEquals(thirdClaimed.messages[1].fieldValues, {
         field: "bop",
         farm: "duck",
+      });
+    });
+  });
+
+  describe("xautoClaim", () => {
+    it("returns a stream ID and successfully claimed messages", async () => {
+      await withConsumerGroup(async (key, group) => {
+        const isRedisV6 = usesRedisVersion("6");
+        const [firstMessageId, secondMessageId] = await Promise.all([
+          client.xadd(key, 1000, { field: "foo" }),
+          client.xadd(key, 2000, { field: "bar" }),
+        ]);
+        const initialConsumer = "bob";
+        await client.xreadgroup([
+          { key, xid: ">" },
+        ], {
+          group,
+          consumer: initialConsumer,
+        });
+
+        await client.xdel(key, secondMessageId);
+
+        const claimingConsumer = "alice";
+        const reply = await client.xautoClaim(
+          key,
+          group,
+          claimingConsumer,
+          0,
+          "0-0",
+        );
+        assertEquals(reply.length, 3);
+        const [streamId, claimedMessages, deletedMessageIds] = reply;
+        assertEquals(streamId, { seqNo: 0, unixMs: 0 });
+        assertEquals(
+          claimedMessages,
+          [
+            {
+              xid: firstMessageId,
+              fieldValues: { field: "foo" },
+            },
+            ...(isRedisV6 ? [null] : []),
+          ],
+        );
+        assertEquals(
+          deletedMessageIds,
+          isRedisV6 ? [] : [secondMessageId],
+        );
+      });
+    });
+
+    it("supports `COUNT` argument", async () => {
+      await withConsumerGroup(async (key, group) => {
+        const [firstMessageId, secondMessageId] = await Promise.all([
+          client.xadd(key, 1000, { field: "foo" }),
+          client.xadd(key, 2000, { field: "bar" }),
+        ]);
+        const initialConsumer = "bob";
+        await client.xreadgroup([
+          { key, xid: ">" },
+        ], {
+          group,
+          consumer: initialConsumer,
+        });
+
+        const claimingConsumer = "alice";
+        const reply = await client.xautoClaim(
+          key,
+          group,
+          claimingConsumer,
+          0,
+          "0-0",
+          { count: 1 },
+        );
+        assertEquals(reply.length, 3);
+        const [streamId, claimedMessages, deletedMessageIds] = reply;
+        assertEquals(streamId, secondMessageId);
+        assertEquals(
+          claimedMessages,
+          [
+            {
+              xid: firstMessageId,
+              fieldValues: { field: "foo" },
+            },
+          ],
+        );
+        assertEquals(
+          deletedMessageIds,
+          [],
+        );
+      });
+    });
+
+    it("supports `JUSTID` argument", async () => {
+      await withConsumerGroup(async (key, group) => {
+        const [firstMessageId] = await Promise.all([
+          client.xadd(key, 1000, { field: "foo" }),
+          client.xadd(key, 2000, { field: "bar" }),
+          client.xadd(key, 3000, { field: "baz" }),
+        ]);
+        const initialConsumer = "bob";
+        await client.xreadgroup([
+          { key, xid: ">" },
+        ], {
+          group,
+          consumer: initialConsumer,
+          count: 1,
+        });
+
+        const claimingConsumer = "alice";
+        const reply = await client.xautoClaim(
+          key,
+          group,
+          claimingConsumer,
+          0,
+          "0-0",
+          { justid: true },
+        );
+        assertEquals(reply.length, 3);
+        const [streamId, claimedMessageIds, deletedMessageIds] = reply;
+        assertEquals(streamId, { seqNo: 0, unixMs: 0 });
+        assertEquals(
+          claimedMessageIds,
+          [
+            firstMessageId,
+          ],
+        );
+        assertEquals(
+          deletedMessageIds,
+          [],
+        );
       });
     });
   });
