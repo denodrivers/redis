@@ -1,5 +1,11 @@
-import { assertEquals } from "../../deps/std/assert.ts";
-import { afterAll, beforeAll, beforeEach, it } from "../../deps/std/testing.ts";
+import { assert, assertEquals, assertExists } from "../../deps/std/assert.ts";
+import {
+  afterAll,
+  beforeAll,
+  beforeEach,
+  describe,
+  it,
+} from "../../deps/std/testing.ts";
 import type { Connector, TestServer } from "../test_util.ts";
 import type { Redis } from "../../mod.ts";
 
@@ -78,6 +84,21 @@ export function hashTests(
     assertEquals(await client.hmset("key", "f1", "1"), "OK");
     assertEquals(await client.hmset("key", { f1: "1", f2: "2" }), "OK");
     assertEquals(await client.hmset("key", ["f4", "4"], ["f5", "5"]), "OK");
+  });
+
+  describe("hrandfield", () => {
+    it("returns a random field from the hash", async () => {
+      const key = "some-key";
+      const field1 = "foo";
+      const field2 = "bar";
+      await client.hset(key, field1, "1");
+      await client.hset(key, field2, "2");
+
+      const reply = await client.hrandfield(key);
+
+      assertExists(reply);
+      assert([field1, field2].includes(reply));
+    });
   });
 
   it("hset", async () => {
