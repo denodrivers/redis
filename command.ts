@@ -95,6 +95,12 @@ export type ClusterSetSlotSubcommand =
   | "NODE"
   | "STABLE";
 
+/** Optional arguments for `HRANDFIELD` command */
+export interface HRandfieldOpts {
+  /** If `true`, `WITHVALUES` argument is set. */
+  withValues?: boolean;
+}
+
 export interface MigrateOpts {
   copy?: boolean;
   replace?: boolean;
@@ -609,6 +615,24 @@ export interface RedisCommands {
     key: string,
     field_values: Record<string, RedisValue>,
   ): Promise<SimpleString>;
+
+  hrandfield(key: string): Promise<Bulk>;
+  hrandfield(key: string, count: number): Promise<Array<BulkString>>;
+  hrandfield(
+    key: string,
+    count: number,
+    opts: Omit<HRandfieldOpts, "withValues"> & { withValues: true },
+  ): Promise<Array<RedisValue>>;
+  /**
+   * @see {@link https://redis.io/docs/latest/commands/hrandfield/ | HRANDFIELD}
+   * @since Redis 6.2.0
+   */
+  hrandfield(
+    key: string,
+    count?: number,
+    opts?: HRandfieldOpts,
+  ): Promise<Bulk | Array<BulkString> | Array<RedisValue>>;
+
   hscan(
     key: string,
     cursor: number,

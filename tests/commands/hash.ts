@@ -1,5 +1,16 @@
-import { assertEquals } from "../../deps/std/assert.ts";
-import { afterAll, beforeAll, beforeEach, it } from "../../deps/std/testing.ts";
+import {
+  assert,
+  assertArrayIncludes,
+  assertEquals,
+  assertExists,
+} from "../../deps/std/assert.ts";
+import {
+  afterAll,
+  beforeAll,
+  beforeEach,
+  describe,
+  it,
+} from "../../deps/std/testing.ts";
 import type { Connector, TestServer } from "../test_util.ts";
 import type { Redis } from "../../mod.ts";
 
@@ -78,6 +89,66 @@ export function hashTests(
     assertEquals(await client.hmset("key", "f1", "1"), "OK");
     assertEquals(await client.hmset("key", { f1: "1", f2: "2" }), "OK");
     assertEquals(await client.hmset("key", ["f4", "4"], ["f5", "5"]), "OK");
+  });
+
+  describe("hrandfield", () => {
+    it("returns a random field from the hash", async () => {
+      const key = "some-key";
+      const field1 = "foo";
+      const field2 = "bar";
+      await client.hset(key, field1, "1");
+      await client.hset(key, field2, "2");
+
+      const reply = await client.hrandfield(key);
+
+      assertExists(reply);
+      assert([field1, field2].includes(reply));
+    });
+
+    it("supports `count` argument", async () => {
+      const key = "some-key";
+      const field1 = "foo";
+      const field2 = "bar";
+      const field3 = "baz";
+      await client.hset(key, field1, "1");
+      await client.hset(key, field2, "2");
+      await client.hset(key, field3, "3");
+
+      const count = 2;
+      const reply = await client.hrandfield(key, count);
+
+      assertEquals(reply.length, count);
+      assertArrayIncludes([field1, field2, field3], reply);
+    });
+
+    it("supports `WITHVALUES` argument", async () => {
+      const key = "some-key";
+      const fields: Record<string, string> = {
+        "foo": "1",
+        "bar": "2",
+        "baz": "3",
+      };
+      for (const [field, value] of Object.entries(fields)) {
+        await client.hset(key, field, value);
+      }
+
+      const count = 2;
+      const reply = await client.hrandfield(key, count, {
+        withValues: true,
+      });
+
+      const expected = Object.keys(fields).reduce(
+        (expected: Array<string>, field) => {
+          if (reply.includes(field)) {
+            expected.push(field, fields[field]);
+          }
+          return expected;
+        },
+        [],
+      );
+      assertEquals(reply.length, count * 2);
+      assertArrayIncludes(reply, expected);
+    });
   });
 
   it("hset", async () => {

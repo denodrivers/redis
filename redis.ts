@@ -14,6 +14,7 @@ import type {
   GeoRadiusOpts,
   GeoUnit,
   HelloOpts,
+  HRandfieldOpts,
   HScanOpts,
   LcsOpts,
   LInsertLocation,
@@ -2595,6 +2596,30 @@ class RedisImpl implements Redis {
     return this.execArrayReply("SSCAN", ...args) as Promise<
       [BulkString, BulkString[]]
     >;
+  }
+
+  hrandfield(key: string): Promise<Bulk>;
+  hrandfield(key: string, count: number): Promise<Array<BulkString>>;
+  hrandfield(
+    key: string,
+    count: number,
+    opts: Omit<HRandfieldOpts, "withValues"> & { withValues: true },
+  ): Promise<Array<RedisValue>>;
+  hrandfield(
+    key: string,
+    count?: number,
+    opts?: HRandfieldOpts,
+  ): Promise<Bulk | Array<BulkString> | Array<RedisValue>> {
+    const args: Array<RedisValue> = [];
+    if (count != null) {
+      args.push(count);
+    }
+    if (opts?.withValues) {
+      args.push("WITHVALUES");
+    }
+    return args.length === 0
+      ? this.execBulkReply("HRANDFIELD", key)
+      : this.execArrayReply("HRANDFIELD", key, ...args);
   }
 
   hscan(
