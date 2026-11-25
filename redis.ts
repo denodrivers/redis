@@ -40,6 +40,7 @@ import type {
   ZAddReply,
   ZInterOpts,
   ZInterstoreOpts,
+  ZRandmemberOpts,
   ZRangeByLexOpts,
   ZRangeByScoreOpts,
   ZRangeOpts,
@@ -2470,6 +2471,29 @@ class RedisImpl implements Redis {
       return this.execArrayReply<BulkString>("ZPOPMIN", key, count);
     }
     return this.execArrayReply<BulkString>("ZPOPMIN", key);
+  }
+
+  zrandmember(key: string): Promise<Bulk>;
+  zrandmember(
+    key: string,
+    count: number,
+    opts?: ZRandmemberOpts,
+  ): Promise<Array<BulkString>>;
+  zrandmember(
+    key: string,
+    count?: number,
+    opts?: ZRandmemberOpts,
+  ): Promise<Bulk | Array<BulkString>> {
+    const args = [];
+    if (count != null) {
+      args.push(count);
+    }
+    if (opts?.withScores) {
+      args.push("WITHSCORES");
+    }
+    return args.length === 0
+      ? this.execBulkReply("ZRANDMEMBER", key)
+      : this.execArrayReply("ZRANDMEMBER", key, ...args);
   }
 
   zrange(
