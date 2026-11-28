@@ -1,4 +1,8 @@
-import { assert, assertEquals } from "../../deps/std/assert.ts";
+import {
+  assert,
+  assertArrayIncludes,
+  assertEquals,
+} from "../../deps/std/assert.ts";
 import type { IsExact } from "../../deps/std/testing.ts";
 import {
   afterAll,
@@ -173,6 +177,48 @@ export function zsetTests(
   it("zpopmax", async () => {
     await client.zadd("key", { one: 1, two: 2 });
     assertEquals(await client.zpopmax("key", 1), ["two", "2"]);
+  });
+
+  describe("zrandmember", () => {
+    it("return a random member from the sorted set", async () => {
+      const members = { foo: 1, bar: 2, baz: 3 };
+      const key = "sorted-set";
+      await client.zadd(key, members);
+
+      const actual = await client.zrandmember(key);
+
+      assertArrayIncludes(Object.keys(members), [actual]);
+    });
+
+    it("supports `count` argument", async () => {
+      const members = { a: 1, b: 2, c: 3 };
+      const key = "sorted-set";
+      await client.zadd(key, members);
+
+      const count = 2;
+      const actual = await client.zrandmember(key, count);
+
+      assertArrayIncludes(Object.keys(members), actual);
+      assertEquals(actual.length, count);
+    });
+
+    it("supports `WITHSCORES` argument", async () => {
+      const members: Record<string, number> = { a: 1, b: 2, c: 3 };
+      const key = "sorted-set";
+      await client.zadd(key, members);
+
+      const count = 2;
+      const actual = await client.zrandmember(key, count, { withScores: true });
+
+      assertArrayIncludes(
+        Object.entries(members).flatMap(([x, score]) => [x, String(score)]),
+        actual,
+      );
+      assertEquals(actual.length, count * 2);
+
+      const scores = actual.map((x) => members[x]).filter(Boolean);
+      assertArrayIncludes(Object.values(members), scores);
+    });
   });
 
   it("zrange", async () => {

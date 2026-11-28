@@ -241,6 +241,12 @@ interface ZStoreOpts {
 export type ZInterstoreOpts = ZStoreOpts;
 export type ZUnionstoreOpts = ZStoreOpts;
 
+/** Optional arguments for `ZRANDMEMBER` command */
+export interface ZRandmemberOpts {
+  /** If `true`, `WITHSCORES` argument is set. */
+  withScores?: boolean;
+}
+
 export interface ZRangeOpts {
   withScore?: boolean;
 }
@@ -1205,6 +1211,21 @@ XRANGE somestream - +
   zlexcount(key: string, min: string, max: string): Promise<Integer>;
   zpopmax(key: string, count?: number): Promise<BulkString[]>;
   zpopmin(key: string, count?: number): Promise<BulkString[]>;
+  zrandmember(key: string): Promise<Bulk>;
+  zrandmember(
+    key: string,
+    count: number,
+    opts?: ZRandmemberOpts,
+  ): Promise<Array<BulkString>>;
+  /**
+   * @see {@link https://redis.io/docs/latest/commands/ZRANDMEMBER/ | ZRANDMEMBER}
+   * @since Redis 6.2.0
+   */
+  zrandmember(
+    key: string,
+    count?: number,
+    opts?: ZRandmemberOpts,
+  ): Promise<Bulk | Array<BulkString>>;
   zrange(
     key: string,
     start: number,
